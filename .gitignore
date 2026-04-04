@@ -20,6 +20,9 @@ bin/
 # VS Code
 .vscode/
 
+# Internal instruction files (local dev only)
+.github/instructions/
+
 # Minecraft
 run/
 run-data/
