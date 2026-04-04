@@ -26,7 +26,6 @@ public class CurseForgeUpdateChecker {
     // CurseForge project ID
     private static final int PROJECT_ID = 1381899;
     private static final String CURSEFORGE_API = "https://api.curseforge.com/v1/mods/%d/files";
-    private static final String MINECRAFT_VERSION = "1.20.1";
     
     // API key loaded from secure config file
     private static String API_KEY = null;
@@ -118,7 +117,7 @@ public class CurseForgeUpdateChecker {
                 OTAVersion currentVersion = OTAVersion.loadFromResources();
                 
                 ServerManagementMod.LOGGER.info("Checking CurseForge for updates...");
-                ServerManagementMod.LOGGER.info("Current version: {}", currentVersion.getFullVersion());
+                ServerManagementMod.LOGGER.info("Current version: {} (MC {})", currentVersion.getDisplayVersion(), currentVersion.getMinecraftVersion());
                 
                 // Get latest file from CurseForge
                 CurseForgeFile latestFile = getLatestFile();
@@ -138,7 +137,7 @@ public class CurseForgeUpdateChecker {
                 
                 if (updateAvailable) {
                     ServerManagementMod.LOGGER.info("Update available on CurseForge!");
-                    ServerManagementMod.LOGGER.info("Latest version: {}", remoteVersion.getFullVersion());
+                    ServerManagementMod.LOGGER.info("Latest version: {}", remoteVersion.getDisplayVersion());
                     ServerManagementMod.LOGGER.info("Download URL: {}", latestFile.downloadUrl);
                     
                     UpdateInfo result = new UpdateInfo(true, remoteVersion, latestFile.downloadUrl, latestFile.fileName);
@@ -167,6 +166,9 @@ public class CurseForgeUpdateChecker {
         if (!ENABLED || API_KEY == null) {
             return null;
         }
+        
+        // Get MC version from OTA properties
+        String minecraftVersion = OTAVersion.loadFromResources().getMinecraftVersion();
         
         try {
             String apiUrl = String.format(CURSEFORGE_API, PROJECT_ID);
@@ -201,7 +203,7 @@ public class CurseForgeUpdateChecker {
                     
                     boolean matchesVersion = false;
                     for (int j = 0; j < gameVersions.size(); j++) {
-                        if (gameVersions.get(j).getAsString().equals(MINECRAFT_VERSION)) {
+                        if (gameVersions.get(j).getAsString().equals(minecraftVersion)) {
                             matchesVersion = true;
                             break;
                         }
@@ -219,7 +221,7 @@ public class CurseForgeUpdateChecker {
                     }
                 }
                 
-                ServerManagementMod.LOGGER.warn("No files found for Minecraft {}", MINECRAFT_VERSION);
+                ServerManagementMod.LOGGER.warn("No files found for Minecraft {}", minecraftVersion);
             } else if (responseCode == 403) {
                 ServerManagementMod.LOGGER.error("CurseForge API authentication failed - Invalid API key");
             } else if (responseCode == 404) {

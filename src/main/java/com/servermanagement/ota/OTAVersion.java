@@ -7,8 +7,9 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * Manages OTA version tracking with build numbers
- * This allows fine-grained control over updates independent of Forge mod version
+ * Manages OTA version tracking with build numbers and Minecraft version awareness.
+ * This allows fine-grained control over updates independent of Forge mod version,
+ * and ensures OTA updates only apply to matching Minecraft versions.
  */
 public class OTAVersion {
     
@@ -16,14 +17,16 @@ public class OTAVersion {
     private final int buildNumber;
     private final String releaseType;
     private final String releaseNotes;
+    private final String minecraftVersion;
     
     private static OTAVersion CURRENT_VERSION = null;
     
-    private OTAVersion(String version, int buildNumber, String releaseType, String releaseNotes) {
+    private OTAVersion(String version, int buildNumber, String releaseType, String releaseNotes, String minecraftVersion) {
         this.version = version;
         this.buildNumber = buildNumber;
         this.releaseType = releaseType;
         this.releaseNotes = releaseNotes;
+        this.minecraftVersion = minecraftVersion != null ? minecraftVersion : "unknown";
     }
     
     /**
@@ -37,7 +40,7 @@ public class OTAVersion {
         try (InputStream is = OTAVersion.class.getResourceAsStream("/ota.properties")) {
             if (is == null) {
                 ServerManagementMod.LOGGER.warn("ota.properties not found, using fallback version");
-                CURRENT_VERSION = new OTAVersion("1.0.0", 1, "unknown", "No release notes");
+                CURRENT_VERSION = new OTAVersion("1.0.0", 1, "unknown", "No release notes", "unknown");
                 return CURRENT_VERSION;
             }
             
@@ -48,23 +51,33 @@ public class OTAVersion {
             int build = Integer.parseInt(props.getProperty("ota.build", "1"));
             String releaseType = props.getProperty("ota.releaseType", "unknown");
             String releaseNotes = props.getProperty("ota.releaseNotes", "No release notes");
+            String mcVersion = props.getProperty("ota.minecraft_version", "unknown");
             
-            CURRENT_VERSION = new OTAVersion(version, build, releaseType, releaseNotes);
+            CURRENT_VERSION = new OTAVersion(version, build, releaseType, releaseNotes, mcVersion);
             
-            ServerManagementMod.LOGGER.info("Loaded OTA version: {} (build {})", version, build);
+            ServerManagementMod.LOGGER.info("Loaded OTA version: {} (build {}, MC {})", version, build, mcVersion);
             return CURRENT_VERSION;
             
         } catch (IOException | NumberFormatException e) {
             ServerManagementMod.LOGGER.error("Failed to load OTA version", e);
-            CURRENT_VERSION = new OTAVersion("1.0.0", 1, "error", "Failed to load version info");
+            CURRENT_VERSION = new OTAVersion("1.0.0", 1, "error", "Failed to load version info", "unknown");
             return CURRENT_VERSION;
         }
     }
     
     /**
-     * Get the full version string (version + build)
+     * Get the full version string for network transmission (version + build + mcVersion)
+     * Format: "1.0.3.3:1.21.1"
      */
     public String getFullVersion() {
+        return version + "." + buildNumber + ":" + minecraftVersion;
+    }
+    
+    /**
+     * Get the display version string (human-readable)
+     * Format: "v1.0.3-mc1.21.1-release (build 3)"
+     */
+    public String getDisplayVersion() {
         return version + "." + buildNumber;
     }
     
@@ -97,12 +110,40 @@ public class OTAVersion {
     }
     
     /**
-     * Check if this version is newer than another
-     * Returns true if this version should trigger an update
+     * Get the Minecraft version this OTA version targets
+     */
+    public String getMinecraftVersion() {
+        return minecraftVersion;
+    }
+    
+    /**
+     * Check if this version targets the same Minecraft version as another
+     */
+    public boolean isCompatibleWith(OTAVersion other) {
+        if (other == null) {
+            return false;
+        }
+        return this.minecraftVersion.equals(other.minecraftVersion);
+    }
+    
+    /**
+     * Check if this version is newer than another.
+     * Returns true if this version should trigger an update.
+     * Only considers versions targeting the same Minecraft version.
      */
     public boolean isNewerThan(OTAVersion other) {
         if (other == null) {
             return true;
+        }
+        
+        // Only allow updates within the same Minecraft version
+        if (!this.minecraftVersion.equals("unknown") && !other.minecraftVersion.equals("unknown")
+                && !this.minecraftVersion.equals("remote") && !other.minecraftVersion.equals("remote")) {
+            if (!this.minecraftVersion.equals(other.minecraftVersion)) {
+                ServerManagementMod.LOGGER.warn("MC version mismatch: {} vs {} - skipping update",
+                    this.minecraftVersion, other.minecraftVersion);
+                return false;
+            }
         }
         
         // First compare semantic versions
@@ -118,14 +159,23 @@ public class OTAVersion {
     }
     
     /**
-     * Parse version string from network packet (format: "version.build")
+     * Parse version string from network packet (format: "version.build" or "version.build:mcVersion")
      */
     public static OTAVersion parseFromString(String versionString) {
         try {
-            String[] parts = versionString.split("\\.");
+            // Check for MC version suffix (format: "1.0.3.3:1.21.1")
+            String mcVersion = "remote";
+            String vPart = versionString;
+            if (versionString.contains(":")) {
+                String[] colonParts = versionString.split(":", 2);
+                vPart = colonParts[0];
+                mcVersion = colonParts[1];
+            }
+            
+            String[] parts = vPart.split("\\.");
             if (parts.length < 4) {
                 // Fallback for old format
-                return new OTAVersion(versionString, 0, "unknown", "");
+                return new OTAVersion(vPart, 0, "unknown", "", mcVersion);
             }
             
             // Extract build number (last component)
@@ -138,11 +188,11 @@ public class OTAVersion {
                 versionBuilder.append(parts[i]);
             }
             
-            return new OTAVersion(versionBuilder.toString(), build, "remote", "");
+            return new OTAVersion(versionBuilder.toString(), build, "remote", "", mcVersion);
             
         } catch (Exception e) {
             ServerManagementMod.LOGGER.warn("Failed to parse version string: {}", versionString);
-            return new OTAVersion(versionString, 0, "error", "");
+            return new OTAVersion(versionString, 0, "error", "", "unknown");
         }
     }
     
@@ -193,11 +243,13 @@ public class OTAVersion {
             return false;
         }
         OTAVersion other = (OTAVersion) obj;
-        return this.version.equals(other.version) && this.buildNumber == other.buildNumber;
+        return this.version.equals(other.version) 
+            && this.buildNumber == other.buildNumber
+            && this.minecraftVersion.equals(other.minecraftVersion);
     }
     
     @Override
     public int hashCode() {
-        return (version + "." + buildNumber).hashCode();
+        return (version + "." + buildNumber + ":" + minecraftVersion).hashCode();
     }
 }

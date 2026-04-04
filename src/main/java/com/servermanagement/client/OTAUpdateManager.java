@@ -23,6 +23,7 @@ public class OTAUpdateManager {
     private static String targetVersion = null;
     private static String expectedHash = null;
     private static long expectedSize = 0;
+    private static String targetMinecraftVersion = null;
     private static List<byte[]> receivedChunks = new ArrayList<>();
     private static int totalChunks = 0;
     private static boolean userAcceptedUpdate = false;
@@ -33,7 +34,8 @@ public class OTAUpdateManager {
      */
     public static void handleVersionMismatch(String clientVersion, String serverVersion,
                                             int serverDataVersion, String serverModJarName,
-                                            String serverModJarHash, long serverModJarSize) {
+                                            String serverModJarHash, long serverModJarSize,
+                                            String serverMinecraftVersion) {
         ServerManagementMod.LOGGER.debug("handleVersionMismatch called, updateInProgress={}", updateInProgress);
         
         if (updateInProgress) {
@@ -77,17 +79,18 @@ public class OTAUpdateManager {
         
         // Auto-start update (user has implicitly accepted by joining)
         ServerManagementMod.LOGGER.info("Starting auto-update to version {}", serverVersion);
-        startUpdate(serverVersion, serverModJarHash, serverModJarSize);
+        startUpdate(serverVersion, serverModJarHash, serverModJarSize, serverMinecraftVersion);
     }
     
     /**
      * Start the update process
      */
-    private static void startUpdate(String version, String hash, long size) {
+    private static void startUpdate(String version, String hash, long size, String minecraftVersion) {
         updateInProgress = true;
         targetVersion = version;
         expectedHash = hash;
         expectedSize = size;
+        targetMinecraftVersion = minecraftVersion;
         receivedChunks.clear();
         totalChunks = 0;
         
@@ -103,7 +106,9 @@ public class OTAUpdateManager {
         // Request mod file from server
         ModNetworking.sendToServer(new ModFileRequestPacket(
             targetVersion,
-            ServerManagementMod.getModVersion()
+            ServerManagementMod.getModVersion(),
+            targetMinecraftVersion != null ? targetMinecraftVersion : 
+                com.servermanagement.ota.OTAVersion.loadFromResources().getMinecraftVersion()
         ));
     }
     
@@ -269,6 +274,7 @@ public class OTAUpdateManager {
         receivedChunks.clear();
         totalChunks = 0;
         targetVersion = null;
+        targetMinecraftVersion = null;
         expectedHash = null;
         expectedSize = 0;
     }
@@ -331,7 +337,7 @@ public class OTAUpdateManager {
             
             // Backup old mod JAR
             File[] oldMods = modsDir.listFiles((dir, name) -> 
-                name.startsWith("servermanagement") && name.endsWith(".jar"));
+                (name.startsWith("servermanagement") || name.startsWith("servermanagementplus")) && name.endsWith(".jar"));
             
             if (oldMods != null && oldMods.length > 0) {
                 for (File oldMod : oldMods) {
@@ -343,7 +349,8 @@ public class OTAUpdateManager {
             }
             
             // Write new mod JAR
-            File newModFile = new File(modsDir, "servermanagement-" + version + ".jar");
+            String mcSuffix = targetMinecraftVersion != null ? "-mc" + targetMinecraftVersion : "";
+            File newModFile = new File(modsDir, "servermanagementplus-v" + version + mcSuffix + "-release.jar");
             try (FileOutputStream fos = new FileOutputStream(newModFile)) {
                 fos.write(fileData);
             }
@@ -392,6 +399,7 @@ public class OTAUpdateManager {
             
             updateInProgress = false;
             targetVersion = null;
+            targetMinecraftVersion = null;
             expectedHash = null;
             expectedSize = 0;
             receivedChunks.clear();

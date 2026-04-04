@@ -1,6 +1,7 @@
 package com.servermanagement.util;
 
 import com.servermanagement.ServerManagementMod;
+import com.servermanagement.ota.OTAVersion;
 import com.servermanagement.security.SecureDataStorage;
 import net.minecraft.server.MinecraftServer;
 
@@ -25,7 +26,7 @@ public class VersionTracker {
             this.dataVersion = DataVersion.CURRENT_VERSION;
             this.firstInstalled = Instant.now().toString();
             this.lastUpdated = Instant.now().toString();
-            this.minecraftVersion = "1.20.1";
+            this.minecraftVersion = OTAVersion.loadFromResources().getMinecraftVersion();
         }
     }
     

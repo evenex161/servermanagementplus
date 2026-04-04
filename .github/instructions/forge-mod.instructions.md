@@ -6,16 +6,18 @@ applyTo: "src/**/*.java"
 
 ## Current Version
 
-- **Latest published release**: v1.0.3 (`servermanagementplus-v1.0.3-release.jar`)
+- **Latest published release**: v1.0.3 (`servermanagementplus-v1.0.3-mc1.21.1-release.jar`)
 - `mod_version` in `gradle.properties` must be a **clean Maven version** (e.g., `1.0.3`) — no `v` prefix or `-release` suffix. Forge's `DefaultArtifactVersion` rejects non-standard formats.
-- `build.gradle` prepends `v` and appends `-release` to produce the JAR filename: `servermanagementplus-v${mod_version}-release.jar`.
+- `build.gradle` prepends `v`, appends `-mc{minecraft_version}-release` to produce the JAR filename: `servermanagementplus-v${mod_version}-mc${minecraft_version}-release.jar`.
 - `ota.version` in `src/main/resources/ota.properties` uses the full display format (`v1.0.3-release`). OTA version parsing in `OTAVersion.java` strips leading `v` and trailing `-release`.
+- `ota.minecraft_version` in `src/main/resources/ota.properties` must match the `minecraft_version` in `gradle.properties`. This is used for OTA multi-version compatibility validation.
+- **Multi-version support**: The OTA system validates Minecraft version compatibility before sending updates. A 1.20.1 server will never push a 1.21.1 JAR to a client (or vice versa).
 
 ## Release Checklist
 
 When the user says a new version is ready for release, perform all of these steps:
 
-1. Update `mod_version` in `gradle.properties` and `ota.version` / `ota.build` in `src/main/resources/ota.properties`.
+1. Update `mod_version` in `gradle.properties` and `ota.version` / `ota.build` / `ota.minecraft_version` in `src/main/resources/ota.properties`.
 2. Create or update `CHANGELOG_v<version>.md` with all changes since the last release.
 3. Update the **Current Version** section at the top of this instructions file.
 4. Update `CURSEFORGE_PAGE.md` — this is the public-facing mod description for CurseForge. Reflect any new features, commands, config changes, or removed functionality so the page stays accurate.
@@ -23,7 +25,7 @@ When the user says a new version is ready for release, perform all of these step
 
 ## Forge Conventions
 
-- Target Minecraft 1.20.1 with Forge 47.4.x and Java 17.
+- Target Minecraft version and Forge version are defined in `gradle.properties` (`minecraft_version` and `forge_version`). Branch `mc/1.20.1` targets MC 1.20.1 with Forge 47.4.x and Java 17. Branch `mc/1.21.1` targets MC 1.21.1 with Forge 52.1.0 and Java 21.
 - Use `@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)` for event listener classes. Handler methods must be `static` with `@SubscribeEvent`.
 - Client-only event handlers must specify `value = Dist.CLIENT` and `bus = Mod.EventBusSubscriber.Bus.MOD` on the class annotation.
 - Use `event.enqueueWork(...)` for thread-safe work in lifecycle events (`FMLClientSetupEvent`, `FMLCommonSetupEvent`).

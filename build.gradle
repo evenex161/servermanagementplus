@@ -6,7 +6,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '[7.0.3,8)'
 }
 
-version = "v${mod_version}-release"
+version = "v${mod_version}-mc${minecraft_version}-release"
 group = "${mod_group_id}"
 
 base {
