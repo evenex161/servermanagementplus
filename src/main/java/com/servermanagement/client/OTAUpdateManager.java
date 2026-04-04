@@ -33,7 +33,8 @@ public class OTAUpdateManager {
      */
     public static void handleVersionMismatch(String clientVersion, String serverVersion,
                                             int serverDataVersion, String serverModJarName,
-                                            String serverModJarHash, long serverModJarSize) {
+                                            String serverModJarHash, long serverModJarSize,
+                                            String serverMinecraftVersion) {
         ServerManagementMod.LOGGER.debug("handleVersionMismatch called, updateInProgress={}", updateInProgress);
         
         if (updateInProgress) {
@@ -101,9 +102,11 @@ public class OTAUpdateManager {
         }
         
         // Request mod file from server
+        com.servermanagement.ota.OTAVersion clientOTA = com.servermanagement.ota.OTAVersion.loadFromResources();
         ModNetworking.sendToServer(new ModFileRequestPacket(
             targetVersion,
-            ServerManagementMod.getModVersion()
+            ServerManagementMod.getModVersion(),
+            clientOTA.getMinecraftVersion()
         ));
     }
     
@@ -331,7 +334,7 @@ public class OTAUpdateManager {
             
             // Backup old mod JAR
             File[] oldMods = modsDir.listFiles((dir, name) -> 
-                name.startsWith("servermanagement") && name.endsWith(".jar"));
+                name.startsWith("servermanagementplus") && name.endsWith(".jar"));
             
             if (oldMods != null && oldMods.length > 0) {
                 for (File oldMod : oldMods) {
@@ -343,7 +346,7 @@ public class OTAUpdateManager {
             }
             
             // Write new mod JAR
-            File newModFile = new File(modsDir, "servermanagement-" + version + ".jar");
+            File newModFile = new File(modsDir, "servermanagementplus-" + version + ".jar");
             try (FileOutputStream fos = new FileOutputStream(newModFile)) {
                 fos.write(fileData);
             }

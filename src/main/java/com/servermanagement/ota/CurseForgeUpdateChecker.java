@@ -26,7 +26,9 @@ public class CurseForgeUpdateChecker {
     // CurseForge project ID
     private static final int PROJECT_ID = 1381899;
     private static final String CURSEFORGE_API = "https://api.curseforge.com/v1/mods/%d/files";
-    private static final String MINECRAFT_VERSION = "1.20.1";
+    
+    // Minecraft version loaded from OTA properties at runtime
+    private static String MINECRAFT_VERSION = null;
     
     // API key loaded from secure config file
     private static String API_KEY = null;
@@ -117,8 +119,13 @@ public class CurseForgeUpdateChecker {
                 
                 OTAVersion currentVersion = OTAVersion.loadFromResources();
                 
+                // Load Minecraft version from OTA properties
+                if (MINECRAFT_VERSION == null) {
+                    MINECRAFT_VERSION = currentVersion.getMinecraftVersion();
+                }
+                
                 ServerManagementMod.LOGGER.info("Checking CurseForge for updates...");
-                ServerManagementMod.LOGGER.info("Current version: {}", currentVersion.getFullVersion());
+                ServerManagementMod.LOGGER.info("Current version: {} (MC {})", currentVersion.getFullVersion(), MINECRAFT_VERSION);
                 
                 // Get latest file from CurseForge
                 CurseForgeFile latestFile = getLatestFile();
