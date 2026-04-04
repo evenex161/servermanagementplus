@@ -1,0 +1,35 @@
+# Gradle
+.gradle/
+build/
+out/
+classes/
+
+# Eclipse
+.settings/
+.metadata
+.classpath
+.project
+bin/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# Minecraft
+run/
+run-data/
+logs/
+forge-server/
+
+# Mac
+.DS_Store
+
+# Security - Never commit sensitive files!
+curseforge.properties
+*.key
+*.secret

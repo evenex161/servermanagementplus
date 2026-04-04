@@ -1,0 +1,1020 @@
+package com.servermanagement.commands;
+
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.servermanagement.ServerManagementMod;
+import com.servermanagement.features.worldmanager.WorldManager;
+import com.servermanagement.features.playermanager.PlayerManagerSingleton;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
+@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+public class ModCommands {
+
+    @SubscribeEvent
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
+        
+        ServerManagementMod.LOGGER.info("Registering mod commands");
+        
+        // Main Dashboard GUI commands
+        dispatcher.register(Commands.literal("servermanagement")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    // Open main dashboard
+                    player.openMenu(new com.servermanagement.gui.provider.DashboardMenuProvider());
+                }
+                return 1;
+            })
+            .then(Commands.literal("dashboard")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        // Open main dashboard
+                        player.openMenu(new com.servermanagement.gui.provider.DashboardMenuProvider());
+                    }
+                    return 1;
+                })
+            )
+            .then(Commands.literal("resetdailies")
+                .executes(context -> {
+                    // Force reset all player dailies
+                    com.servermanagement.features.economy.EconomyManager economyManager = 
+                        com.servermanagement.features.economy.EconomyManager.getInstance(context.getSource().getServer());
+                    
+                    if (economyManager != null) {
+                        int count = economyManager.getDailyTasksManager().forceResetAllDailies();
+                        economyManager.save();
+                        context.getSource().sendSuccess(() -> 
+                            Component.literal("Reset daily tasks for " + count + " players"), true);
+                    } else {
+                        context.getSource().sendFailure(Component.literal("Economy system not initialized"));
+                    }
+                    return 1;
+                })
+            )
+        );
+        
+        dispatcher.register(Commands.literal("sm")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    // Open main dashboard
+                    player.openMenu(new com.servermanagement.gui.provider.DashboardMenuProvider());
+                }
+                return 1;
+            })
+        );
+        
+        // ServerManagement Settings command
+        dispatcher.register(Commands.literal("smconfig")
+            .requires(source -> source.hasPermission(2))
+            // Default: open GUI
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    // Sync feature states before opening
+                    syncFeatureStates(player);
+                    // Open settings GUI
+                    player.openMenu(new com.servermanagement.gui.provider.ServerManagementMenuProvider());
+                }
+                return 1;
+            })
+            // Toggle features from command line
+            .then(Commands.literal("toggle")
+                .then(Commands.argument("feature", StringArgumentType.string())
+                    .executes(context -> {
+                        String featureId = StringArgumentType.getString(context, "feature");
+                        boolean currentState = com.servermanagement.features.FeatureManager.isFeatureEnabled(featureId);
+                        com.servermanagement.features.FeatureManager.toggleFeature(featureId, !currentState);
+                        context.getSource().sendSuccess(() -> Component.literal("§aToggled " + featureId + " to: " + (!currentState ? "ON" : "OFF")), true);
+                        return 1;
+                    })
+                )
+            )
+            // Config info
+            .then(Commands.literal("info")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    int currentVersion = com.servermanagement.config.ModConfig.CONFIG_VERSION.get();
+                    int targetVersion = com.servermanagement.config.ModConfig.CURRENT_CONFIG_VERSION;
+                    
+                    context.getSource().sendSuccess(() -> Component.literal("§e=== Config Information ==="), false);
+                    context.getSource().sendSuccess(() -> Component.literal("§7Current Version: §f" + currentVersion), false);
+                    context.getSource().sendSuccess(() -> Component.literal("§7Expected Version: §f" + targetVersion), false);
+                    
+                    if (currentVersion == targetVersion) {
+                        context.getSource().sendSuccess(() -> Component.literal("§aConfig is up to date!"), false);
+                    } else if (currentVersion < targetVersion) {
+                        context.getSource().sendSuccess(() -> Component.literal("§eMigration needed: v" + currentVersion + " -> v" + targetVersion), false);
+                        context.getSource().sendSuccess(() -> Component.literal("§7Run '/smconfig migrate' to update"), false);
+                    } else {
+                        context.getSource().sendSuccess(() -> Component.literal("§cConfig is from a newer mod version!"), false);
+                    }
+                    
+                    return 1;
+                })
+            )
+            // Config migration
+            .then(Commands.literal("migrate")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    if (!com.servermanagement.config.ConfigMigration.needsMigration()) {
+                        context.getSource().sendSuccess(() -> Component.literal("§aNo migration needed - config is up to date!"), false);
+                        return 1;
+                    }
+                    
+                    context.getSource().sendSuccess(() -> Component.literal("§eStarting config migration..."), false);
+                    boolean success = com.servermanagement.config.ConfigMigration.checkAndMigrate();
+                    
+                    if (success) {
+                        context.getSource().sendSuccess(() -> Component.literal("§aMigration completed successfully!"), true);
+                        context.getSource().sendSuccess(() -> Component.literal("§eA backup of your old config was created."), false);
+                    } else {
+                        context.getSource().sendFailure(Component.literal("§cMigration failed! Check server logs for details."));
+                    }
+                    
+                    return success ? 1 : 0;
+                })
+            )
+            // Config validation
+            .then(Commands.literal("validate")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    context.getSource().sendSuccess(() -> Component.literal("§eValidating configuration..."), false);
+                    boolean valid = com.servermanagement.config.ConfigValidator.validateAndRepair();
+                    if (valid) {
+                        context.getSource().sendSuccess(() -> Component.literal("§aConfiguration is valid!"), true);
+                    } else {
+                        context.getSource().sendFailure(Component.literal("§cConfiguration validation failed! Check server logs for details."));
+                    }
+                    return valid ? 1 : 0;
+                })
+            )
+            // Config reset
+            .then(Commands.literal("reset")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    context.getSource().sendSuccess(() -> Component.literal("§c§lWARNING: This will reset ALL configuration to defaults!"), false);
+                    context.getSource().sendSuccess(() -> Component.literal("§eRun '/smconfig reset confirm' to proceed."), false);
+                    return 1;
+                })
+                .then(Commands.literal("confirm")
+                    .executes(context -> {
+                        context.getSource().sendSuccess(() -> Component.literal("§eResetting configuration to defaults..."), false);
+                        boolean success = com.servermanagement.config.ConfigValidator.forceReset();
+                        if (success) {
+                            context.getSource().sendSuccess(() -> Component.literal("§aConfiguration reset successfully! A backup was created."), true);
+                            context.getSource().sendSuccess(() -> Component.literal("§eRestart the server for changes to take full effect."), false);
+                        } else {
+                            context.getSource().sendFailure(Component.literal("§cFailed to reset configuration! Check server logs."));
+                        }
+                        return success ? 1 : 0;
+                    })
+                )
+            )
+            // Backup cleanup
+            .then(Commands.literal("backup")
+                .requires(source -> source.hasPermission(4))
+                .executes(context -> {
+                    context.getSource().sendSuccess(() -> Component.literal("§eCleaning up old config backups..."), false);
+                    com.servermanagement.config.ConfigValidator.cleanupOldBackups();
+                    context.getSource().sendSuccess(() -> Component.literal("§aBackup cleanup complete!"), true);
+                    return 1;
+                })
+            )
+        );
+        
+        // WorldManager command (/worldmanager or /wm)
+        dispatcher.register(Commands.literal("worldmanager")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    player.openMenu(new com.servermanagement.gui.WorldListMenuProvider());
+                }
+                return 1;
+            })
+        );
+        
+        dispatcher.register(Commands.literal("wm")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    player.openMenu(new com.servermanagement.gui.WorldListMenuProvider());
+                }
+                return 1;
+            })
+        );
+        
+        // PlayerManager command (/playermanager or /pm)
+        dispatcher.register(Commands.literal("playermanager")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    player.openMenu(new com.servermanagement.gui.PlayerManagerMenuProvider());
+                }
+                return 1;
+            })
+        );
+        
+        dispatcher.register(Commands.literal("pm")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    player.openMenu(new com.servermanagement.gui.PlayerManagerMenuProvider());
+                }
+                return 1;
+            })
+        );
+        
+        // Spectate command
+        dispatcher.register(Commands.literal("spectate")
+            .requires(source -> source.hasPermission(2))
+            .then(Commands.argument("player", StringArgumentType.string())
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        String targetName = StringArgumentType.getString(context, "player");
+                        PlayerManagerSingleton.spectatePlayer(player, targetName);
+                        context.getSource().sendSuccess(() -> Component.literal("Now spectating " + targetName), false);
+                    }
+                    return 1;
+                })
+            )
+        );
+        
+        // Stop spectate command
+        dispatcher.register(Commands.literal("stopspectate")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    if (PlayerManagerSingleton.isSpectating(player)) {
+                        PlayerManagerSingleton.stopSpectate(player);
+                        context.getSource().sendSuccess(() -> Component.literal("Stopped spectating"), false);
+                    } else {
+                        context.getSource().sendFailure(Component.literal("You are not spectating anyone"));
+                    }
+                }
+                return 1;
+            })
+        );
+        
+        // View inventory command
+        dispatcher.register(Commands.literal("viewinv")
+            .requires(source -> source.hasPermission(2))
+            .then(Commands.argument("player", StringArgumentType.string())
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        String targetName = StringArgumentType.getString(context, "player");
+                        PlayerManagerSingleton.viewInventory(player, targetName);
+                        context.getSource().sendSuccess(() -> Component.literal("Viewing inventory of " + targetName), false);
+                    }
+                    return 1;
+                })
+            )
+        );
+        
+        // Nether portals command
+        dispatcher.register(Commands.literal("netherportals")
+            .requires(source -> source.hasPermission(2))
+            .then(Commands.argument("enabled", BoolArgumentType.bool())
+                .executes(context -> {
+                    boolean enabled = BoolArgumentType.getBool(context, "enabled");
+                    // Get the dimension the command sender is in
+                    String dimensionId = "minecraft:overworld";
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        dimensionId = player.level().dimension().location().toString();
+                    }
+                    // Check timer lock
+                    if (WorldManager.getInstance().getData().hasActiveTimer(dimensionId)) {
+                        context.getSource().sendFailure(Component.literal("Cannot change portal state while a timer is active for this dimension!"));
+                        return 0;
+                    }
+                    WorldManager.getInstance().toggleNetherPortals(dimensionId, enabled);
+                    // Broadcast to all players
+                    if (context.getSource().getServer() != null) {
+                        WorldManager.broadcastPortalChange(context.getSource().getServer(), dimensionId, "nether", enabled);
+                    }
+                    context.getSource().sendSuccess(() -> Component.literal("Nether portals " + (enabled ? "enabled" : "disabled")), true);
+                    return 1;
+                })
+            )
+        );
+        
+        // End portals command
+        dispatcher.register(Commands.literal("endportals")
+            .requires(source -> source.hasPermission(2))
+            .then(Commands.argument("enabled", BoolArgumentType.bool())
+                .executes(context -> {
+                    boolean enabled = BoolArgumentType.getBool(context, "enabled");
+                    // Get the dimension the command sender is in
+                    String dimensionId = "minecraft:overworld";
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        dimensionId = player.level().dimension().location().toString();
+                    }
+                    // Check timer lock
+                    if (WorldManager.getInstance().getData().hasActiveTimer(dimensionId)) {
+                        context.getSource().sendFailure(Component.literal("Cannot change portal state while a timer is active for this dimension!"));
+                        return 0;
+                    }
+                    WorldManager.getInstance().toggleEndPortals(dimensionId, enabled);
+                    // Broadcast to all players
+                    if (context.getSource().getServer() != null) {
+                        WorldManager.broadcastPortalChange(context.getSource().getServer(), dimensionId, "end", enabled);
+                    }
+                    context.getSource().sendSuccess(() -> Component.literal("End portals " + (enabled ? "enabled" : "disabled")), true);
+                    return 1;
+                })
+            )
+        );
+        
+        // Set lobby command
+        dispatcher.register(Commands.literal("setlobby")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    WorldManager.setLobbySpawn(player.blockPosition(), player.level().dimension().location().toString());
+                    context.getSource().sendSuccess(() -> Component.literal("Lobby spawn set to current location"), true);
+                }
+                return 1;
+            })
+        );
+        
+        // Clear lobby command
+        dispatcher.register(Commands.literal("clearlobby")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                WorldManager.getInstance().getData().clearLobbySpawn();
+                WorldManager.getInstance().save();
+                context.getSource().sendSuccess(() -> Component.literal("Lobby spawn cleared"), true);
+                return 1;
+            })
+        );
+        
+        // Teleport to lobby command
+        dispatcher.register(Commands.literal("teleportlobby")
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    var lobby = WorldManager.getInstance().getData().getLobbySpawn();
+                    if (lobby != null) {
+                        WorldManager.teleportToDimension(player, lobby.dimension);
+                        context.getSource().sendSuccess(() -> Component.literal("Teleported to lobby"), false);
+                    } else {
+                        context.getSource().sendFailure(Component.literal("No lobby spawn set"));
+                    }
+                }
+                return 1;
+            })
+        );
+        
+        // SlimeHead command
+        dispatcher.register(Commands.literal("slimehead")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    com.servermanagement.features.slimehead.SlimeHeadManager.giveSlimeHead(player);
+                }
+                return 1;
+            })
+            .then(Commands.argument("player", StringArgumentType.string())
+                .executes(context -> {
+                    String targetName = StringArgumentType.getString(context, "player");
+                    ServerPlayer targetPlayer = context.getSource().getServer().getPlayerList().getPlayerByName(targetName);
+                    if (targetPlayer != null) {
+                        com.servermanagement.features.slimehead.SlimeHeadManager.giveSlimeHead(targetPlayer);
+                        context.getSource().sendSuccess(() -> Component.literal("Gave slime head to " + targetName), true);
+                    } else {
+                        context.getSource().sendFailure(Component.literal("Player not found: " + targetName));
+                    }
+                    return 1;
+                })
+            )
+        );
+        
+        // Bank command for Economy feature
+        dispatcher.register(Commands.literal("bank")
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    // Check if Economy feature is enabled
+                    if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                        player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                        return 0;
+                    }
+                    
+                    // Sync bank account data before opening
+                    var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                    var account = economyManager.getOrCreateAccount(player.getUUID());
+                    
+                    com.servermanagement.network.ModNetworking.sendToPlayer(
+                        new com.servermanagement.network.packet.SyncBankAccountPacket(
+                            account.getBalance(),
+                            account.getRecentTransactions(10)
+                        ),
+                        player
+                    );
+                    
+                    // Open bank GUI
+                    player.openMenu(new com.servermanagement.gui.economy.BankMenuProvider());
+                }
+                return 1;
+            })
+            .then(Commands.literal("balance")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            return 0;
+                        }
+                        
+                        // Sync bank account data before opening
+                        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                        var account = economyManager.getOrCreateAccount(player.getUUID());
+                        
+                        com.servermanagement.network.ModNetworking.sendToPlayer(
+                            new com.servermanagement.network.packet.SyncBankAccountPacket(
+                                account.getBalance(),
+                                account.getRecentTransactions(10)
+                            ),
+                            player
+                        );
+                        
+                        // Open Bank GUI to show balance
+                        player.openMenu(new com.servermanagement.gui.economy.BankMenuProvider());
+                    }
+                    return 1;
+                })
+            )
+            .then(Commands.literal("pay")
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                        .executes(context -> {
+                            if (context.getSource().getEntity() instanceof ServerPlayer sender) {
+                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                    sender.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                    return 0;
+                                }
+                                
+                                String targetName = StringArgumentType.getString(context, "player");
+                                int amount = IntegerArgumentType.getInteger(context, "amount");
+                                
+                                ServerPlayer target = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayerByName(targetName);
+                                
+                                if (target == null) {
+                                    sender.sendSystemMessage(Component.literal("§cPlayer not found"));
+                                    return 0;
+                                }
+                                
+                                if (target.getUUID().equals(sender.getUUID())) {
+                                    sender.sendSystemMessage(Component.literal("§cYou cannot pay yourself"));
+                                    return 0;
+                                }
+                                
+                                boolean success = com.servermanagement.features.economy.EconomyManager
+                                    .getInstance()
+                                    .transfer(sender.getUUID(), target.getUUID(), amount);
+                                
+                                if (success) {
+                                    // Send payment notifications
+                                    com.servermanagement.features.economy.notifications.NotificationManager
+                                        .sendPaymentNotification(sender, target.getName().getString(), amount);
+                                    com.servermanagement.features.economy.notifications.NotificationManager
+                                        .sendReceivedPaymentNotification(target, sender.getName().getString(), amount);
+                                } else {
+                                    sender.sendSystemMessage(Component.literal("§cInsufficient funds"));
+                                }
+                            }
+                            return 1;
+                        })
+                    )
+                )
+            )
+            .then(Commands.literal("admin")
+                .requires(source -> source.hasPermission(2))
+                .then(Commands.literal("set")
+                    .then(Commands.argument("player", StringArgumentType.word())
+                        .then(Commands.argument("amount", IntegerArgumentType.integer(0))
+                            .executes(context -> {
+                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                    context.getSource().sendFailure(Component.literal("Economy feature is disabled"));
+                                    return 0;
+                                }
+                                
+                                String targetName = StringArgumentType.getString(context, "player");
+                                int amount = IntegerArgumentType.getInteger(context, "amount");
+                                
+                                ServerPlayer target = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayerByName(targetName);
+                                
+                                if (target == null) {
+                                    context.getSource().sendFailure(Component.literal("Player not found"));
+                                    return 0;
+                                }
+                                
+                                com.servermanagement.features.economy.EconomyManager
+                                    .getInstance()
+                                    .setBalance(target.getUUID(), amount);
+                                
+                                context.getSource().sendSuccess(
+                                    () -> Component.literal("Set " + targetName + "'s balance to $" + amount),
+                                    true
+                                );
+                                
+                                target.sendSystemMessage(Component.literal(
+                                    "§eYour balance has been set to §a$" + amount
+                                ));
+                                
+                                return 1;
+                            })
+                        )
+                    )
+                )
+                .then(Commands.literal("give")
+                    .then(Commands.argument("player", StringArgumentType.word())
+                        .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                            .executes(context -> {
+                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                    context.getSource().sendFailure(Component.literal("Economy feature is disabled"));
+                                    return 0;
+                                }
+                                
+                                String targetName = StringArgumentType.getString(context, "player");
+                                int amount = IntegerArgumentType.getInteger(context, "amount");
+                                
+                                ServerPlayer target = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayerByName(targetName);
+                                
+                                if (target == null) {
+                                    context.getSource().sendFailure(Component.literal("Player not found"));
+                                    return 0;
+                                }
+                                
+                                com.servermanagement.features.economy.EconomyManager
+                                    .getInstance()
+                                    .deposit(
+                                        target.getUUID(),
+                                        amount,
+                                        com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
+                                        "Admin gift"
+                                    );
+                                
+                                context.getSource().sendSuccess(
+                                    () -> Component.literal("Gave $" + amount + " to " + targetName),
+                                    true
+                                );
+                                
+                                target.sendSystemMessage(Component.literal(
+                                    "§aYou received §e$" + amount + "§a from an admin"
+                                ));
+                                
+                                return 1;
+                            })
+                        )
+                    )
+                )
+                .then(Commands.literal("take")
+                    .then(Commands.argument("player", StringArgumentType.word())
+                        .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                            .executes(context -> {
+                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                    context.getSource().sendFailure(Component.literal("Economy feature is disabled"));
+                                    return 0;
+                                }
+                                
+                                String targetName = StringArgumentType.getString(context, "player");
+                                int amount = IntegerArgumentType.getInteger(context, "amount");
+                                
+                                ServerPlayer target = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayerByName(targetName);
+                                
+                                if (target == null) {
+                                    context.getSource().sendFailure(Component.literal("Player not found"));
+                                    return 0;
+                                }
+                                
+                                boolean success = com.servermanagement.features.economy.EconomyManager
+                                    .getInstance()
+                                    .withdraw(
+                                        target.getUUID(),
+                                        amount,
+                                        com.servermanagement.features.economy.TransactionType.ADMIN_TAKE,
+                                        "Admin deduction"
+                                    );
+                                
+                                if (success) {
+                                    context.getSource().sendSuccess(
+                                        () -> Component.literal("Took $" + amount + " from " + targetName),
+                                        true
+                                    );
+                                    
+                                    target.sendSystemMessage(Component.literal(
+                                        "§c$" + amount + " was deducted from your account"
+                                    ));
+                                } else {
+                                    context.getSource().sendFailure(Component.literal("Player has insufficient funds"));
+                                }
+                                
+                                return 1;
+                            })
+                        )
+                    )
+                )
+            )
+            .then(Commands.literal("stats")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            return 0;
+                        }
+                        
+                        var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                        double balance = manager.getBalance(player.getUUID());
+                        int achievementCount = manager.getAchievementTracker()
+                            .getRewardedCount(player.getUUID());
+                        
+                        player.sendSystemMessage(Component.literal("§6=== Bank Statistics ==="));
+                        player.sendSystemMessage(Component.literal(
+                            "§aBalance: §e$" + String.format("%.2f", balance)
+                        ));
+                        player.sendSystemMessage(Component.literal(
+                            "§aRewarded Achievements: §e" + achievementCount
+                        ));
+                    }
+                    return 1;
+                })
+            )
+            .then(Commands.literal("dailies")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            return 0;
+                        }
+                        
+                        // Sync daily tasks data before opening
+                        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                        var dailyTasksManager = economyManager.getDailyTasksManager();
+                        var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+                        var templateManager = economyManager.getTemplateManager();
+                        
+                        // Use admin-configurable free reward amount from template manager
+                        int freeRewardAmount = templateManager != null
+                            ? (int) templateManager.getFreeRewardAmount()
+                            : playerTasks.getFreeRewardAmount();
+                        
+                        // Calculate reset time
+                        long resetTime = System.currentTimeMillis() + playerTasks.getTimeUntilTaskRefresh();
+                        
+                        com.servermanagement.network.ModNetworking.sendToPlayer(
+                            new com.servermanagement.network.packet.SyncDailyTasksPacket(
+                                playerTasks.getTasks(),
+                                resetTime,
+                                playerTasks.isFreeRewardAvailable(),
+                                freeRewardAmount,
+                                playerTasks.getTimeUntilFreeReward()
+                            ),
+                            player
+                        );
+                        
+                        // Open Daily Tasks GUI
+                        player.openMenu(new com.servermanagement.gui.economy.DailyTasksMenuProvider());
+                    }
+                    return 1;
+                })
+                .then(Commands.literal("claim")
+                    .then(Commands.argument("taskNumber", IntegerArgumentType.integer(1, 3))
+                        .executes(context -> {
+                            if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                    player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                    return 0;
+                                }
+                                
+                                int taskNum = IntegerArgumentType.getInteger(context, "taskNumber");
+                                int taskIndex = taskNum - 1;
+                                
+                                var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                                int reward = manager.getDailyTasksManager()
+                                    .claimTaskReward(player.getUUID(), taskIndex);
+                                
+                                if (reward > 0) {
+                                    manager.deposit(
+                                        player.getUUID(),
+                                        reward,
+                                        com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
+                                        "Daily Task Reward"
+                                    );
+                                    
+                                    // Send reward notification
+                                    com.servermanagement.features.economy.notifications.NotificationManager
+                                        .sendRewardClaimedNotification(player, reward);
+                                } else {
+                                    player.sendSystemMessage(Component.literal(
+                                        "§cTask not completed or already claimed"
+                                    ));
+                                }
+                            }
+                            return 1;
+                        })
+                    )
+                )
+                .then(Commands.literal("free")
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                            if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                return 0;
+                            }
+                            
+                            var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                            int reward = manager.getDailyTasksManager()
+                                .claimFreeReward(player.getUUID());
+                            
+                            if (reward > 0) {
+                                manager.deposit(
+                                    player.getUUID(),
+                                    reward,
+                                    com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
+                                    "Free Daily Reward"
+                                );
+                                
+                                // Send reward notification
+                                com.servermanagement.features.economy.notifications.NotificationManager
+                                    .sendRewardClaimedNotification(player, reward);
+                            } else {
+                                var playerTasks = manager.getDailyTasksManager()
+                                    .getOrCreatePlayerTasks(player.getUUID());
+                                long timeRemaining = playerTasks.getTimeUntilFreeReward();
+                                player.sendSystemMessage(Component.literal(
+                                    "§cFree reward not available. Next reward in: " +
+                                    com.servermanagement.features.economy.PlayerDailyTasks.formatTimeRemaining(timeRemaining)
+                                ));
+                            }
+                        }
+                        return 1;
+                    })
+                )
+            )
+            .then(Commands.literal("request")
+                .then(Commands.argument("player", StringArgumentType.word())
+                    .then(Commands.argument("amount", IntegerArgumentType.integer(1))
+                        .executes(context -> {
+                            if (context.getSource().getEntity() instanceof ServerPlayer requester) {
+                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                    requester.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                    return 0;
+                                }
+                                
+                                String targetName = StringArgumentType.getString(context, "player");
+                                int amount = IntegerArgumentType.getInteger(context, "amount");
+                                
+                                ServerPlayer target = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayerByName(targetName);
+                                
+                                if (target == null) {
+                                    requester.sendSystemMessage(Component.literal("§cPlayer not found or not online"));
+                                    return 0;
+                                }
+                                
+                                if (target.getUUID().equals(requester.getUUID())) {
+                                    requester.sendSystemMessage(Component.literal("§cYou cannot request money from yourself"));
+                                    return 0;
+                                }
+                                
+                                var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                                var request = manager.getRequestManager()
+                                    .createRequest(requester.getUUID(), target.getUUID(), amount, "Money request");
+                                
+                                if (request != null) {
+                                    manager.save();
+                                    
+                                    requester.sendSystemMessage(Component.literal(
+                                        "§aRequest sent to §e" + targetName + "§a for §e$" + amount
+                                    ));
+                                    
+                                    target.sendSystemMessage(Component.literal(
+                                        "§e" + requester.getName().getString() + "§a is requesting §e$" + amount
+                                    ));
+                                    target.sendSystemMessage(Component.literal(
+                                        "§7Use §e/bank requests§7 to view and respond"
+                                    ));
+                                } else {
+                                    requester.sendSystemMessage(Component.literal(
+                                        "§cYou have too many pending requests. Cancel some first."
+                                    ));
+                                }
+                            }
+                            return 1;
+                        })
+                    )
+                )
+            )
+            .then(Commands.literal("requests")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            return 0;
+                        }
+                        
+                        var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                        var incoming = manager.getRequestManager()
+                            .getPendingIncomingRequests(player.getUUID());
+                        var outgoing = manager.getRequestManager()
+                            .getPendingRequestsByRequester(player.getUUID());
+                        
+                        player.sendSystemMessage(Component.literal("§6=== Money Requests ==="));
+                        
+                        if (!incoming.isEmpty()) {
+                            player.sendSystemMessage(Component.literal("§eIncoming Requests:"));
+                            for (var req : incoming) {
+                                ServerPlayer requesterPlayer = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayer(req.getRequesterUUID());
+                                String requesterName = requesterPlayer != null ? 
+                                    requesterPlayer.getName().getString() : "Unknown";
+                                
+                                player.sendSystemMessage(Component.literal(
+                                    "§a• §f" + requesterName + " §7requests §e$" + String.format("%.0f", req.getAmount()) +
+                                    " §7(" + req.getFormattedAge() + ")"
+                                ));
+                                player.sendSystemMessage(Component.literal(
+                                    "  §7ID: §e" + req.getRequestId().toString().substring(0, 8) + 
+                                    " §7- Use §e/bank accept <id>§7 or §e/bank deny <id>"
+                                ));
+                            }
+                        }
+                        
+                        if (!outgoing.isEmpty()) {
+                            player.sendSystemMessage(Component.literal("§eOutgoing Requests:"));
+                            for (var req : outgoing) {
+                                ServerPlayer targetPlayer = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayer(req.getTargetUUID());
+                                String targetName = targetPlayer != null ? 
+                                    targetPlayer.getName().getString() : "Unknown";
+                                
+                                player.sendSystemMessage(Component.literal(
+                                    "§a• §7To §f" + targetName + "§7: §e$" + String.format("%.0f", req.getAmount()) +
+                                    " §7(" + req.getFormattedAge() + ")"
+                                ));
+                            }
+                        }
+                        
+                        if (incoming.isEmpty() && outgoing.isEmpty()) {
+                            player.sendSystemMessage(Component.literal("§7No pending requests"));
+                        }
+                    }
+                    return 1;
+                })
+            )
+            .then(Commands.literal("accept")
+                .then(Commands.argument("requestId", StringArgumentType.word())
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                            if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                return 0;
+                            }
+                            
+                            String idStr = StringArgumentType.getString(context, "requestId");
+                            var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                            
+                            // Find request by partial ID
+                            var request = manager.getRequestManager()
+                                .getPendingIncomingRequests(player.getUUID())
+                                .stream()
+                                .filter(r -> r.getRequestId().toString().startsWith(idStr))
+                                .findFirst()
+                                .orElse(null);
+                            
+                            if (request == null) {
+                                player.sendSystemMessage(Component.literal("§cRequest not found"));
+                                return 0;
+                            }
+                            
+                            // Transfer the money
+                            boolean success = manager.transfer(
+                                player.getUUID(),
+                                request.getRequesterUUID(),
+                                request.getAmount()
+                            );
+                            
+                            if (success) {
+                                manager.getRequestManager().acceptRequest(request.getRequestId(), player.getUUID());
+                                manager.save();
+                                
+                                player.sendSystemMessage(Component.literal(
+                                    "§aAccepted request and sent §e$" + String.format("%.0f", request.getAmount())
+                                ));
+                                
+                                // Notify requester if online
+                                ServerPlayer requester = context.getSource().getServer()
+                                    .getPlayerList()
+                                    .getPlayer(request.getRequesterUUID());
+                                if (requester != null) {
+                                    requester.sendSystemMessage(Component.literal(
+                                        "§a" + player.getName().getString() + " accepted your request and sent §e$" + 
+                                        String.format("%.0f", request.getAmount())
+                                    ));
+                                }
+                            } else {
+                                player.sendSystemMessage(Component.literal("§cInsufficient funds"));
+                            }
+                        }
+                        return 1;
+                    })
+                )
+            )
+            .then(Commands.literal("deny")
+                .then(Commands.argument("requestId", StringArgumentType.word())
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                            if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                return 0;
+                            }
+                            
+                            String idStr = StringArgumentType.getString(context, "requestId");
+                            var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                            
+                            // Find request by partial ID
+                            var request = manager.getRequestManager()
+                                .getPendingIncomingRequests(player.getUUID())
+                                .stream()
+                                .filter(r -> r.getRequestId().toString().startsWith(idStr))
+                                .findFirst()
+                                .orElse(null);
+                            
+                            if (request == null) {
+                                player.sendSystemMessage(Component.literal("§cRequest not found"));
+                                return 0;
+                            }
+                            
+                            manager.getRequestManager().denyRequest(request.getRequestId(), player.getUUID());
+                            manager.save();
+                            
+                            player.sendSystemMessage(Component.literal("§cDenied money request"));
+                            
+                            // Notify requester if online
+                            ServerPlayer requester = context.getSource().getServer()
+                                .getPlayerList()
+                                .getPlayer(request.getRequesterUUID());
+                            if (requester != null) {
+                                requester.sendSystemMessage(Component.literal(
+                                    "§c" + player.getName().getString() + " denied your request for §e$" + 
+                                    String.format("%.0f", request.getAmount())
+                                ));
+                            }
+                        }
+                        return 1;
+                    })
+                )
+            )
+        );
+        
+        // Performance metrics command
+        dispatcher.register(Commands.literal("smmetrics")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                String report = com.servermanagement.util.PerformanceMetrics.getInstance().getReport();
+                context.getSource().sendSuccess(() -> Component.literal(report), false);
+                return 1;
+            })
+            .then(Commands.literal("reset")
+                .executes(context -> {
+                    com.servermanagement.util.PerformanceMetrics.getInstance().reset();
+                    context.getSource().sendSuccess(() -> Component.literal("§aPerformance metrics reset"), false);
+                    return 1;
+                })
+            )
+        );
+        
+        // Register /help integration with SM command descriptions
+        HelpCommandIntegration.register(dispatcher);
+        
+        ServerManagementMod.LOGGER.info("Registered all mod commands");
+    }
+    
+    /**
+     * Syncs feature states from server to client before opening GUI.
+     */
+    private static void syncFeatureStates(ServerPlayer player) {
+        var featureStates = com.servermanagement.features.FeatureManager.getFeatureStates();
+        com.servermanagement.network.ModNetworking.sendToPlayer(
+            new com.servermanagement.network.packet.SyncFeatureStatesPacket(featureStates),
+            player
+        );
+    }
+}

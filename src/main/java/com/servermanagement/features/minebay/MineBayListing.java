@@ -1,0 +1,220 @@
+package com.servermanagement.features.minebay;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.*;
+
+/**
+ * Represents a listing on MineBay - an item being sold with a price
+ */
+public class MineBayListing {
+    private String listingId;
+    private UUID sellerId;
+    private String sellerName;
+    private ItemStack itemForSale;
+    private double moneyPrice;
+    private List<PriceItemEntry> priceItems; // Up to 3 item requirements (max 3)
+    private OfferType offerType;
+    private ListingStatus status;
+    private long createdTimestamp;
+    private List<MineBayOffer> counteroffers;
+    
+    public static final int MAX_PRICE_ITEMS = 3;
+    
+    public enum OfferType {
+        FIXED,          // First come first serve, no counteroffers
+        NEGOTIABLE      // Accepts counteroffers
+    }
+    
+    public enum ListingStatus {
+        ACTIVE,
+        COMPLETED,
+        CANCELLED
+    }
+    
+    public MineBayListing() {
+        this.listingId = UUID.randomUUID().toString();
+        this.priceItems = new ArrayList<>();
+        this.counteroffers = new ArrayList<>();
+        this.status = ListingStatus.ACTIVE;
+        this.createdTimestamp = System.currentTimeMillis();
+    }
+    
+    public MineBayListing(UUID sellerId, String sellerName, ItemStack itemForSale, 
+                          double moneyPrice, List<PriceItemEntry> priceItems, OfferType offerType) {
+        this();
+        this.sellerId = sellerId;
+        this.sellerName = sellerName;
+        this.itemForSale = itemForSale.copy();
+        this.moneyPrice = moneyPrice;
+        this.priceItems = new ArrayList<>(priceItems);
+        this.offerType = offerType;
+    }
+    
+    // Serialize to NBT for saving
+    public CompoundTag toNBT() {
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("DataVersion", com.servermanagement.util.DataVersion.CURRENT_VERSION);
+        tag.putString("ListingId", listingId);
+        tag.putUUID("SellerId", sellerId);
+        tag.putString("SellerName", sellerName);
+        tag.put("ItemForSale", itemForSale.save(new CompoundTag()));
+        tag.putDouble("MoneyPrice", moneyPrice);
+        tag.putString("OfferType", offerType.name());
+        tag.putString("Status", status.name());
+        tag.putLong("Created", createdTimestamp);
+        
+        // Save price items
+        CompoundTag priceItemsTag = new CompoundTag();
+        for (int i = 0; i < priceItems.size() && i < MAX_PRICE_ITEMS; i++) {
+            priceItemsTag.put("Item" + i, priceItems.get(i).toNBT());
+        }
+        priceItemsTag.putInt("Count", Math.min(priceItems.size(), MAX_PRICE_ITEMS));
+        tag.put("PriceItems", priceItemsTag);
+        
+        // Save counteroffers
+        CompoundTag counteroffersTag = new CompoundTag();
+        for (int i = 0; i < counteroffers.size(); i++) {
+            counteroffersTag.put("Offer" + i, counteroffers.get(i).toNBT());
+        }
+        counteroffersTag.putInt("Count", counteroffers.size());
+        tag.put("Counteroffers", counteroffersTag);
+        
+        return tag;
+    }
+    
+    // Deserialize from NBT with version checking
+    public static MineBayListing fromNBT(CompoundTag tag) {
+        // Check data version for future migrations
+        int dataVersion = tag.contains("DataVersion") ? tag.getInt("DataVersion") : 0;
+        if (dataVersion > com.servermanagement.util.DataVersion.CURRENT_VERSION) {
+            com.servermanagement.ServerManagementMod.LOGGER.warn(
+                "MineBay listing data version {} is newer than supported version {}",
+                dataVersion, com.servermanagement.util.DataVersion.CURRENT_VERSION);
+        }
+        
+        MineBayListing listing = new MineBayListing();
+        listing.listingId = tag.getString("ListingId");
+        listing.sellerId = tag.getUUID("SellerId");
+        listing.sellerName = tag.getString("SellerName");
+        listing.itemForSale = ItemStack.of(tag.getCompound("ItemForSale"));
+        listing.moneyPrice = tag.getDouble("MoneyPrice");
+        listing.offerType = OfferType.valueOf(tag.getString("OfferType"));
+        listing.status = ListingStatus.valueOf(tag.getString("Status"));
+        listing.createdTimestamp = tag.getLong("Created");
+        
+        // Load price items
+        CompoundTag priceItemsTag = tag.getCompound("PriceItems");
+        int itemCount = priceItemsTag.getInt("Count");
+        listing.priceItems = new ArrayList<>();
+        for (int i = 0; i < itemCount && i < MAX_PRICE_ITEMS; i++) {
+            listing.priceItems.add(PriceItemEntry.fromNBT(priceItemsTag.getCompound("Item" + i)));
+        }
+        
+        // Load counteroffers
+        CompoundTag counteroffersTag = tag.getCompound("Counteroffers");
+        int offerCount = counteroffersTag.getInt("Count");
+        listing.counteroffers = new ArrayList<>();
+        for (int i = 0; i < offerCount; i++) {
+            listing.counteroffers.add(MineBayOffer.fromNBT(counteroffersTag.getCompound("Offer" + i)));
+        }
+        
+        return listing;
+    }
+    
+    public void addCounteroffer(MineBayOffer offer) {
+        this.counteroffers.add(offer);
+    }
+    
+    // Getters
+    public String getListingId() {
+        return listingId;
+    }
+    
+    public UUID getSellerId() {
+        return sellerId;
+    }
+    
+    public String getSellerName() {
+        return sellerName;
+    }
+    
+    public ItemStack getItemForSale() {
+        return itemForSale.copy();
+    }
+    
+    public double getMoneyPrice() {
+        return moneyPrice;
+    }
+    
+    public List<PriceItemEntry> getPriceItems() {
+        return new ArrayList<>(priceItems);
+    }
+    
+    public void addPriceItem(PriceItemEntry entry) {
+        if (priceItems.size() < MAX_PRICE_ITEMS && !entry.isEmpty()) {
+            priceItems.add(entry);
+        }
+    }
+    
+    public void removePriceItem(int index) {
+        if (index >= 0 && index < priceItems.size()) {
+            priceItems.remove(index);
+        }
+    }
+    
+    public void setPriceItem(int index, PriceItemEntry entry) {
+        if (index >= 0 && index < MAX_PRICE_ITEMS) {
+            while (priceItems.size() <= index) {
+                priceItems.add(new PriceItemEntry());
+            }
+            priceItems.set(index, entry);
+        }
+    }
+    
+    public PriceItemEntry getPriceItem(int index) {
+        if (index >= 0 && index < priceItems.size()) {
+            return priceItems.get(index);
+        }
+        return new PriceItemEntry();
+    }
+    
+    public OfferType getOfferType() {
+        return offerType;
+    }
+    
+    public ListingStatus getStatus() {
+        return status;
+    }
+    
+    public long getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+    
+    public List<MineBayOffer> getCounteroffers() {
+        return new ArrayList<>(counteroffers);
+    }
+    
+    // Setters
+    public void setStatus(ListingStatus status) {
+        this.status = status;
+    }
+    
+    public void setListingId(String listingId) {
+        this.listingId = listingId;
+    }
+    
+    public void setCreatedTime(long timestamp) {
+        this.createdTimestamp = timestamp;
+    }
+    
+    // Getters for renamed methods
+    public ItemStack getItemOffered() {
+        return getItemForSale();
+    }
+    
+    public long getCreatedTime() {
+        return getCreatedTimestamp();
+    }
+}
