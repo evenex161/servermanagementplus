@@ -774,7 +774,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         }
         
         // Render background first
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         
         // Save matrix state and apply shake
         guiGraphics.pose().pushPose();

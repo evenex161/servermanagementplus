@@ -1,12 +1,12 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
 public interface IPacket {
     void encode(FriendlyByteBuf buf);
     
-    void handle(Supplier<NetworkEvent.Context> ctx);
+    void handle(CustomPayloadEvent.Context ctx);
 }

@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import com.servermanagement.client.ClientPacketHandler;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -30,10 +30,10 @@ public class SyncGlobalSettingsPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             ClientPacketHandler.handleGlobalSettings(chatIsolationEnabled, tabIsolationEnabled);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

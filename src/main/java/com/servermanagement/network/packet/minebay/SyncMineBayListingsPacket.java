@@ -6,7 +6,7 @@ import com.servermanagement.network.packet.IPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class SyncMineBayListingsPacket implements IPacket {
             String listingId = buf.readUtf(36);
             UUID sellerId = buf.readUUID();
             String sellerName = buf.readUtf(16);
-            ItemStack itemOffered = buf.readItem();
+            ItemStack itemOffered = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
             double moneyPrice = buf.readDouble();
             long createdTime = buf.readLong();
             MineBayListing.OfferType offerType = buf.readEnum(MineBayListing.OfferType.class);
@@ -41,7 +41,7 @@ public class SyncMineBayListingsPacket implements IPacket {
             int priceItemCount = buf.readInt();
             List<PriceItemEntry> priceItems = new ArrayList<>();
             for (int j = 0; j < priceItemCount; j++) {
-                ItemStack priceItem = buf.readItem();
+                ItemStack priceItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
                 int amount = buf.readInt();
                 boolean useStacks = buf.readBoolean();
                 priceItems.add(new PriceItemEntry(priceItem, amount, useStacks));
@@ -64,7 +64,7 @@ public class SyncMineBayListingsPacket implements IPacket {
             buf.writeUtf(listing.getListingId(), 36);
             buf.writeUUID(listing.getSellerId());
             buf.writeUtf(listing.getSellerName(), 16);
-            buf.writeItem(listing.getItemOffered());
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, listing.getItemOffered());
             buf.writeDouble(listing.getMoneyPrice());
             buf.writeLong(listing.getCreatedTime());
             buf.writeEnum(listing.getOfferType());
@@ -72,7 +72,7 @@ public class SyncMineBayListingsPacket implements IPacket {
             // Write price items
             buf.writeInt(listing.getPriceItems().size());
             for (PriceItemEntry priceItem : listing.getPriceItems()) {
-                buf.writeItem(priceItem.getItemStack());
+                ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, priceItem.getItemStack());
                 buf.writeInt(priceItem.getAmount());
                 buf.writeBoolean(priceItem.isUseStacks());
             }
@@ -80,8 +80,8 @@ public class SyncMineBayListingsPacket implements IPacket {
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Update client-side cache
             com.servermanagement.client.ClientMineBayData.updateListings(listings);
             
@@ -91,6 +91,6 @@ public class SyncMineBayListingsPacket implements IPacket {
                 screen.updateListings(listings);
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

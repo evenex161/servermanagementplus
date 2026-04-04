@@ -7,7 +7,7 @@ import com.servermanagement.features.gambling.games.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -53,9 +53,9 @@ public class PlaceGamblingBetPacket implements IPacket {
         buf.writeUtf(this.gameOption, 64);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer player = ctx.getSender();
             if (player == null) {
                 return; // No player - reject packet
             }
@@ -177,7 +177,7 @@ public class PlaceGamblingBetPacket implements IPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
     
     private static GamblingGame createGame(GameType type, String option) {

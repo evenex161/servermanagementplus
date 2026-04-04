@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import com.servermanagement.client.ClientGamblingData;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -54,8 +54,8 @@ public class SyncGamblingStatsPacket implements IPacket {
         buf.writeDouble(this.biggestLoss);
     }
 
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Update client-side gambling stats
             ClientGamblingData.updateStats(
                 totalBets, totalWins, totalLosses,
@@ -63,6 +63,6 @@ public class SyncGamblingStatsPacket implements IPacket {
                 biggestWin, biggestLoss
             );
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

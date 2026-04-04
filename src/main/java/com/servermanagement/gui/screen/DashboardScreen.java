@@ -117,7 +117,7 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
     
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
         // Title - render BEFORE super.render to prevent overlap

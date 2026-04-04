@@ -386,7 +386,7 @@ public class EconomyManager {
      */
     private void loadBankInventories() {
         try {
-            java.io.File bankInvDir = new java.io.File(server.getServerDirectory(), "servermanagement/bankinventories");
+            java.io.File bankInvDir = server.getServerDirectory().resolve("servermanagement/bankinventories").toFile();
             if (!bankInvDir.exists()) {
                 return;
             }
@@ -395,7 +395,7 @@ public class EconomyManager {
             if (files != null) {
                 for (java.io.File file : files) {
                     try {
-                        net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.NbtIo.readCompressed(file);
+                        net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
                         BankInventory inventory = BankInventory.fromNBT(tag);
                         bankInventories.put(inventory.playerId, inventory);
                     } catch (Exception e) {
@@ -414,7 +414,7 @@ public class EconomyManager {
      */
     public void saveBankInventories() {
         try {
-            java.io.File bankInvDir = new java.io.File(server.getServerDirectory(), "servermanagement/bankinventories");
+            java.io.File bankInvDir = server.getServerDirectory().resolve("servermanagement/bankinventories").toFile();
             if (!bankInvDir.exists()) {
                 bankInvDir.mkdirs();
             }
@@ -422,7 +422,7 @@ public class EconomyManager {
             for (BankInventory inventory : bankInventories.values()) {
                 if (!inventory.isEmpty()) {
                     java.io.File file = new java.io.File(bankInvDir, inventory.playerId.toString() + ".dat");
-                    net.minecraft.nbt.NbtIo.writeCompressed(inventory.toNBT(), file);
+                    net.minecraft.nbt.NbtIo.writeCompressed(inventory.toNBT(), file.toPath());
                 }
             }
         } catch (Exception e) {

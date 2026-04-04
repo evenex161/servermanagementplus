@@ -1,7 +1,7 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,12 +41,12 @@ public class SyncWorldListPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Handle on client - update GUI
             com.servermanagement.client.ClientPacketHandler.handleWorldList(worlds);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 
     public List<WorldInfo> getWorlds() {

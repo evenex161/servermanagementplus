@@ -33,7 +33,7 @@ public class MineBayManager {
     }
     
     public void initialize(MinecraftServer server) {
-        this.dataDirectory = new File(server.getServerDirectory(), "servermanagement/minebay");
+        this.dataDirectory = server.getServerDirectory().resolve("servermanagement/minebay").toFile();
         if (!dataDirectory.exists()) {
             dataDirectory.mkdirs();
         }
@@ -244,14 +244,14 @@ public class MineBayManager {
             for (Map.Entry<UUID, ItemStack> entry : heldItems.entrySet()) {
                 CompoundTag entryTag = new CompoundTag();
                 entryTag.putUUID("PlayerId", entry.getKey());
-                entryTag.put("Item", entry.getValue().save(new CompoundTag()));
+                entryTag.put("Item", entry.getValue().saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
                 heldItemsTag.put("Held" + index, entryTag);
                 index++;
             }
             heldItemsTag.putInt("Count", index);
             rootTag.put("HeldItems", heldItemsTag);
             
-            NbtIo.writeCompressed(rootTag, listingsFile);
+            NbtIo.writeCompressed(rootTag, listingsFile.toPath());
             ServerManagementMod.LOGGER.debug("Saved {} MineBay listings", activeListings.size());
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to save MineBay data", e);
@@ -278,7 +278,7 @@ public class MineBayManager {
                 return;
             }
             
-            CompoundTag rootTag = NbtIo.readCompressed(listingsFile);
+            CompoundTag rootTag = NbtIo.readCompressed(listingsFile.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
             
             // Load active listings
             CompoundTag listingsTag = rootTag.getCompound("Listings");
@@ -296,7 +296,7 @@ public class MineBayManager {
             for (int i = 0; i < heldCount; i++) {
                 CompoundTag entryTag = heldItemsTag.getCompound("Held" + i);
                 UUID playerId = entryTag.getUUID("PlayerId");
-                ItemStack item = ItemStack.of(entryTag.getCompound("Item"));
+                ItemStack item = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), entryTag.getCompound("Item"));
                 heldItems.put(playerId, item);
             }
             

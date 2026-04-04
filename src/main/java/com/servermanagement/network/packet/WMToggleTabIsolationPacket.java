@@ -1,7 +1,7 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -26,9 +26,9 @@ public class WMToggleTabIsolationPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            var player = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            var player = ctx.getSender();
             if (player != null && player.hasPermissions(2)) {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "tab_isolation";
@@ -37,6 +37,6 @@ public class WMToggleTabIsolationPacket implements IPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

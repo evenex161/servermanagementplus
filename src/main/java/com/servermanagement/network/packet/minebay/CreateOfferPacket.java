@@ -9,7 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ public class CreateOfferPacket implements IPacket {
         int itemCount = buf.readInt();
         this.itemOffers = new ArrayList<>();
         for (int i = 0; i < itemCount; i++) {
-            this.itemOffers.add(buf.readItem());
+            this.itemOffers.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
         }
     }
     
@@ -45,14 +45,14 @@ public class CreateOfferPacket implements IPacket {
         buf.writeDouble(moneyOffer);
         buf.writeInt(itemOffers.size());
         for (ItemStack stack : itemOffers) {
-            buf.writeItem(stack);
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, stack);
         }
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer buyer = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer buyer = ctx.getSender();
             if (buyer == null) return;
             
             MineBayManager mineBayManager = MineBayManager.getInstance();
@@ -98,7 +98,7 @@ public class CreateOfferPacket implements IPacket {
                 
                 int found = 0;
                 for (ItemStack invStack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(invStack, offeredStack)) {
+                    if (ItemStack.isSameItemSameComponents(invStack, offeredStack)) {
                         found += invStack.getCount();
                     }
                 }
@@ -141,6 +141,6 @@ public class CreateOfferPacket implements IPacket {
                 seller.sendSystemMessage(Component.literal("§7Use /minebay to view and accept/reject offers"));
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

@@ -96,11 +96,11 @@ public class ConsoleOutput extends AbstractWidget {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollDelta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (this.isHoveredOrFocused()) {
-            if (scrollDelta > 0) {
+            if (scrollY > 0) {
                 scrollUp();
-            } else if (scrollDelta < 0) {
+            } else if (scrollY < 0) {
                 scrollDown();
             }
             return true;

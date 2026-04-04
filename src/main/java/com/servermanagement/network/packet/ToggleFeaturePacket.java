@@ -1,7 +1,7 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -30,10 +30,10 @@ public class ToggleFeaturePacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Handle on server thread
-            var player = ctx.get().getSender();
+            var player = ctx.getSender();
             if (player != null && player.hasPermissions(2)) {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "toggle_" + featureId;
@@ -43,7 +43,7 @@ public class ToggleFeaturePacket implements IPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 
     public String getFeatureId() {

@@ -10,7 +10,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ public class SyncEconomyTemplatesPacket implements IPacket {
                 buf.readInt(),
                 buf.readInt(),
                 buf.readBoolean(),
-                buf.readItem()
+                ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf)
             ));
         }
         this.freeRewardAmount = buf.readInt();
@@ -59,18 +59,18 @@ public class SyncEconomyTemplatesPacket implements IPacket {
             buf.writeInt(t.goal);
             buf.writeInt(t.rewardAmount);
             buf.writeBoolean(t.enabled);
-            buf.writeItem(t.rewardItem);
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, t.rewardItem);
         }
         buf.writeInt(freeRewardAmount);
         buf.writeInt(freeRewardCooldownHours);
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 
     /**

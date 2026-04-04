@@ -4,9 +4,9 @@ import com.servermanagement.ServerManagementMod;
 import com.servermanagement.network.packet.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.ChannelBuilder;
 import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.network.SimpleChannel;
 
 public class ModNetworking {
     private static final String PROTOCOL_VERSION = "1";
@@ -18,301 +18,355 @@ public class ModNetworking {
     }
 
     public static void register() {
-        INSTANCE = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(ServerManagementMod.MOD_ID, "main"),
-            () -> PROTOCOL_VERSION,
-            // Accept any client version (enables OTA updates)
-            clientVersion -> true,
-            // Accept any server version (enables OTA updates)
-            serverVersion -> true
-        );
+        INSTANCE = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "main"))
+            .networkProtocolVersion(1)
+            .clientAcceptedVersions((status, version) -> true)
+            .serverAcceptedVersions((status, version) -> true)
+            .simpleChannel();
 
         ServerManagementMod.LOGGER.info("Registering network packets");
         
         // Config packets (bidirectional)
-        INSTANCE.registerMessage(id(), ToggleFeaturePacket.class,
-            ToggleFeaturePacket::encode,
-            ToggleFeaturePacket::new,
-            ToggleFeaturePacket::handle);
+        INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
+            .encoder(ToggleFeaturePacket::encode)
+            .decoder(ToggleFeaturePacket::new)
+            .consumer(ToggleFeaturePacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), ToggleAutoShowPacket.class,
-            ToggleAutoShowPacket::encode,
-            ToggleAutoShowPacket::new,
-            ToggleAutoShowPacket::handle);
+        INSTANCE.messageBuilder(ToggleAutoShowPacket.class, id())
+            .encoder(ToggleAutoShowPacket::encode)
+            .decoder(ToggleAutoShowPacket::new)
+            .consumer(ToggleAutoShowPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), RequestAutoShowPacket.class,
-            RequestAutoShowPacket::encode,
-            RequestAutoShowPacket::new,
-            RequestAutoShowPacket::handle);
+        INSTANCE.messageBuilder(RequestAutoShowPacket.class, id())
+            .encoder(RequestAutoShowPacket::encode)
+            .decoder(RequestAutoShowPacket::new)
+            .consumer(RequestAutoShowPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), SyncAutoShowPacket.class,
-            SyncAutoShowPacket::encode,
-            SyncAutoShowPacket::new,
-            SyncAutoShowPacket::handle);
+        INSTANCE.messageBuilder(SyncAutoShowPacket.class, id())
+            .encoder(SyncAutoShowPacket::encode)
+            .decoder(SyncAutoShowPacket::new)
+            .consumer(SyncAutoShowPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), SyncFeatureStatesPacket.class,
-            SyncFeatureStatesPacket::encode,
-            SyncFeatureStatesPacket::new,
-            SyncFeatureStatesPacket::handle);
+        INSTANCE.messageBuilder(SyncFeatureStatesPacket.class, id())
+            .encoder(SyncFeatureStatesPacket::encode)
+            .decoder(SyncFeatureStatesPacket::new)
+            .consumer(SyncFeatureStatesPacket::handle)
+            .add();
         
         // WorldManager packets (server-bound)
-        INSTANCE.registerMessage(id(), WMTogglePortalsPacket.class,
-            WMTogglePortalsPacket::encode,
-            WMTogglePortalsPacket::new,
-            WMTogglePortalsPacket::handle);
+        INSTANCE.messageBuilder(WMTogglePortalsPacket.class, id())
+            .encoder(WMTogglePortalsPacket::encode)
+            .decoder(WMTogglePortalsPacket::new)
+            .consumer(WMTogglePortalsPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), WMSetTimerPacket.class,
-            WMSetTimerPacket::encode,
-            WMSetTimerPacket::new,
-            WMSetTimerPacket::handle);
+        INSTANCE.messageBuilder(WMSetTimerPacket.class, id())
+            .encoder(WMSetTimerPacket::encode)
+            .decoder(WMSetTimerPacket::new)
+            .consumer(WMSetTimerPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), WMSetLobbyPacket.class,
-            WMSetLobbyPacket::encode,
-            WMSetLobbyPacket::new,
-            WMSetLobbyPacket::handle);
+        INSTANCE.messageBuilder(WMSetLobbyPacket.class, id())
+            .encoder(WMSetLobbyPacket::encode)
+            .decoder(WMSetLobbyPacket::new)
+            .consumer(WMSetLobbyPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), WMToggleChatIsolationPacket.class,
-            WMToggleChatIsolationPacket::encode,
-            WMToggleChatIsolationPacket::new,
-            WMToggleChatIsolationPacket::handle);
+        INSTANCE.messageBuilder(WMToggleChatIsolationPacket.class, id())
+            .encoder(WMToggleChatIsolationPacket::encode)
+            .decoder(WMToggleChatIsolationPacket::new)
+            .consumer(WMToggleChatIsolationPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), WMToggleTabIsolationPacket.class,
-            WMToggleTabIsolationPacket::encode,
-            WMToggleTabIsolationPacket::new,
-            WMToggleTabIsolationPacket::handle);
+        INSTANCE.messageBuilder(WMToggleTabIsolationPacket.class, id())
+            .encoder(WMToggleTabIsolationPacket::encode)
+            .decoder(WMToggleTabIsolationPacket::new)
+            .consumer(WMToggleTabIsolationPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), WMTeleportToDimensionPacket.class,
-            WMTeleportToDimensionPacket::encode,
-            WMTeleportToDimensionPacket::new,
-            WMTeleportToDimensionPacket::handle);
+        INSTANCE.messageBuilder(WMTeleportToDimensionPacket.class, id())
+            .encoder(WMTeleportToDimensionPacket::encode)
+            .decoder(WMTeleportToDimensionPacket::new)
+            .consumer(WMTeleportToDimensionPacket::handle)
+            .add();
         
         // PlayerManager packets (server-bound)
-        INSTANCE.registerMessage(id(), PMSpectatePlayerPacket.class,
-            PMSpectatePlayerPacket::encode,
-            PMSpectatePlayerPacket::new,
-            PMSpectatePlayerPacket::handle);
+        INSTANCE.messageBuilder(PMSpectatePlayerPacket.class, id())
+            .encoder(PMSpectatePlayerPacket::encode)
+            .decoder(PMSpectatePlayerPacket::new)
+            .consumer(PMSpectatePlayerPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), PMViewInventoryPacket.class,
-            PMViewInventoryPacket::encode,
-            PMViewInventoryPacket::new,
-            PMViewInventoryPacket::handle);
+        INSTANCE.messageBuilder(PMViewInventoryPacket.class, id())
+            .encoder(PMViewInventoryPacket::encode)
+            .decoder(PMViewInventoryPacket::new)
+            .consumer(PMViewInventoryPacket::handle)
+            .add();
             
         // Add more packets for GUI data sync
-        INSTANCE.registerMessage(id(), SyncWorldListPacket.class,
-            SyncWorldListPacket::encode,
-            SyncWorldListPacket::new,
-            SyncWorldListPacket::handle);
+        INSTANCE.messageBuilder(SyncWorldListPacket.class, id())
+            .encoder(SyncWorldListPacket::encode)
+            .decoder(SyncWorldListPacket::new)
+            .consumer(SyncWorldListPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), RequestWorldListPacket.class,
-            RequestWorldListPacket::encode,
-            RequestWorldListPacket::new,
-            RequestWorldListPacket::handle);
+        INSTANCE.messageBuilder(RequestWorldListPacket.class, id())
+            .encoder(RequestWorldListPacket::encode)
+            .decoder(RequestWorldListPacket::new)
+            .consumer(RequestWorldListPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), SyncWorldDetailPacket.class,
-            SyncWorldDetailPacket::encode,
-            SyncWorldDetailPacket::new,
-            SyncWorldDetailPacket::handle);
+        INSTANCE.messageBuilder(SyncWorldDetailPacket.class, id())
+            .encoder(SyncWorldDetailPacket::encode)
+            .decoder(SyncWorldDetailPacket::new)
+            .consumer(SyncWorldDetailPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), OpenGuiPacket.class,
-            OpenGuiPacket::encode,
-            OpenGuiPacket::new,
-            OpenGuiPacket::handle);
+        INSTANCE.messageBuilder(OpenGuiPacket.class, id())
+            .encoder(OpenGuiPacket::encode)
+            .decoder(OpenGuiPacket::new)
+            .consumer(OpenGuiPacket::handle)
+            .add();
             
-        INSTANCE.registerMessage(id(), ConsoleCommandPacket.class,
-            ConsoleCommandPacket::encode,
-            ConsoleCommandPacket::new,
-            ConsoleCommandPacket::handle);
+        INSTANCE.messageBuilder(ConsoleCommandPacket.class, id())
+            .encoder(ConsoleCommandPacket::encode)
+            .decoder(ConsoleCommandPacket::new)
+            .consumer(ConsoleCommandPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ConsoleResponsePacket.class,
-            ConsoleResponsePacket::encode,
-            ConsoleResponsePacket::new,
-            ConsoleResponsePacket::handle);
+        INSTANCE.messageBuilder(ConsoleResponsePacket.class, id())
+            .encoder(ConsoleResponsePacket::encode)
+            .decoder(ConsoleResponsePacket::new)
+            .consumer(ConsoleResponsePacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncGlobalSettingsPacket.class,
-            SyncGlobalSettingsPacket::encode,
-            SyncGlobalSettingsPacket::new,
-            SyncGlobalSettingsPacket::handle);
+        INSTANCE.messageBuilder(SyncGlobalSettingsPacket.class, id())
+            .encoder(SyncGlobalSettingsPacket::encode)
+            .decoder(SyncGlobalSettingsPacket::new)
+            .consumer(SyncGlobalSettingsPacket::handle)
+            .add();
         
         // Economy Management admin packets
-        INSTANCE.registerMessage(id(), SaveTemplatePacket.class,
-            SaveTemplatePacket::encode,
-            SaveTemplatePacket::new,
-            SaveTemplatePacket::handle);
+        INSTANCE.messageBuilder(SaveTemplatePacket.class, id())
+            .encoder(SaveTemplatePacket::encode)
+            .decoder(SaveTemplatePacket::new)
+            .consumer(SaveTemplatePacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), DeleteTemplatePacket.class,
-            DeleteTemplatePacket::encode,
-            DeleteTemplatePacket::new,
-            DeleteTemplatePacket::handle);
+        INSTANCE.messageBuilder(DeleteTemplatePacket.class, id())
+            .encoder(DeleteTemplatePacket::encode)
+            .decoder(DeleteTemplatePacket::new)
+            .consumer(DeleteTemplatePacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ToggleTemplatePacket.class,
-            ToggleTemplatePacket::encode,
-            ToggleTemplatePacket::new,
-            ToggleTemplatePacket::handle);
+        INSTANCE.messageBuilder(ToggleTemplatePacket.class, id())
+            .encoder(ToggleTemplatePacket::encode)
+            .decoder(ToggleTemplatePacket::new)
+            .consumer(ToggleTemplatePacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SaveFreeRewardSettingsPacket.class,
-            SaveFreeRewardSettingsPacket::encode,
-            SaveFreeRewardSettingsPacket::new,
-            SaveFreeRewardSettingsPacket::handle);
+        INSTANCE.messageBuilder(SaveFreeRewardSettingsPacket.class, id())
+            .encoder(SaveFreeRewardSettingsPacket::encode)
+            .decoder(SaveFreeRewardSettingsPacket::new)
+            .consumer(SaveFreeRewardSettingsPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncEconomyTemplatesPacket.class,
-            SyncEconomyTemplatesPacket::encode,
-            SyncEconomyTemplatesPacket::new,
-            SyncEconomyTemplatesPacket::handle);
+        INSTANCE.messageBuilder(SyncEconomyTemplatesPacket.class, id())
+            .encoder(SyncEconomyTemplatesPacket::encode)
+            .decoder(SyncEconomyTemplatesPacket::new)
+            .consumer(SyncEconomyTemplatesPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncBankAccountPacket.class,
-            SyncBankAccountPacket::encode,
-            SyncBankAccountPacket::new,
-            SyncBankAccountPacket::handle);
+        INSTANCE.messageBuilder(SyncBankAccountPacket.class, id())
+            .encoder(SyncBankAccountPacket::encode)
+            .decoder(SyncBankAccountPacket::new)
+            .consumer(SyncBankAccountPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), BankTransferPacket.class,
-            BankTransferPacket::encode,
-            BankTransferPacket::new,
-            BankTransferPacket::handle);
+        INSTANCE.messageBuilder(BankTransferPacket.class, id())
+            .encoder(BankTransferPacket::encode)
+            .decoder(BankTransferPacket::new)
+            .consumer(BankTransferPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncDailyTasksPacket.class,
-            SyncDailyTasksPacket::encode,
-            SyncDailyTasksPacket::new,
-            SyncDailyTasksPacket::handle);
+        INSTANCE.messageBuilder(SyncDailyTasksPacket.class, id())
+            .encoder(SyncDailyTasksPacket::encode)
+            .decoder(SyncDailyTasksPacket::new)
+            .consumer(SyncDailyTasksPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncAchievementsPacket.class,
-            SyncAchievementsPacket::encode,
-            SyncAchievementsPacket::new,
-            SyncAchievementsPacket::handle);
+        INSTANCE.messageBuilder(SyncAchievementsPacket.class, id())
+            .encoder(SyncAchievementsPacket::encode)
+            .decoder(SyncAchievementsPacket::new)
+            .consumer(SyncAchievementsPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ClaimDailyTaskPacket.class,
-            ClaimDailyTaskPacket::encode,
-            ClaimDailyTaskPacket::new,
-            ClaimDailyTaskPacket::handle);
+        INSTANCE.messageBuilder(ClaimDailyTaskPacket.class, id())
+            .encoder(ClaimDailyTaskPacket::encode)
+            .decoder(ClaimDailyTaskPacket::new)
+            .consumer(ClaimDailyTaskPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ClaimFreeRewardPacket.class,
-            ClaimFreeRewardPacket::encode,
-            ClaimFreeRewardPacket::new,
-            ClaimFreeRewardPacket::handle);
+        INSTANCE.messageBuilder(ClaimFreeRewardPacket.class, id())
+            .encoder(ClaimFreeRewardPacket::encode)
+            .decoder(ClaimFreeRewardPacket::new)
+            .consumer(ClaimFreeRewardPacket::handle)
+            .add();
         
         // MineBay packets
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.HoldItemPacket.class,
-            com.servermanagement.network.packet.minebay.HoldItemPacket::encode,
-            com.servermanagement.network.packet.minebay.HoldItemPacket::new,
-            com.servermanagement.network.packet.minebay.HoldItemPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.HoldItemPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.HoldItemPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.HoldItemPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.HoldItemPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.CreateListingPacket.class,
-            com.servermanagement.network.packet.minebay.CreateListingPacket::encode,
-            com.servermanagement.network.packet.minebay.CreateListingPacket::new,
-            com.servermanagement.network.packet.minebay.CreateListingPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.CreateListingPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.CreateListingPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.CreateListingPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.CreateListingPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.CancelListingPacket.class,
-            com.servermanagement.network.packet.minebay.CancelListingPacket::encode,
-            com.servermanagement.network.packet.minebay.CancelListingPacket::new,
-            com.servermanagement.network.packet.minebay.CancelListingPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.CancelListingPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.CancelListingPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.CancelListingPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.CancelListingPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket.class,
-            com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::encode,
-            com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::new,
-            com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.PurchaseListingPacket.class,
-            com.servermanagement.network.packet.minebay.PurchaseListingPacket::encode,
-            com.servermanagement.network.packet.minebay.PurchaseListingPacket::new,
-            com.servermanagement.network.packet.minebay.PurchaseListingPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.PurchaseListingPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.PurchaseListingPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.PurchaseListingPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.PurchaseListingPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.CreateOfferPacket.class,
-            com.servermanagement.network.packet.minebay.CreateOfferPacket::encode,
-            com.servermanagement.network.packet.minebay.CreateOfferPacket::new,
-            com.servermanagement.network.packet.minebay.CreateOfferPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.CreateOfferPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.CreateOfferPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.CreateOfferPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.CreateOfferPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.AcceptOfferPacket.class,
-            com.servermanagement.network.packet.minebay.AcceptOfferPacket::encode,
-            com.servermanagement.network.packet.minebay.AcceptOfferPacket::new,
-            com.servermanagement.network.packet.minebay.AcceptOfferPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.AcceptOfferPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.AcceptOfferPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.AcceptOfferPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.AcceptOfferPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.RejectOfferPacket.class,
-            com.servermanagement.network.packet.minebay.RejectOfferPacket::encode,
-            com.servermanagement.network.packet.minebay.RejectOfferPacket::new,
-            com.servermanagement.network.packet.minebay.RejectOfferPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.RejectOfferPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.RejectOfferPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.RejectOfferPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.RejectOfferPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.minebay.DeleteListingPacket.class,
-            com.servermanagement.network.packet.minebay.DeleteListingPacket::encode,
-            com.servermanagement.network.packet.minebay.DeleteListingPacket::new,
-            com.servermanagement.network.packet.minebay.DeleteListingPacket::handle);
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.DeleteListingPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.DeleteListingPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.DeleteListingPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.DeleteListingPacket::handle)
+            .add();
         
         // Bank inventory packets
-        INSTANCE.registerMessage(id(), SyncBankInventoryPacket.class,
-            SyncBankInventoryPacket::encode,
-            SyncBankInventoryPacket::new,
-            SyncBankInventoryPacket::handle);
+        INSTANCE.messageBuilder(SyncBankInventoryPacket.class, id())
+            .encoder(SyncBankInventoryPacket::encode)
+            .decoder(SyncBankInventoryPacket::new)
+            .consumer(SyncBankInventoryPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ClaimBankItemPacket.class,
-            ClaimBankItemPacket::encode,
-            ClaimBankItemPacket::new,
-            ClaimBankItemPacket::handle);
+        INSTANCE.messageBuilder(ClaimBankItemPacket.class, id())
+            .encoder(ClaimBankItemPacket::encode)
+            .decoder(ClaimBankItemPacket::new)
+            .consumer(ClaimBankItemPacket::handle)
+            .add();
         
         // OTA Update packets
-        INSTANCE.registerMessage(id(), VersionCheckPacket.class,
-            VersionCheckPacket::encode,
-            VersionCheckPacket::new,
-            VersionCheckPacket::handle);
+        INSTANCE.messageBuilder(VersionCheckPacket.class, id())
+            .encoder(VersionCheckPacket::encode)
+            .decoder(VersionCheckPacket::new)
+            .consumer(VersionCheckPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ModFileRequestPacket.class,
-            ModFileRequestPacket::encode,
-            ModFileRequestPacket::new,
-            ModFileRequestPacket::handle);
+        INSTANCE.messageBuilder(ModFileRequestPacket.class, id())
+            .encoder(ModFileRequestPacket::encode)
+            .decoder(ModFileRequestPacket::new)
+            .consumer(ModFileRequestPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ModFileChunkPacket.class,
-            ModFileChunkPacket::encode,
-            ModFileChunkPacket::new,
-            ModFileChunkPacket::handle);
+        INSTANCE.messageBuilder(ModFileChunkPacket.class, id())
+            .encoder(ModFileChunkPacket::encode)
+            .decoder(ModFileChunkPacket::new)
+            .consumer(ModFileChunkPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), ModFileCompletePacket.class,
-            ModFileCompletePacket::encode,
-            ModFileCompletePacket::new,
-            ModFileCompletePacket::handle);
+        INSTANCE.messageBuilder(ModFileCompletePacket.class, id())
+            .encoder(ModFileCompletePacket::encode)
+            .decoder(ModFileCompletePacket::new)
+            .consumer(ModFileCompletePacket::handle)
+            .add();
         
         // Gambling packets
-        INSTANCE.registerMessage(id(), PlaceGamblingBetPacket.class,
-            PlaceGamblingBetPacket::encode,
-            PlaceGamblingBetPacket::new,
-            PlaceGamblingBetPacket::handle);
+        INSTANCE.messageBuilder(PlaceGamblingBetPacket.class, id())
+            .encoder(PlaceGamblingBetPacket::encode)
+            .decoder(PlaceGamblingBetPacket::new)
+            .consumer(PlaceGamblingBetPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), PlaceGamblingBetWithItemPacket.class,
-            PlaceGamblingBetWithItemPacket::encode,
-            PlaceGamblingBetWithItemPacket::new,
-            PlaceGamblingBetWithItemPacket::handle);
+        INSTANCE.messageBuilder(PlaceGamblingBetWithItemPacket.class, id())
+            .encoder(PlaceGamblingBetWithItemPacket::encode)
+            .decoder(PlaceGamblingBetWithItemPacket::new)
+            .consumer(PlaceGamblingBetWithItemPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), GamblingResultPacket.class,
-            GamblingResultPacket::encode,
-            GamblingResultPacket::new,
-            GamblingResultPacket::handle);
+        INSTANCE.messageBuilder(GamblingResultPacket.class, id())
+            .encoder(GamblingResultPacket::encode)
+            .decoder(GamblingResultPacket::new)
+            .consumer(GamblingResultPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncBettingSlotStatePacket.class,
-            SyncBettingSlotStatePacket::encode,
-            SyncBettingSlotStatePacket::new,
-            SyncBettingSlotStatePacket::handle);
+        INSTANCE.messageBuilder(SyncBettingSlotStatePacket.class, id())
+            .encoder(SyncBettingSlotStatePacket::encode)
+            .decoder(SyncBettingSlotStatePacket::new)
+            .consumer(SyncBettingSlotStatePacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncGamblingStatsPacket.class,
-            SyncGamblingStatsPacket::encode,
-            SyncGamblingStatsPacket::new,
-            SyncGamblingStatsPacket::handle);
+        INSTANCE.messageBuilder(SyncGamblingStatsPacket.class, id())
+            .encoder(SyncGamblingStatsPacket::encode)
+            .decoder(SyncGamblingStatsPacket::new)
+            .consumer(SyncGamblingStatsPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), GamblingTensionPacket.class,
-            GamblingTensionPacket::encode,
-            GamblingTensionPacket::new,
-            GamblingTensionPacket::handle);
+        INSTANCE.messageBuilder(GamblingTensionPacket.class, id())
+            .encoder(GamblingTensionPacket::encode)
+            .decoder(GamblingTensionPacket::new)
+            .consumer(GamblingTensionPacket::handle)
+            .add();
         
         // Money Request packets
-        INSTANCE.registerMessage(id(), SendMoneyRequestPacket.class,
-            SendMoneyRequestPacket::encode,
-            SendMoneyRequestPacket::new,
-            SendMoneyRequestPacket::handle);
+        INSTANCE.messageBuilder(SendMoneyRequestPacket.class, id())
+            .encoder(SendMoneyRequestPacket::encode)
+            .decoder(SendMoneyRequestPacket::new)
+            .consumer(SendMoneyRequestPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), RespondMoneyRequestPacket.class,
-            RespondMoneyRequestPacket::encode,
-            RespondMoneyRequestPacket::new,
-            RespondMoneyRequestPacket::handle);
+        INSTANCE.messageBuilder(RespondMoneyRequestPacket.class, id())
+            .encoder(RespondMoneyRequestPacket::encode)
+            .decoder(RespondMoneyRequestPacket::new)
+            .consumer(RespondMoneyRequestPacket::handle)
+            .add();
         
-        INSTANCE.registerMessage(id(), SyncMoneyRequestsPacket.class,
-            SyncMoneyRequestsPacket::encode,
-            SyncMoneyRequestsPacket::new,
-            SyncMoneyRequestsPacket::handle);
+        INSTANCE.messageBuilder(SyncMoneyRequestsPacket.class, id())
+            .encoder(SyncMoneyRequestsPacket::encode)
+            .decoder(SyncMoneyRequestsPacket::new)
+            .consumer(SyncMoneyRequestsPacket::handle)
+            .add();
+        
+        INSTANCE.build();
         
         ServerManagementMod.LOGGER.info("Registered {} network packets", packetId);
     }
@@ -322,15 +376,15 @@ public class ModNetworking {
     }
     
     public static void sendToServer(IPacket packet) {
-        INSTANCE.sendToServer(packet);
+        INSTANCE.send(packet, PacketDistributor.SERVER.noArg());
     }
     
     public static void sendToPlayer(IPacket packet, ServerPlayer player) {
-        INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), packet);
+        INSTANCE.send(packet, PacketDistributor.PLAYER.with(player));
     }
     
     public static void sendToAllPlayers(IPacket packet) {
-        INSTANCE.send(PacketDistributor.ALL.noArg(), packet);
+        INSTANCE.send(packet, PacketDistributor.ALL.noArg());
     }
     
     public static SimpleChannel getChannel() {

@@ -154,7 +154,7 @@ public class WorldManagerData {
     }
 
     private static File getDataFile(MinecraftServer server) {
-        return new File(server.getServerDirectory(), "config/servermanagement/world_manager.json");
+        return server.getServerDirectory().resolve("config/servermanagement/world_manager.json").toFile();
     }
 
     public boolean areNetherPortalsEnabled(String dimensionId) {

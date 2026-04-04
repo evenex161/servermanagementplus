@@ -21,7 +21,7 @@ public class PlayerPreferences {
     private static int dataVersion = DataVersion.CURRENT_VERSION;
 
     public static void initialize(MinecraftServer server) {
-        File configDir = new File(server.getServerDirectory(), "config/servermanagement");
+        File configDir = server.getServerDirectory().resolve("config/servermanagement").toFile();
         configDir.mkdirs();
         configFile = new File(configDir, "player_preferences.json");
         load();

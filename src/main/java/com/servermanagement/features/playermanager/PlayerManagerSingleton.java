@@ -69,7 +69,7 @@ public class PlayerManagerSingleton {
             // Find the dimension and teleport back
             var dimensionKey = net.minecraft.resources.ResourceKey.create(
                 net.minecraft.core.registries.Registries.DIMENSION,
-                new net.minecraft.resources.ResourceLocation(data.dimension)
+                net.minecraft.resources.ResourceLocation.parse(data.dimension)
             );
             var level = getInstance().server.getLevel(dimensionKey);
             if (level != null) {

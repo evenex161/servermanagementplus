@@ -7,7 +7,7 @@ import com.servermanagement.network.packet.IPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public class CreateListingPacket implements IPacket {
     }
     
     public CreateListingPacket(FriendlyByteBuf buf) {
-        this.itemToSell = buf.readItem();
+        this.itemToSell = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
         this.moneyPrice = buf.readDouble();
         this.offerType = buf.readEnum(MineBayListing.OfferType.class);
         
@@ -38,7 +38,7 @@ public class CreateListingPacket implements IPacket {
         int priceItemCount = buf.readInt();
         this.priceItems = new ArrayList<>();
         for (int i = 0; i < priceItemCount; i++) {
-            ItemStack itemStack = buf.readItem();
+            ItemStack itemStack = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
             int amount = buf.readInt();
             boolean useStacks = buf.readBoolean();
             if (!itemStack.isEmpty()) {
@@ -49,23 +49,23 @@ public class CreateListingPacket implements IPacket {
     
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeItem(itemToSell);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, itemToSell);
         buf.writeDouble(moneyPrice);
         buf.writeEnum(offerType);
         
         // Write price items
         buf.writeInt(priceItems.size());
         for (PriceItemEntry priceItem : priceItems) {
-            buf.writeItem(priceItem.getItemStack());
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, priceItem.getItemStack());
             buf.writeInt(priceItem.getAmount());
             buf.writeBoolean(priceItem.isUseStacks());
         }
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer player = ctx.getSender();
             if (player != null) {
                 MineBayManager manager = MineBayManager.getInstance();
                 
@@ -123,6 +123,6 @@ public class CreateListingPacket implements IPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

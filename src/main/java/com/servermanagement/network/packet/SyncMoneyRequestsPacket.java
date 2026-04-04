@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import com.servermanagement.client.ClientMoneyRequestData;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,11 +68,11 @@ public class SyncMoneyRequestsPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             ClientMoneyRequestData.setIncomingRequests(incoming);
             ClientMoneyRequestData.setOutgoingRequests(outgoing);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

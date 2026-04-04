@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.features.economy.DailyTask;
 import com.servermanagement.features.economy.TaskType;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,8 +75,8 @@ public class SyncDailyTasksPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Store daily tasks on client side for GUI display
             com.servermanagement.client.ClientDailyTasksData.setTasks(tasks);
             com.servermanagement.client.ClientDailyTasksData.setResetTime(resetTime);
@@ -84,6 +84,6 @@ public class SyncDailyTasksPacket implements IPacket {
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAmount(freeRewardAmount);
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

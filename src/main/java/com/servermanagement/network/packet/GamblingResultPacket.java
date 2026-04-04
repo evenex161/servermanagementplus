@@ -1,7 +1,7 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -31,8 +31,8 @@ public class GamblingResultPacket implements IPacket {
         buf.writeUtf(this.message, 256);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Update client-side screen
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.screen instanceof com.servermanagement.gui.gambling.MineStacksScreen) {
@@ -41,6 +41,6 @@ public class GamblingResultPacket implements IPacket {
                 screen.handleGamblingResult(this.won, this.payout, this.message);
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

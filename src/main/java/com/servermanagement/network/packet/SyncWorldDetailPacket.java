@@ -1,7 +1,7 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -47,15 +47,15 @@ public class SyncWorldDetailPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Handle on client
             com.servermanagement.client.ClientPacketHandler.handleWorldDetail(
                 dimensionId, netherPortalsEnabled, endPortalsEnabled,
                 hasTimer, timerSeconds, chatConnected, timerPortalType
             );
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 
     public String getDimensionId() {

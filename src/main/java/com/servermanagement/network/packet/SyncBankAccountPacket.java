@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import com.servermanagement.features.economy.Transaction;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,12 +40,12 @@ public class SyncBankAccountPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Store balance on client side for GUI display
             com.servermanagement.client.ClientBankData.setBalance(balance);
             com.servermanagement.client.ClientBankData.setTransactions(recentTransactions);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

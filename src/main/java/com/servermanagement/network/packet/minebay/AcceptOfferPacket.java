@@ -11,7 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -39,9 +39,9 @@ public class AcceptOfferPacket implements IPacket {
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer seller = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer seller = ctx.getSender();
             if (seller == null) return;
             
             MineBayManager mineBayManager = MineBayManager.getInstance();
@@ -101,7 +101,7 @@ public class AcceptOfferPacket implements IPacket {
                 
                 int found = 0;
                 for (ItemStack invStack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(invStack, offeredStack)) {
+                    if (ItemStack.isSameItemSameComponents(invStack, offeredStack)) {
                         found += invStack.getCount();
                     }
                 }
@@ -127,7 +127,7 @@ public class AcceptOfferPacket implements IPacket {
                 
                 int remaining = offeredStack.getCount();
                 for (ItemStack invStack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(invStack, offeredStack) && remaining > 0) {
+                    if (ItemStack.isSameItemSameComponents(invStack, offeredStack) && remaining > 0) {
                         int toRemove = Math.min(remaining, invStack.getCount());
                         invStack.shrink(toRemove);
                         remaining -= toRemove;
@@ -185,6 +185,6 @@ public class AcceptOfferPacket implements IPacket {
             buyer.sendSystemMessage(Component.literal("§7Purchased " + listing.getItemForSale().getDisplayName().getString() + 
                 " from " + seller.getName().getString()));
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

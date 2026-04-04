@@ -1,10 +1,21 @@
-# Changelog - v1.0.3 (Help Integration, Security Hardening & Quality Update)
+# Changelog - v1.0.3 (Help Integration, Security Hardening, Quality & 1.21.1 Port)
 
 **Release Date**: April 4, 2026  
 **Previous Version**: v1.0.2  
-**Minecraft Version**: 1.20.1  
-**Forge Version**: 47.4.0+  
+**Minecraft Version**: 1.20.1 / 1.21.1  
+**Forge Version**: 47.4.0+ (MC 1.20.1) / 52.1.0+ (MC 1.21.1)  
 **OTA Build**: 3
+
+---
+
+## 🔄 Minecraft 1.21.1 Port
+
+### Full Port to Forge 1.21.1
+- **Minecraft 1.21.1** support with **Forge 52.1.0** and **ForgeGradle 7** (Gradle 9.3.0, Java 21)
+- Complete networking API migration: `NetworkEvent` → `CustomPayloadEvent`, `ChannelBuilder`/`messageBuilder` pattern
+- All 56 packet handlers, ItemStack serialization, Advancement API, GUI screens, and NbtIo calls updated
+- Player head system updated for `ResolvableProfile` and `DataComponents`
+- Dual version support: **mc/1.20.1** and **mc/1.21.1** branches
 
 ---
 

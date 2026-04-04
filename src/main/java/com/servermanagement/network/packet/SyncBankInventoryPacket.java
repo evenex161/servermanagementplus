@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.features.economy.BankInventory;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -27,12 +27,12 @@ public class SyncBankInventoryPacket implements IPacket {
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Store in client-side data holder
             BankInventory inventory = BankInventory.fromNBT(inventoryData);
             com.servermanagement.client.ClientBankInventoryData.setBankInventory(inventory);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

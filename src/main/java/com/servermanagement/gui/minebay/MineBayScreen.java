@@ -1109,16 +1109,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 this.rebuildWidgets();
             }
         }
-        
-        // Tick all EditBox widgets
-        if (moneyPriceBox != null) {
-            moneyPriceBox.tick();
-        }
-        for (EditBox box : priceAmountBoxes) {
-            if (box != null) {
-                box.tick();
-            }
-        }
     }
     
     private void renderBrowseScreen(GuiGraphics guiGraphics, int centerX, int centerY) {
@@ -1846,7 +1836,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 // Count how many of this item the player has
                 int available = 0;
                 for (ItemStack invStack : this.minecraft.player.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(invStack, selectedItem)) {
+                    if (ItemStack.isSameItemSameComponents(invStack, selectedItem)) {
                         available += invStack.getCount();
                     }
                 }
@@ -1933,18 +1923,18 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollDelta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (currentState == ScreenState.BROWSE && !listings.isEmpty()) {
             int maxScroll = Math.max(0, listings.size() - LISTINGS_PER_PAGE);
-            if (scrollDelta > 0) {
+            if (scrollY > 0) {
                 scrollOffset = Math.max(0, scrollOffset - 1);
-            } else if (scrollDelta < 0) {
+            } else if (scrollY < 0) {
                 scrollOffset = Math.min(maxScroll, scrollOffset + 1);
             }
             this.rebuildWidgets();
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, scrollDelta);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
     
     @Override

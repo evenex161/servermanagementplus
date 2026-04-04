@@ -4,7 +4,7 @@ import com.servermanagement.ServerManagementMod;
 import com.servermanagement.server.ModFileTransferManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -30,8 +30,8 @@ public class ModFileRequestPacket implements IPacket {
         buf.writeUtf(clientVersion, 64);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
+    public void handle(CustomPayloadEvent.Context contextSupplier) {
+        CustomPayloadEvent.Context context = contextSupplier;
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {

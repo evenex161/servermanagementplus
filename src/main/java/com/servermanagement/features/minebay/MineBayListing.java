@@ -59,7 +59,7 @@ public class MineBayListing {
         tag.putString("ListingId", listingId);
         tag.putUUID("SellerId", sellerId);
         tag.putString("SellerName", sellerName);
-        tag.put("ItemForSale", itemForSale.save(new CompoundTag()));
+        tag.put("ItemForSale", itemForSale.saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
         tag.putDouble("MoneyPrice", moneyPrice);
         tag.putString("OfferType", offerType.name());
         tag.putString("Status", status.name());
@@ -98,7 +98,7 @@ public class MineBayListing {
         listing.listingId = tag.getString("ListingId");
         listing.sellerId = tag.getUUID("SellerId");
         listing.sellerName = tag.getString("SellerName");
-        listing.itemForSale = ItemStack.of(tag.getCompound("ItemForSale"));
+        listing.itemForSale = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("ItemForSale"));
         listing.moneyPrice = tag.getDouble("MoneyPrice");
         listing.offerType = OfferType.valueOf(tag.getString("OfferType"));
         listing.status = ListingStatus.valueOf(tag.getString("Status"));

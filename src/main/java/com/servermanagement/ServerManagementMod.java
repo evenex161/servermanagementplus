@@ -13,7 +13,6 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig.Type;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -36,8 +35,8 @@ public class ServerManagementMod {
     
     private static ModConfig config;
 
-    public ServerManagementMod() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public ServerManagementMod(FMLJavaModLoadingContext context) {
+        IEventBus modEventBus = context.getModEventBus();
         
         // Register setup handlers
         modEventBus.addListener(this::commonSetup);
@@ -50,7 +49,7 @@ public class ServerManagementMod {
         MinecraftForge.EVENT_BUS.register(this);
         
         // Register config
-        ModLoadingContext.get().registerConfig(Type.COMMON, ModConfig.SPEC);
+        context.registerConfig(Type.COMMON, ModConfig.SPEC);
         
         // Validate and repair config if necessary
         LOGGER.info("Validating configuration...");

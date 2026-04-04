@@ -5,7 +5,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -29,9 +29,9 @@ public class ConsoleCommandPacket implements IPacket {
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer player = ctx.getSender();
             if (player != null && player.hasPermissions(2)) {
                 var server = player.getServer();
                 if (server != null) {
@@ -40,15 +40,7 @@ public class ConsoleCommandPacket implements IPacket {
                         .withSuppressedOutput()
                         .withSource(new com.servermanagement.network.ConsoleCommandListener(player));
                     
-                    int result = server.getCommands().performPrefixedCommand(source, command);
-                    
-                    // If no output was captured, send a result indicator
-                    if (result == 0) {
-                        ModNetworking.sendToPlayer(
-                            new ConsoleResponsePacket("[WARN] Command returned 0 (may have failed): " + command),
-                            player
-                        );
-                    }
+                    server.getCommands().performPrefixedCommand(source, command);
                     
                     com.servermanagement.ServerManagementMod.LOGGER.info(
                         "Console command executed by {}: {}", player.getName().getString(), 
@@ -57,6 +49,6 @@ public class ConsoleCommandPacket implements IPacket {
                 }
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

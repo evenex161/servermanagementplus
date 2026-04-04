@@ -6,7 +6,7 @@ import com.servermanagement.features.gambling.ItemValuation;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -33,9 +33,9 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
         buf.writeUtf(this.gameOption, 64);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer player = ctx.getSender();
             if (player == null) {
                 return; // No player - reject packet
             }
@@ -164,7 +164,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                     "§cInvalid gambling menu state"));
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
     
     private static com.servermanagement.features.gambling.GamblingGame createGame(

@@ -5,12 +5,14 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.servermanagement.ServerManagementMod;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 
 import java.io.IOException;
 
@@ -40,9 +42,12 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
         out.name("count").value(src.getCount());
 
         // Store NBT data if present
-        CompoundTag tag = src.getTag();
-        if (tag != null && !tag.isEmpty()) {
-            out.name("nbt").value(tag.toString());
+        CustomData customData = src.get(DataComponents.CUSTOM_DATA);
+        if (customData != null) {
+            CompoundTag tag = customData.copyTag();
+            if (!tag.isEmpty()) {
+                out.name("nbt").value(tag.toString());
+            }
         }
 
         out.endObject();
@@ -99,7 +104,7 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
         if (nbtString != null) {
             try {
                 CompoundTag tag = TagParser.parseTag(nbtString);
-                stack.setTag(tag);
+                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
             } catch (Exception e) {
                 ServerManagementMod.LOGGER.warn("Failed to parse ItemStack NBT: {}", e.getMessage());
             }

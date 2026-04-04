@@ -10,7 +10,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.HashMap;
 import java.util.List;
@@ -37,9 +37,9 @@ public class PurchaseListingPacket implements IPacket {
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer buyer = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer buyer = ctx.getSender();
             if (buyer == null) {
                 return; // No buyer - reject packet
             }
@@ -92,7 +92,7 @@ public class PurchaseListingPacket implements IPacket {
                 // Count how many buyer has
                 int count = 0;
                 for (ItemStack stack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(stack, priceItem.getItemStack())) {
+                    if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
                         count += stack.getCount();
                     }
                 }
@@ -116,7 +116,7 @@ public class PurchaseListingPacket implements IPacket {
                 
                 for (int i = 0; i < buyer.getInventory().items.size() && remaining > 0; i++) {
                     ItemStack stack = buyer.getInventory().items.get(i);
-                    if (ItemStack.isSameItemSameTags(stack, priceItem.getItemStack())) {
+                    if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
                         int toRemove = Math.min(remaining, stack.getCount());
                         stack.shrink(toRemove);
                         remaining -= toRemove;
@@ -199,6 +199,6 @@ public class PurchaseListingPacket implements IPacket {
                 );
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

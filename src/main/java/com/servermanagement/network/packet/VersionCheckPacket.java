@@ -4,7 +4,7 @@ import com.servermanagement.ServerManagementMod;
 import com.servermanagement.client.OTAUpdateManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -44,8 +44,8 @@ public class VersionCheckPacket implements IPacket {
         buf.writeLong(serverModJarSize);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
+    public void handle(CustomPayloadEvent.Context contextSupplier) {
+        CustomPayloadEvent.Context context = contextSupplier;
         context.enqueueWork(() -> {
             // This runs on the client
             com.servermanagement.ota.OTAVersion clientOTAVersion = 

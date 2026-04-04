@@ -7,7 +7,7 @@ import com.servermanagement.network.packet.IPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -35,9 +35,9 @@ public class RejectOfferPacket implements IPacket {
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer seller = ctx.get().getSender();
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            ServerPlayer seller = ctx.getSender();
             if (seller == null) return;
             
             MineBayManager mineBayManager = MineBayManager.getInstance();
@@ -83,6 +83,6 @@ public class RejectOfferPacket implements IPacket {
                     " rejected your offer on " + listing.getItemForSale().getDisplayName().getString()));
             }
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }

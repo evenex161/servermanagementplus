@@ -1,7 +1,7 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,12 +42,12 @@ public class SyncAchievementsPacket implements IPacket {
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
+    public void handle(CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
             // Store achievements on client side for GUI display
             com.servermanagement.client.ClientAchievementsData.setEarnedAchievements(earnedAchievements);
             com.servermanagement.client.ClientAchievementsData.setTotalRewardsEarned(totalRewards);
         });
-        ctx.get().setPacketHandled(true);
+        ctx.setPacketHandled(true);
     }
 }
