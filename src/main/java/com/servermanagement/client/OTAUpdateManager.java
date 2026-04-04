@@ -348,9 +348,8 @@ public class OTAUpdateManager {
                 }
             }
             
-            // Write new mod JAR
-            String mcSuffix = targetMinecraftVersion != null ? "-mc" + targetMinecraftVersion : "";
-            File newModFile = new File(modsDir, "servermanagementplus-v" + version + mcSuffix + "-release.jar");
+            // Write new mod JAR - version already contains the full version string from Gradle
+            File newModFile = new File(modsDir, "servermanagementplus-" + version + ".jar");
             try (FileOutputStream fos = new FileOutputStream(newModFile)) {
                 fos.write(fileData);
             }

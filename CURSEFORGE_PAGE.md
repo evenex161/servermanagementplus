@@ -1,6 +1,8 @@
 # Server Management Plus
 
-**The all-in-one server management solution for Minecraft 1.20.1**
+**The all-in-one server management solution for Minecraft**
+
+**Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+)
 
 Server Management Plus gives you a complete suite of tools to run your server — a full economy with bank accounts, a player marketplace, a casino, daily tasks, world management, and a sleek admin dashboard — all in one mod.
 
@@ -134,6 +136,8 @@ Automatic over-the-air mod updates for connected clients.
 - Downloads the correct JAR, verifies hash integrity, and installs
 - Shows an update progress screen to the player
 - Smart version comparison: semantic versioning first, then build number for same-version patches
+- **Multi-version aware** — OTA updates are blocked across different Minecraft versions (e.g., a 1.20.1 client won't receive a 1.21.1 update)
+- **Build number tracking** — Each release uses `v1.0.3-bXX` format to differentiate incremental builds within the same version
 
 ---
 
@@ -226,12 +230,14 @@ All economy data, task templates, and player progress persist across server rest
 ## Installation
 
 ### Requirements
-- **Minecraft** 1.20.1
-- **Forge** 47.4.0+
-- **Java** 17 or higher (Java 18–21 also work as runtime)
+- **Minecraft** 1.20.1 or 1.21.1
+- **Forge** 47.4.0+ (MC 1.20.1) or 52.1.0+ (MC 1.21.1)
+- **Java** 17+ (MC 1.20.1) or 21+ (MC 1.21.1)
 
 ### Setup
-1. Download `servermanagementplus-v1.0.3-release.jar`
+1. Download the JAR for your Minecraft version:
+   - MC 1.20.1: `servermanagementplus-v1.0.3-b04-mc1.20.1-release.jar`
+   - MC 1.21.1: `servermanagementplus-v1.0.3-b04-mc1.21.1-release.jar`
 2. Place it in your server's `mods/` folder
 3. Start the server — config and data folders generate automatically
 4. Optionally install on clients for full GUI support (server-side only works too)
@@ -284,4 +290,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*Server Management Plus v1.0.3 — Minecraft 1.20.1 — Forge 47.4.0+*
+*Server Management Plus v1.0.3-b04 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*

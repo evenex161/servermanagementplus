@@ -1,10 +1,30 @@
-# Changelog - v1.0.3 (Help Integration, Security Hardening, Quality & 1.21.1 Port)
+# Changelog - v1.0.3-b04 (Help Integration, Security Hardening, Quality & 1.21.1 Port)
 
 **Release Date**: April 4, 2026  
 **Previous Version**: v1.0.2  
 **Minecraft Version**: 1.20.1 / 1.21.1  
 **Forge Version**: 47.4.0+ (MC 1.20.1) / 52.1.0+ (MC 1.21.1)  
-**OTA Build**: 3
+**OTA Build**: 04  
+**JAR Files**:  
+- `servermanagementplus-v1.0.3-b04-mc1.20.1-release.jar`  
+- `servermanagementplus-v1.0.3-b04-mc1.21.1-release.jar`
+
+---
+
+## 🔢 Build Number Versioning (b04)
+
+### New Version Naming Scheme
+- **Build numbers** added to all version strings: `v1.0.3-bXX-mcX.XX.X-release`
+- Build numbers (`-bXX`) differentiate incremental updates within the same release version
+- Gradle automatically populates `ota.properties` with version, build, and MC version at build time
+- `mod_build` property in `gradle.properties` controls the build number (zero-padded)
+
+### Multi-Version OTA Support
+- **Minecraft version awareness** — OTA version tracking now includes the target MC version
+- **Cross-version update blocking** — A 1.20.1 client connected to a 1.21.1 server (or vice versa) will not receive an OTA update
+- **MC version sent in network packets** — `VersionCheckPacket` and `ModFileRequestPacket` carry explicit MC version fields
+- **CurseForge update checker** reads MC version dynamically from `ota.properties` instead of hardcoding
+- **VersionTracker** reads MC version from OTA properties instead of hardcoding
 
 ---
 
