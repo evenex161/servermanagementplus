@@ -56,3 +56,6 @@ RECENT_FIXES.md
 RELEASE_NOTES_v1.0.0-release.md
 SECURITY_IMPLEMENTATION.md
 SERIALIZATION_FIX.md
+
+# Internal development tooling
+.github/
