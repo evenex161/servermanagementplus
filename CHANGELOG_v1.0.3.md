@@ -1,11 +1,11 @@
-# Changelog - v1.0.3-b04 (Help Integration, Security Hardening & Quality Update)
+# Changelog - v1.0.3-b05 (Help Integration, Security Hardening & Quality Update)
 
 **Release Date**: April 4, 2026  
 **Previous Version**: v1.0.2  
 **Minecraft Version**: 1.20.1  
 **Forge Version**: 47.4.0+  
-**OTA Build**: 04  
-**JAR File**: `servermanagementplus-v1.0.3-b04-mc1.20.1-release.jar`
+**OTA Build**: 05  
+**JAR File**: `servermanagementplus-v1.0.3-b05-mc1.20.1-release.jar`
 
 ---
 
