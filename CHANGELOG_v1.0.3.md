@@ -1,28 +1,35 @@
-# Changelog - v1.0.3-b05 (Help Integration, Security Hardening & Quality Update)
+# Changelog - v1.0.3 Forge (Help Integration, Security Hardening, Quality & Multi-Loader Support)
 
-**Release Date**: April 4, 2026  
+**Release Date**: April 5, 2026  
 **Previous Version**: v1.0.2  
 **Minecraft Version**: 1.20.1  
+**Mod Loader**: Forge  
 **Forge Version**: 47.4.0+  
 **OTA Build**: 05  
-**JAR File**: `servermanagementplus-v1.0.3-b05-mc1.20.1-release.jar`
+**JAR File**: `servermanagementplus-v1.0.3-b05-mc1.20.1-forge-release.jar`
+
+> **Also available**: [MC 1.21.1 Forge](https://github.com/evenex161/servermanagementplus/tree/mc/1.21.1) | [MC 1.21.1 NeoForge](https://github.com/evenex161/servermanagementplus/tree/mc/1.21.1-neoforge)
 
 ---
 
-## 🔢 Build Number Versioning (b04)
+## 🔢 Build Number Versioning (b04+)
 
 ### New Version Naming Scheme
-- **Build numbers** added to all version strings: `v1.0.3-bXX-mcX.XX.X-release`
+- **Build numbers** added to all version strings: `v1.0.3-bXX-mcX.XX.X-<loader>-release`
 - Build numbers (`-bXX`) differentiate incremental updates within the same release version
-- Gradle automatically populates `ota.properties` with version, build, and MC version at build time
-- `mod_build` property in `gradle.properties` controls the build number (zero-padded)
+- **Mod loader identifier** (`forge`, `neoforge`) now embedded in JAR filenames and OTA version strings
+- Gradle automatically populates `ota.properties` with version, build, MC version, and mod loader at build time
+- `mod_build` and `mod_loader` properties in `gradle.properties` control the build number and loader tag
 
-### Multi-Version OTA Support
+### Multi-Version & Multi-Loader OTA Support
 - **Minecraft version awareness** — OTA version tracking now includes the target MC version
+- **Mod loader awareness** — OTA version tracking now includes the mod loader (`forge`, `neoforge`, `fabric`, `quilt`)
 - **Cross-version update blocking** — A 1.20.1 client connected to a 1.21.1 server (or vice versa) will not receive an OTA update
-- **MC version sent in network packets** — `VersionCheckPacket` and `ModFileRequestPacket` carry explicit MC version fields
+- **Cross-loader update blocking** — A Forge client connected to a NeoForge server (or vice versa) will not receive an OTA update
+- **MC version and mod loader sent in network packets** — `VersionCheckPacket` carries explicit MC version and mod loader fields
 - **CurseForge update checker** reads MC version dynamically from `ota.properties` instead of hardcoding
 - **VersionTracker** reads MC version from OTA properties instead of hardcoding
+- **`OTAVersion.parseFromString()`** recognizes known mod loaders when parsing version strings
 
 ---
 
@@ -237,4 +244,10 @@ This prevents a malicious client from sending multi-megabyte strings in a single
 | `SlimeHeadManager.java` | Removed redundant enabled log |
 | `PacketTimestampTracker.java` | Removed per-packet DEBUG trace log |
 | `SecureDataStorage.java` | Fixed string concatenation to SLF4J format |
-| `ota.properties` | OTA build 2 → 3 |
+| `ota.properties` | OTA build 2 → 3, added `ota.mod_loader` |
+| `gradle.properties` | Added `mod_loader` property |
+| `build.gradle` | Mod loader in version string, added to processResources |
+| `OTAVersion.java` | Added `modLoader` field, loader-aware compatibility checks, `parseFromString()` recognizes loaders |
+| `VersionCheckPacket.java` | Added `serverModLoader` field, cross-loader OTA blocking |
+| `PlayerJoinListener.java` | Sends mod loader in version check packet |
+| `OTAUpdateManager.java` | Added `serverModLoader` parameter to `handleVersionMismatch` |
