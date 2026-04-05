@@ -1,0 +1,49 @@
+[Meta]
+	#Config version for auto-migration. DO NOT EDIT MANUALLY!
+	# Default: 1
+	# Range: > 0
+	configVersion = 1
+
+["World Manager"]
+	#Enable World Manager features
+	worldManagerEnabled = true
+	#Enable Nether portal toggle
+	netherPortalsEnabled = true
+	#Enable End portal toggle
+	endPortalsEnabled = true
+	#Enable world timers
+	worldTimersEnabled = true
+	#Enable chat isolation per world
+	chatIsolationEnabled = true
+	#Enable tab list isolation per world
+	tabIsolationEnabled = true
+	#Cooldown in seconds between world teleports
+	# Default: 5
+	# Range: 0 ~ 300
+	teleportCooldown = 5
+
+["Player Manager"]
+	#Enable Player Manager features
+	playerManagerEnabled = true
+	#Enable spectate command
+	spectateEnabled = true
+	#Enable view inventory command
+	viewInventoryEnabled = true
+	#Enable slime heads feature
+	slimeHeadsEnabled = true
+
+[Economy]
+	#Starting balance for new players
+	# Default: 1000.0
+	# Range: 0.0 ~ 1000000.0
+	startingBalance = 1000.0
+	#Enable AES-256-GCM encryption for economy data
+	encryptedStorage = true
+	#Maximum number of transactions stored per player
+	# Default: 100
+	# Range: 10 ~ 10000
+	transactionHistoryLimit = 100
+	#Maximum number of active MineBay listings per player
+	# Default: 10
+	# Range: 1 ~ 100
+	maxListingsPerPlayer = 10

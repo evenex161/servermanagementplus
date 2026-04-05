@@ -4,8 +4,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 public class PMViewInventoryPacket implements IPacket {
+    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     private final String playerName;
 
     public PMViewInventoryPacket(String playerName) {
@@ -26,7 +28,7 @@ public class PMViewInventoryPacket implements IPacket {
         ctx.enqueueWork(() -> {
             var player = ctx.getSender();
             if (player != null && player.hasPermissions(2)) {
-                if (playerName == null || playerName.length() > 16 || !playerName.matches("[a-zA-Z0-9_]+")) {
+                if (playerName == null || playerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(playerName).matches()) {
                     return;
                 }
                 com.servermanagement.features.playermanager.PlayerManagerSingleton.viewInventory(player, playerName);

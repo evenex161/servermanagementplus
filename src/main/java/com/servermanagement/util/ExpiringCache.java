@@ -31,18 +31,20 @@ public class ExpiringCache<K, V> {
      * Get value from cache
      */
     public V get(K key) {
+        CacheEntry<V> entry;
         synchronized (cache) {
-            CacheEntry<V> entry = cache.get(key);
-            if (entry != null) {
-                if (entry.isExpired()) {
-                    cache.remove(key);
-                    PerformanceMetrics.getInstance().recordCacheMiss();
-                    return null;
-                }
-                entry.updateAccess();
-                PerformanceMetrics.getInstance().recordCacheHit();
-                return entry.value;
+            entry = cache.get(key);
+            if (entry != null && entry.isExpired()) {
+                cache.remove(key);
+                entry = null;
             }
+            if (entry != null) {
+                entry.updateAccess();
+            }
+        }
+        if (entry != null) {
+            PerformanceMetrics.getInstance().recordCacheHit();
+            return entry.value;
         }
         PerformanceMetrics.getInstance().recordCacheMiss();
         return null;

@@ -13,11 +13,13 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 /**
  * Client → Server: Create a new money request
  */
 public class SendMoneyRequestPacket implements IPacket {
+    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     private final String targetPlayerName;
     private final double amount;
     private final String message;
@@ -51,7 +53,7 @@ public class SendMoneyRequestPacket implements IPacket {
             // Validate player name
             if (this.targetPlayerName == null || this.targetPlayerName.trim().isEmpty()
                     || this.targetPlayerName.length() > 16
-                    || !this.targetPlayerName.matches("[a-zA-Z0-9_]+")) {
+                    || !PLAYER_NAME_PATTERN.matcher(this.targetPlayerName).matches()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                     "§cInvalid player name"));
                 return;

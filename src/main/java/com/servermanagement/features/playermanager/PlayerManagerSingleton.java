@@ -36,7 +36,8 @@ public class PlayerManagerSingleton {
         
         ServerPlayer target = instance.server.getPlayerList().getPlayerByName(targetName);
         if (target == null) {
-            spectator.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cPlayer not found: " + targetName));
+            spectator.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                String.format("§cPlayer not found: %s", targetName)));
             return;
         }
         
@@ -54,7 +55,7 @@ public class PlayerManagerSingleton {
         spectator.setCamera(target);
         
         spectator.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-            "§aNow spectating " + targetName + ". Use /stopspectate to return."));
+            String.format("§aNow spectating %s. Use /stopspectate to return.", targetName)));
     }
 
     public static void stopSpectate(ServerPlayer player) {
@@ -90,7 +91,8 @@ public class PlayerManagerSingleton {
         
         ServerPlayer target = instance.server.getPlayerList().getPlayerByName(targetName);
         if (target == null) {
-            viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cPlayer not found: " + targetName));
+            viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                String.format("§cPlayer not found: %s", targetName)));
             return;
         }
         

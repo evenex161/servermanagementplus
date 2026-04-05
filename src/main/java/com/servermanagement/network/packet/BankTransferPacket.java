@@ -7,11 +7,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 /**
  * Packet for transferring money between players
  */
 public class BankTransferPacket implements IPacket {
+    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     private final String targetPlayerName;
     private final double amount;
     
@@ -46,7 +48,7 @@ public class BankTransferPacket implements IPacket {
             }
             
             // Sanitize player name (prevent injection/exploits)
-            if (this.targetPlayerName.length() > 16 || !this.targetPlayerName.matches("[a-zA-Z0-9_]+")) {
+            if (this.targetPlayerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(this.targetPlayerName).matches()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                     "§cInvalid player name format"));
                 return;
