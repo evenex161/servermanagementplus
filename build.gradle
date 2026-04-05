@@ -6,7 +6,7 @@ plugins {
     id 'net.neoforged.gradle.userdev' version '7.1.21'
 }
 
-version = "v${mod_version}-b${mod_build}-mc${minecraft_version}-release"
+version = "v${mod_version}-b${mod_build}-mc${minecraft_version}-${mod_loader}-release"
 group = "${mod_group_id}"
 
 base {
@@ -63,6 +63,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_license: mod_license,
             mod_version: mod_version,
             mod_build: mod_build,
+            mod_loader: mod_loader,
             mod_authors: mod_authors,
             mod_description: mod_description
     ]

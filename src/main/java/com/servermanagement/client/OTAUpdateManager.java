@@ -35,7 +35,7 @@ public class OTAUpdateManager {
     public static void handleVersionMismatch(String clientVersion, String serverVersion,
                                             int serverDataVersion, String serverModJarName,
                                             String serverModJarHash, long serverModJarSize,
-                                            String serverMinecraftVersion) {
+                                            String serverMinecraftVersion, String serverModLoader) {
         ServerManagementMod.LOGGER.debug("handleVersionMismatch called, updateInProgress={}", updateInProgress);
         
         if (updateInProgress) {
@@ -43,8 +43,8 @@ public class OTAUpdateManager {
             return; // Already handling an update
         }
         
-        ServerManagementMod.LOGGER.info("Version mismatch: client {} -> server {} (file: {}, size: {} bytes)",
-            clientVersion, serverVersion, serverModJarName, serverModJarSize);
+        ServerManagementMod.LOGGER.info("Version mismatch: client {} -> server {} (file: {}, size: {} bytes, loader: {})",
+            clientVersion, serverVersion, serverModJarName, serverModJarSize, serverModLoader);
         
         // Show update screen
         Minecraft minecraft = Minecraft.getInstance();

@@ -31,16 +31,18 @@ public class VersionCheckPacket implements IPacket {
     private final String serverModJarHash; // SHA-256 hash
     private final long serverModJarSize;
     private final String serverMinecraftVersion;
+    private final String serverModLoader;
     
     public VersionCheckPacket(String serverModVersion, int serverDataVersion, 
                              String serverModJarName, String serverModJarHash, long serverModJarSize,
-                             String serverMinecraftVersion) {
+                             String serverMinecraftVersion, String serverModLoader) {
         this.serverModVersion = serverModVersion;
         this.serverDataVersion = serverDataVersion;
         this.serverModJarName = serverModJarName;
         this.serverModJarHash = serverModJarHash;
         this.serverModJarSize = serverModJarSize;
         this.serverMinecraftVersion = serverMinecraftVersion;
+        this.serverModLoader = serverModLoader;
     }
     
     public VersionCheckPacket(FriendlyByteBuf buf) {
@@ -50,6 +52,7 @@ public class VersionCheckPacket implements IPacket {
         this.serverModJarHash = buf.readUtf(128);
         this.serverModJarSize = buf.readLong();
         this.serverMinecraftVersion = buf.readUtf(32);
+        this.serverModLoader = buf.readUtf(32);
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -59,6 +62,7 @@ public class VersionCheckPacket implements IPacket {
         buf.writeUtf(serverModJarHash, 128);
         buf.writeLong(serverModJarSize);
         buf.writeUtf(serverMinecraftVersion, 32);
+        buf.writeUtf(serverModLoader, 32);
     }
     
     public void handle(IPayloadContext context) {
@@ -69,14 +73,22 @@ public class VersionCheckPacket implements IPacket {
             com.servermanagement.ota.OTAVersion serverOTAVersion = 
                 com.servermanagement.ota.OTAVersion.parseFromString(serverModVersion);
             
-            ServerManagementMod.LOGGER.debug("Version check: client={} (build {}, MC {}), server={} (build {}, MC {})",
-                clientOTAVersion.getVersion(), clientOTAVersion.getBuildNumber(), clientOTAVersion.getMinecraftVersion(),
-                serverOTAVersion.getVersion(), serverOTAVersion.getBuildNumber(), serverMinecraftVersion);
+            ServerManagementMod.LOGGER.debug("Version check: client={} (build {}, MC {}, loader {}), server={} (build {}, MC {}, loader {})",
+                clientOTAVersion.getVersion(), clientOTAVersion.getBuildNumber(), clientOTAVersion.getMinecraftVersion(), clientOTAVersion.getModLoader(),
+                serverOTAVersion.getVersion(), serverOTAVersion.getBuildNumber(), serverMinecraftVersion, serverModLoader);
             
             // Verify Minecraft version compatibility
             if (!clientOTAVersion.getMinecraftVersion().equals(serverMinecraftVersion)) {
                 ServerManagementMod.LOGGER.error("Minecraft version mismatch! Client MC {} vs Server MC {}. OTA update blocked.",
                     clientOTAVersion.getMinecraftVersion(), serverMinecraftVersion);
+                return;
+            }
+            
+            // Verify mod loader compatibility
+            if (!"unknown".equals(clientOTAVersion.getModLoader()) && !"unknown".equals(serverModLoader)
+                    && !clientOTAVersion.getModLoader().equals(serverModLoader)) {
+                ServerManagementMod.LOGGER.error("Mod loader mismatch! Client {} vs Server {}. OTA update blocked.",
+                    clientOTAVersion.getModLoader(), serverModLoader);
                 return;
             }
             
@@ -95,7 +107,8 @@ public class VersionCheckPacket implements IPacket {
                         serverModJarName,
                         serverModJarHash,
                         serverModJarSize,
-                        serverMinecraftVersion
+                        serverMinecraftVersion,
+                        serverModLoader
                     );
                 } else {
                     ServerManagementMod.LOGGER.error("context.player() was not null on client! This shouldn't happen.");

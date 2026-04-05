@@ -7,8 +7,8 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
- * Manages OTA version tracking with build numbers and Minecraft version awareness.
- * Version format: v1.0.3-b04-release (network) / v1.0.3-b04-mc1.21.1-release (display)
+ * Manages OTA version tracking with build numbers, Minecraft version, and mod loader awareness.
+ * Version format: v1.0.3-b04-release (network) / v1.0.3-b04-mc1.21.1-neoforge-release (display)
  */
 public class OTAVersion {
     
@@ -17,13 +17,15 @@ public class OTAVersion {
     private final String releaseType;
     private final String releaseNotes;
     private final String minecraftVersion;
+    private final String modLoader;
     
     private static OTAVersion CURRENT_VERSION = null;
     
-    private OTAVersion(String version, int buildNumber, String minecraftVersion, String releaseType, String releaseNotes) {
+    private OTAVersion(String version, int buildNumber, String minecraftVersion, String modLoader, String releaseType, String releaseNotes) {
         this.version = version;
         this.buildNumber = buildNumber;
         this.minecraftVersion = minecraftVersion != null ? minecraftVersion : "unknown";
+        this.modLoader = modLoader != null ? modLoader : "unknown";
         this.releaseType = releaseType;
         this.releaseNotes = releaseNotes;
     }
@@ -39,7 +41,7 @@ public class OTAVersion {
         try (InputStream is = OTAVersion.class.getResourceAsStream("/ota.properties")) {
             if (is == null) {
                 ServerManagementMod.LOGGER.warn("ota.properties not found, using fallback version");
-                CURRENT_VERSION = new OTAVersion("1.0.0", 1, "unknown", "unknown", "No release notes");
+                CURRENT_VERSION = new OTAVersion("1.0.0", 1, "unknown", "unknown", "unknown", "No release notes");
                 return CURRENT_VERSION;
             }
             
@@ -51,21 +53,22 @@ public class OTAVersion {
             String releaseType = props.getProperty("ota.releaseType", "unknown");
             String releaseNotes = props.getProperty("ota.releaseNotes", "No release notes");
             String mcVersion = props.getProperty("ota.minecraft_version", "unknown");
+            String loader = props.getProperty("ota.mod_loader", "unknown");
             
-            CURRENT_VERSION = new OTAVersion(version, build, mcVersion, releaseType, releaseNotes);
+            CURRENT_VERSION = new OTAVersion(version, build, mcVersion, loader, releaseType, releaseNotes);
             
-            ServerManagementMod.LOGGER.info("Loaded OTA version: {} (build {}, MC {})", version, build, mcVersion);
+            ServerManagementMod.LOGGER.info("Loaded OTA version: {} (build {}, MC {}, loader {})", version, build, mcVersion, loader);
             return CURRENT_VERSION;
             
         } catch (IOException | NumberFormatException e) {
             ServerManagementMod.LOGGER.error("Failed to load OTA version", e);
-            CURRENT_VERSION = new OTAVersion("1.0.0", 1, "unknown", "error", "Failed to load version info");
+            CURRENT_VERSION = new OTAVersion("1.0.0", 1, "unknown", "unknown", "error", "Failed to load version info");
             return CURRENT_VERSION;
         }
     }
     
     /**
-     * Get the full version string for network transmission (without MC version).
+     * Get the full version string for network transmission (without MC version/loader).
      * Format: v1.0.3-b04-release
      */
     public String getFullVersion() {
@@ -73,14 +76,20 @@ public class OTAVersion {
     }
     
     /**
-     * Get the display version string including MC version.
-     * Format: v1.0.3-b04-mc1.21.1-release
+     * Get the display version string including MC version and mod loader.
+     * Format: v1.0.3-b04-mc1.21.1-neoforge-release
      */
     public String getDisplayVersion() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%s-b%02d", version, buildNumber));
         if (minecraftVersion != null && !"unknown".equals(minecraftVersion)) {
-            return String.format("%s-b%02d-mc%s-%s", version, buildNumber, minecraftVersion, releaseType);
+            sb.append("-mc").append(minecraftVersion);
         }
-        return getFullVersion();
+        if (modLoader != null && !"unknown".equals(modLoader)) {
+            sb.append("-").append(modLoader);
+        }
+        sb.append("-").append(releaseType);
+        return sb.toString();
     }
     
     /**
@@ -119,14 +128,30 @@ public class OTAVersion {
     }
     
     /**
-     * Check if this version targets the same Minecraft version as another
+     * Get the mod loader (e.g., "forge", "neoforge")
+     */
+    public String getModLoader() {
+        return modLoader;
+    }
+    
+    /**
+     * Check if this version targets the same Minecraft version and mod loader as another
      */
     public boolean isCompatibleWith(OTAVersion other) {
         if (other == null) return false;
-        if ("unknown".equals(this.minecraftVersion) || "unknown".equals(other.minecraftVersion)) {
-            return true; // Can't determine, assume compatible
+        // Check Minecraft version compatibility
+        if (!"unknown".equals(this.minecraftVersion) && !"unknown".equals(other.minecraftVersion)) {
+            if (!this.minecraftVersion.equals(other.minecraftVersion)) {
+                return false;
+            }
         }
-        return this.minecraftVersion.equals(other.minecraftVersion);
+        // Check mod loader compatibility
+        if (!"unknown".equals(this.modLoader) && !"unknown".equals(other.modLoader)) {
+            if (!this.modLoader.equals(other.modLoader)) {
+                return false;
+            }
+        }
+        return true;
     }
     
     /**
@@ -153,7 +178,7 @@ public class OTAVersion {
     /**
      * Parse version string from network packet or display string.
      * Supports formats:
-     *   New: "v1.0.3-b04-release" or "v1.0.3-b04-mc1.21.1-release"
+     *   New: "v1.0.3-b04-release" or "v1.0.3-b04-mc1.21.1-neoforge-release"
      *   Old: "v1.0.3-release.3" or "v1.0.3-release.3:1.21.1"
      */
     public static OTAVersion parseFromString(String versionString) {
@@ -164,19 +189,25 @@ public class OTAVersion {
                 String version = parts[0];
                 int build = 0;
                 String mcVersion = null;
+                String loader = null;
                 String releaseType = "unknown";
+                
+                // Known loader names for disambiguation
+                java.util.Set<String> knownLoaders = java.util.Set.of("forge", "neoforge", "fabric", "quilt");
                 
                 for (int i = 1; i < parts.length; i++) {
                     if (parts[i].matches("b\\d+")) {
                         build = Integer.parseInt(parts[i].substring(1));
                     } else if (parts[i].startsWith("mc")) {
                         mcVersion = parts[i].substring(2);
+                    } else if (knownLoaders.contains(parts[i].toLowerCase())) {
+                        loader = parts[i].toLowerCase();
                     } else {
                         releaseType = parts[i];
                     }
                 }
                 
-                return new OTAVersion(version, build, mcVersion, releaseType, "");
+                return new OTAVersion(version, build, mcVersion, loader, releaseType, "");
             }
             
             // Old format with optional MC version: "v1.0.3-release.3:1.21.1"
@@ -196,15 +227,15 @@ public class OTAVersion {
                     if (i > 0) versionBuilder.append(".");
                     versionBuilder.append(parts[i]);
                 }
-                return new OTAVersion(versionBuilder.toString(), build, mcVersion, "remote", "");
+                return new OTAVersion(versionBuilder.toString(), build, mcVersion, null, "remote", "");
             }
             
             // Fallback for unrecognized format
-            return new OTAVersion(vPart, 0, mcVersion, "unknown", "");
+            return new OTAVersion(vPart, 0, mcVersion, null, "unknown", "");
             
         } catch (Exception e) {
             ServerManagementMod.LOGGER.warn("Failed to parse version string: {}", versionString);
-            return new OTAVersion(versionString, 0, null, "error", "");
+            return new OTAVersion(versionString, 0, null, null, "error", "");
         }
     }
     
@@ -260,6 +291,6 @@ public class OTAVersion {
     
     @Override
     public int hashCode() {
-        return (version + "." + buildNumber + ":" + minecraftVersion).hashCode();
+        return (version + "." + buildNumber + ":" + minecraftVersion + ":" + modLoader).hashCode();
     }
 }
