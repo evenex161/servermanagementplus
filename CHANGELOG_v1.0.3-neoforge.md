@@ -1,12 +1,12 @@
 # Changelog - v1.0.3 NeoForge (Initial NeoForge Port & Multi-Loader Support)
 
 **Release Date**: April 5, 2026  
-**Previous Version**: N/A (first NeoForge release — ported from Forge v1.0.3-b04)  
+**Previous Version**: v1.0.3-b04 (NeoForge)  
 **Minecraft Version**: 1.21.1  
 **Mod Loader**: NeoForge  
 **NeoForge Version**: 21.1.222+  
-**OTA Build**: 04  
-**JAR File**: `servermanagementplus-v1.0.3-b04-mc1.21.1-neoforge-release.jar`  
+**OTA Build**: 05  
+**JAR File**: `servermanagementplus-v1.0.3-b05-mc1.21.1-neoforge-release.jar`  
 **Branch**: `mc/1.21.1-neoforge`
 
 > **Forge users**: See [CHANGELOG_v1.0.3.md](CHANGELOG_v1.0.3.md) for the Forge-specific changelog.
