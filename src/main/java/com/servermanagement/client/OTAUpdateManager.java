@@ -35,8 +35,8 @@ public class OTAUpdateManager {
     public static void handleVersionMismatch(String clientVersion, String serverVersion,
                                             int serverDataVersion, String serverModJarName,
                                             String serverModJarHash, long serverModJarSize,
-                                            String serverMinecraftVersion) {
-        ServerManagementMod.LOGGER.debug("handleVersionMismatch called, updateInProgress={}", updateInProgress);
+                                            String serverMinecraftVersion, String serverModLoader) {
+        ServerManagementMod.LOGGER.debug("handleVersionMismatch called, updateInProgress={}, loader={}", updateInProgress, serverModLoader);
         
         if (updateInProgress) {
             ServerManagementMod.LOGGER.warn("Update already in progress, ignoring new version mismatch");
