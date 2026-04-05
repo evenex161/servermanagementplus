@@ -8,6 +8,18 @@ Server Management Plus gives you a complete suite of tools to run your server �
 
 ---
 
+## Changelogs
+
+Detailed changelogs are available per branch on GitHub:
+
+| Branch | Changelog |
+|---|---|
+| MC 1.20.1 — Forge (`mc/1.20.1-forge`) | [CHANGELOG_v1.0.3.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.20.1-forge/CHANGELOG_v1.0.3.md) |
+| MC 1.21.1 — Forge (`mc/1.21.1-forge`) | [CHANGELOG_v1.0.3.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v1.0.3.md) |
+| MC 1.21.1 — NeoForge (`mc/1.21.1-neoforge`) | [CHANGELOG_v1.0.3-neoforge.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-neoforge/CHANGELOG_v1.0.3-neoforge.md) |
+
+---
+
 ## Features
 
 ### Admin Dashboard

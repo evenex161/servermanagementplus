@@ -42,7 +42,7 @@
 - Complete networking API migration: `NetworkEvent` → `CustomPayloadEvent`, `ChannelBuilder`/`messageBuilder` pattern
 - All 56 packet handlers, ItemStack serialization, Advancement API, GUI screens, and NbtIo calls updated
 - Player head system updated for `ResolvableProfile` and `DataComponents`
-- Three branches: **mc/1.20.1** (Forge), **mc/1.21.1** (Forge), **mc/1.21.1-neoforge** (NeoForge)
+- Three branches: **mc/1.20.1-forge** (Forge), **mc/1.21.1-forge** (Forge), **mc/1.21.1-neoforge** (NeoForge)
 
 ---
 

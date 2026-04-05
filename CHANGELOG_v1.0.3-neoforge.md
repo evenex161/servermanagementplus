@@ -16,7 +16,7 @@
 ## 🔀 NeoForge Port
 
 ### Full Port from Forge to NeoForge 21.1
-This is the initial NeoForge release of Server Management Plus, ported from the Forge `mc/1.21.1` branch. All features, systems, and fixes from the Forge v1.0.3 release are included.
+This is the initial NeoForge release of Server Management Plus, ported from the Forge `mc/1.21.1-forge` branch. All features, systems, and fixes from the Forge v1.0.3 release are included.
 
 - **NeoForge 21.1.222** with **NeoGradle 7.1.21** (Gradle 9.3.0, Java 21)
 - **Build system migration**: ForgeGradle → NeoGradle, Forge dependency replaced with NeoForge
@@ -98,7 +98,7 @@ All security hardening and performance improvements from Forge v1.0.3 are includ
 
 ---
 
-## 📁 Files Changed (vs. Forge mc/1.21.1 branch)
+## 📁 Files Changed (vs. Forge mc/1.21.1-forge branch)
 
 | File | Change |
 |---|---|
