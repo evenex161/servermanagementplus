@@ -133,7 +133,10 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
 
         // Requests tab — show count badge if there are incoming
         List<ClientMoneyRequestData.RequestEntry> incoming = ClientMoneyRequestData.getIncomingRequests();
-        long pendingCount = incoming.stream().filter(ClientMoneyRequestData.RequestEntry::isPending).count();
+        int pendingCount = 0;
+        for (ClientMoneyRequestData.RequestEntry r : incoming) {
+            if (r.isPending()) pendingCount++;
+        }
         String reqLabel = pendingCount > 0 ? "Requests (" + pendingCount + ")" : "Requests";
         ModernButton.ButtonStyle reqStyle = currentTab == Tab.REQUESTS ? ModernButton.ButtonStyle.PRIMARY :
             (pendingCount > 0 ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY);
@@ -284,9 +287,10 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
             ClientMoneyRequestData.getOutgoingRequests();
 
         // Filter to pending only
-        List<ClientMoneyRequestData.RequestEntry> pending = requests.stream()
-            .filter(ClientMoneyRequestData.RequestEntry::isPending)
-            .toList();
+        List<ClientMoneyRequestData.RequestEntry> pending = new java.util.ArrayList<>();
+        for (ClientMoneyRequestData.RequestEntry r : requests) {
+            if (r.isPending()) pending.add(r);
+        }
 
         reqMaxPages = Math.max(1, (pending.size() + REQUESTS_PER_PAGE - 1) / REQUESTS_PER_PAGE);
         if (reqPage >= reqMaxPages) reqPage = Math.max(0, reqMaxPages - 1);
@@ -589,9 +593,10 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
             ClientMoneyRequestData.getIncomingRequests() :
             ClientMoneyRequestData.getOutgoingRequests();
 
-        List<ClientMoneyRequestData.RequestEntry> pending = requests.stream()
-            .filter(ClientMoneyRequestData.RequestEntry::isPending)
-            .toList();
+        List<ClientMoneyRequestData.RequestEntry> pending = new java.util.ArrayList<>();
+        for (ClientMoneyRequestData.RequestEntry r : requests) {
+            if (r.isPending()) pending.add(r);
+        }
 
         int entryY = contentY + 24;
 

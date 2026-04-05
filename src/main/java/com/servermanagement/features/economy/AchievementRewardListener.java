@@ -43,7 +43,8 @@ public class AchievementRewardListener {
         }
 
         // Calculate reward amount
-        int reward = calculateReward(holder, displayInfo);
+        AchievementRewardTier tier = calculateTier(holder, displayInfo);
+        int reward = tier.getAverageReward();
         
         // Give the reward
         EconomyManager.getInstance().deposit(
@@ -57,11 +58,9 @@ public class AchievementRewardListener {
         markAsRewarded(player, holder);
 
         // Notify player
-        String tierName = getTierFromAdvancement(holder, displayInfo).getDisplayName();
+        String tierName = tier.getDisplayName();
         player.sendSystemMessage(Component.literal(
-            "§a§l✓ Achievement Reward! §r§a+" +
-            "$" + reward + 
-            " §7(" + tierName + ")"
+            String.format("§a§l✓ Achievement Reward! §r§a+$%d §7(%s)", reward, tierName)
         ));
 
         ServerManagementMod.LOGGER.info(
@@ -73,35 +72,13 @@ public class AchievementRewardListener {
     }
 
     /**
-     * Calculate reward amount based on advancement properties
+     * Calculate the reward tier based on advancement properties
      */
-    private static int calculateReward(AdvancementHolder holder, DisplayInfo displayInfo) {
-        // Determine tier based on frame type (TASK, GOAL, CHALLENGE)
-        AchievementRewardTier tierFromFrame = AchievementRewardTier.fromFrameType(displayInfo.getType());
-        
-        // Also consider complexity (number of criteria)
-        int criteriaCount = holder.value().criteria().size();
-        boolean hasParent = holder.value().parent().isPresent();
-        AchievementRewardTier tierFromComplexity = AchievementRewardTier.fromComplexity(criteriaCount, hasParent);
-        
-        // Use the higher tier of the two
-        AchievementRewardTier finalTier = tierFromComplexity.ordinal() > tierFromFrame.ordinal() 
-            ? tierFromComplexity 
-            : tierFromFrame;
-        
-        // Return average reward for the tier
-        return finalTier.getAverageReward();
-    }
-
-    /**
-     * Get the tier for display purposes
-     */
-    private static AchievementRewardTier getTierFromAdvancement(AdvancementHolder holder, DisplayInfo displayInfo) {
+    private static AchievementRewardTier calculateTier(AdvancementHolder holder, DisplayInfo displayInfo) {
         AchievementRewardTier tierFromFrame = AchievementRewardTier.fromFrameType(displayInfo.getType());
         int criteriaCount = holder.value().criteria().size();
         boolean hasParent = holder.value().parent().isPresent();
         AchievementRewardTier tierFromComplexity = AchievementRewardTier.fromComplexity(criteriaCount, hasParent);
-        
         return tierFromComplexity.ordinal() > tierFromFrame.ordinal() 
             ? tierFromComplexity 
             : tierFromFrame;

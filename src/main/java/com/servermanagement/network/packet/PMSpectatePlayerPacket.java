@@ -6,12 +6,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import com.servermanagement.ServerManagementMod;
 
 public class PMSpectatePlayerPacket implements IPacket {
+    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     public static final CustomPacketPayload.Type<PMSpectatePlayerPacket> TYPE = 
         new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "p_m_spectate_player_packet"));
     
@@ -40,7 +42,7 @@ public class PMSpectatePlayerPacket implements IPacket {
         ctx.enqueueWork(() -> {
             ServerPlayer player = (ServerPlayer) ctx.player();
             if (player != null && player.hasPermissions(2)) {
-                if (playerName == null || playerName.length() > 16 || !playerName.matches("[a-zA-Z0-9_]+")) {
+                if (playerName == null || playerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(playerName).matches()) {
                     return;
                 }
                 com.servermanagement.features.playermanager.PlayerManagerSingleton.spectatePlayer(player, playerName);

@@ -7,7 +7,6 @@ import net.minecraft.server.MinecraftServer;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Manages money requests between players
@@ -158,50 +157,62 @@ public class MoneyRequestManager {
      * Find a request by ID
      */
     public MoneyRequest findRequest(UUID requestId) {
-        return requests.stream()
-            .filter(r -> r.getRequestId().equals(requestId))
-            .findFirst()
-            .orElse(null);
+        for (MoneyRequest r : requests) {
+            if (r.getRequestId().equals(requestId)) {
+                return r;
+            }
+        }
+        return null;
     }
 
     /**
      * Get all pending incoming requests for a player
      */
     public List<MoneyRequest> getPendingIncomingRequests(UUID playerUUID) {
-        return requests.stream()
-            .filter(r -> r.isIncoming(playerUUID))
-            .filter(r -> r.getStatus() == RequestStatus.PENDING)
-            .filter(r -> !r.isExpired())
-            .collect(Collectors.toList());
+        List<MoneyRequest> result = new ArrayList<>();
+        for (MoneyRequest r : requests) {
+            if (r.isIncoming(playerUUID) && r.getStatus() == RequestStatus.PENDING && !r.isExpired()) {
+                result.add(r);
+            }
+        }
+        return result;
     }
 
     /**
      * Get all pending outgoing requests from a player
      */
     public List<MoneyRequest> getPendingRequestsByRequester(UUID playerUUID) {
-        return requests.stream()
-            .filter(r -> r.isOutgoing(playerUUID))
-            .filter(r -> r.getStatus() == RequestStatus.PENDING)
-            .filter(r -> !r.isExpired())
-            .collect(Collectors.toList());
+        List<MoneyRequest> result = new ArrayList<>();
+        for (MoneyRequest r : requests) {
+            if (r.isOutgoing(playerUUID) && r.getStatus() == RequestStatus.PENDING && !r.isExpired()) {
+                result.add(r);
+            }
+        }
+        return result;
     }
 
     /**
      * Get all requests involving a player (incoming or outgoing)
      */
     public List<MoneyRequest> getAllRequestsForPlayer(UUID playerUUID) {
-        return requests.stream()
-            .filter(r -> r.isIncoming(playerUUID) || r.isOutgoing(playerUUID))
-            .collect(Collectors.toList());
+        List<MoneyRequest> result = new ArrayList<>();
+        for (MoneyRequest r : requests) {
+            if (r.isIncoming(playerUUID) || r.isOutgoing(playerUUID)) {
+                result.add(r);
+            }
+        }
+        return result;
     }
 
     /**
      * Clean up expired requests and enforce hard cap
      */
     public void cleanupExpiredRequests() {
-        requests.stream()
-            .filter(MoneyRequest::isExpired)
-            .forEach(r -> r.setStatus(RequestStatus.EXPIRED));
+        for (MoneyRequest r : requests) {
+            if (r.isExpired()) {
+                r.setStatus(RequestStatus.EXPIRED);
+            }
+        }
         
         // Remove old completed/expired requests (keep last 7 days instead of 30)
         long cutoffTime = System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000);

@@ -39,15 +39,16 @@ public class ChatIsolationHandler {
         event.setCanceled(true);
         
         // Build the chat message
-        Component chatMessage = Component.literal("<" + sender.getName().getString() + "> " + event.getMessage().getString());
+        StringBuilder msgBuilder = new StringBuilder();
+        msgBuilder.append('<').append(sender.getName().getString()).append("> ").append(event.getMessage().getString());
+        Component chatMessage = Component.literal(msgBuilder.toString());
         
         // Send to sender
         sender.sendSystemMessage(chatMessage);
         
         // Send to all players in connected dimensions (use HashSet for O(1) lookups)
-        Set<String> allowedDimensions = new HashSet<>();
+        Set<String> allowedDimensions = new HashSet<>(connectedDimensions);
         allowedDimensions.add(senderDimension); // Include sender's dimension
-        allowedDimensions.addAll(connectedDimensions);
         
         for (ServerPlayer player : sender.server.getPlayerList().getPlayers()) {
             // Skip the sender (already sent)

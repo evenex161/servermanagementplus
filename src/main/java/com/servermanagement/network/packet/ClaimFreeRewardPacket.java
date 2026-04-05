@@ -89,11 +89,12 @@ public class ClaimFreeRewardPacket implements IPacket {
                         player.sendSystemMessage(Component.literal("§e⚠ Inventory full! Item sent to Bank Inventory."));
                     }
                     
-                    player.sendSystemMessage(Component.literal("§a✓ Claimed free daily reward: $" + reward + " + " + 
-                        rewardItem.getHoverName().getString() + " x" + rewardItem.getCount()));
+                    player.sendSystemMessage(Component.literal(String.format(
+                        "§a✓ Claimed free daily reward: $%d + %s x%d",
+                        reward, rewardItem.getHoverName().getString(), rewardItem.getCount())));
                 } else {
                     // Send success message (money only)
-                    player.sendSystemMessage(Component.literal("§a✓ Claimed free daily reward: $" + reward));
+                    player.sendSystemMessage(Component.literal(String.format("§a✓ Claimed free daily reward: $%d", reward)));
                 }
                 
                 // Save data
