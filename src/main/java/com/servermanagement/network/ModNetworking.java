@@ -366,6 +366,19 @@ public class ModNetworking {
             .consumer(SyncMoneyRequestsPacket::handle)
             .add();
         
+        // Performance Settings packets
+        INSTANCE.messageBuilder(SyncPerformanceSettingsPacket.class, id())
+            .encoder(SyncPerformanceSettingsPacket::encode)
+            .decoder(SyncPerformanceSettingsPacket::new)
+            .consumer(SyncPerformanceSettingsPacket::handle)
+            .add();
+        
+        INSTANCE.messageBuilder(UpdatePerformanceSettingPacket.class, id())
+            .encoder(UpdatePerformanceSettingPacket::encode)
+            .decoder(UpdatePerformanceSettingPacket::new)
+            .consumer(UpdatePerformanceSettingPacket::handle)
+            .add();
+        
         INSTANCE.build();
         
         ServerManagementMod.LOGGER.info("Registered {} network packets", packetId);

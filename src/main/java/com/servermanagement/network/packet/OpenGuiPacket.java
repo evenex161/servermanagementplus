@@ -112,6 +112,10 @@ public class OpenGuiPacket implements IPacket {
                         syncGamblingStats(player); // Sync gambling statistics
                         com.servermanagement.gui.gambling.MineStacksMenuProvider.open(player);
                         break;
+                    case PERFORMANCE_SETTINGS:
+                        SyncPerformanceSettingsPacket.syncToPlayer(player);
+                        player.openMenu(new com.servermanagement.gui.provider.PerformanceSettingsMenuProvider());
+                        break;
                 }
             }
         });
@@ -281,7 +285,8 @@ public class OpenGuiPacket implements IPacket {
         ACHIEVEMENTS,
         ECONOMY_MANAGEMENT,
         MINEBAY,
-        MINESTACKS;
+        MINESTACKS,
+        PERFORMANCE_SETTINGS;
 
         public boolean isAdminOnly() {
             return switch (this) {

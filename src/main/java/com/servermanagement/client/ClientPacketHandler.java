@@ -103,4 +103,96 @@ public class ClientPacketHandler {
     public static int getCachedFreeRewardCooldownHours() {
         return cachedFreeRewardCooldownHours;
     }
+
+    // --- Performance settings cache ---
+    private static boolean perfFeatureEnabled = true;
+    private static boolean perfItemMergingEnabled = true;
+    private static boolean perfMobSpawnLimiterEnabled = false;
+    private static boolean perfEntityActivationRangeEnabled = false;
+    private static boolean perfVillagerThrottleEnabled = false;
+    private static boolean perfRedstoneThrottleEnabled = false;
+    private static boolean perfTpsMonitorEnabled = true;
+    private static boolean perfTpsAutoOptimize = false;
+    private static double perfItemMergeRadius = 3.0;
+    private static int perfItemMergeInterval = 40;
+    private static int perfMobCapMultiplier = 75;
+    private static int perfMonsterActivationRange = 32;
+    private static int perfAnimalActivationRange = 16;
+    private static int perfMiscActivationRange = 8;
+    private static int perfVillagerTickInterval = 3;
+    private static int perfRedstoneUpdatesPerTick = 1000;
+    private static double perfTpsWarningThreshold = 18.0;
+    private static double perfTpsCriticalThreshold = 15.0;
+    private static double perfCurrentTps = 20.0;
+    private static double perfAverageMspt = 0.0;
+    private static boolean perfAutoOptimizeActive = false;
+    private static long perfTotalItemsMerged = 0;
+    private static long perfTotalSpawnsCancelled = 0;
+    private static long perfTotalEntitiesThrottled = 0;
+    private static long perfTotalRedstoneThrottled = 0;
+
+    public static void handlePerformanceSettings(
+            boolean featureEnabled,
+            boolean itemMergingEnabled, boolean mobSpawnLimiterEnabled,
+            boolean entityActivationRangeEnabled, boolean villagerThrottleEnabled,
+            boolean redstoneThrottleEnabled, boolean tpsMonitorEnabled, boolean tpsAutoOptimize,
+            double itemMergeRadius, int itemMergeInterval, int mobCapMultiplier,
+            int monsterActivationRange, int animalActivationRange, int miscActivationRange,
+            int villagerTickInterval, int redstoneUpdatesPerTick,
+            double tpsWarningThreshold, double tpsCriticalThreshold,
+            double currentTps, double averageMspt, boolean autoOptimizeActive,
+            long totalItemsMerged, long totalSpawnsCancelled,
+            long totalEntitiesThrottled, long totalRedstoneThrottled) {
+        perfFeatureEnabled = featureEnabled;
+        perfItemMergingEnabled = itemMergingEnabled;
+        perfMobSpawnLimiterEnabled = mobSpawnLimiterEnabled;
+        perfEntityActivationRangeEnabled = entityActivationRangeEnabled;
+        perfVillagerThrottleEnabled = villagerThrottleEnabled;
+        perfRedstoneThrottleEnabled = redstoneThrottleEnabled;
+        perfTpsMonitorEnabled = tpsMonitorEnabled;
+        perfTpsAutoOptimize = tpsAutoOptimize;
+        perfItemMergeRadius = itemMergeRadius;
+        perfItemMergeInterval = itemMergeInterval;
+        perfMobCapMultiplier = mobCapMultiplier;
+        perfMonsterActivationRange = monsterActivationRange;
+        perfAnimalActivationRange = animalActivationRange;
+        perfMiscActivationRange = miscActivationRange;
+        perfVillagerTickInterval = villagerTickInterval;
+        perfRedstoneUpdatesPerTick = redstoneUpdatesPerTick;
+        perfTpsWarningThreshold = tpsWarningThreshold;
+        perfTpsCriticalThreshold = tpsCriticalThreshold;
+        perfCurrentTps = currentTps;
+        perfAverageMspt = averageMspt;
+        perfAutoOptimizeActive = autoOptimizeActive;
+        perfTotalItemsMerged = totalItemsMerged;
+        perfTotalSpawnsCancelled = totalSpawnsCancelled;
+        perfTotalEntitiesThrottled = totalEntitiesThrottled;
+        perfTotalRedstoneThrottled = totalRedstoneThrottled;
+    }
+
+    public static boolean getPerfFeatureEnabled() { return perfFeatureEnabled; }
+    public static boolean getPerfItemMergingEnabled() { return perfItemMergingEnabled; }
+    public static boolean getPerfMobSpawnLimiterEnabled() { return perfMobSpawnLimiterEnabled; }
+    public static boolean getPerfEntityActivationRangeEnabled() { return perfEntityActivationRangeEnabled; }
+    public static boolean getPerfVillagerThrottleEnabled() { return perfVillagerThrottleEnabled; }
+    public static boolean getPerfRedstoneThrottleEnabled() { return perfRedstoneThrottleEnabled; }
+    public static boolean getPerfTpsMonitorEnabled() { return perfTpsMonitorEnabled; }
+    public static boolean getPerfTpsAutoOptimize() { return perfTpsAutoOptimize; }
+    public static double getPerfItemMergeRadius() { return perfItemMergeRadius; }
+    public static int getPerfItemMergeInterval() { return perfItemMergeInterval; }
+    public static int getPerfMobCapMultiplier() { return perfMobCapMultiplier; }
+    public static int getPerfMonsterActivationRange() { return perfMonsterActivationRange; }
+    public static int getPerfAnimalActivationRange() { return perfAnimalActivationRange; }
+    public static int getPerfMiscActivationRange() { return perfMiscActivationRange; }
+    public static int getPerfVillagerTickInterval() { return perfVillagerTickInterval; }
+    public static int getPerfRedstoneUpdatesPerTick() { return perfRedstoneUpdatesPerTick; }
+    public static double getPerfTpsWarningThreshold() { return perfTpsWarningThreshold; }
+    public static double getPerfTpsCriticalThreshold() { return perfTpsCriticalThreshold; }
+    public static double getPerfCurrentTps() { return perfCurrentTps; }
+    public static double getPerfAverageMspt() { return perfAverageMspt; }
+    public static boolean getPerfAutoOptimizeActive() { return perfAutoOptimizeActive; }
+    public static long getPerfTotalItemsMerged() { return perfTotalItemsMerged; }
+    public static long getPerfTotalSpawnsCancelled() { return perfTotalSpawnsCancelled; }
+    public static long getPerfTotalEntitiesThrottled() { return perfTotalEntitiesThrottled; }
+    public static long getPerfTotalRedstoneThrottled() { return perfTotalRedstoneThrottled; }
 }

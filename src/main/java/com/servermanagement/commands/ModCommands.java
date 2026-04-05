@@ -986,55 +986,8 @@ public class ModCommands {
         );
         
         // Server Performance command (/smperformance or /smperf)
-        dispatcher.register(Commands.literal("smperformance")
-            .requires(source -> source.hasPermission(2))
-            .executes(context -> {
-                return executePerformanceStatus(context.getSource());
-            })
-            .then(Commands.literal("status")
-                .executes(context -> {
-                    return executePerformanceStatus(context.getSource());
-                })
-            )
-            .then(Commands.literal("stats")
-                .executes(context -> {
-                    return executePerformanceStats(context.getSource());
-                })
-            )
-            .then(Commands.literal("reset")
-                .executes(context -> {
-                    var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
-                    manager.resetStats();
-                    context.getSource().sendSuccess(() -> Component.literal("§aPerformance stats reset"), true);
-                    return 1;
-                })
-            )
-        );
-        
-        dispatcher.register(Commands.literal("smperf")
-            .requires(source -> source.hasPermission(2))
-            .executes(context -> {
-                return executePerformanceStatus(context.getSource());
-            })
-            .then(Commands.literal("status")
-                .executes(context -> {
-                    return executePerformanceStatus(context.getSource());
-                })
-            )
-            .then(Commands.literal("stats")
-                .executes(context -> {
-                    return executePerformanceStats(context.getSource());
-                })
-            )
-            .then(Commands.literal("reset")
-                .executes(context -> {
-                    var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
-                    manager.resetStats();
-                    context.getSource().sendSuccess(() -> Component.literal("§aPerformance stats reset"), true);
-                    return 1;
-                })
-            )
-        );
+        registerPerformanceCommand(dispatcher, "smperformance");
+        registerPerformanceCommand(dispatcher, "smperf");
         
         // Performance metrics command
         dispatcher.register(Commands.literal("smmetrics")
@@ -1118,6 +1071,142 @@ public class ModCommands {
         return 1;
     }
     
+    /**
+     * Registers a full performance command tree under the given root literal.
+     */
+    private static void registerPerformanceCommand(CommandDispatcher<net.minecraft.commands.CommandSourceStack> dispatcher, String name) {
+        dispatcher.register(Commands.literal(name)
+            .requires(source -> source.hasPermission(2))
+            .executes(ctx -> executePerformanceStatus(ctx.getSource()))
+            .then(Commands.literal("status")
+                .executes(ctx -> executePerformanceStatus(ctx.getSource())))
+            .then(Commands.literal("stats")
+                .executes(ctx -> executePerformanceStats(ctx.getSource())))
+            .then(Commands.literal("reset")
+                .executes(ctx -> {
+                    com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance().resetStats();
+                    ctx.getSource().sendSuccess(() -> Component.literal("§aPerformance stats reset"), true);
+                    return 1;
+                }))
+            .then(Commands.literal("toggle")
+                .then(Commands.argument("subsystem", StringArgumentType.string())
+                    .suggests((ctx, builder) -> {
+                        for (String s : new String[]{"feature", "item_merging", "mob_spawn_limiter",
+                                "entity_activation_range", "villager_throttle", "redstone_throttle",
+                                "tps_monitor", "auto_optimize"}) {
+                            builder.suggest(s);
+                        }
+                        return builder.buildFuture();
+                    })
+                    .executes(ctx -> {
+                        String subsystem = StringArgumentType.getString(ctx, "subsystem");
+                        return executePerformanceToggle(ctx.getSource(), subsystem);
+                    })
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(ctx -> {
+                            String subsystem = StringArgumentType.getString(ctx, "subsystem");
+                            boolean enabled = BoolArgumentType.getBool(ctx, "enabled");
+                            return executePerformanceSet(ctx.getSource(), subsystem, enabled);
+                        })
+                    )
+                )
+            )
+            .then(Commands.literal("set")
+                .then(Commands.argument("setting", StringArgumentType.string())
+                    .suggests((ctx, builder) -> {
+                        for (String s : new String[]{"item_merge_radius", "item_merge_interval",
+                                "mob_cap_multiplier", "monster_activation_range", "animal_activation_range",
+                                "misc_activation_range", "villager_tick_interval", "redstone_updates_per_tick",
+                                "tps_warning_threshold", "tps_critical_threshold"}) {
+                            builder.suggest(s);
+                        }
+                        return builder.buildFuture();
+                    })
+                    .then(Commands.argument("value", StringArgumentType.string())
+                        .executes(ctx -> {
+                            String setting = StringArgumentType.getString(ctx, "setting");
+                            String value = StringArgumentType.getString(ctx, "value");
+                            return executePerformanceSetValue(ctx.getSource(), setting, value);
+                        })
+                    )
+                )
+            )
+            .then(Commands.literal("gui")
+                .executes(ctx -> {
+                    if (ctx.getSource().getEntity() instanceof ServerPlayer player) {
+                        com.servermanagement.network.packet.SyncPerformanceSettingsPacket.syncToPlayer(player);
+                        player.openMenu(new com.servermanagement.gui.provider.PerformanceSettingsMenuProvider());
+                    }
+                    return 1;
+                })
+            )
+        );
+    }
+    
+    private static int executePerformanceToggle(net.minecraft.commands.CommandSourceStack source, String subsystem) {
+        boolean current = getPerformanceToggle(subsystem);
+        return executePerformanceSet(source, subsystem, !current);
+    }
+    
+    private static boolean getPerformanceToggle(String subsystem) {
+        return switch (subsystem) {
+            case "feature" -> ModConfig.SERVER_PERFORMANCE_ENABLED.get();
+            case "item_merging" -> ModConfig.ITEM_MERGING_ENABLED.get();
+            case "mob_spawn_limiter" -> ModConfig.MOB_SPAWN_LIMITER_ENABLED.get();
+            case "entity_activation_range" -> ModConfig.ENTITY_ACTIVATION_RANGE_ENABLED.get();
+            case "villager_throttle" -> ModConfig.VILLAGER_THROTTLE_ENABLED.get();
+            case "redstone_throttle" -> ModConfig.REDSTONE_THROTTLE_ENABLED.get();
+            case "tps_monitor" -> ModConfig.TPS_MONITOR_ENABLED.get();
+            case "auto_optimize" -> ModConfig.TPS_AUTO_OPTIMIZE.get();
+            default -> false;
+        };
+    }
+    
+    private static int executePerformanceSet(net.minecraft.commands.CommandSourceStack source, String subsystem, boolean enabled) {
+        switch (subsystem) {
+            case "feature" -> ModConfig.SERVER_PERFORMANCE_ENABLED.set(enabled);
+            case "item_merging" -> ModConfig.ITEM_MERGING_ENABLED.set(enabled);
+            case "mob_spawn_limiter" -> ModConfig.MOB_SPAWN_LIMITER_ENABLED.set(enabled);
+            case "entity_activation_range" -> ModConfig.ENTITY_ACTIVATION_RANGE_ENABLED.set(enabled);
+            case "villager_throttle" -> ModConfig.VILLAGER_THROTTLE_ENABLED.set(enabled);
+            case "redstone_throttle" -> ModConfig.REDSTONE_THROTTLE_ENABLED.set(enabled);
+            case "tps_monitor" -> ModConfig.TPS_MONITOR_ENABLED.set(enabled);
+            case "auto_optimize" -> ModConfig.TPS_AUTO_OPTIMIZE.set(enabled);
+            default -> {
+                source.sendFailure(Component.literal("§cUnknown subsystem: " + subsystem));
+                return 0;
+            }
+        }
+        source.sendSuccess(() -> Component.literal("§aSet " + subsystem + " to " + (enabled ? "§aON" : "§cOFF")), true);
+        return 1;
+    }
+    
+    private static int executePerformanceSetValue(net.minecraft.commands.CommandSourceStack source, String setting, String value) {
+        try {
+            switch (setting) {
+                case "item_merge_radius" -> ModConfig.ITEM_MERGE_RADIUS.set(Double.parseDouble(value));
+                case "item_merge_interval" -> ModConfig.ITEM_MERGE_INTERVAL.set(Integer.parseInt(value));
+                case "mob_cap_multiplier" -> ModConfig.MOB_CAP_MULTIPLIER.set(Integer.parseInt(value));
+                case "monster_activation_range" -> ModConfig.MONSTER_ACTIVATION_RANGE.set(Integer.parseInt(value));
+                case "animal_activation_range" -> ModConfig.ANIMAL_ACTIVATION_RANGE.set(Integer.parseInt(value));
+                case "misc_activation_range" -> ModConfig.MISC_ACTIVATION_RANGE.set(Integer.parseInt(value));
+                case "villager_tick_interval" -> ModConfig.VILLAGER_TICK_INTERVAL.set(Integer.parseInt(value));
+                case "redstone_updates_per_tick" -> ModConfig.REDSTONE_UPDATES_PER_TICK.set(Integer.parseInt(value));
+                case "tps_warning_threshold" -> ModConfig.TPS_WARNING_THRESHOLD.set(Double.parseDouble(value));
+                case "tps_critical_threshold" -> ModConfig.TPS_CRITICAL_THRESHOLD.set(Double.parseDouble(value));
+                default -> {
+                    source.sendFailure(Component.literal("§cUnknown setting: " + setting));
+                    return 0;
+                }
+            }
+            source.sendSuccess(() -> Component.literal("§aSet " + setting + " to §e" + value), true);
+            return 1;
+        } catch (NumberFormatException e) {
+            source.sendFailure(Component.literal("§cInvalid value: " + value));
+            return 0;
+        }
+    }
+
     /**
      * Syncs feature states from server to client before opening GUI.
      */
