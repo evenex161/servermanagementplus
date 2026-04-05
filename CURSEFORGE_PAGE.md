@@ -2,7 +2,7 @@
 
 **The all-in-one server management solution for Minecraft**
 
-**Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+)
+**Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+) | Minecraft 1.21.1 (NeoForge 21.1.222+)
 
 Server Management Plus gives you a complete suite of tools to run your server — a full economy with bank accounts, a player marketplace, a casino, daily tasks, world management, and a sleek admin dashboard — all in one mod.
 
@@ -137,7 +137,8 @@ Automatic over-the-air mod updates for connected clients.
 - Shows an update progress screen to the player
 - Smart version comparison: semantic versioning first, then build number for same-version patches
 - **Multi-version aware** — OTA updates are blocked across different Minecraft versions (e.g., a 1.20.1 client won't receive a 1.21.1 update)
-- **Build number tracking** — Each release uses `v1.0.3-bXX` format to differentiate incremental builds within the same version
+- **Multi-loader aware** — OTA updates are blocked across different mod loaders (e.g., a NeoForge client won't receive updates from a Forge server)
+- **Build number tracking** — Each release uses `v1.0.3-bXX-mcX.XX.X-<loader>` format to differentiate incremental builds within the same version
 
 ---
 
@@ -149,10 +150,25 @@ All sensitive data is encrypted at rest and authenticated in transit.
 - **HMAC-SHA256** packet authentication prevents replay and tampering
 - **Session management** with per-player tokens and 30-minute timeout
 - **Atomic transactions** with automatic rollback — no partial operations, no data loss
-- **Network buffer hardening** — All 54 packet string fields enforce strict length limits (`readUtf(N)`) to prevent memory exhaustion from oversized payloads
+- **Network buffer hardening** — 45 packet string fields across 25 packet classes enforce strict length limits (`readUtf(N)`) to prevent memory exhaustion from oversized payloads
 - **Input validation** — Player names validated against `[a-zA-Z0-9_]{1,16}` regex at the network layer before any server-side processing
 - **Log injection prevention** — User-controlled strings are sanitized before logging to prevent log forging
 - **Thread-safe marketplace** — MineBay listing creation uses synchronized operations to prevent race-condition exploits that could bypass per-player listing limits
+
+---
+
+## Performance
+
+Server Management Plus is optimized for low-overhead operation, especially in hot paths running every tick or every frame.
+
+- **Stream → loop in tick handlers** — All collection traversals in tick-rate code (tab list isolation, chat isolation, MineBay, money requests) use direct for-loops instead of stream pipelines to eliminate lambda allocation and intermediate object creation
+- **Reused collections in tick handlers** — `TabListIsolationHandler` reuses a static `HashSet<UUID>` across ticks instead of allocating a new one per player per second, drastically reducing GC pressure at scale
+- **O(1) dimension lookups** — `ChatIsolationHandler` uses a `HashSet` for allowed-dimension checks instead of `ArrayList.contains()`, reducing broadcast cost from O(n) to O(1)
+- **Precompiled regex patterns** — Player name validation patterns in four packet handlers are compiled once as static constants instead of on every packet received
+- **GUI render path** — `BankScreen` uses direct loops instead of streams in `init()` and `renderRequestsTab()`, which run every frame
+- **Atomic cache operations** — `ExpiringCache.get()` moves metrics recording outside the synchronized block, minimizing lock hold time
+- **Unmodifiable map view** — `EconomyData.getAllAccounts()` returns `Collections.unmodifiableMap()` instead of copying the entire map on every call
+- **Consolidated logic** — Duplicate `calculateReward` / `getTierFromAdvancement` methods in `AchievementRewardListener` merged into a single `calculateTier()` method, eliminating redundant advancement traversal
 
 ---
 
@@ -231,13 +247,14 @@ All economy data, task templates, and player progress persist across server rest
 
 ### Requirements
 - **Minecraft** 1.20.1 or 1.21.1
-- **Forge** 47.4.0+ (MC 1.20.1) or 52.1.0+ (MC 1.21.1)
+- **Forge** 47.4.0+ (MC 1.20.1) or 52.1.0+ (MC 1.21.1), **or NeoForge** 21.1.222+ (MC 1.21.1)
 - **Java** 17+ (MC 1.20.1) or 21+ (MC 1.21.1)
 
 ### Setup
-1. Download the JAR for your Minecraft version:
-   - MC 1.20.1: `servermanagementplus-v1.0.3-b04-mc1.20.1-release.jar`
-   - MC 1.21.1: `servermanagementplus-v1.0.3-b04-mc1.21.1-release.jar`
+1. Download the JAR for your Minecraft version and mod loader:
+   - MC 1.20.1 Forge: `servermanagementplus-v1.0.3-b05-mc1.20.1-forge-release.jar`
+   - MC 1.21.1 Forge: `servermanagementplus-v1.0.3-b05-mc1.21.1-forge-release.jar`
+   - MC 1.21.1 NeoForge: `servermanagementplus-v1.0.3-b05-mc1.21.1-neoforge-release.jar`
 2. Place it in your server's `mods/` folder
 3. Start the server — config and data folders generate automatically
 4. Optionally install on clients for full GUI support (server-side only works too)
@@ -290,4 +307,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*Server Management Plus v1.0.3-b04 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*
+*Server Management Plus v1.0.3-b05 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.222+*
