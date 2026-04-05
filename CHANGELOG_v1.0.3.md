@@ -5,10 +5,10 @@
 **Minecraft Version**: 1.20.1 / 1.21.1  
 **Mod Loader**: Forge  
 **Forge Version**: 47.4.0+ (MC 1.20.1) / 52.1.0+ (MC 1.21.1)  
-**OTA Build**: 05 (MC 1.20.1) / 04 (MC 1.21.1)  
+**OTA Build**: 05 (MC 1.20.1) / 05 (MC 1.21.1)  
 **JAR Files**:  
 - `servermanagementplus-v1.0.3-b05-mc1.20.1-forge-release.jar`  
-- `servermanagementplus-v1.0.3-b04-mc1.21.1-forge-release.jar`
+- `servermanagementplus-v1.0.3-b05-mc1.21.1-forge-release.jar`
 
 > **NeoForge users**: See [CHANGELOG_v1.0.3-neoforge.md](CHANGELOG_v1.0.3-neoforge.md) for the NeoForge-specific changelog.
 
