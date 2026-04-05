@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.servermanagement.ServerManagementMod;
+import com.servermanagement.config.ModConfig;
 import com.servermanagement.features.worldmanager.WorldManager;
 import com.servermanagement.features.playermanager.PlayerManagerSingleton;
 import net.minecraft.commands.CommandSourceStack;
@@ -984,6 +985,57 @@ public class ModCommands {
             )
         );
         
+        // Server Performance command (/smperformance or /smperf)
+        dispatcher.register(Commands.literal("smperformance")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                return executePerformanceStatus(context.getSource());
+            })
+            .then(Commands.literal("status")
+                .executes(context -> {
+                    return executePerformanceStatus(context.getSource());
+                })
+            )
+            .then(Commands.literal("stats")
+                .executes(context -> {
+                    return executePerformanceStats(context.getSource());
+                })
+            )
+            .then(Commands.literal("reset")
+                .executes(context -> {
+                    var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
+                    manager.resetStats();
+                    context.getSource().sendSuccess(() -> Component.literal("§aPerformance stats reset"), true);
+                    return 1;
+                })
+            )
+        );
+        
+        dispatcher.register(Commands.literal("smperf")
+            .requires(source -> source.hasPermission(2))
+            .executes(context -> {
+                return executePerformanceStatus(context.getSource());
+            })
+            .then(Commands.literal("status")
+                .executes(context -> {
+                    return executePerformanceStatus(context.getSource());
+                })
+            )
+            .then(Commands.literal("stats")
+                .executes(context -> {
+                    return executePerformanceStats(context.getSource());
+                })
+            )
+            .then(Commands.literal("reset")
+                .executes(context -> {
+                    var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
+                    manager.resetStats();
+                    context.getSource().sendSuccess(() -> Component.literal("§aPerformance stats reset"), true);
+                    return 1;
+                })
+            )
+        );
+        
         // Performance metrics command
         dispatcher.register(Commands.literal("smmetrics")
             .requires(source -> source.hasPermission(2))
@@ -1005,6 +1057,65 @@ public class ModCommands {
         HelpCommandIntegration.register(dispatcher);
         
         ServerManagementMod.LOGGER.info("Registered all mod commands");
+    }
+    
+    private static int executePerformanceStatus(net.minecraft.commands.CommandSourceStack source) {
+        var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
+        boolean enabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("server_performance");
+        
+        source.sendSuccess(() -> Component.literal("§6=== Server Performance ==="), false);
+        source.sendSuccess(() -> Component.literal("§7Feature: " + (enabled ? "§aEnabled" : "§cDisabled")), false);
+        
+        if (!enabled) {
+            source.sendSuccess(() -> Component.literal("§7Enable via /smconfig toggle server_performance"), false);
+            return 1;
+        }
+        
+        var status = manager.getTpsStatus();
+        String tpsColor = status.getColorCode();
+        source.sendSuccess(() -> Component.literal(
+            tpsColor + "TPS: " + String.format("%.1f", manager.getCurrentTps()) +
+            " §7| §fMSPT: " + String.format("%.1f", manager.getAverageMspt()) + "ms"
+        ), false);
+        
+        boolean autoOpt = ModConfig.TPS_AUTO_OPTIMIZE.get();
+        source.sendSuccess(() -> Component.literal(
+            "§7Auto-Optimize: " + (autoOpt ? (manager.isAutoOptimizeActive() ? "§eACTIVE" : "§aStandby") : "§cOff")
+        ), false);
+        
+        source.sendSuccess(() -> Component.literal("§7--- Subsystems ---"), false);
+        source.sendSuccess(() -> Component.literal(
+            "§7Item Merging: " + (ModConfig.ITEM_MERGING_ENABLED.get() ? "§aON" : "§cOFF") +
+            " §7| Mob Spawn Limiter: " + (ModConfig.MOB_SPAWN_LIMITER_ENABLED.get() ? "§aON" : "§cOFF")
+        ), false);
+        source.sendSuccess(() -> Component.literal(
+            "§7Entity Range: " + (ModConfig.ENTITY_ACTIVATION_RANGE_ENABLED.get() ? "§aON" : "§cOFF") +
+            " §7| Villager Throttle: " + (ModConfig.VILLAGER_THROTTLE_ENABLED.get() ? "§aON" : "§cOFF")
+        ), false);
+        source.sendSuccess(() -> Component.literal(
+            "§7Redstone Throttle: " + (ModConfig.REDSTONE_THROTTLE_ENABLED.get() ? "§aON" : "§cOFF") +
+            " §7| TPS Monitor: " + (ModConfig.TPS_MONITOR_ENABLED.get() ? "§aON" : "§cOFF")
+        ), false);
+        
+        return 1;
+    }
+    
+    private static int executePerformanceStats(net.minecraft.commands.CommandSourceStack source) {
+        var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
+        boolean enabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("server_performance");
+        
+        if (!enabled) {
+            source.sendSuccess(() -> Component.literal("§cServer Performance feature is disabled"), false);
+            return 0;
+        }
+        
+        source.sendSuccess(() -> Component.literal("§6=== Performance Stats ==="), false);
+        source.sendSuccess(() -> Component.literal("§7Items Merged: §e" + manager.getTotalItemsMerged()), false);
+        source.sendSuccess(() -> Component.literal("§7Spawns Cancelled: §e" + manager.getTotalSpawnsCancelled()), false);
+        source.sendSuccess(() -> Component.literal("§7Entities Throttled: §e" + manager.getTotalEntitiesThrottled()), false);
+        source.sendSuccess(() -> Component.literal("§7Redstone Updates Throttled: §e" + manager.getTotalRedstoneThrottled()), false);
+        
+        return 1;
     }
     
     /**

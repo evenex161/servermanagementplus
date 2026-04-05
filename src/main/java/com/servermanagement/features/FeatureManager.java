@@ -51,6 +51,7 @@ public class FeatureManager {
         featureStates.put("slimehead", com.servermanagement.config.ModConfig.SLIME_HEADS_ENABLED.get());
         featureStates.put("chatisolation", com.servermanagement.config.ModConfig.CHAT_ISOLATION_ENABLED.get());
         featureStates.put("tablist", com.servermanagement.config.ModConfig.TAB_ISOLATION_ENABLED.get());
+        featureStates.put("server_performance", com.servermanagement.config.ModConfig.SERVER_PERFORMANCE_ENABLED.get());
     }
 
     public static void toggleFeature(String featureId, boolean enabled) {
@@ -94,6 +95,9 @@ public class FeatureManager {
                 break;
             case "tablist":
                 com.servermanagement.config.ModConfig.TAB_ISOLATION_ENABLED.set(enabled);
+                break;
+            case "server_performance":
+                com.servermanagement.config.ModConfig.SERVER_PERFORMANCE_ENABLED.set(enabled);
                 break;
         }
         // Save config to disk

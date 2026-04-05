@@ -20,6 +20,9 @@ public class FeatureRegistry {
         
         // Register Economy feature
         FeatureManager.registerFeature(new com.servermanagement.features.economy.EconomyFeature());
+        
+        // Register Server Performance feature
+        FeatureManager.registerFeature(new com.servermanagement.features.serverperformance.ServerPerformanceFeature());
     }
     
     public static void initializeFeatures(MinecraftServer server) {
