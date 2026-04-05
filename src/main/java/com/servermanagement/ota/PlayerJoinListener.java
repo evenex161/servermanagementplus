@@ -46,9 +46,10 @@ public class PlayerJoinListener {
             String jarHash = ModFileTransferManager.getModJarHash();
             long jarSize = ModFileTransferManager.getModJarSize();
             String mcVersion = serverOTAVersion.getMinecraftVersion();
+            String modLoader = serverOTAVersion.getModLoader();
             
-            ServerManagementMod.LOGGER.debug("Server OTA: {} (build {}, MC {}), JAR: {} ({} bytes)", 
-                serverOTAVersion.getVersion(), serverOTAVersion.getBuildNumber(), mcVersion, jarName, jarSize);
+            ServerManagementMod.LOGGER.debug("Server OTA: {} (build {}, MC {}, loader {}), JAR: {} ({} bytes)", 
+                serverOTAVersion.getVersion(), serverOTAVersion.getBuildNumber(), mcVersion, modLoader, jarName, jarSize);
             
             VersionCheckPacket packet = new VersionCheckPacket(
                 modVersion,
@@ -56,7 +57,8 @@ public class PlayerJoinListener {
                 jarName,
                 jarHash,
                 jarSize,
-                mcVersion
+                mcVersion,
+                modLoader
             );
             
             ModNetworking.sendToPlayer(packet, player);
