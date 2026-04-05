@@ -1,12 +1,17 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.economy.MoneyRequest;
 import com.servermanagement.features.economy.MoneyRequestManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -15,6 +20,14 @@ import java.util.function.Supplier;
  * Client → Server: Respond to a money request (accept, deny, or cancel)
  */
 public class RespondMoneyRequestPacket implements IPacket {
+    public static final CustomPacketPayload.Type<RespondMoneyRequestPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "respond_money_request_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RespondMoneyRequestPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), RespondMoneyRequestPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     
     public enum Action {
         ACCEPT, DENY, CANCEL
@@ -40,10 +53,9 @@ public class RespondMoneyRequestPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context contextSupplier) {
-        CustomPayloadEvent.Context context = contextSupplier;
+    public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
+            ServerPlayer player = (ServerPlayer) context.player();
             if (player == null) return;
 
             EconomyManager econ = EconomyManager.getInstance(player.server);
@@ -141,7 +153,7 @@ public class RespondMoneyRequestPacket implements IPacket {
                 }
             }
         });
-        context.setPacketHandled(true);
+        
     }
 
     private void syncBankAndRequests(ServerPlayer player, EconomyManager econ) {

@@ -1,9 +1,14 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.economy.DailyTask;
 import com.servermanagement.features.economy.TaskType;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +18,14 @@ import java.util.function.Supplier;
  * Packet to sync daily tasks from server to client
  */
 public class SyncDailyTasksPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncDailyTasksPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_daily_tasks_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncDailyTasksPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncDailyTasksPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final List<DailyTask> tasks;
     private final long resetTime;
     private final boolean freeRewardAvailable;
@@ -75,7 +88,7 @@ public class SyncDailyTasksPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // Store daily tasks on client side for GUI display
             com.servermanagement.client.ClientDailyTasksData.setTasks(tasks);
@@ -84,6 +97,6 @@ public class SyncDailyTasksPacket implements IPacket {
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAmount(freeRewardAmount);
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

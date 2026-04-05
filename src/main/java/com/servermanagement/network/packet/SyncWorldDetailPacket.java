@@ -1,11 +1,23 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
 
 public class SyncWorldDetailPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncWorldDetailPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_world_detail_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncWorldDetailPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncWorldDetailPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String dimensionId;
     private final boolean netherPortalsEnabled;
     private final boolean endPortalsEnabled;
@@ -47,7 +59,7 @@ public class SyncWorldDetailPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // Handle on client
             com.servermanagement.client.ClientPacketHandler.handleWorldDetail(
@@ -55,7 +67,7 @@ public class SyncWorldDetailPacket implements IPacket {
                 hasTimer, timerSeconds, chatConnected, timerPortalType
             );
         });
-        ctx.setPacketHandled(true);
+        
     }
 
     public String getDimensionId() {

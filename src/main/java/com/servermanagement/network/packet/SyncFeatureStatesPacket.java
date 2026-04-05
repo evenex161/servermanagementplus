@@ -1,13 +1,25 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
 
 public class SyncFeatureStatesPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncFeatureStatesPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_feature_states_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncFeatureStatesPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncFeatureStatesPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final Map<String, Boolean> featureStates;
 
     public SyncFeatureStatesPacket(Map<String, Boolean> featureStates) {
@@ -32,12 +44,12 @@ public class SyncFeatureStatesPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // Handle on client thread
             com.servermanagement.features.FeatureManager.syncFeatureStates(featureStates);
         });
-        ctx.setPacketHandled(true);
+        
     }
 
     public Map<String, Boolean> getFeatureStates() {

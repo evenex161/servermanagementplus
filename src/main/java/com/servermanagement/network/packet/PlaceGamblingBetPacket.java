@@ -1,5 +1,10 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.gambling.GamblingGame;
 import com.servermanagement.features.gambling.GamblingManager;
 import com.servermanagement.features.gambling.GamblingResult;
@@ -7,7 +12,7 @@ import com.servermanagement.features.gambling.games.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,6 +23,14 @@ import java.util.function.Supplier;
  * Packet sent from client to server to place a gambling bet
  */
 public class PlaceGamblingBetPacket implements IPacket {
+    public static final CustomPacketPayload.Type<PlaceGamblingBetPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "place_gambling_bet_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PlaceGamblingBetPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), PlaceGamblingBetPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private static final ScheduledExecutorService DELAYED_EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "ServerManagement-GamblingDelay");
         t.setDaemon(true);
@@ -53,9 +66,9 @@ public class PlaceGamblingBetPacket implements IPacket {
         buf.writeUtf(this.gameOption, 64);
     }
     
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player == null) {
                 return; // No player - reject packet
             }
@@ -177,7 +190,7 @@ public class PlaceGamblingBetPacket implements IPacket {
                 }
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
     
     private static GamblingGame createGame(GameType type, String option) {

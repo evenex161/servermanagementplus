@@ -1,8 +1,13 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.client.ClientGamblingData;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -10,6 +15,14 @@ import java.util.function.Supplier;
  * Packet sent from server to client to sync gambling statistics
  */
 public class SyncGamblingStatsPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncGamblingStatsPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_gambling_stats_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncGamblingStatsPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncGamblingStatsPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final long totalBets;
     private final long totalWins;
     private final long totalLosses;
@@ -54,7 +67,7 @@ public class SyncGamblingStatsPacket implements IPacket {
         buf.writeDouble(this.biggestLoss);
     }
 
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // Update client-side gambling stats
             ClientGamblingData.updateStats(
@@ -63,6 +76,6 @@ public class SyncGamblingStatsPacket implements IPacket {
                 biggestWin, biggestLoss
             );
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

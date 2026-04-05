@@ -1,5 +1,10 @@
 package com.servermanagement.network.packet.minebay;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.MineBayOffer;
@@ -7,7 +12,7 @@ import com.servermanagement.network.packet.IPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -15,6 +20,14 @@ import java.util.function.Supplier;
  * Packet sent from client to server when a seller rejects an offer
  */
 public class RejectOfferPacket implements IPacket {
+    public static final CustomPacketPayload.Type<RejectOfferPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "reject_offer_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RejectOfferPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), RejectOfferPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String listingId;
     private final String offerId;
     
@@ -35,9 +48,9 @@ public class RejectOfferPacket implements IPacket {
     }
     
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer seller = ctx.getSender();
+            ServerPlayer seller = (ServerPlayer) ctx.player();
             if (seller == null) return;
             
             MineBayManager mineBayManager = MineBayManager.getInstance();
@@ -83,6 +96,6 @@ public class RejectOfferPacket implements IPacket {
                     " rejected your offer on " + listing.getItemForSale().getDisplayName().getString()));
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

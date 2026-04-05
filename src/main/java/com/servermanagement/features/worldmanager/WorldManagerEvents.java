@@ -1,11 +1,11 @@
 package com.servermanagement.features.worldmanager;
 
 import com.servermanagement.ServerManagementMod;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 public class WorldManagerEvents {
     private static WorldManagerEvents instance;
@@ -13,14 +13,13 @@ public class WorldManagerEvents {
     public static void register() {
         if (instance == null) {
             instance = new WorldManagerEvents();
-            MinecraftForge.EVENT_BUS.register(instance);
+            NeoForge.EVENT_BUS.register(instance);
             ServerManagementMod.LOGGER.info("Registered WorldManager events");
         }
     }
 
     @SubscribeEvent
-    public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
+    public void onServerTick(ServerTickEvent.Post event) {        {
             WorldManager.getInstance().tick();
         }
     }
@@ -39,7 +38,7 @@ public class WorldManagerEvents {
         // Block portal usage if portals are disabled
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             var block = event.getLevel().getBlockState(event.getPos()).getBlock();
-            String blockId = net.minecraftforge.registries.ForgeRegistries.BLOCKS.getKey(block).toString();
+            String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).toString();
             String dimensionId = player.level().dimension().location().toString();
             
             if (blockId.equals("minecraft:nether_portal")) {

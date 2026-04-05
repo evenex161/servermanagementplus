@@ -1,11 +1,16 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.network.ModNetworking;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -13,6 +18,14 @@ import java.util.function.Supplier;
  * Packet for executing console commands from the in-game GUI
  */
 public class ConsoleCommandPacket implements IPacket {
+    public static final CustomPacketPayload.Type<ConsoleCommandPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "console_command_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ConsoleCommandPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), ConsoleCommandPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String command;
     
     public ConsoleCommandPacket(String command) {
@@ -29,9 +42,9 @@ public class ConsoleCommandPacket implements IPacket {
     }
     
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player != null && player.hasPermissions(2)) {
                 var server = player.getServer();
                 if (server != null) {
@@ -49,6 +62,6 @@ public class ConsoleCommandPacket implements IPacket {
                 }
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

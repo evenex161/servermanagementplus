@@ -1,9 +1,13 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.client.OTAUpdateManager;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -12,6 +16,14 @@ import java.util.function.Supplier;
  * Uses chunked transfer to avoid packet size limits.
  */
 public class ModFileChunkPacket implements IPacket {
+    public static final CustomPacketPayload.Type<ModFileChunkPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "mod_file_chunk_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ModFileChunkPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), ModFileChunkPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final int chunkIndex;
     private final int totalChunks;
     private final byte[] chunkData;
@@ -43,11 +55,10 @@ public class ModFileChunkPacket implements IPacket {
         buf.writeBytes(chunkData);
     }
     
-    public void handle(CustomPayloadEvent.Context contextSupplier) {
-        CustomPayloadEvent.Context context = contextSupplier;
+    public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             // This runs on the client
-            if (context.getSender() == null) {
+            if (context.player() == null) {
                 // We're on the client side
                 OTAUpdateManager.handleModFileChunk(chunkIndex, totalChunks, chunkData, fileHash);
                 
@@ -59,7 +70,7 @@ public class ModFileChunkPacket implements IPacket {
                 }
             }
         });
-        context.setPacketHandled(true);
+        
     }
     
     public int getChunkIndex() {

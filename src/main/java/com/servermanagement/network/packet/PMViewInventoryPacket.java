@@ -1,11 +1,25 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.server.level.ServerPlayer;
+
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
 
 public class PMViewInventoryPacket implements IPacket {
+    public static final CustomPacketPayload.Type<PMViewInventoryPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "p_m_view_inventory_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PMViewInventoryPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), PMViewInventoryPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String playerName;
 
     public PMViewInventoryPacket(String playerName) {
@@ -22,9 +36,9 @@ public class PMViewInventoryPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            var player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player != null && player.hasPermissions(2)) {
                 if (playerName == null || playerName.length() > 16 || !playerName.matches("[a-zA-Z0-9_]+")) {
                     return;
@@ -32,6 +46,6 @@ public class PMViewInventoryPacket implements IPacket {
                 com.servermanagement.features.playermanager.PlayerManagerSingleton.viewInventory(player, playerName);
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

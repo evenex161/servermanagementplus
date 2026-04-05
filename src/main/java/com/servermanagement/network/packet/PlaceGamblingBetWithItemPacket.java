@@ -1,12 +1,17 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.gambling.GamblingManager;
 import com.servermanagement.features.gambling.GamblingResult;
 import com.servermanagement.features.gambling.ItemValuation;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -15,6 +20,14 @@ import java.util.function.Supplier;
  * Packet sent from client to server to place a gambling bet with an item
  */
 public class PlaceGamblingBetWithItemPacket implements IPacket {
+    public static final CustomPacketPayload.Type<PlaceGamblingBetWithItemPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "place_gambling_bet_with_item_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PlaceGamblingBetWithItemPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), PlaceGamblingBetWithItemPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final PlaceGamblingBetPacket.GameType gameType;
     private final String gameOption;
     
@@ -33,9 +46,9 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
         buf.writeUtf(this.gameOption, 64);
     }
     
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player == null) {
                 return; // No player - reject packet
             }
@@ -164,7 +177,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                     "§cInvalid gambling menu state"));
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
     
     private static com.servermanagement.features.gambling.GamblingGame createGame(

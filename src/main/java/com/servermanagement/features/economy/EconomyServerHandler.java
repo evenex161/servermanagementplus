@@ -1,16 +1,18 @@
 package com.servermanagement.features.economy;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 /**
  * Handles server lifecycle events for economy system.
  * Ensures proper shutdown and periodic auto-save.
  */
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class EconomyServerHandler {
     private static int autoSaveTicks = 0;
     private static final int AUTOSAVE_INTERVAL = 12000; // 10 minutes (20 ticks/sec * 60 * 10)
@@ -19,11 +21,7 @@ public class EconomyServerHandler {
      * Periodic auto-save to prevent data loss
      */
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        
+    public static void onServerTick(ServerTickEvent.Post event) {
         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
             return;
         }

@@ -1,5 +1,7 @@
 package com.servermanagement.features.economy;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.util.PerformanceMetrics;
 import net.minecraft.server.level.ServerPlayer;
@@ -7,17 +9,17 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.entity.player.TradeWithVillagerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.entity.player.TradeWithVillagerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 /**
  * Tracks player progress on daily tasks
  */
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class DailyTaskProgressListener {
 
     @SubscribeEvent

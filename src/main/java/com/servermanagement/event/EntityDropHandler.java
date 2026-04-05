@@ -1,18 +1,20 @@
 package com.servermanagement.event;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import com.servermanagement.features.slimehead.SlimeHeadManager;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.living.LivingDropsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 import java.util.Random;
 
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class EntityDropHandler {
     
     private static final Random RANDOM = new Random();

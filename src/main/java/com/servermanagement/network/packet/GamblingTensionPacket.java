@@ -1,7 +1,12 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -10,6 +15,14 @@ import java.util.function.Supplier;
  * Sent immediately when bet is placed, before the actual result
  */
 public class GamblingTensionPacket implements IPacket {
+    public static final CustomPacketPayload.Type<GamblingTensionPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "gambling_tension_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, GamblingTensionPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), GamblingTensionPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final GameType gameType;
     private final String gameOption; // For specific animations (e.g., which roulette bet)
     
@@ -35,7 +48,7 @@ public class GamblingTensionPacket implements IPacket {
         buf.writeUtf(this.gameOption, 64);
     }
     
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // This will be handled on the client side
             net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
@@ -45,6 +58,6 @@ public class GamblingTensionPacket implements IPacket {
                 screen.startTension(this.gameType, this.gameOption);
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

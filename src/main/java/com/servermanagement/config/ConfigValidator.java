@@ -1,7 +1,7 @@
 package com.servermanagement.config;
 
 import com.servermanagement.ServerManagementMod;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class ConfigValidator {
             // Check if config file exists
             if (!configFile.exists()) {
                 ServerManagementMod.LOGGER.info("Config file does not exist. It will be created with defaults.");
-                return true; // ForgeConfigSpec will create it
+                return true; // ModConfigSpec will create it
             }
             
             // Validate config structure first

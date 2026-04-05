@@ -1,18 +1,20 @@
 package com.servermanagement.features.worldmanager;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.ServerChatEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.ServerChatEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class ChatIsolationHandler {
     
     @SubscribeEvent

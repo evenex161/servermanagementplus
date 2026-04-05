@@ -408,7 +408,7 @@ public class TransactionManager {
             if (buyerId != null) tag.putUUID("Buyer", buyerId);
             if (sellerId != null) tag.putUUID("Seller", sellerId);
             if (listingId != null) tag.putString("Listing", listingId);
-            if (item != null) tag.put("Item", item.saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
+            if (item != null) tag.put("Item", item.saveOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
             tag.putDouble("Money", moneyAmount);
             tag.putLong("Created", createdTimestamp);
             tag.putLong("Completed", completedTimestamp);
@@ -430,7 +430,7 @@ public class TransactionManager {
             if (tag.contains("Buyer")) transaction.buyerId = tag.getUUID("Buyer");
             if (tag.contains("Seller")) transaction.sellerId = tag.getUUID("Seller");
             if (tag.contains("Listing")) transaction.listingId = tag.getString("Listing");
-            if (tag.contains("Item")) transaction.item = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("Item"));
+            if (tag.contains("Item")) transaction.item = ItemStack.parseOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("Item"));
             transaction.moneyAmount = tag.getDouble("Money");
             transaction.createdTimestamp = tag.getLong("Created");
             transaction.completedTimestamp = tag.getLong("Completed");

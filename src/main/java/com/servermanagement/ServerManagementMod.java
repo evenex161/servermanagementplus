@@ -1,5 +1,7 @@
 package com.servermanagement;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.mojang.logging.LogUtils;
 import com.servermanagement.commands.MineBayCommand;
 import com.servermanagement.commands.MineStacksCommand;
@@ -7,17 +9,17 @@ import com.servermanagement.config.ModConfig;
 import com.servermanagement.features.FeatureRegistry;
 import com.servermanagement.gui.ModMenuTypes;
 import com.servermanagement.network.ModNetworking;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig.Type;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig.Type;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.ModContainer;
 import org.slf4j.Logger;
 
 import java.io.File;
@@ -28,16 +30,14 @@ public class ServerManagementMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public static String getModVersion() {
-        return net.minecraftforge.fml.ModList.get().getModContainerById(MOD_ID)
+        return net.neoforged.fml.ModList.get().getModContainerById(MOD_ID)
                 .map(c -> c.getModInfo().getVersion().toString())
                 .orElse("unknown");
     }
     
     private static ModConfig config;
 
-    public ServerManagementMod(FMLJavaModLoadingContext context) {
-        IEventBus modEventBus = context.getModEventBus();
-        
+    public ServerManagementMod(IEventBus modEventBus, ModContainer container) {
         // Register setup handlers
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::clientSetup);
@@ -46,10 +46,10 @@ public class ServerManagementMod {
         ModMenuTypes.register(modEventBus);
         
         // Register ourselves for server and other game events
-        MinecraftForge.EVENT_BUS.register(this);
+        NeoForge.EVENT_BUS.register(this);
         
         // Register config
-        context.registerConfig(Type.COMMON, ModConfig.SPEC);
+        container.registerConfig(Type.COMMON, ModConfig.SPEC);
         
         // Validate and repair config if necessary
         LOGGER.info("Validating configuration...");
@@ -68,9 +68,6 @@ public class ServerManagementMod {
         LOGGER.info("ServerManagement mod common setup");
         
         event.enqueueWork(() -> {
-            // Initialize networking
-            ModNetworking.register();
-            
             // Load config
             config = new ModConfig();
             
@@ -150,7 +147,7 @@ public class ServerManagementMod {
         return config;
     }
 
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {

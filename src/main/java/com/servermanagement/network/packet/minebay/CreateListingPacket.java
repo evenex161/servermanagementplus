@@ -1,5 +1,10 @@
 package com.servermanagement.network.packet.minebay;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.PriceItemEntry;
@@ -7,7 +12,7 @@ import com.servermanagement.network.packet.IPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +22,14 @@ import java.util.function.Supplier;
  * Packet sent from client to server to create a new MineBay listing
  */
 public class CreateListingPacket implements IPacket {
+    public static final CustomPacketPayload.Type<CreateListingPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "create_listing_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateListingPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateListingPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final ItemStack itemToSell;
     private final double moneyPrice;
     private final MineBayListing.OfferType offerType;
@@ -63,9 +76,9 @@ public class CreateListingPacket implements IPacket {
     }
     
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player != null) {
                 MineBayManager manager = MineBayManager.getInstance();
                 
@@ -123,6 +136,6 @@ public class CreateListingPacket implements IPacket {
                 }
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

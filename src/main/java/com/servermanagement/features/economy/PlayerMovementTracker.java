@@ -1,11 +1,14 @@
 package com.servermanagement.features.economy;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 import java.util.Map;
 import java.util.UUID;
@@ -15,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Tracks player movement distance for daily tasks
  * Thread-safe with ConcurrentHashMap for concurrent access
  */
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class PlayerMovementTracker {
     private static final Map<UUID, Vec3> lastPositions = new ConcurrentHashMap<>();
     private static final Map<UUID, Integer> accumulatedDistance = new ConcurrentHashMap<>();
@@ -27,16 +30,11 @@ public class PlayerMovementTracker {
     private static final int SAVE_THRESHOLD = 50;
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
             return;
         }
-
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-
-        if (!(event.player instanceof ServerPlayer player)) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
 

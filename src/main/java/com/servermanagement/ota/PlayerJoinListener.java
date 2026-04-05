@@ -1,19 +1,21 @@
 package com.servermanagement.ota;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.VersionCheckPacket;
 import com.servermanagement.server.ModFileTransferManager;
 import com.servermanagement.util.DataVersion;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 /**
  * Handles player join events to trigger version checking
  */
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class PlayerJoinListener {
     
     @SubscribeEvent

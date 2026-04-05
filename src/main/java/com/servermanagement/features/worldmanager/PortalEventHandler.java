@@ -1,5 +1,7 @@
 package com.servermanagement.features.worldmanager;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import net.minecraft.core.BlockPos;
@@ -8,14 +10,14 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.EntityTravelToDimensionEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class PortalEventHandler {
     
     /**
@@ -139,7 +141,6 @@ public class PortalEventHandler {
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areNetherPortalsEnabled(dimensionId)) {
-                event.setUseBlock(Event.Result.DENY);
                 event.setCanceled(true);
                 player.sendSystemMessage(Component.literal("§cNether portals are disabled in this dimension!"));
             }
@@ -153,7 +154,6 @@ public class PortalEventHandler {
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areEndPortalsEnabled(dimensionId)) {
-                event.setUseBlock(Event.Result.DENY);
                 event.setCanceled(true);
                 player.sendSystemMessage(Component.literal("§cEnd portals are disabled in this dimension!"));
             }

@@ -1,9 +1,9 @@
 package com.servermanagement.features.playermanager;
 
 import com.servermanagement.ServerManagementMod;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 public class PlayerManagerEvents {
     private static PlayerManagerEvents instance;
@@ -11,7 +11,7 @@ public class PlayerManagerEvents {
     public static void register() {
         if (instance == null) {
             instance = new PlayerManagerEvents();
-            MinecraftForge.EVENT_BUS.register(instance);
+            NeoForge.EVENT_BUS.register(instance);
             ServerManagementMod.LOGGER.info("Registered PlayerManager events");
         }
     }

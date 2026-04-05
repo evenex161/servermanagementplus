@@ -1,5 +1,10 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.features.economy.DailyTaskTemplate;
 import com.servermanagement.features.economy.DailyTaskTemplateManager;
@@ -10,7 +15,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +25,14 @@ import java.util.function.Supplier;
  * Server-to-client packet that syncs economy templates and free reward settings
  */
 public class SyncEconomyTemplatesPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncEconomyTemplatesPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_economy_templates_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncEconomyTemplatesPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncEconomyTemplatesPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     private final List<TemplateData> templates;
     private final int freeRewardAmount;
@@ -66,11 +79,11 @@ public class SyncEconomyTemplatesPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours);
         });
-        ctx.setPacketHandled(true);
+        
     }
 
     /**

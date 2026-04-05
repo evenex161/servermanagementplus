@@ -1,16 +1,18 @@
 package com.servermanagement.features.worldmanager;
 
+import net.neoforged.fml.common.EventBusSubscriber;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
 import java.util.*;
 
-@Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class TabListIsolationHandler {
     
     private static int tickCounter = 0;
@@ -20,11 +22,7 @@ public class TabListIsolationHandler {
     private static final Map<String, List<ServerPlayer>> dimensionPlayers = new HashMap<>();
     
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
-        
+    public static void onServerTick(ServerTickEvent.Post event) {
         if (!ModConfig.WORLD_MANAGER_ENABLED.get() || !ModConfig.TAB_ISOLATION_ENABLED.get()) {
             return;
         }

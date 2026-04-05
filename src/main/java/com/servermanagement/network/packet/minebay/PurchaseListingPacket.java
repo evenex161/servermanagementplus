@@ -1,5 +1,10 @@
 package com.servermanagement.network.packet.minebay;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.minebay.MineBayListing;
@@ -10,7 +15,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +26,14 @@ import java.util.function.Supplier;
  * Packet sent from client to server to purchase a MineBay listing
  */
 public class PurchaseListingPacket implements IPacket {
+    public static final CustomPacketPayload.Type<PurchaseListingPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "purchase_listing_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PurchaseListingPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), PurchaseListingPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String listingId;
     
     public PurchaseListingPacket(String listingId) {
@@ -37,9 +50,9 @@ public class PurchaseListingPacket implements IPacket {
     }
     
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer buyer = ctx.getSender();
+            ServerPlayer buyer = (ServerPlayer) ctx.player();
             if (buyer == null) {
                 return; // No buyer - reject packet
             }
@@ -199,6 +212,6 @@ public class PurchaseListingPacket implements IPacket {
                 );
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

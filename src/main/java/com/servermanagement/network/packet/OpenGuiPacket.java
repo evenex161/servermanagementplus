@@ -2,11 +2,23 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
 
 public class OpenGuiPacket implements IPacket {
+    public static final CustomPacketPayload.Type<OpenGuiPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "open_gui_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, OpenGuiPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), OpenGuiPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final GuiType guiType;
     private final String data; // Can hold dimension ID or other data
 
@@ -34,9 +46,9 @@ public class OpenGuiPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player != null) {
                 // Admin GUIs require OP level 2
                 if (guiType.isAdminOnly() && !player.hasPermissions(2)) {
@@ -115,7 +127,7 @@ public class OpenGuiPacket implements IPacket {
                 }
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
     
     private void syncWorldList(ServerPlayer player) {

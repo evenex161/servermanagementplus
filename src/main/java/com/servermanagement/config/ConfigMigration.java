@@ -1,7 +1,7 @@
 package com.servermanagement.config;
 
 import com.servermanagement.ServerManagementMod;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.File;
 import java.io.IOException;

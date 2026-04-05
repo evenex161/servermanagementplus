@@ -1,11 +1,25 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.server.level.ServerPlayer;
+
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
 
 public class WMSetTimerPacket implements IPacket {
+    public static final CustomPacketPayload.Type<WMSetTimerPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "w_m_set_timer_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMSetTimerPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMSetTimerPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String dimensionId;
     private final int seconds;
     private final String portalType; // "nether", "end", or "both"
@@ -34,9 +48,9 @@ public class WMSetTimerPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            var player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player != null && player.hasPermissions(2)) {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "timer_" + dimensionId;
@@ -54,6 +68,6 @@ public class WMSetTimerPacket implements IPacket {
                 }
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

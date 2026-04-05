@@ -1,8 +1,13 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.client.ClientMoneyRequestData;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +18,14 @@ import java.util.function.Supplier;
  * Server → Client: Sync money requests for display in the Bank GUI
  */
 public class SyncMoneyRequestsPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncMoneyRequestsPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_money_requests_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncMoneyRequestsPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncMoneyRequestsPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final List<ClientMoneyRequestData.RequestEntry> incoming;
     private final List<ClientMoneyRequestData.RequestEntry> outgoing;
 
@@ -68,11 +81,11 @@ public class SyncMoneyRequestsPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             ClientMoneyRequestData.setIncomingRequests(incoming);
             ClientMoneyRequestData.setOutgoingRequests(outgoing);
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

@@ -1,7 +1,12 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -9,6 +14,14 @@ import java.util.function.Supplier;
  * Packet sent from server to client with gambling result
  */
 public class GamblingResultPacket implements IPacket {
+    public static final CustomPacketPayload.Type<GamblingResultPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "gambling_result_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, GamblingResultPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), GamblingResultPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final boolean won;
     private final double payout;
     private final String message;
@@ -31,7 +44,7 @@ public class GamblingResultPacket implements IPacket {
         buf.writeUtf(this.message, 256);
     }
     
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // Update client-side screen
             var mc = net.minecraft.client.Minecraft.getInstance();
@@ -41,6 +54,6 @@ public class GamblingResultPacket implements IPacket {
                 screen.handleGamblingResult(this.won, this.payout, this.message);
             }
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

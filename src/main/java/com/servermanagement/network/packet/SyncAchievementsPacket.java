@@ -1,7 +1,12 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,6 +16,14 @@ import java.util.function.Supplier;
  * Packet to sync achievements from server to client
  */
 public class SyncAchievementsPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncAchievementsPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_achievements_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncAchievementsPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncAchievementsPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final Set<String> earnedAchievements;
     private final int totalRewards;
 
@@ -42,12 +55,12 @@ public class SyncAchievementsPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // Store achievements on client side for GUI display
             com.servermanagement.client.ClientAchievementsData.setEarnedAchievements(earnedAchievements);
             com.servermanagement.client.ClientAchievementsData.setTotalRewardsEarned(totalRewards);
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

@@ -1,13 +1,25 @@
 package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
 
 public class SyncWorldListPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SyncWorldListPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_world_list_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncWorldListPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncWorldListPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final List<WorldInfo> worlds;
 
     public SyncWorldListPacket(List<WorldInfo> worlds) {
@@ -41,12 +53,12 @@ public class SyncWorldListPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             // Handle on client - update GUI
             com.servermanagement.client.ClientPacketHandler.handleWorldList(worlds);
         });
-        ctx.setPacketHandled(true);
+        
     }
 
     public List<WorldInfo> getWorlds() {

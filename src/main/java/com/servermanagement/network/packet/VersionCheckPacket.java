@@ -1,10 +1,14 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.client.OTAUpdateManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -13,6 +17,14 @@ import java.util.function.Supplier;
  * Triggers OTA update if versions don't match.
  */
 public class VersionCheckPacket implements IPacket {
+    public static final CustomPacketPayload.Type<VersionCheckPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "version_check_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, VersionCheckPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), VersionCheckPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String serverModVersion;
     private final int serverDataVersion;
     private final String serverModJarName;
@@ -49,8 +61,7 @@ public class VersionCheckPacket implements IPacket {
         buf.writeUtf(serverMinecraftVersion, 32);
     }
     
-    public void handle(CustomPayloadEvent.Context contextSupplier) {
-        CustomPayloadEvent.Context context = contextSupplier;
+    public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             // This runs on the client
             com.servermanagement.ota.OTAVersion clientOTAVersion = 
@@ -75,7 +86,7 @@ public class VersionCheckPacket implements IPacket {
                     clientOTAVersion.getDisplayVersion(), serverOTAVersion.getDisplayVersion());
                 
                 // Notify client and offer to download update
-                if (context.getSender() == null) {
+                if (context.player() == null) {
                     // We're on the client side
                     OTAUpdateManager.handleVersionMismatch(
                         clientOTAVersion.getDisplayVersion(), 
@@ -87,14 +98,14 @@ public class VersionCheckPacket implements IPacket {
                         serverMinecraftVersion
                     );
                 } else {
-                    ServerManagementMod.LOGGER.error("context.getSender() was not null on client! This shouldn't happen.");
+                    ServerManagementMod.LOGGER.error("context.player() was not null on client! This shouldn't happen.");
                 }
             } else {
                 ServerManagementMod.LOGGER.debug("Client and server OTA versions match: {}", 
                     clientOTAVersion.getDisplayVersion());
             }
         });
-        context.setPacketHandled(true);
+        
     }
     
     public String getServerModVersion() {

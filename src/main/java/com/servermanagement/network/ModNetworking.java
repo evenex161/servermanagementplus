@@ -2,373 +2,98 @@ package com.servermanagement.network;
 
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.network.packet.*;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.ChannelBuilder;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.SimpleChannel;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class ModNetworking {
-    private static final String PROTOCOL_VERSION = "1";
-    private static SimpleChannel INSTANCE;
-    
-    private static int packetId = 0;
-    private static int id() {
-        return packetId++;
-    }
 
-    public static void register() {
-        INSTANCE = ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "main"))
-            .networkProtocolVersion(1)
-            .clientAcceptedVersions((status, version) -> true)
-            .serverAcceptedVersions((status, version) -> true)
-            .simpleChannel();
+    @SubscribeEvent
+    public static void register(RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar("1");
 
         ServerManagementMod.LOGGER.info("Registering network packets");
         
         // Config packets (bidirectional)
-        INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
-            .encoder(ToggleFeaturePacket::encode)
-            .decoder(ToggleFeaturePacket::new)
-            .consumer(ToggleFeaturePacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(ToggleAutoShowPacket.class, id())
-            .encoder(ToggleAutoShowPacket::encode)
-            .decoder(ToggleAutoShowPacket::new)
-            .consumer(ToggleAutoShowPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(RequestAutoShowPacket.class, id())
-            .encoder(RequestAutoShowPacket::encode)
-            .decoder(RequestAutoShowPacket::new)
-            .consumer(RequestAutoShowPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(SyncAutoShowPacket.class, id())
-            .encoder(SyncAutoShowPacket::encode)
-            .decoder(SyncAutoShowPacket::new)
-            .consumer(SyncAutoShowPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(SyncFeatureStatesPacket.class, id())
-            .encoder(SyncFeatureStatesPacket::encode)
-            .decoder(SyncFeatureStatesPacket::new)
-            .consumer(SyncFeatureStatesPacket::handle)
-            .add();
+        registrar.playBidirectional(ToggleFeaturePacket.TYPE, ToggleFeaturePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ToggleAutoShowPacket.TYPE, ToggleAutoShowPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(RequestAutoShowPacket.TYPE, RequestAutoShowPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncAutoShowPacket.TYPE, SyncAutoShowPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncFeatureStatesPacket.TYPE, SyncFeatureStatesPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
-        // WorldManager packets (server-bound)
-        INSTANCE.messageBuilder(WMTogglePortalsPacket.class, id())
-            .encoder(WMTogglePortalsPacket::encode)
-            .decoder(WMTogglePortalsPacket::new)
-            .consumer(WMTogglePortalsPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(WMSetTimerPacket.class, id())
-            .encoder(WMSetTimerPacket::encode)
-            .decoder(WMSetTimerPacket::new)
-            .consumer(WMSetTimerPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(WMSetLobbyPacket.class, id())
-            .encoder(WMSetLobbyPacket::encode)
-            .decoder(WMSetLobbyPacket::new)
-            .consumer(WMSetLobbyPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(WMToggleChatIsolationPacket.class, id())
-            .encoder(WMToggleChatIsolationPacket::encode)
-            .decoder(WMToggleChatIsolationPacket::new)
-            .consumer(WMToggleChatIsolationPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(WMToggleTabIsolationPacket.class, id())
-            .encoder(WMToggleTabIsolationPacket::encode)
-            .decoder(WMToggleTabIsolationPacket::new)
-            .consumer(WMToggleTabIsolationPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(WMTeleportToDimensionPacket.class, id())
-            .encoder(WMTeleportToDimensionPacket::encode)
-            .decoder(WMTeleportToDimensionPacket::new)
-            .consumer(WMTeleportToDimensionPacket::handle)
-            .add();
+        // WorldManager packets
+        registrar.playBidirectional(WMTogglePortalsPacket.TYPE, WMTogglePortalsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(WMSetTimerPacket.TYPE, WMSetTimerPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(WMSetLobbyPacket.TYPE, WMSetLobbyPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(WMToggleChatIsolationPacket.TYPE, WMToggleChatIsolationPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(WMToggleTabIsolationPacket.TYPE, WMToggleTabIsolationPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(WMTeleportToDimensionPacket.TYPE, WMTeleportToDimensionPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
-        // PlayerManager packets (server-bound)
-        INSTANCE.messageBuilder(PMSpectatePlayerPacket.class, id())
-            .encoder(PMSpectatePlayerPacket::encode)
-            .decoder(PMSpectatePlayerPacket::new)
-            .consumer(PMSpectatePlayerPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(PMViewInventoryPacket.class, id())
-            .encoder(PMViewInventoryPacket::encode)
-            .decoder(PMViewInventoryPacket::new)
-            .consumer(PMViewInventoryPacket::handle)
-            .add();
-            
-        // Add more packets for GUI data sync
-        INSTANCE.messageBuilder(SyncWorldListPacket.class, id())
-            .encoder(SyncWorldListPacket::encode)
-            .decoder(SyncWorldListPacket::new)
-            .consumer(SyncWorldListPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(RequestWorldListPacket.class, id())
-            .encoder(RequestWorldListPacket::encode)
-            .decoder(RequestWorldListPacket::new)
-            .consumer(RequestWorldListPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(SyncWorldDetailPacket.class, id())
-            .encoder(SyncWorldDetailPacket::encode)
-            .decoder(SyncWorldDetailPacket::new)
-            .consumer(SyncWorldDetailPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(OpenGuiPacket.class, id())
-            .encoder(OpenGuiPacket::encode)
-            .decoder(OpenGuiPacket::new)
-            .consumer(OpenGuiPacket::handle)
-            .add();
-            
-        INSTANCE.messageBuilder(ConsoleCommandPacket.class, id())
-            .encoder(ConsoleCommandPacket::encode)
-            .decoder(ConsoleCommandPacket::new)
-            .consumer(ConsoleCommandPacket::handle)
-            .add();
+        // PlayerManager packets
+        registrar.playBidirectional(PMSpectatePlayerPacket.TYPE, PMSpectatePlayerPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(PMViewInventoryPacket.TYPE, PMViewInventoryPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
-        INSTANCE.messageBuilder(ConsoleResponsePacket.class, id())
-            .encoder(ConsoleResponsePacket::encode)
-            .decoder(ConsoleResponsePacket::new)
-            .consumer(ConsoleResponsePacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncGlobalSettingsPacket.class, id())
-            .encoder(SyncGlobalSettingsPacket::encode)
-            .decoder(SyncGlobalSettingsPacket::new)
-            .consumer(SyncGlobalSettingsPacket::handle)
-            .add();
+        // GUI data sync
+        registrar.playBidirectional(SyncWorldListPacket.TYPE, SyncWorldListPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(RequestWorldListPacket.TYPE, RequestWorldListPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncWorldDetailPacket.TYPE, SyncWorldDetailPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ConsoleCommandPacket.TYPE, ConsoleCommandPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ConsoleResponsePacket.TYPE, ConsoleResponsePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncGlobalSettingsPacket.TYPE, SyncGlobalSettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // Economy Management admin packets
-        INSTANCE.messageBuilder(SaveTemplatePacket.class, id())
-            .encoder(SaveTemplatePacket::encode)
-            .decoder(SaveTemplatePacket::new)
-            .consumer(SaveTemplatePacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(DeleteTemplatePacket.class, id())
-            .encoder(DeleteTemplatePacket::encode)
-            .decoder(DeleteTemplatePacket::new)
-            .consumer(DeleteTemplatePacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(ToggleTemplatePacket.class, id())
-            .encoder(ToggleTemplatePacket::encode)
-            .decoder(ToggleTemplatePacket::new)
-            .consumer(ToggleTemplatePacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SaveFreeRewardSettingsPacket.class, id())
-            .encoder(SaveFreeRewardSettingsPacket::encode)
-            .decoder(SaveFreeRewardSettingsPacket::new)
-            .consumer(SaveFreeRewardSettingsPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncEconomyTemplatesPacket.class, id())
-            .encoder(SyncEconomyTemplatesPacket::encode)
-            .decoder(SyncEconomyTemplatesPacket::new)
-            .consumer(SyncEconomyTemplatesPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncBankAccountPacket.class, id())
-            .encoder(SyncBankAccountPacket::encode)
-            .decoder(SyncBankAccountPacket::new)
-            .consumer(SyncBankAccountPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(BankTransferPacket.class, id())
-            .encoder(BankTransferPacket::encode)
-            .decoder(BankTransferPacket::new)
-            .consumer(BankTransferPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncDailyTasksPacket.class, id())
-            .encoder(SyncDailyTasksPacket::encode)
-            .decoder(SyncDailyTasksPacket::new)
-            .consumer(SyncDailyTasksPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncAchievementsPacket.class, id())
-            .encoder(SyncAchievementsPacket::encode)
-            .decoder(SyncAchievementsPacket::new)
-            .consumer(SyncAchievementsPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(ClaimDailyTaskPacket.class, id())
-            .encoder(ClaimDailyTaskPacket::encode)
-            .decoder(ClaimDailyTaskPacket::new)
-            .consumer(ClaimDailyTaskPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(ClaimFreeRewardPacket.class, id())
-            .encoder(ClaimFreeRewardPacket::encode)
-            .decoder(ClaimFreeRewardPacket::new)
-            .consumer(ClaimFreeRewardPacket::handle)
-            .add();
+        registrar.playBidirectional(SaveTemplatePacket.TYPE, SaveTemplatePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(DeleteTemplatePacket.TYPE, DeleteTemplatePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ToggleTemplatePacket.TYPE, ToggleTemplatePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SaveFreeRewardSettingsPacket.TYPE, SaveFreeRewardSettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncEconomyTemplatesPacket.TYPE, SyncEconomyTemplatesPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncBankAccountPacket.TYPE, SyncBankAccountPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(BankTransferPacket.TYPE, BankTransferPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncDailyTasksPacket.TYPE, SyncDailyTasksPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncAchievementsPacket.TYPE, SyncAchievementsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ClaimDailyTaskPacket.TYPE, ClaimDailyTaskPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ClaimFreeRewardPacket.TYPE, ClaimFreeRewardPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // MineBay packets
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.HoldItemPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.HoldItemPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.HoldItemPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.HoldItemPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.CreateListingPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.CreateListingPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.CreateListingPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.CreateListingPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.CancelListingPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.CancelListingPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.CancelListingPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.CancelListingPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.PurchaseListingPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.PurchaseListingPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.PurchaseListingPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.PurchaseListingPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.CreateOfferPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.CreateOfferPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.CreateOfferPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.CreateOfferPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.AcceptOfferPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.AcceptOfferPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.AcceptOfferPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.AcceptOfferPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.RejectOfferPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.RejectOfferPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.RejectOfferPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.RejectOfferPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.DeleteListingPacket.class, id())
-            .encoder(com.servermanagement.network.packet.minebay.DeleteListingPacket::encode)
-            .decoder(com.servermanagement.network.packet.minebay.DeleteListingPacket::new)
-            .consumer(com.servermanagement.network.packet.minebay.DeleteListingPacket::handle)
-            .add();
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.HoldItemPacket.TYPE, com.servermanagement.network.packet.minebay.HoldItemPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.CreateListingPacket.TYPE, com.servermanagement.network.packet.minebay.CreateListingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.CancelListingPacket.TYPE, com.servermanagement.network.packet.minebay.CancelListingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket.TYPE, com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.PurchaseListingPacket.TYPE, com.servermanagement.network.packet.minebay.PurchaseListingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.CreateOfferPacket.TYPE, com.servermanagement.network.packet.minebay.CreateOfferPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.AcceptOfferPacket.TYPE, com.servermanagement.network.packet.minebay.AcceptOfferPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.RejectOfferPacket.TYPE, com.servermanagement.network.packet.minebay.RejectOfferPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.DeleteListingPacket.TYPE, com.servermanagement.network.packet.minebay.DeleteListingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // Bank inventory packets
-        INSTANCE.messageBuilder(SyncBankInventoryPacket.class, id())
-            .encoder(SyncBankInventoryPacket::encode)
-            .decoder(SyncBankInventoryPacket::new)
-            .consumer(SyncBankInventoryPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(ClaimBankItemPacket.class, id())
-            .encoder(ClaimBankItemPacket::encode)
-            .decoder(ClaimBankItemPacket::new)
-            .consumer(ClaimBankItemPacket::handle)
-            .add();
+        registrar.playBidirectional(SyncBankInventoryPacket.TYPE, SyncBankInventoryPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ClaimBankItemPacket.TYPE, ClaimBankItemPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // OTA Update packets
-        INSTANCE.messageBuilder(VersionCheckPacket.class, id())
-            .encoder(VersionCheckPacket::encode)
-            .decoder(VersionCheckPacket::new)
-            .consumer(VersionCheckPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(ModFileRequestPacket.class, id())
-            .encoder(ModFileRequestPacket::encode)
-            .decoder(ModFileRequestPacket::new)
-            .consumer(ModFileRequestPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(ModFileChunkPacket.class, id())
-            .encoder(ModFileChunkPacket::encode)
-            .decoder(ModFileChunkPacket::new)
-            .consumer(ModFileChunkPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(ModFileCompletePacket.class, id())
-            .encoder(ModFileCompletePacket::encode)
-            .decoder(ModFileCompletePacket::new)
-            .consumer(ModFileCompletePacket::handle)
-            .add();
+        registrar.playBidirectional(VersionCheckPacket.TYPE, VersionCheckPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ModFileRequestPacket.TYPE, ModFileRequestPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ModFileChunkPacket.TYPE, ModFileChunkPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ModFileCompletePacket.TYPE, ModFileCompletePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // Gambling packets
-        INSTANCE.messageBuilder(PlaceGamblingBetPacket.class, id())
-            .encoder(PlaceGamblingBetPacket::encode)
-            .decoder(PlaceGamblingBetPacket::new)
-            .consumer(PlaceGamblingBetPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(PlaceGamblingBetWithItemPacket.class, id())
-            .encoder(PlaceGamblingBetWithItemPacket::encode)
-            .decoder(PlaceGamblingBetWithItemPacket::new)
-            .consumer(PlaceGamblingBetWithItemPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(GamblingResultPacket.class, id())
-            .encoder(GamblingResultPacket::encode)
-            .decoder(GamblingResultPacket::new)
-            .consumer(GamblingResultPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncBettingSlotStatePacket.class, id())
-            .encoder(SyncBettingSlotStatePacket::encode)
-            .decoder(SyncBettingSlotStatePacket::new)
-            .consumer(SyncBettingSlotStatePacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncGamblingStatsPacket.class, id())
-            .encoder(SyncGamblingStatsPacket::encode)
-            .decoder(SyncGamblingStatsPacket::new)
-            .consumer(SyncGamblingStatsPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(GamblingTensionPacket.class, id())
-            .encoder(GamblingTensionPacket::encode)
-            .decoder(GamblingTensionPacket::new)
-            .consumer(GamblingTensionPacket::handle)
-            .add();
+        registrar.playBidirectional(PlaceGamblingBetPacket.TYPE, PlaceGamblingBetPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(PlaceGamblingBetWithItemPacket.TYPE, PlaceGamblingBetWithItemPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(GamblingResultPacket.TYPE, GamblingResultPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncBettingSlotStatePacket.TYPE, SyncBettingSlotStatePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncGamblingStatsPacket.TYPE, SyncGamblingStatsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(GamblingTensionPacket.TYPE, GamblingTensionPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // Money Request packets
-        INSTANCE.messageBuilder(SendMoneyRequestPacket.class, id())
-            .encoder(SendMoneyRequestPacket::encode)
-            .decoder(SendMoneyRequestPacket::new)
-            .consumer(SendMoneyRequestPacket::handle)
-            .add();
+        registrar.playBidirectional(SendMoneyRequestPacket.TYPE, SendMoneyRequestPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(RespondMoneyRequestPacket.TYPE, RespondMoneyRequestPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SyncMoneyRequestsPacket.TYPE, SyncMoneyRequestsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
-        INSTANCE.messageBuilder(RespondMoneyRequestPacket.class, id())
-            .encoder(RespondMoneyRequestPacket::encode)
-            .decoder(RespondMoneyRequestPacket::new)
-            .consumer(RespondMoneyRequestPacket::handle)
-            .add();
-        
-        INSTANCE.messageBuilder(SyncMoneyRequestsPacket.class, id())
-            .encoder(SyncMoneyRequestsPacket::encode)
-            .decoder(SyncMoneyRequestsPacket::new)
-            .consumer(SyncMoneyRequestsPacket::handle)
-            .add();
-        
-        INSTANCE.build();
-        
-        ServerManagementMod.LOGGER.info("Registered {} network packets", packetId);
+        ServerManagementMod.LOGGER.info("Registered network packets");
     }
 
     public static void registerClientPackets() {
@@ -376,18 +101,14 @@ public class ModNetworking {
     }
     
     public static void sendToServer(IPacket packet) {
-        INSTANCE.send(packet, PacketDistributor.SERVER.noArg());
+        PacketDistributor.sendToServer(packet);
     }
     
     public static void sendToPlayer(IPacket packet, ServerPlayer player) {
-        INSTANCE.send(packet, PacketDistributor.PLAYER.with(player));
+        PacketDistributor.sendToPlayer(player, packet);
     }
     
     public static void sendToAllPlayers(IPacket packet) {
-        INSTANCE.send(packet, PacketDistributor.ALL.noArg());
-    }
-    
-    public static SimpleChannel getChannel() {
-        return INSTANCE;
+        PacketDistributor.sendToAllPlayers(packet);
     }
 }

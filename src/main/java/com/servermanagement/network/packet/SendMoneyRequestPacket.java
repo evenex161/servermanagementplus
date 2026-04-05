@@ -1,5 +1,9 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.client.ClientMoneyRequestData;
 import com.servermanagement.features.economy.BankAccount;
@@ -8,7 +12,7 @@ import com.servermanagement.features.economy.MoneyRequest;
 import com.servermanagement.features.economy.MoneyRequestManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +22,14 @@ import java.util.function.Supplier;
  * Client → Server: Create a new money request
  */
 public class SendMoneyRequestPacket implements IPacket {
+    public static final CustomPacketPayload.Type<SendMoneyRequestPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "send_money_request_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SendMoneyRequestPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SendMoneyRequestPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String targetPlayerName;
     private final double amount;
     private final String message;
@@ -42,10 +54,9 @@ public class SendMoneyRequestPacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context contextSupplier) {
-        CustomPayloadEvent.Context context = contextSupplier;
+    public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            ServerPlayer sender = context.getSender();
+            ServerPlayer sender = (ServerPlayer) context.player();
             if (sender == null) return;
 
             // Validate player name
@@ -111,7 +122,7 @@ public class SendMoneyRequestPacket implements IPacket {
             syncRequestsToPlayer(sender, econ);
             syncRequestsToPlayer(target, econ);
         });
-        context.setPacketHandled(true);
+        
     }
 
     static void syncRequestsToPlayer(ServerPlayer player, EconomyManager econ) {

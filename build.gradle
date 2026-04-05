@@ -3,7 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.minecraftforge.gradle' version '[7.0.3,8)'
+    id 'net.neoforged.gradle.userdev' version '7.1.21'
 }
 
 version = "v${mod_version}-b${mod_build}-mc${minecraft_version}-release"
@@ -15,50 +15,48 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-minecraft {
-    mappings channel: "${mapping_channel}", version: "${mapping_version}"
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'forge.logging.console.level', 'debug'
+        modSource project.sourceSets.main
+    }
 
-    runs {
-        configureEach {
-            workingDir = layout.projectDirectory.dir('run')
+    client {
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+    }
 
-            systemProperty 'forge.enabledGameTestNamespaces', "${mod_id}"
-        }
+    server {
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        argument '--nogui'
+    }
 
-        register('client')
+    gameTestServer {
+        systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+    }
 
-        register('server') {
-            args '--nogui'
-        }
-
-        register('gameTestServer')
-
-        register('data') {
-            workingDir = layout.projectDirectory.dir('run-data')
-            args '--mod', "${mod_id}", '--all', '--output', layout.projectDirectory.dir('src/generated/resources'), '--existing', layout.projectDirectory.dir('src/main/resources')
-        }
+    data {
+        arguments.addAll '--mod', project.mod_id, '--all', '--output',
+            file('src/generated/resources/').getAbsolutePath(), '--existing',
+            file('src/main/resources/').getAbsolutePath()
     }
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
-repositories {
-    minecraft.mavenizer(it)
-    maven fg.forgeMaven
-    maven fg.minecraftLibsMaven
-    mavenCentral()
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
 }
 
 dependencies {
-    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+    implementation "net.neoforged:neoforge:${neo_version}"
 }
 
 tasks.named('processResources', ProcessResources).configure {
     var replaceProperties = [
             minecraft_version: minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            forge_version: forge_version,
-            forge_version_range: forge_version_range,
+            neo_version: neo_version,
             loader_version_range: loader_version_range,
             mod_id: mod_id,
             mod_name: mod_name,
@@ -71,7 +69,7 @@ tasks.named('processResources', ProcessResources).configure {
     
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/mods.toml', 'ota.properties']) {
+    filesMatching(['META-INF/neoforge.mods.toml', 'ota.properties']) {
         expand replaceProperties
     }
 }

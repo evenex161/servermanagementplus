@@ -1,5 +1,10 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.economy.DailyTaskTemplate;
 import com.servermanagement.features.economy.DailyTaskTemplateManager;
 import com.servermanagement.features.economy.EconomyManager;
@@ -8,7 +13,7 @@ import com.servermanagement.network.ModNetworking;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -16,6 +21,14 @@ import java.util.function.Supplier;
  * Client-to-server packet for creating or updating a daily task template
  */
 public class SaveTemplatePacket implements IPacket {
+    public static final CustomPacketPayload.Type<SaveTemplatePacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "save_template_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveTemplatePacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveTemplatePacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String templateId; // empty for new template
     private final int taskTypeOrdinal;
     private final String description;
@@ -52,9 +65,9 @@ public class SaveTemplatePacket implements IPacket {
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
+    public void handle(IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+            ServerPlayer player = (ServerPlayer) ctx.player();
             if (player == null || !player.hasPermissions(2)) return;
 
             var server = player.getServer();
@@ -88,6 +101,6 @@ public class SaveTemplatePacket implements IPacket {
             // Sync updated list back to client
             SyncEconomyTemplatesPacket.syncToPlayer(player, server);
         });
-        ctx.setPacketHandled(true);
+        
     }
 }

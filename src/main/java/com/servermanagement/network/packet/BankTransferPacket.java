@@ -1,10 +1,15 @@
 package com.servermanagement.network.packet;
 
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import com.servermanagement.ServerManagementMod;
+
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.function.Supplier;
 
@@ -12,6 +17,14 @@ import java.util.function.Supplier;
  * Packet for transferring money between players
  */
 public class BankTransferPacket implements IPacket {
+    public static final CustomPacketPayload.Type<BankTransferPacket> TYPE = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "bank_transfer_packet"));
+    
+    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, BankTransferPacket> STREAM_CODEC = 
+        StreamCodec.of((buf, pkt) -> pkt.encode(buf), BankTransferPacket::new);
+    
+    @Override
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String targetPlayerName;
     private final double amount;
     
@@ -30,10 +43,9 @@ public class BankTransferPacket implements IPacket {
         buf.writeDouble(this.amount);
     }
     
-    public void handle(CustomPayloadEvent.Context contextSupplier) {
-        CustomPayloadEvent.Context context = contextSupplier;
+    public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            ServerPlayer sender = context.getSender();
+            ServerPlayer sender = (ServerPlayer) context.player();
             if (sender == null) {
                 return; // No sender - reject packet
             }
@@ -108,6 +120,6 @@ public class BankTransferPacket implements IPacket {
                     "§cTransfer failed - insufficient funds"));
             }
         });
-        context.setPacketHandled(true);
+        
     }
 }

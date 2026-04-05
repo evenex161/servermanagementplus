@@ -169,7 +169,7 @@ public class BankInventory {
         
         public CompoundTag toNBT() {
             CompoundTag tag = new CompoundTag();
-            tag.put("Item", itemStack.saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
+            tag.put("Item", itemStack.saveOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
             tag.putString("Source", source.name());
             tag.putString("Details", details);
             tag.putLong("Timestamp", timestamp);
@@ -177,7 +177,7 @@ public class BankInventory {
         }
         
         public static StoredItem fromNBT(CompoundTag tag) {
-            ItemStack item = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("Item"));
+            ItemStack item = ItemStack.parseOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("Item"));
             ItemSource source = ItemSource.valueOf(tag.getString("Source"));
             String details = tag.getString("Details");
             long timestamp = tag.getLong("Timestamp");

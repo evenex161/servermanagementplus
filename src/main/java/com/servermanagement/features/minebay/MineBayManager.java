@@ -244,7 +244,7 @@ public class MineBayManager {
             for (Map.Entry<UUID, ItemStack> entry : heldItems.entrySet()) {
                 CompoundTag entryTag = new CompoundTag();
                 entryTag.putUUID("PlayerId", entry.getKey());
-                entryTag.put("Item", entry.getValue().saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
+                entryTag.put("Item", entry.getValue().saveOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
                 heldItemsTag.put("Held" + index, entryTag);
                 index++;
             }
@@ -296,7 +296,7 @@ public class MineBayManager {
             for (int i = 0; i < heldCount; i++) {
                 CompoundTag entryTag = heldItemsTag.getCompound("Held" + i);
                 UUID playerId = entryTag.getUUID("PlayerId");
-                ItemStack item = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), entryTag.getCompound("Item"));
+                ItemStack item = ItemStack.parseOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), entryTag.getCompound("Item"));
                 heldItems.put(playerId, item);
             }
             
