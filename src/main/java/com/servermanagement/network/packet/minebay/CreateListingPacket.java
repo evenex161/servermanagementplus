@@ -98,6 +98,10 @@ public class CreateListingPacket implements IPacket {
                         listing.setBaseMarketPrice(baseMarketPrice);
                         listing.setMarginPercent(clampedMargin);
                         listing.setMoneyPrice(finalPrice);
+                        
+                        // Log margin to history for future pricing calculations
+                        com.servermanagement.features.economy.MarginHistoryTracker.getInstance()
+                            .recordMargin(itemToSell, clampedMargin, finalPrice, baseMarketPrice, player.getUUID());
                     }
                     
                     if (listing == null) {

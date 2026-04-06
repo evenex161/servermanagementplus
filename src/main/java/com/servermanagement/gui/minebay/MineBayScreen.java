@@ -347,6 +347,10 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             moneyPriceBox.setMaxLength(10);
             if (isEditMode && listingBeingEdited != null) {
                 moneyPriceBox.setValue(String.valueOf((int) listingBeingEdited.getMoneyPrice()));
+            } else if (!placedItem.isEmpty()) {
+                // Auto-populate with market base price for the placed item
+                double basePrice = com.servermanagement.client.ClientMarketData.getStackPrice(placedItem);
+                moneyPriceBox.setValue(String.format("%.2f", basePrice));
             } else {
                 moneyPriceBox.setValue("0");
             }
@@ -364,7 +368,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             if (isEditMode && listingBeingEdited != null) {
                 marginPercentBox.setValue(String.valueOf((int) listingBeingEdited.getMarginPercent()));
             } else {
-                marginPercentBox.setValue("0");
+                marginPercentBox.setValue("10"); // Default 10% margin
             }
             marginPercentBox.setHint(Component.literal("%"));
             marginPercentBox.setFilter(s -> s.matches("-?\\d*"));
@@ -1408,13 +1412,16 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
             double finalPrice = com.servermanagement.client.ClientMarketData.calculateFinalPrice(basePrice, margin);
             
-            // Item being listed preview
+            // Item being listed preview (with count)
             guiGraphics.drawString(this.font,
                 Component.literal("Listing: "),
                 formX + 320, formY - 12, 0x999999, true);
             guiGraphics.renderItem(placedItem, formX + 370, formY - 16);
+            String listingLabel = placedItem.getCount() > 1 
+                ? placedItem.getCount() + "x " + placedItem.getHoverName().getString()
+                : placedItem.getHoverName().getString();
             guiGraphics.drawString(this.font,
-                placedItem.getHoverName(),
+                Component.literal(listingLabel),
                 formX + 390, formY - 12, 0xFFFFFF, true);
             
             // Market base price
@@ -1486,13 +1493,16 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         int infoX = centerX + 50;
         int infoY = centerY + 76;
         
-        // Item preview - icon + name
+        // Item preview - icon + name (with count)
         if (!placedItem.isEmpty()) {
             guiGraphics.fill(infoX - 1, infoY - 1, infoX + 17, infoY + 17, 0xFF555555);
             guiGraphics.fill(infoX, infoY, infoX + 16, infoY + 16, 0xFF8B8B8B);
             guiGraphics.renderItem(placedItem, infoX, infoY);
             guiGraphics.renderItemDecorations(this.font, placedItem, infoX, infoY);
-            guiGraphics.drawString(this.font, placedItem.getHoverName(),
+            String confirmItemLabel = placedItem.getCount() > 1 
+                ? placedItem.getCount() + "x " + placedItem.getHoverName().getString()
+                : placedItem.getHoverName().getString();
+            guiGraphics.drawString(this.font, Component.literal(confirmItemLabel),
                 infoX + 22, infoY + 4, 0xFFFFFF, true);
         }
         

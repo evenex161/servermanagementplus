@@ -43,6 +43,9 @@ public class EconomyServerHandler {
             if (event.getServer() != null) {
                 tracker.applyDecay();
                 tracker.tickSave(event.getServer());
+                
+                // Periodic margin history save
+                MarginHistoryTracker.getInstance().save(event.getServer());
             }
 
             // Periodic session cleanup to prevent memory leak
