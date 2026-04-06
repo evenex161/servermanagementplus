@@ -20,11 +20,12 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
     private ToggleSwitch playerManagerSwitch;
     private ToggleSwitch economySwitch;
     private ToggleSwitch slimeHeadSwitch;
+    private ToggleSwitch serverPerformanceSwitch;
     
     public ConfigScreen(ConfigMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = 320;
-        this.imageHeight = 260; // Increased height for 4 toggles
+        this.imageHeight = 295; // Height for 5 toggles
     }
 
     @Override
@@ -90,6 +91,19 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
         );
         this.addRenderableWidget(this.slimeHeadSwitch);
         
+        // Server Performance toggle - ALWAYS shown
+        this.serverPerformanceSwitch = new ToggleSwitch(
+            rightCol, startY + spacing * 4 + 3,
+            Component.literal("Server Performance"),
+            this.menu.isServerPerformanceEnabled(),
+            (newState) -> {
+                long clientTick = minecraft.player.tickCount;
+                ModNetworking.sendToServer(new ToggleFeaturePacket("server_performance", newState, clientTick));
+                this.menu.setServerPerformanceEnabled(newState);
+            }
+        );
+        this.addRenderableWidget(this.serverPerformanceSwitch);
+        
         // Back to Dashboard button
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("← Dashboard"),
@@ -144,6 +158,8 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
             this.leftPos + 20, this.topPos + 123, 0xFFFFFF, false);
         guiGraphics.drawString(this.font, "SlimeHead Feature:", 
             this.leftPos + 20, this.topPos + 158, 0xFFFFFF, false);
+        guiGraphics.drawString(this.font, "Server Performance:", 
+            this.leftPos + 20, this.topPos + 193, 0xFFFFFF, false);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

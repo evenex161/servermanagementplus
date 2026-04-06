@@ -13,18 +13,46 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class PerformanceSettingsScreen extends AbstractContainerScreen<PerformanceSettingsMenu> {
 
-    // Scroll state
     private int scrollOffset = 0;
-    private static final int MAX_SCROLL = 260;
     private static final int SCROLL_STEP = 16;
 
-    // Current page (0 = toggles, 1 = tunables)
+    // Layout constants
+    private static final int HEADER_HEIGHT = 65;
+    private static final int FOOTER_HEIGHT = 35;
+    private static final int ROW_SPACING = 30;
+    private static final int TOGGLE_HEIGHT = 20;
+    private static final int BUTTON_HEIGHT = 18;
+
     private int currentPage = 0;
 
     public PerformanceSettingsScreen(PerformanceSettingsMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = 380;
         this.imageHeight = 340;
+    }
+
+    private int getContentTop() {
+        return this.topPos + HEADER_HEIGHT;
+    }
+
+    private int getContentBottom() {
+        return this.topPos + this.imageHeight - FOOTER_HEIGHT;
+    }
+
+    private int getContentHeight() {
+        return getContentBottom() - getContentTop();
+    }
+
+    private int getMaxScroll() {
+        int rows;
+        if (currentPage == 0) rows = 8;
+        else if (currentPage == 1) rows = 10;
+        else return 0;
+        return Math.max(0, rows * ROW_SPACING - getContentHeight());
+    }
+
+    private boolean isRowVisible(int y, int height) {
+        return (y + height > getContentTop()) && (y < getContentBottom());
     }
 
     @Override
@@ -40,10 +68,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int cX = this.leftPos;
         int cY = this.topPos;
 
-        // --- TPS status bar at top ---
-        // (rendered in render(), not a widget)
-
-        // --- Page tabs ---
+        // --- Tab buttons (fixed position, never scrolled) ---
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Toggles"),
             btn -> { currentPage = 0; scrollOffset = 0; rebuildWidgets(); })
@@ -65,18 +90,17 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
             .style(currentPage == 2 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
-        int contentY = cY + 70 - scrollOffset;
+        // --- Content widgets (only add if within visible content area) ---
+        int contentY = getContentTop() - scrollOffset;
         int rightCol = cX + 290;
-        int spacing = 30;
 
         if (currentPage == 0) {
-            buildTogglesPage(cX, contentY, rightCol, spacing);
+            buildTogglesPage(cX, contentY, rightCol);
         } else if (currentPage == 1) {
-            buildSettingsPage(cX, contentY, spacing);
+            buildSettingsPage(cX, contentY);
         }
-        // Page 2 (Stats) is rendered in render() method only
 
-        // --- Bottom buttons ---
+        // --- Bottom buttons (fixed position) ---
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("\u2190 Dashboard"),
             btn -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
@@ -92,43 +116,35 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
             .build());
     }
 
-    private void buildTogglesPage(int cX, int contentY, int rightCol, int spacing) {
+    private void buildTogglesPage(int cX, int contentY, int rightCol) {
         int row = 0;
-
-        // Master toggle
-        addToggle(rightCol, contentY + spacing * row, "feature_enabled",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "feature_enabled",
             this.menu.isFeatureEnabled(), v -> this.menu.setFeatureEnabled(v));
         row++;
-
-        addToggle(rightCol, contentY + spacing * row, "auto_optimize",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "auto_optimize",
             this.menu.isTpsAutoOptimize(), v -> this.menu.setTpsAutoOptimize(v));
         row++;
-
-        addToggle(rightCol, contentY + spacing * row, "item_merging",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "item_merging",
             this.menu.isItemMergingEnabled(), v -> this.menu.setItemMergingEnabled(v));
         row++;
-
-        addToggle(rightCol, contentY + spacing * row, "mob_spawn_limiter",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "mob_spawn_limiter",
             this.menu.isMobSpawnLimiterEnabled(), v -> this.menu.setMobSpawnLimiterEnabled(v));
         row++;
-
-        addToggle(rightCol, contentY + spacing * row, "entity_activation_range",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "entity_activation_range",
             this.menu.isEntityActivationRangeEnabled(), v -> this.menu.setEntityActivationRangeEnabled(v));
         row++;
-
-        addToggle(rightCol, contentY + spacing * row, "villager_throttle",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "villager_throttle",
             this.menu.isVillagerThrottleEnabled(), v -> this.menu.setVillagerThrottleEnabled(v));
         row++;
-
-        addToggle(rightCol, contentY + spacing * row, "redstone_throttle",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "redstone_throttle",
             this.menu.isRedstoneThrottleEnabled(), v -> this.menu.setRedstoneThrottleEnabled(v));
         row++;
-
-        addToggle(rightCol, contentY + spacing * row, "tps_monitor",
+        addToggleIfVisible(rightCol, contentY + ROW_SPACING * row, "tps_monitor",
             this.menu.isTpsMonitorEnabled(), v -> this.menu.setTpsMonitorEnabled(v));
     }
 
-    private void addToggle(int x, int y, String key, boolean initialState, java.util.function.Consumer<Boolean> setter) {
+    private void addToggleIfVisible(int x, int y, String key, boolean initialState, java.util.function.Consumer<Boolean> setter) {
+        if (!isRowVisible(y, TOGGLE_HEIGHT)) return;
         this.addRenderableWidget(new ToggleSwitch(
             x, y, Component.literal(key),
             initialState,
@@ -140,81 +156,60 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         ));
     }
 
-    private void buildSettingsPage(int cX, int contentY, int spacing) {
-        int btnWidth = 30;
+    private void buildSettingsPage(int cX, int contentY) {
         int row = 0;
-
-        // Item Merge Radius
-        addValueButtons(cX + 260, contentY + spacing * row, "item_merge_radius",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "item_merge_radius",
             this.menu.getItemMergeRadius(), 0.5, 1.0, 10.0, true);
         row++;
-
-        // Item Merge Interval
-        addValueButtons(cX + 260, contentY + spacing * row, "item_merge_interval",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "item_merge_interval",
             this.menu.getItemMergeInterval(), 10, 10, 200, false);
         row++;
-
-        // Mob Cap Multiplier
-        addValueButtons(cX + 260, contentY + spacing * row, "mob_cap_multiplier",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "mob_cap_multiplier",
             this.menu.getMobCapMultiplier(), 5, 10, 100, false);
         row++;
-
-        // Monster Activation Range
-        addValueButtons(cX + 260, contentY + spacing * row, "monster_activation_range",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "monster_activation_range",
             this.menu.getMonsterActivationRange(), 4, 8, 128, false);
         row++;
-
-        // Animal Activation Range
-        addValueButtons(cX + 260, contentY + spacing * row, "animal_activation_range",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "animal_activation_range",
             this.menu.getAnimalActivationRange(), 4, 8, 128, false);
         row++;
-
-        // Misc Activation Range
-        addValueButtons(cX + 260, contentY + spacing * row, "misc_activation_range",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "misc_activation_range",
             this.menu.getMiscActivationRange(), 2, 4, 64, false);
         row++;
-
-        // Villager Tick Interval
-        addValueButtons(cX + 260, contentY + spacing * row, "villager_tick_interval",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "villager_tick_interval",
             this.menu.getVillagerTickInterval(), 1, 1, 10, false);
         row++;
-
-        // Redstone Updates Per Tick
-        addValueButtons(cX + 260, contentY + spacing * row, "redstone_updates_per_tick",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "redstone_updates_per_tick",
             this.menu.getRedstoneUpdatesPerTick(), 100, 100, 100000, false);
         row++;
-
-        // TPS Warning Threshold
-        addValueButtons(cX + 260, contentY + spacing * row, "tps_warning_threshold",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "tps_warning_threshold",
             this.menu.getTpsWarningThreshold(), 0.5, 5.0, 20.0, true);
         row++;
-
-        // TPS Critical Threshold
-        addValueButtons(cX + 260, contentY + spacing * row, "tps_critical_threshold",
+        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "tps_critical_threshold",
             this.menu.getTpsCriticalThreshold(), 0.5, 5.0, 20.0, true);
     }
 
-    private void addValueButtons(int x, int y, String key, double currentValue,
-                                  double step, double min, double max, boolean isDouble) {
-        // Minus button
+    private void addValueButtonsIfVisible(int x, int y, String key, double currentValue,
+                                           double step, double min, double max, boolean isDouble) {
+        if (!isRowVisible(y, BUTTON_HEIGHT)) return;
+
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("-"),
             btn -> {
                 double newVal = Math.max(min, currentValue - step);
                 updateNumericSetting(key, newVal, isDouble);
             })
-            .bounds(x, y, 25, 18)
+            .bounds(x, y, 25, BUTTON_HEIGHT)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
 
-        // Plus button
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("+"),
             btn -> {
                 double newVal = Math.min(max, currentValue + step);
                 updateNumericSetting(key, newVal, isDouble);
             })
-            .bounds(x + 75, y, 25, 18)
+            .bounds(x + 80, y, 25, BUTTON_HEIGHT)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
     }
@@ -223,8 +218,6 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         long tick = minecraft.player != null ? minecraft.player.tickCount : 0;
         String valStr = isDouble ? String.valueOf(newVal) : String.valueOf((int) newVal);
         ModNetworking.sendToServer(new UpdatePerformanceSettingPacket(key, valStr, tick));
-
-        // Update local menu state and rebuild
         applyLocalMenuUpdate(key, newVal);
         rebuildWidgets();
     }
@@ -246,7 +239,9 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        scrollOffset = (int) Math.max(0, Math.min(MAX_SCROLL, scrollOffset - scrollY * SCROLL_STEP));
+        int maxScroll = getMaxScroll();
+        if (maxScroll <= 0) return true;
+        scrollOffset = (int) Math.max(0, Math.min(maxScroll, scrollOffset - scrollY * SCROLL_STEP));
         rebuildWidgets();
         return true;
     }
@@ -258,16 +253,29 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
         int cX = this.leftPos;
         int cY = this.topPos;
+        int contentTop = getContentTop();
+        int contentBottom = getContentBottom();
 
-        // Header
-        g.drawString(this.font, "Server Performance", cX + 15, cY + 8, 0xFFD700, true);
+        // 1) Render widgets (super.render includes all addRenderableWidget items)
+        super.render(g, mouseX, mouseY, partialTick);
 
-        // TPS indicator in header
+        // 2) Repaint header zone to cover any widget bleed from scrolling
+        g.fill(cX, cY, cX + this.imageWidth, cY + 35, 0xFF1A1A2E);
+        g.fill(cX, cY + 35, cX + this.imageWidth, cY + 36, 0xFF333333);
+        // TPS bar
         double tps = this.menu.getCurrentTps();
+        int barWidth = (int) (Math.min(tps / 20.0, 1.0) * (this.imageWidth - 20));
+        int barColor = tps >= 18.0 ? 0xFF27AE60 : (tps >= 15.0 ? 0xFFE67E22 : 0xFFE74C3C);
+        g.fill(cX + 10, cY + 36, cX + 10 + barWidth, cY + 39, barColor);
+
+        // 3) Repaint footer zone to cover any widget bleed from scrolling
+        g.fill(cX, contentBottom, cX + this.imageWidth, cY + this.imageHeight - 32, 0xE0101010);
+
+        // 4) Draw header text (on top of repainted header)
+        g.drawString(this.font, "Server Performance", cX + 15, cY + 8, 0xFFD700, true);
         int tpsColor = tps >= 18.0 ? 0x27AE60 : (tps >= 15.0 ? 0xE67E22 : 0xE74C3C);
         String tpsStr = String.format("TPS: %.1f", tps);
         g.drawString(this.font, tpsStr, cX + this.imageWidth - this.font.width(tpsStr) - 15, cY + 8, tpsColor, true);
-
         String msptStr = String.format("MSPT: %.1fms", this.menu.getAverageMspt());
         g.drawString(this.font, msptStr, cX + this.imageWidth - this.font.width(msptStr) - 15, cY + 20, 0xAAAAAA, true);
 
@@ -278,42 +286,38 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
             g.drawString(this.font, sub, cX + 15, cY + 20, 0xAAAAAA, true);
         }
 
-        // Content area
-        int contentY = cY + 70 - scrollOffset;
-        int spacing = 30;
+        // 5) Render content text labels with scissor clipping
+        g.enableScissor(cX, contentTop, cX + this.imageWidth, contentBottom);
+
+        int contentY = contentTop - scrollOffset;
 
         if (currentPage == 0) {
-            renderTogglesLabels(g, cX, contentY, spacing);
+            renderTogglesLabels(g, cX, contentY);
         } else if (currentPage == 1) {
-            renderSettingsLabels(g, cX, contentY, spacing);
+            renderSettingsLabels(g, cX, contentY);
         } else if (currentPage == 2) {
-            renderStatsPage(g, cX, cY + 70);
+            renderStatsPage(g, cX, contentTop);
         }
 
-        super.render(g, mouseX, mouseY, partialTick);
+        g.disableScissor();
+
         this.renderTooltip(g, mouseX, mouseY);
     }
 
-    private void renderTogglesLabels(GuiGraphics g, int cX, int contentY, int spacing) {
-        int row = 0;
-        g.drawString(this.font, "Server Performance:", cX + 20, contentY + spacing * row + 5, 0xFFFF55, false);
-        row++;
-        g.drawString(this.font, "Auto-Optimize:", cX + 20, contentY + spacing * row + 5, 0xFFFFFF, false);
-        row++;
-        g.drawString(this.font, "Item Merging:", cX + 20, contentY + spacing * row + 5, 0xFFFFFF, false);
-        row++;
-        g.drawString(this.font, "Mob Spawn Limiter:", cX + 20, contentY + spacing * row + 5, 0xFFFFFF, false);
-        row++;
-        g.drawString(this.font, "Entity Activation Range:", cX + 20, contentY + spacing * row + 5, 0xFFFFFF, false);
-        row++;
-        g.drawString(this.font, "Villager Throttle:", cX + 20, contentY + spacing * row + 5, 0xFFFFFF, false);
-        row++;
-        g.drawString(this.font, "Redstone Throttle:", cX + 20, contentY + spacing * row + 5, 0xFFFFFF, false);
-        row++;
-        g.drawString(this.font, "TPS Monitor:", cX + 20, contentY + spacing * row + 5, 0xFFFFFF, false);
+    private void renderTogglesLabels(GuiGraphics g, int cX, int contentY) {
+        String[] labels = {
+            "Server Performance:", "Auto-Optimize:", "Item Merging:",
+            "Mob Spawn Limiter:", "Entity Activation Range:", "Villager Throttle:",
+            "Redstone Throttle:", "TPS Monitor:"
+        };
+        for (int i = 0; i < labels.length; i++) {
+            int y = contentY + ROW_SPACING * i + 5;
+            int color = i == 0 ? 0xFFFF55 : 0xFFFFFF;
+            g.drawString(this.font, labels[i], cX + 20, y, color, false);
+        }
     }
 
-    private void renderSettingsLabels(GuiGraphics g, int cX, int contentY, int spacing) {
+    private void renderSettingsLabels(GuiGraphics g, int cX, int contentY) {
         String[][] labels = {
             {"Item Merge Radius:", String.format("%.1f", this.menu.getItemMergeRadius())},
             {"Merge Interval (ticks):", String.valueOf(this.menu.getItemMergeInterval())},
@@ -328,11 +332,13 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         };
 
         for (int i = 0; i < labels.length; i++) {
-            int y = contentY + spacing * i + 4;
+            int y = contentY + ROW_SPACING * i + 4;
             g.drawString(this.font, labels[i][0], cX + 20, y, 0xFFFFFF, false);
-            // Value display between - and + buttons
+            // Value centered between - and + buttons
             String valStr = labels[i][1];
-            g.drawString(this.font, valStr, cX + 260 + 28, y, 0x55FF55, false);
+            int valWidth = this.font.width(valStr);
+            int valCenter = cX + 260 + 52;
+            g.drawString(this.font, valStr, valCenter - valWidth / 2, y, 0x55FF55, false);
         }
     }
 
