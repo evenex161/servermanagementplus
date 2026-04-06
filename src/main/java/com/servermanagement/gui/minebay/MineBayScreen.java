@@ -31,6 +31,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     // For creating new listings
     private EditBox moneyPriceBox;
+    private EditBox marginPercentBox; // Margin % input for dynamic pricing
     private EditBox[] priceAmountBoxes = new EditBox[3]; // Amount inputs for 3 price items
     private PriceItemEntry[] priceItems = new PriceItemEntry[3]; // Price items (items buyer must provide)
     private boolean[] useStacks = new boolean[3]; // Stack mode toggle for each price item
@@ -309,7 +310,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             ModernButton.ButtonStyle.SECONDARY
         ));
         
-        // Money price input
+        // Money price input (now shows final calculated price)
         if (moneyPriceBox == null) {
             moneyPriceBox = new EditBox(this.font, formX, formY, 120, 18, Component.literal("Money Price"));
             moneyPriceBox.setMaxLength(10);
@@ -326,9 +327,25 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         }
         this.addRenderableWidget(moneyPriceBox);
         
+        // Margin % input (dynamic pricing)
+        if (marginPercentBox == null) {
+            marginPercentBox = new EditBox(this.font, formX + 130, formY, 60, 18, Component.literal("Margin %"));
+            marginPercentBox.setMaxLength(5);
+            if (isEditMode && listingBeingEdited != null) {
+                marginPercentBox.setValue(String.valueOf((int) listingBeingEdited.getMarginPercent()));
+            } else {
+                marginPercentBox.setValue("0");
+            }
+            marginPercentBox.setHint(Component.literal("%"));
+            marginPercentBox.setFilter(s -> s.matches("-?\\d*"));
+        } else {
+            marginPercentBox.setPosition(formX + 130, formY);
+        }
+        this.addRenderableWidget(marginPercentBox);
+        
         // Offer type selector
         this.addRenderableWidget(new ModernButton(
-            formX + 130, formY - 2, 140, 22,
+            formX + 200, formY - 2, 100, 22,
             Component.literal(selectedOfferType == MineBayListing.OfferType.FIXED ? 
                 "Fixed Price" : "Negotiable"),
             button -> {
@@ -887,6 +904,16 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
         }
         
+        // Get margin percent
+        double marginPercent = 0.0;
+        if (marginPercentBox != null && !marginPercentBox.getValue().isEmpty()) {
+            try {
+                marginPercent = Double.parseDouble(marginPercentBox.getValue());
+            } catch (NumberFormatException e) {
+                marginPercent = 0.0;
+            }
+        }
+        
         // Validate that either money or price items are set
         boolean hasPriceItems = false;
         for (PriceItemEntry entry : priceItems) {
@@ -937,6 +964,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             new com.servermanagement.network.packet.minebay.CreateListingPacket(
                 offeringItem.copy(), // Send the actual item
                 moneyPrice,
+                marginPercent,
                 selectedOfferType,
                 priceItemsList // Send the price items
             )
@@ -949,6 +977,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         listingBeingEdited = null;
         placedItem = ItemStack.EMPTY;
         moneyPriceBox = null;
+        marginPercentBox = null;
         for (int i = 0; i < priceAmountBoxes.length; i++) {
             priceAmountBoxes[i] = null;
             priceItems[i] = new PriceItemEntry();
@@ -1183,7 +1212,21 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                     guiGraphics.drawString(this.font, 
                         Component.literal("$" + String.format("%.0f", listing.getMoneyPrice())),
                         priceX, priceY, 0x55FF55, true);
-                    priceY += 13;
+                    priceY += 11;
+                    
+                    // Show margin indicator if market pricing data is available
+                    if (listing.getBaseMarketPrice() > 0) {
+                        String marginStr = listing.getMarginPercent() >= 0 
+                            ? "+" + String.format("%.0f", listing.getMarginPercent()) + "%" 
+                            : String.format("%.0f", listing.getMarginPercent()) + "%";
+                        int marginColor = listing.getMarginPercent() >= 0 ? 0x55FFFF : 0xFFAA00;
+                        guiGraphics.drawString(this.font,
+                            Component.literal(marginStr),
+                            priceX, priceY, marginColor, true);
+                        priceY += 11;
+                    } else {
+                        priceY += 2;
+                    }
                 }
                 
                 // Price items (render up to 3 inline)
@@ -1255,13 +1298,43 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // Money price label
         guiGraphics.drawString(this.font, 
-            Component.literal("Money ($):"),
+            Component.literal("Price ($):"),
             formX, formY - 12, 0xFFFFFF, true);
+        
+        // Margin % label
+        guiGraphics.drawString(this.font, 
+            Component.literal("Margin %:"),
+            formX + 130, formY - 12, 0xFFFFFF, true);
         
         // Offer type label
         guiGraphics.drawString(this.font, 
             Component.literal("Type:"),
-            formX + 130, formY - 12, 0xFFFFFF, true);
+            formX + 200, formY - 12, 0xFFFFFF, true);
+        
+        // Show market pricing info if item is placed
+        if (!placedItem.isEmpty()) {
+            double basePrice = com.servermanagement.client.ClientMarketData.getStackPrice(placedItem);
+            double margin = 0.0;
+            if (marginPercentBox != null && !marginPercentBox.getValue().isEmpty()) {
+                try { margin = Double.parseDouble(marginPercentBox.getValue()); } catch (NumberFormatException e) {}
+            }
+            double finalPrice = com.servermanagement.client.ClientMarketData.calculateFinalPrice(basePrice, margin);
+            
+            // Market base price
+            guiGraphics.drawString(this.font,
+                Component.literal("Market Base: $" + String.format("%.2f", basePrice)),
+                formX, formY + 22, 0x55FFFF, true);
+            
+            // Final price preview
+            int finalColor = margin >= 0 ? 0x55FF55 : 0xFFAA00;
+            guiGraphics.drawString(this.font,
+                Component.literal("Final Price: $" + String.format("%.2f", finalPrice)),
+                formX + 160, formY + 22, finalColor, true);
+        } else {
+            guiGraphics.drawString(this.font,
+                Component.literal("Place item to see market price"),
+                formX, formY + 22, 0x666666, true);
+        }
         
         // Price Items section header
         int priceItemY = formY + 38; // Must match initCreateStep1 and mouseClicked
@@ -1552,9 +1625,25 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         infoY += 15;
         if (listing.getMoneyPrice() > 0) {
             guiGraphics.drawString(this.font, 
-                Component.literal("Money: $" + String.format("%.2f", listing.getMoneyPrice())),
+                Component.literal("Total: $" + String.format("%.2f", listing.getMoneyPrice())),
                 itemX, infoY, 0x55FF55, true);
             infoY += 15;
+            
+            // Show market pricing breakdown if available
+            if (listing.getBaseMarketPrice() > 0) {
+                guiGraphics.drawString(this.font,
+                    Component.literal("Market Base: $" + String.format("%.2f", listing.getBaseMarketPrice())),
+                    itemX, infoY, 0x55FFFF, true);
+                infoY += 12;
+                String marginStr = listing.getMarginPercent() >= 0 
+                    ? "+" + String.format("%.0f", listing.getMarginPercent()) + "%" 
+                    : String.format("%.0f", listing.getMarginPercent()) + "%";
+                int marginColor = listing.getMarginPercent() >= 0 ? 0x55FF55 : 0xFFAA00;
+                guiGraphics.drawString(this.font,
+                    Component.literal("Seller Margin: " + marginStr),
+                    itemX, infoY, marginColor, true);
+                infoY += 15;
+            }
         }
         
         // Required items
@@ -1717,6 +1806,37 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         int priceW = this.font.width(priceComp);
         guiGraphics.drawString(this.font, priceComp, dialogX + (dialogWidth - priceW) / 2, dialogY + 82, 0x55FF55, true);
         
+        // Smart payment breakdown
+        double totalPrice = listingToBuy.getMoneyPrice();
+        double balance = com.servermanagement.client.ClientBankData.getBalance();
+        
+        if (totalPrice > 0 && minecraft != null && minecraft.player != null) {
+            // Calculate what items from inventory could cover
+            com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
+                com.servermanagement.features.economy.MarketPricingEngine.getInstance();
+            double itemValueInInventory = 0.0;
+            for (net.minecraft.world.item.ItemStack invStack : minecraft.player.getInventory().items) {
+                if (!invStack.isEmpty()) {
+                    itemValueInInventory += com.servermanagement.client.ClientMarketData.getStackPrice(invStack);
+                }
+            }
+            
+            double itemPayment = Math.min(itemValueInInventory, totalPrice);
+            double bankPayment = Math.max(0, totalPrice - itemPayment);
+            
+            int payY = dialogY + 95;
+            guiGraphics.drawString(this.font, Component.literal("— Payment Breakdown —"),
+                dialogX + (dialogWidth - this.font.width("— Payment Breakdown —")) / 2, payY, 0xFFD700, true);
+            payY += 13;
+            guiGraphics.drawString(this.font, 
+                Component.literal("Items from inventory: $" + String.format("%.2f", itemPayment)),
+                dialogX + 80, payY, 0x55FFFF, true);
+            payY += 12;
+            guiGraphics.drawString(this.font, 
+                Component.literal("Bank balance: $" + String.format("%.2f", bankPayment)),
+                dialogX + 80, payY, 0xFFAA00, true);
+        }
+        
         // Required items
         List<PriceItemEntry> reqItems = listingToBuy.getPriceItems();
         if (reqItems != null && !reqItems.isEmpty()) {
@@ -1735,10 +1855,19 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
         }
         
-        // Balance check
-        double balance = com.servermanagement.client.ClientBankData.getBalance();
-        if (listingToBuy.getMoneyPrice() > balance) {
-            Component warning = Component.literal("⚠ Insufficient funds! Balance: $" + String.format("%.2f", balance));
+        // Balance check (smart payment: items in inventory + bank balance)
+        double balanceCheck = com.servermanagement.client.ClientBankData.getBalance();
+        double invValue = 0.0;
+        if (minecraft != null && minecraft.player != null) {
+            for (net.minecraft.world.item.ItemStack invStack : minecraft.player.getInventory().items) {
+                if (!invStack.isEmpty()) {
+                    invValue += com.servermanagement.client.ClientMarketData.getStackPrice(invStack);
+                }
+            }
+        }
+        double totalAvailable = balanceCheck + invValue;
+        if (listingToBuy.getMoneyPrice() > totalAvailable) {
+            Component warning = Component.literal("⚠ Insufficient funds! Total available: $" + String.format("%.2f", totalAvailable));
             int warnW = this.font.width(warning);
             guiGraphics.drawString(this.font, warning, dialogX + (dialogWidth - warnW) / 2, dialogY + dialogHeight - 70, 0xFF5555, true);
         }

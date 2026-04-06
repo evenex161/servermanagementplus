@@ -379,6 +379,12 @@ public class ModNetworking {
             .consumer(UpdatePerformanceSettingPacket::handle)
             .add();
         
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.SyncMarketPricesPacket.class, id())
+            .encoder(com.servermanagement.network.packet.SyncMarketPricesPacket::encode)
+            .decoder(com.servermanagement.network.packet.SyncMarketPricesPacket::new)
+            .consumer(com.servermanagement.network.packet.SyncMarketPricesPacket::handle)
+            .add();
+        
         INSTANCE.build();
         
         ServerManagementMod.LOGGER.info("Registered {} network packets", packetId);

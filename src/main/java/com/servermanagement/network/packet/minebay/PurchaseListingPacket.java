@@ -12,6 +12,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,17 +72,36 @@ public class PurchaseListingPacket implements IPacket {
                 return;
             }
             
-            // Validate buyer has enough money
+            // === SMART PAYMENT SYSTEM ===
+            // Calculate total money cost
             EconomyManager economyManager = EconomyManager.getInstance();
             BankAccount buyerAccount = economyManager.getOrCreateAccount(buyer.getUUID());
+            double totalMoneyPrice = listing.getMoneyPrice();
             
-            if (buyerAccount.getBalance() < listing.getMoneyPrice()) {
-                buyer.sendSystemMessage(Component.literal("§cInsufficient funds! Need $" + 
-                    String.format("%.2f", listing.getMoneyPrice())));
-                return;
+            // Get the market pricing engine for item valuation
+            com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
+                com.servermanagement.features.economy.MarketPricingEngine.getInstance();
+            pricingEngine.ensureFresh(buyer.server);
+            
+            // Build a list of inventory items with their market values (cheapest first)
+            List<int[]> valuedSlots = new ArrayList<>(); // [slotIndex, unused]
+            Map<Integer, Double> slotValues = new HashMap<>();
+            
+            for (int i = 0; i < buyer.getInventory().items.size(); i++) {
+                ItemStack stack = buyer.getInventory().items.get(i);
+                if (!stack.isEmpty()) {
+                    double perItemValue = pricingEngine.getBasePrice(stack);
+                    if (perItemValue > 0) {
+                        slotValues.put(i, perItemValue);
+                        valuedSlots.add(new int[]{i, 0});
+                    }
+                }
             }
             
-            // Validate buyer has required price items
+            // Sort by per-item value ascending (cheapest first)
+            valuedSlots.sort(Comparator.comparingDouble(a -> slotValues.getOrDefault(a[0], 0.0)));
+            
+            // Validate buyer has required price items (existing item-for-item requirements)
             List<PriceItemEntry> priceItems = listing.getPriceItems();
             Map<PriceItemEntry, Integer> requiredItems = new HashMap<>();
             
@@ -89,7 +110,6 @@ public class PurchaseListingPacket implements IPacket {
                     priceItem.getAmount() * 64 : priceItem.getAmount();
                 requiredItems.put(priceItem, required);
                 
-                // Count how many buyer has
                 int count = 0;
                 for (ItemStack stack : buyer.getInventory().items) {
                     if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
@@ -104,12 +124,64 @@ public class PurchaseListingPacket implements IPacket {
                 }
             }
             
-            // All checks passed - execute purchase
+            // Smart payment: auto-select items from inventory (cheapest first) to cover the price
+            double remainingCost = totalMoneyPrice;
+            Map<Integer, Integer> itemsToConsume = new java.util.LinkedHashMap<>(); // slot -> count to remove
+            double totalItemValue = 0.0;
             
-            // 1. Deduct money from buyer
-            buyerAccount.withdraw(listing.getMoneyPrice());
+            for (int[] slotInfo : valuedSlots) {
+                if (remainingCost <= 0) break;
+                
+                int slot = slotInfo[0];
+                ItemStack stack = buyer.getInventory().items.get(slot);
+                if (stack.isEmpty()) continue;
+                
+                // Skip items that are needed for price item requirements
+                boolean isRequiredItem = false;
+                for (PriceItemEntry priceItem : priceItems) {
+                    if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
+                        isRequiredItem = true;
+                        break;
+                    }
+                }
+                if (isRequiredItem) continue;
+                
+                double perItemValue = slotValues.getOrDefault(slot, 0.0);
+                int maxNeeded = (int) Math.ceil(remainingCost / perItemValue);
+                int toConsume = Math.min(maxNeeded, stack.getCount());
+                double consumeValue = toConsume * perItemValue;
+                
+                itemsToConsume.put(slot, toConsume);
+                totalItemValue += consumeValue;
+                remainingCost -= consumeValue;
+            }
             
-            // 2. Remove required items from buyer
+            // After item selection, check if remaining cost can be covered by bank balance
+            double bankPayment = Math.max(0, remainingCost);
+            
+            if (bankPayment > buyerAccount.getBalance()) {
+                // Not enough combined resources
+                double totalAvailable = totalItemValue + buyerAccount.getBalance();
+                buyer.sendSystemMessage(Component.literal("§cInsufficient funds! Need $" + 
+                    String.format("%.2f", totalMoneyPrice) + " but you only have $" +
+                    String.format("%.2f", totalAvailable) + " in items + bank balance."));
+                return;
+            }
+            
+            // === All checks passed - execute purchase ===
+            
+            // 1. Remove auto-selected items from buyer inventory
+            for (Map.Entry<Integer, Integer> entry : itemsToConsume.entrySet()) {
+                ItemStack stack = buyer.getInventory().items.get(entry.getKey());
+                stack.shrink(entry.getValue());
+            }
+            
+            // 2. Deduct remaining money from buyer's bank
+            if (bankPayment > 0) {
+                buyerAccount.withdraw(bankPayment);
+            }
+            
+            // 3. Remove required price items from buyer
             for (Map.Entry<PriceItemEntry, Integer> entry : requiredItems.entrySet()) {
                 PriceItemEntry priceItem = entry.getKey();
                 int remaining = entry.getValue();
@@ -124,18 +196,17 @@ public class PurchaseListingPacket implements IPacket {
                 }
             }
             
-            // 3. Give purchased item to buyer
+            // 4. Give purchased item to buyer
             ItemStack purchasedItem = listing.getItemForSale().copy();
             if (!buyer.getInventory().add(purchasedItem)) {
-                // Inventory full, drop at player's feet
                 buyer.drop(purchasedItem, false);
             }
             
-            // 4. Give money to seller
+            // 5. Give money to seller (full listing price)
             BankAccount sellerAccount = economyManager.getOrCreateAccount(listing.getSellerId());
             sellerAccount.deposit(listing.getMoneyPrice());
             
-            // 5. Give price items to seller (if they're online, add to inventory, otherwise store)
+            // 6. Give price items to seller
             ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
             for (PriceItemEntry priceItem : priceItems) {
                 ItemStack itemToGive = priceItem.getItemStack().copy();
@@ -152,7 +223,6 @@ public class PurchaseListingPacket implements IPacket {
                             seller.drop(stack, false);
                         }
                     } else {
-                        // Seller offline - add to their bank inventory
                         economyManager.getBankInventory(listing.getSellerId())
                             .addItem(stack, 
                                 com.servermanagement.features.economy.BankInventory.ItemSource.MINEBAY_SALE, 
@@ -163,13 +233,24 @@ public class PurchaseListingPacket implements IPacket {
                 }
             }
             
-            // 6. Remove listing
+            // 7. Remove listing
             mineBayManager.removeListing(listingId);
             
-            // 7. Notify both parties
-            buyer.sendSystemMessage(Component.literal("§aPurchase successful! You bought " + 
-                purchasedItem.getHoverName().getString() + " for $" + 
-                String.format("%.2f", listing.getMoneyPrice())));
+            // 8. Build payment breakdown message
+            StringBuilder paymentMsg = new StringBuilder();
+            paymentMsg.append("§aPurchase successful! You bought ");
+            paymentMsg.append(purchasedItem.getHoverName().getString());
+            if (totalItemValue > 0 && bankPayment > 0) {
+                paymentMsg.append(" — Paid $").append(String.format("%.2f", totalItemValue));
+                paymentMsg.append(" in items + $").append(String.format("%.2f", bankPayment));
+                paymentMsg.append(" from bank");
+            } else if (totalItemValue > 0) {
+                paymentMsg.append(" — Paid $").append(String.format("%.2f", totalItemValue));
+                paymentMsg.append(" in items");
+            } else {
+                paymentMsg.append(" for $").append(String.format("%.2f", bankPayment));
+            }
+            buyer.sendSystemMessage(Component.literal(paymentMsg.toString()));
             
             if (seller != null && seller.isAlive()) {
                 seller.sendSystemMessage(Component.literal("§aYour listing was purchased by " + 
@@ -177,10 +258,10 @@ public class PurchaseListingPacket implements IPacket {
                     String.format("%.2f", listing.getMoneyPrice())));
             }
             
-            // 8. Sync updated listings to all players
+            // 9. Sync updated listings to all players
             mineBayManager.syncListingsToAllPlayers(buyer.server);
             
-            // 9. Sync updated balances
+            // 10. Sync updated balances
             com.servermanagement.network.ModNetworking.sendToPlayer(
                 new com.servermanagement.network.packet.SyncBankAccountPacket(
                     buyerAccount.getBalance(), 

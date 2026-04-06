@@ -14,6 +14,8 @@ public class MineBayListing {
     private String sellerName;
     private ItemStack itemForSale;
     private double moneyPrice;
+    private double baseMarketPrice; // Dynamic market price from MarketPricingEngine
+    private double marginPercent;   // Seller's margin percentage on top of market price
     private List<PriceItemEntry> priceItems; // Up to 3 item requirements (max 3)
     private OfferType offerType;
     private ListingStatus status;
@@ -51,6 +53,14 @@ public class MineBayListing {
         this.priceItems = new ArrayList<>(priceItems);
         this.offerType = offerType;
     }
+
+    public MineBayListing(UUID sellerId, String sellerName, ItemStack itemForSale,
+                          double moneyPrice, double baseMarketPrice, double marginPercent,
+                          List<PriceItemEntry> priceItems, OfferType offerType) {
+        this(sellerId, sellerName, itemForSale, moneyPrice, priceItems, offerType);
+        this.baseMarketPrice = baseMarketPrice;
+        this.marginPercent = marginPercent;
+    }
     
     // Serialize to NBT for saving
     public CompoundTag toNBT() {
@@ -61,6 +71,8 @@ public class MineBayListing {
         tag.putString("SellerName", sellerName);
         tag.put("ItemForSale", itemForSale.saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
         tag.putDouble("MoneyPrice", moneyPrice);
+        tag.putDouble("BaseMarketPrice", baseMarketPrice);
+        tag.putDouble("MarginPercent", marginPercent);
         tag.putString("OfferType", offerType.name());
         tag.putString("Status", status.name());
         tag.putLong("Created", createdTimestamp);
@@ -100,6 +112,8 @@ public class MineBayListing {
         listing.sellerName = tag.getString("SellerName");
         listing.itemForSale = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("ItemForSale"));
         listing.moneyPrice = tag.getDouble("MoneyPrice");
+        listing.baseMarketPrice = tag.contains("BaseMarketPrice") ? tag.getDouble("BaseMarketPrice") : 0.0;
+        listing.marginPercent = tag.contains("MarginPercent") ? tag.getDouble("MarginPercent") : 0.0;
         listing.offerType = OfferType.valueOf(tag.getString("OfferType"));
         listing.status = ListingStatus.valueOf(tag.getString("Status"));
         listing.createdTimestamp = tag.getLong("Created");
@@ -209,6 +223,26 @@ public class MineBayListing {
         this.createdTimestamp = timestamp;
     }
     
+    public double getBaseMarketPrice() {
+        return baseMarketPrice;
+    }
+
+    public void setBaseMarketPrice(double baseMarketPrice) {
+        this.baseMarketPrice = baseMarketPrice;
+    }
+
+    public double getMarginPercent() {
+        return marginPercent;
+    }
+
+    public void setMarginPercent(double marginPercent) {
+        this.marginPercent = marginPercent;
+    }
+
+    public void setMoneyPrice(double moneyPrice) {
+        this.moneyPrice = moneyPrice;
+    }
+
     // Getters for renamed methods
     public ItemStack getItemOffered() {
         return getItemForSale();

@@ -77,7 +77,43 @@ public class EconomyManager {
         // Load bank inventories
         loadBankInventories();
         
+        // Initialize market pricing engine
+        MarketPricingEngine.getInstance().recalculate(server);
+        
         ServerManagementMod.LOGGER.info("Economy system initialized with performance optimizations");
+    }
+
+    /**
+     * Sync market prices to a specific player (call on player join or when MineBay opens)
+     */
+    public void syncMarketPrices(ServerPlayer player) {
+        MarketPricingEngine engine = MarketPricingEngine.getInstance();
+        engine.ensureFresh(server);
+        com.servermanagement.network.ModNetworking.sendToPlayer(
+            new com.servermanagement.network.packet.SyncMarketPricesPacket(
+                engine.getInflationMultiplier(),
+                engine.getAverageBalance(),
+                engine.getTotalPlayerCount(),
+                engine.getStarterMoney()
+            ),
+            player
+        );
+    }
+
+    /**
+     * Sync market prices to all online players
+     */
+    public void syncMarketPricesToAll() {
+        MarketPricingEngine engine = MarketPricingEngine.getInstance();
+        engine.ensureFresh(server);
+        com.servermanagement.network.ModNetworking.sendToAllPlayers(
+            new com.servermanagement.network.packet.SyncMarketPricesPacket(
+                engine.getInflationMultiplier(),
+                engine.getAverageBalance(),
+                engine.getTotalPlayerCount(),
+                engine.getStarterMoney()
+            )
+        );
     }
 
     /**

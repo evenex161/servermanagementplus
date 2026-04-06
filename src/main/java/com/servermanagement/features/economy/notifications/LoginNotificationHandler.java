@@ -32,6 +32,9 @@ public class LoginNotificationHandler {
     }
 
     private static void sendLoginNotifications(ServerPlayer player) {
+        // Sync market prices to the joining player
+        EconomyManager.getInstance(player.getServer()).syncMarketPrices(player);
+        
         // Check if player is admin
         boolean isAdmin = SessionManager.getInstance().hasAdminPermission(player);
 
