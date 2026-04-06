@@ -37,6 +37,13 @@ public class EconomyServerHandler {
                 manager.save(); // This will be debounced by AsyncSaveScheduler
                 ServerManagementMod.LOGGER.debug("Economy auto-save triggered");
             }
+            
+            // Periodic supply/demand save and decay
+            ItemSupplyDemandTracker tracker = ItemSupplyDemandTracker.getInstance();
+            if (event.getServer() != null) {
+                tracker.applyDecay();
+                tracker.tickSave(event.getServer());
+            }
 
             // Periodic session cleanup to prevent memory leak
             com.servermanagement.security.SessionManager.getInstance().cleanupExpiredSessions();

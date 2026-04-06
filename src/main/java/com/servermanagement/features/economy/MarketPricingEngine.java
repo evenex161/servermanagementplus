@@ -104,7 +104,9 @@ public class MarketPricingEngine {
 
     /**
      * Get the dynamic market base price for an item stack (single item, count=1).
-     * Uses ItemValuation's static values scaled by the inflation multiplier.
+     * Uses ItemValuation's static values scaled by inflation and supply/demand factors.
+     * 
+     * Formula: marketPrice = staticValue * inflationMultiplier * supplyFactor
      */
     public double getBasePrice(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
@@ -115,6 +117,10 @@ public class MarketPricingEngine {
 
         // Apply inflation multiplier
         double marketPrice = staticValue * inflationMultiplier;
+        
+        // Apply supply/demand factor
+        double supplyFactor = ItemSupplyDemandTracker.getInstance().getSupplyFactor(singleItem);
+        marketPrice *= supplyFactor;
 
         return Math.max(FLOOR_PRICE, marketPrice);
     }

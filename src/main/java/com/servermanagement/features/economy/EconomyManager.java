@@ -80,6 +80,9 @@ public class EconomyManager {
         // Initialize market pricing engine
         MarketPricingEngine.getInstance().recalculate(server);
         
+        // Load supply/demand tracking data
+        ItemSupplyDemandTracker.getInstance().load(server);
+        
         ServerManagementMod.LOGGER.info("Economy system initialized with performance optimizations");
     }
 
@@ -201,6 +204,11 @@ public class EconomyManager {
         // Clear caches
         if (balanceCache != null) {
             balanceCache.clear();
+        }
+        
+        // Save and shutdown supply/demand tracker
+        if (server != null) {
+            ItemSupplyDemandTracker.getInstance().shutdown(server);
         }
     }
 
