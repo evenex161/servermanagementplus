@@ -151,15 +151,15 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
         
         // Labels
         guiGraphics.drawString(this.font, "World Manager:", 
-            this.leftPos + 20, this.topPos + 53, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 53, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Player Manager:", 
-            this.leftPos + 20, this.topPos + 88, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 88, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Economy System:", 
-            this.leftPos + 20, this.topPos + 123, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 123, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "SlimeHead Feature:", 
-            this.leftPos + 20, this.topPos + 158, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 158, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Server Performance:", 
-            this.leftPos + 20, this.topPos + 193, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 193, 0xFFFFFF, true);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

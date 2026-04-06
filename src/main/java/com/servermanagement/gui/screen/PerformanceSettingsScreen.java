@@ -313,7 +313,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         for (int i = 0; i < labels.length; i++) {
             int y = contentY + ROW_SPACING * i + 5;
             int color = i == 0 ? 0xFFFF55 : 0xFFFFFF;
-            g.drawString(this.font, labels[i], cX + 20, y, color, false);
+            g.drawString(this.font, labels[i], cX + 20, y, color, true);
         }
     }
 
@@ -333,12 +333,12 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
         for (int i = 0; i < labels.length; i++) {
             int y = contentY + ROW_SPACING * i + 4;
-            g.drawString(this.font, labels[i][0], cX + 20, y, 0xFFFFFF, false);
+            g.drawString(this.font, labels[i][0], cX + 20, y, 0xFFFFFF, true);
             // Value centered between - and + buttons
             String valStr = labels[i][1];
             int valWidth = this.font.width(valStr);
             int valCenter = cX + 260 + 52;
-            g.drawString(this.font, valStr, valCenter - valWidth / 2, y, 0x55FF55, false);
+            g.drawString(this.font, valStr, valCenter - valWidth / 2, y, 0x55FF55, true);
         }
     }
 
@@ -346,34 +346,34 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int y = startY;
         int spacing = 22;
 
-        g.drawString(this.font, "\u00a76=== Performance Statistics ===", cX + 20, y, 0xFFFFFF, false);
+        g.drawString(this.font, "\u00a76=== Performance Statistics ===", cX + 20, y, 0xFFFFFF, true);
         y += spacing;
 
         double tps = this.menu.getCurrentTps();
         int tpsColor = tps >= 18.0 ? 0x27AE60 : (tps >= 15.0 ? 0xE67E22 : 0xE74C3C);
-        g.drawString(this.font, String.format("Current TPS: %.1f", tps), cX + 20, y, tpsColor, false);
+        g.drawString(this.font, String.format("Current TPS: %.1f", tps), cX + 20, y, tpsColor, true);
         y += spacing;
 
-        g.drawString(this.font, String.format("Average MSPT: %.1fms", this.menu.getAverageMspt()), cX + 20, y, 0xFFFFFF, false);
+        g.drawString(this.font, String.format("Average MSPT: %.1fms", this.menu.getAverageMspt()), cX + 20, y, 0xFFFFFF, true);
         y += spacing;
 
         String autoOptStatus = this.menu.isAutoOptimizeActive() ? "\u00a7eACTIVE" : (this.menu.isTpsAutoOptimize() ? "\u00a7aStandby" : "\u00a7cOff");
-        g.drawString(this.font, "Auto-Optimize: " + autoOptStatus, cX + 20, y, 0xFFFFFF, false);
+        g.drawString(this.font, "Auto-Optimize: " + autoOptStatus, cX + 20, y, 0xFFFFFF, true);
         y += spacing + 5;
 
-        g.drawString(this.font, "\u00a77--- Cumulative Stats ---", cX + 20, y, 0xFFFFFF, false);
+        g.drawString(this.font, "\u00a77--- Cumulative Stats ---", cX + 20, y, 0xFFFFFF, true);
         y += spacing;
 
-        g.drawString(this.font, "Items Merged: " + this.menu.getTotalItemsMerged(), cX + 20, y, 0xAAAAAA, false);
+        g.drawString(this.font, "Items Merged: " + this.menu.getTotalItemsMerged(), cX + 20, y, 0xAAAAAA, true);
         y += spacing;
 
-        g.drawString(this.font, "Spawns Cancelled: " + this.menu.getTotalSpawnsCancelled(), cX + 20, y, 0xAAAAAA, false);
+        g.drawString(this.font, "Spawns Cancelled: " + this.menu.getTotalSpawnsCancelled(), cX + 20, y, 0xAAAAAA, true);
         y += spacing;
 
-        g.drawString(this.font, "Entities Throttled: " + this.menu.getTotalEntitiesThrottled(), cX + 20, y, 0xAAAAAA, false);
+        g.drawString(this.font, "Entities Throttled: " + this.menu.getTotalEntitiesThrottled(), cX + 20, y, 0xAAAAAA, true);
         y += spacing;
 
-        g.drawString(this.font, "Redstone Throttled: " + this.menu.getTotalRedstoneThrottled(), cX + 20, y, 0xAAAAAA, false);
+        g.drawString(this.font, "Redstone Throttled: " + this.menu.getTotalRedstoneThrottled(), cX + 20, y, 0xAAAAAA, true);
     }
 
     @Override

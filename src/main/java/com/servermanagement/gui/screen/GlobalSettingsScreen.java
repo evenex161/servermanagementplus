@@ -97,9 +97,9 @@ public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettings
         
         // Labels
         guiGraphics.drawString(this.font, "Chat Isolation:", 
-            this.leftPos + 20, this.topPos + 63, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 63, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Tab Isolation:", 
-            this.leftPos + 20, this.topPos + 98, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 98, 0xFFFFFF, true);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

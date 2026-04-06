@@ -198,9 +198,9 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         int labelX = this.leftPos + 30;
         int labelY = this.topPos + 53;
         
-        guiGraphics.drawString(this.font, "H", labelX + 20, labelY, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, "M", labelX + 95, labelY, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, "S", labelX + 170, labelY, 0xAAAAAA, false);
+        guiGraphics.drawString(this.font, "H", labelX + 20, labelY, 0xAAAAAA, true);
+        guiGraphics.drawString(this.font, "M", labelX + 95, labelY, 0xAAAAAA, true);
+        guiGraphics.drawString(this.font, "S", labelX + 170, labelY, 0xAAAAAA, true);
         
         // Current timer status
         boolean hasTimer = ClientPacketHandler.hasTimer();
