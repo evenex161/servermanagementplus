@@ -185,9 +185,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // If no listings, show empty state with create button in center
         if (listings.isEmpty()) {
-            // Create Listing button (centered in empty state)
+            // Create Listing button (centered below empty state text)
             this.addRenderableWidget(new ModernButton(
-                centerX + (this.imageWidth / 2) - 75, centerY + 150, 150, 30,
+                centerX + (this.imageWidth / 2) - 75, centerY + 170, 150, 30,
                 Component.literal("+ Create Listing"),
                 button -> switchState(ScreenState.CREATE_STEP1),
                 ModernButton.ButtonStyle.SUCCESS
@@ -1119,18 +1119,18 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             
             // Draw an empty box icon using fills
             int boxX = centerX + (this.imageWidth / 2) - 12;
-            int boxY = (int)(centerY + 95 + bounce);
+            int boxY = (int)(centerY + 80 + bounce);
             guiGraphics.fill(boxX, boxY, boxX + 24, boxY + 20, 0xFF555555);
             guiGraphics.fill(boxX + 1, boxY + 1, boxX + 23, boxY + 19, 0xFF333333);
             guiGraphics.fill(boxX + 1, boxY + 8, boxX + 23, boxY + 10, 0xFF555555);
             
             guiGraphics.drawString(this.font, 
                 Component.literal("No Active Listings"),
-                centerX + (this.imageWidth / 2) - 60, centerY + 130, 0xFFFFFF, true);
+                centerX + (this.imageWidth / 2) - 60, centerY + 115, 0xFFFFFF, true);
             
             guiGraphics.drawString(this.font, 
                 Component.literal("Create a listing to start trading!"),
-                centerX + (this.imageWidth / 2) - 80, centerY + 145, 0xBBBBBB, true);
+                centerX + (this.imageWidth / 2) - 80, centerY + 130, 0xBBBBBB, true);
         } else {
             // Render listing cards
             for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
