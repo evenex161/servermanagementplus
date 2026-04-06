@@ -783,63 +783,66 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Render custom BG
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
-        // Render only betting slot (index 0)
-        net.minecraft.world.inventory.Slot bettingSlot = this.menu.slots.get(0);
-        if (bettingSlot.isActive()) {
-            int slotX = this.leftPos + bettingSlot.x;
-            int slotY = this.topPos + bettingSlot.y;
-            
-            // Render slot background with glow effect when animating
-            if (isAnimating && lastResultWon) {
-                float pulseSize = 2f + (float)Math.sin(winAnimationProgress * 10) * 2f;
-                int glowColor = 0x40FFD700; // Translucent gold
-                guiGraphics.fill(
-                    (int)(slotX - pulseSize), 
-                    (int)(slotY - pulseSize), 
-                    (int)(slotX + 18 + pulseSize), 
-                    (int)(slotY + 18 + pulseSize), 
-                    glowColor
-                );
-            }
-            
-            guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
-            guiGraphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF373737);
-            
-            // Render item in slot if present
-            if (bettingSlot.hasItem()) {
-                guiGraphics.renderItem(bettingSlot.getItem(), slotX + 1, slotY + 1);
-                guiGraphics.renderItemDecorations(this.font, bettingSlot.getItem(), slotX + 1, slotY + 1);
-            }
-            
-            // Add label below the betting slot to indicate its purpose
-            guiGraphics.drawString(this.font, 
-                Component.literal("Bet Item"),
-                slotX - 8, slotY + 20, 0xFFAA00, true);
-        }
-        
-        // Render inventory slots only when in game mode AND using items
-        boolean shouldShowInventory = (currentMode != GameMode.MENU && currentMode != GameMode.STATS) && !useMoney;
-        if (shouldShowInventory) {
-            for (int i = 1; i < this.menu.slots.size(); i++) {
-                net.minecraft.world.inventory.Slot slot = this.menu.slots.get(i);
-                int slotX = this.leftPos + slot.x;
-                int slotY = this.topPos + slot.y;
+        // Skip slot/item/widget rendering during animation overlays to prevent z-bleed
+        if (!isTensionActive && !isEndingAnimation) {
+            // Render only betting slot (index 0)
+            net.minecraft.world.inventory.Slot bettingSlot = this.menu.slots.get(0);
+            if (bettingSlot.isActive()) {
+                int slotX = this.leftPos + bettingSlot.x;
+                int slotY = this.topPos + bettingSlot.y;
                 
-                // Render slot background
+                // Render slot background with glow effect when animating
+                if (isAnimating && lastResultWon) {
+                    float pulseSize = 2f + (float)Math.sin(winAnimationProgress * 10) * 2f;
+                    int glowColor = 0x40FFD700; // Translucent gold
+                    guiGraphics.fill(
+                        (int)(slotX - pulseSize), 
+                        (int)(slotY - pulseSize), 
+                        (int)(slotX + 18 + pulseSize), 
+                        (int)(slotY + 18 + pulseSize), 
+                        glowColor
+                    );
+                }
+                
                 guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
                 guiGraphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF373737);
                 
                 // Render item in slot if present
-                if (slot.hasItem()) {
-                    guiGraphics.renderItem(slot.getItem(), slotX + 1, slotY + 1);
-                    guiGraphics.renderItemDecorations(this.font, slot.getItem(), slotX + 1, slotY + 1);
+                if (bettingSlot.hasItem()) {
+                    guiGraphics.renderItem(bettingSlot.getItem(), slotX + 1, slotY + 1);
+                    guiGraphics.renderItemDecorations(this.font, bettingSlot.getItem(), slotX + 1, slotY + 1);
+                }
+                
+                // Add label below the betting slot to indicate its purpose
+                guiGraphics.drawString(this.font, 
+                    Component.literal("Bet Item"),
+                    slotX - 8, slotY + 20, 0xFFAA00, true);
+            }
+            
+            // Render inventory slots only when in game mode AND using items
+            boolean shouldShowInventory = (currentMode != GameMode.MENU && currentMode != GameMode.STATS) && !useMoney;
+            if (shouldShowInventory) {
+                for (int i = 1; i < this.menu.slots.size(); i++) {
+                    net.minecraft.world.inventory.Slot slot = this.menu.slots.get(i);
+                    int slotX = this.leftPos + slot.x;
+                    int slotY = this.topPos + slot.y;
+                    
+                    // Render slot background
+                    guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
+                    guiGraphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF373737);
+                    
+                    // Render item in slot if present
+                    if (slot.hasItem()) {
+                        guiGraphics.renderItem(slot.getItem(), slotX + 1, slotY + 1);
+                        guiGraphics.renderItemDecorations(this.font, slot.getItem(), slotX + 1, slotY + 1);
+                    }
                 }
             }
-        }
-        
-        // Render widgets (buttons, etc.)
-        for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
-            renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            
+            // Render widgets (buttons, etc.)
+            for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
+                renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            }
         }
         
         guiGraphics.pose().popPose();
@@ -849,52 +852,55 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        // Title (centered in header)
-        String title = currentMode == GameMode.MENU ? "MineStacks Casino" : getModeTitle();
-        guiGraphics.drawCenteredString(this.font, Component.literal(title),
-            centerX + this.imageWidth / 2, centerY + 10, 0xFFD700);
-        
-        // Balance display - use menu's synced balance for reliability
-        if (minecraft != null && minecraft.player != null) {
-            double balance = menu.getPlayerBalance();
-            // Fallback to ClientBankData if menu balance is 0 (shouldn't happen, but defensive)
-            if (balance == 0.0) {
-                balance = com.servermanagement.client.ClientBankData.getBalance();
+        // Skip rendering UI text/content when animation overlay is active to prevent z-bleed
+        if (!isTensionActive && !isEndingAnimation) {
+            // Title (centered in header)
+            String title = currentMode == GameMode.MENU ? "MineStacks Casino" : getModeTitle();
+            guiGraphics.drawCenteredString(this.font, Component.literal(title),
+                centerX + this.imageWidth / 2, centerY + 10, 0xFFD700);
+            
+            // Balance display - use menu's synced balance for reliability
+            if (minecraft != null && minecraft.player != null) {
+                double balance = menu.getPlayerBalance();
+                // Fallback to ClientBankData if menu balance is 0 (shouldn't happen, but defensive)
+                if (balance == 0.0) {
+                    balance = com.servermanagement.client.ClientBankData.getBalance();
+                }
+                String balanceStr = "Balance: " + currencyFormat.format(balance);
+                int balanceColor = balance >= 0 ? 0x55FF55 : 0xFF5555;
+                guiGraphics.drawString(this.font, Component.literal(balanceStr),
+                    centerX + this.imageWidth - this.font.width(balanceStr) - 5,
+                    centerY + 32, balanceColor, true);
             }
-            String balanceStr = "Balance: " + currencyFormat.format(balance);
-            int balanceColor = balance >= 0 ? 0x55FF55 : 0xFF5555;
-            guiGraphics.drawString(this.font, Component.literal(balanceStr),
-                centerX + this.imageWidth - this.font.width(balanceStr) - 5,
-                centerY + 32, balanceColor, true);
+            
+            // Render mode-specific content
+            switch (currentMode) {
+                case MENU:
+                    renderMainMenu(guiGraphics, centerX, centerY);
+                    break;
+                case STATS:
+                    renderStats(guiGraphics, centerX, centerY);
+                    break;
+                default:
+                    renderGameInfo(guiGraphics, centerX, centerY);
+                    break;
+            }
+            
+            // Render particles on top of everything
+            for (AnimatedParticle particle : particles) {
+                int size = (int)(particle.size * 3); // Use variable size from particle
+                guiGraphics.fill(
+                    (int)particle.x - size/2, 
+                    (int)particle.y - size/2, 
+                    (int)particle.x + size/2, 
+                    (int)particle.y + size/2, 
+                    particle.getAlphaColor()
+                );
+            }
         }
         
-        // Render mode-specific content
-        switch (currentMode) {
-            case MENU:
-                renderMainMenu(guiGraphics, centerX, centerY);
-                break;
-            case STATS:
-                renderStats(guiGraphics, centerX, centerY);
-                break;
-            default:
-                renderGameInfo(guiGraphics, centerX, centerY);
-                break;
-        }
-        
-        // Render particles on top of everything
-        for (AnimatedParticle particle : particles) {
-            int size = (int)(particle.size * 3); // Use variable size from particle
-            guiGraphics.fill(
-                (int)particle.x - size/2, 
-                (int)particle.y - size/2, 
-                (int)particle.x + size/2, 
-                (int)particle.y + size/2, 
-                particle.getAlphaColor()
-            );
-        }
-        
-        // Show result message with enhanced animation
-        if (!lastResult.isEmpty() && System.currentTimeMillis() - resultShowTime < 5000) {
+        // Show result message with enhanced animation (skip during animation overlays)
+        if (!isTensionActive && !isEndingAnimation && !lastResult.isEmpty() && System.currentTimeMillis() - resultShowTime < 5000) {
             long elapsed = System.currentTimeMillis() - resultShowTime;
             float messageAlpha = Math.min(1.0f, elapsed / 300f); // Fade in over 300ms
             
@@ -952,6 +958,10 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         long elapsed = System.currentTimeMillis() - tensionStartTime;
         float progress = elapsed / (float)TENSION_DURATION;
         
+        // Elevate z-level above all widget text
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 200);
+        
         // Dark overlay
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
         
@@ -981,6 +991,8 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                     break;
             }
         }
+        
+        guiGraphics.pose().popPose();
     }
     
     private void renderCoinFlipTension(GuiGraphics guiGraphics, int x, int y, float progress) {
@@ -1128,6 +1140,10 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         long elapsed = System.currentTimeMillis() - endingStartTime;
         float progress = elapsed / (float)ENDING_DURATION; // 0.0 to 1.0
         
+        // Elevate z-level above all widget text
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 200);
+        
         // Dark overlay (slightly lighter than tension)
         guiGraphics.fill(0, 0, this.width, this.height, 0x60000000);
         
@@ -1152,6 +1168,8 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                     break;
             }
         }
+        
+        guiGraphics.pose().popPose();
     }
     
     private void renderCoinFlipEnding(GuiGraphics guiGraphics, int x, int y, float progress) {

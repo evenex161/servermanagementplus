@@ -1130,7 +1130,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             
             guiGraphics.drawString(this.font, 
                 Component.literal("Create a listing to start trading!"),
-                centerX + (this.imageWidth / 2) - 80, centerY + 145, 0x888888, true);
+                centerX + (this.imageWidth / 2) - 80, centerY + 145, 0xBBBBBB, true);
         } else {
             // Render listing cards
             for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
