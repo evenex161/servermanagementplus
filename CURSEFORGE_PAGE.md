@@ -1,14 +1,15 @@
 # Server Management Plus
 
-**Version**: v1.0.3-b05  
+**Version**: v1.0.4-b01 (Pre-release)  
 **Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+) | Minecraft 1.21.1 (NeoForge 21.1.222+)
 
 Server Management Plus gives server owners a complete toolkit to build an engaging, professional server experience — a full economy system, player marketplace, casino, daily tasks, world management, and a polished admin dashboard, all packed into a single mod.
 
 > **Full changelogs** are available on GitHub:
-> - [MC 1.20.1 — Forge](https://github.com/evenex161/servermanagementplus/blob/mc/1.20.1-forge/CHANGELOG_v1.0.3.md)
-> - [MC 1.21.1 — Forge](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v1.0.3.md)
-> - [MC 1.21.1 — NeoForge](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-neoforge/CHANGELOG_v1.0.3-neoforge.md)
+> - [v1.0.4 — MC 1.21.1 Forge](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v1.0.4.md)
+> - [v1.0.3 — MC 1.20.1 Forge](https://github.com/evenex161/servermanagementplus/blob/mc/1.20.1-forge/CHANGELOG_v1.0.3.md)
+> - [v1.0.3 — MC 1.21.1 Forge](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v1.0.3.md)
+> - [v1.0.3 — MC 1.21.1 NeoForge](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-neoforge/CHANGELOG_v1.0.3-neoforge.md)
 
 ---
 
@@ -31,6 +32,9 @@ Every player gets a bank account on first join with a configurable starting bala
 - **Balance & history** — Check your balance, browse your full transaction history, and see exactly where every dollar came from
 - **Send money** — Transfer funds directly to another player or send a money request they can accept or decline
 - **Achievement rewards** — Earn money automatically when you unlock in-game advancements
+- **Dynamic market pricing** — Item prices adjust in real time based on server inflation, player wealth, and supply/demand
+- **Supply & demand tracking** — Mining, crafting, smelting, and pickups are tracked server-wide; scarce items cost more, oversupplied items cost less
+- **Margin history** — Every listing's margin is logged for future pricing intelligence and analytics
 - **Admin tools** — Server owners can set, give, or take money from any player via commands or the dashboard
 - **Secure storage** — All economy data is encrypted at rest — player balances are never stored in plain text
 
@@ -40,11 +44,14 @@ Every player gets a bank account on first join with a configurable starting bala
 A fully-featured player-to-player marketplace for buying and selling items.
 
 - **Create listings** — Sell any item or stack directly from your inventory
+- **Smart pricing** — Price fields auto-populate with the current market value; margin defaults to 10%
 - **Flexible pricing** — Accept money, up to 3 different item types, or a combination of both
 - **Counteroffers** — Buyers can propose alternative prices; sellers review and accept or decline
+- **Price tooltips** — Hover over any item to see its market price per unit and total stack value
+- **Inventory value overlay** — Total inventory value displayed above the player inventory
 - **Bank inventory** — Purchased items that don't fit your inventory go straight to your bank for safe pickup later
 - **No item loss** — Every transaction is atomic — if anything goes wrong, everything is automatically rolled back
-- **Step-by-step listing wizard** — Item picker and quantity controls make listing items quick and easy
+- **Step-by-step listing wizard** — Place your item first, then set prices — a natural two-step flow with live price preview
 
 ---
 
@@ -225,8 +232,8 @@ All economy data, task templates, and player progress persist across server rest
 
 ### Setup
 1. Download the JAR for your Minecraft version and mod loader:
+   - MC 1.21.1 — Forge: `servermanagementplus-v1.0.4-b01-mc1.21.1-forge-release.jar`
    - MC 1.20.1 — Forge: `servermanagementplus-v1.0.3-b05-mc1.20.1-forge-release.jar`
-   - MC 1.21.1 — Forge: `servermanagementplus-v1.0.3-b05-mc1.21.1-forge-release.jar`
    - MC 1.21.1 — NeoForge: `servermanagementplus-v1.0.3-b05-mc1.21.1-neoforge-release.jar`
 2. Drop the JAR into your server's `mods/` folder
 3. Start the server — all config and data folders are created automatically
@@ -255,6 +262,8 @@ All mod data is stored under `world/data/servermanagement/`:
 | `achievement_rewards.json` | Achievement claims | Encrypted JSON |
 | `world_manager.json` | World settings | Plain JSON |
 | `minebay_listings.dat` | Marketplace listings | Compressed NBT |
+| `supply_demand.dat` | Server-wide item supply counts | Binary |
+| `margin_history.dat` | Per-item margin history | Binary |
 | `playerdata/[UUID]/bank_inventory.dat` | Bank items | Compressed NBT |
 | `playerdata/[UUID]/transactions.dat` | Transaction history | Compressed NBT |
 
@@ -280,4 +289,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*Server Management Plus v1.0.3-b05 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.222+*
+*Server Management Plus v1.0.4-b01 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.222+*
