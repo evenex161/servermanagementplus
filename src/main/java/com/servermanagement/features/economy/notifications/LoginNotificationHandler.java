@@ -1,7 +1,5 @@
 package com.servermanagement.features.economy.notifications;
 
-import net.neoforged.fml.common.EventBusSubscriber;
-
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.economy.PlayerDailyTasks;
@@ -9,7 +7,7 @@ import com.servermanagement.security.SessionManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 /**
  * Handles player login notifications for economy features
@@ -34,6 +32,9 @@ public class LoginNotificationHandler {
     }
 
     private static void sendLoginNotifications(ServerPlayer player) {
+        // Sync market prices to the joining player
+        EconomyManager.getInstance(player.getServer()).syncMarketPrices(player);
+        
         // Check if player is admin
         boolean isAdmin = SessionManager.getInstance().hasAdminPermission(player);
 

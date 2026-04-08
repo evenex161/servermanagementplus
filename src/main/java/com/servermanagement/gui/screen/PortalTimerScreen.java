@@ -49,17 +49,17 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         if (showNether && showEnd) {
             this.selectedPortalType = "both";
             this.portalTypeButton = Button.builder(
-                Component.literal("§bPortal Type: Both"),
+                Component.literal("┬ºbPortal Type: Both"),
                 button -> {
                     if ("both".equals(selectedPortalType)) {
                         selectedPortalType = "nether";
-                        button.setMessage(Component.literal("§bPortal Type: Nether"));
+                        button.setMessage(Component.literal("┬ºbPortal Type: Nether"));
                     } else if ("nether".equals(selectedPortalType)) {
                         selectedPortalType = "end";
-                        button.setMessage(Component.literal("§bPortal Type: End"));
+                        button.setMessage(Component.literal("┬ºbPortal Type: End"));
                     } else {
                         selectedPortalType = "both";
-                        button.setMessage(Component.literal("§bPortal Type: Both"));
+                        button.setMessage(Component.literal("┬ºbPortal Type: Both"));
                     }
                 })
                 .bounds(centerX + 30, startY - 10, 240, 20)
@@ -98,7 +98,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         
         // Start button
         this.startButton = Button.builder(
-            Component.literal("§aStart Timer"),
+            Component.literal("┬ºaStart Timer"),
             button -> {
                 try {
                     int hours = Integer.parseInt(this.hoursInput.getValue());
@@ -120,7 +120,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         
         // Stop/Cancel button
         this.stopButton = Button.builder(
-            Component.literal("§cCancel"),
+            Component.literal("┬ºcCancel"),
             button -> {
                 long clientTick = minecraft.player.tickCount;
                 ModNetworking.sendToServer(new WMSetTimerPacket(dimensionId, 0, selectedPortalType, clientTick));
@@ -198,9 +198,9 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         int labelX = this.leftPos + 30;
         int labelY = this.topPos + 53;
         
-        guiGraphics.drawString(this.font, "H", labelX + 20, labelY, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, "M", labelX + 95, labelY, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, "S", labelX + 170, labelY, 0xAAAAAA, false);
+        guiGraphics.drawString(this.font, "H", labelX + 20, labelY, 0xAAAAAA, true);
+        guiGraphics.drawString(this.font, "M", labelX + 95, labelY, 0xAAAAAA, true);
+        guiGraphics.drawString(this.font, "S", labelX + 170, labelY, 0xAAAAAA, true);
         
         // Current timer status
         boolean hasTimer = ClientPacketHandler.hasTimer();
@@ -212,7 +212,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
             int seconds = timerSeconds % 60;
             
             String statusLabel = "Current Timer:";
-            String timeDisplay = String.format("§e%d:%02d:%02d", hours, minutes, seconds);
+            String timeDisplay = String.format("┬ºe%d:%02d:%02d", hours, minutes, seconds);
             
             int statusY = this.topPos + 165;
             guiGraphics.drawString(this.font, statusLabel, 

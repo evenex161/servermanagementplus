@@ -377,7 +377,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -411,7 +411,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -442,7 +442,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private boolean validateBet() {
         if (useMoney) {
             if (betAmountBox == null || betAmountBox.getValue().isEmpty()) {
-                lastResult = "§cEnter a bet amount!";
+                lastResult = "┬ºcEnter a bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -450,19 +450,19 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             try {
                 double amount = Double.parseDouble(betAmountBox.getValue());
                 if (amount < 10.0) {
-                    lastResult = "§cMinimum bet is $10";
+                    lastResult = "┬ºcMinimum bet is $10";
                     resultShowTime = System.currentTimeMillis();
                     return false;
                 }
             } catch (NumberFormatException e) {
-                lastResult = "§cInvalid bet amount!";
+                lastResult = "┬ºcInvalid bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
         } else {
             ItemStack bettingItem = menu.getBettingItem();
             if (bettingItem.isEmpty()) {
-                lastResult = "§cPlace an item in the slot!";
+                lastResult = "┬ºcPlace an item in the slot!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -501,7 +501,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         }
         
         // Show pending message
-        lastResult = "§ePlacing bet...";
+        lastResult = "┬ºePlacing bet...";
         resultShowTime = System.currentTimeMillis();
     }
     
@@ -524,7 +524,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private void showPendingResult() {
         if (!hasPendingResult) return;
         
-        lastResult = pendingResultWon ? "§a" + pendingResultMessage : "§c" + pendingResultMessage;
+        lastResult = pendingResultWon ? "┬ºa" + pendingResultMessage : "┬ºc" + pendingResultMessage;
         lastResultWon = pendingResultWon;
         resultShowTime = System.currentTimeMillis();
         
@@ -783,63 +783,66 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Render custom BG
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
-        // Render only betting slot (index 0)
-        net.minecraft.world.inventory.Slot bettingSlot = this.menu.slots.get(0);
-        if (bettingSlot.isActive()) {
-            int slotX = this.leftPos + bettingSlot.x;
-            int slotY = this.topPos + bettingSlot.y;
-            
-            // Render slot background with glow effect when animating
-            if (isAnimating && lastResultWon) {
-                float pulseSize = 2f + (float)Math.sin(winAnimationProgress * 10) * 2f;
-                int glowColor = 0x40FFD700; // Translucent gold
-                guiGraphics.fill(
-                    (int)(slotX - pulseSize), 
-                    (int)(slotY - pulseSize), 
-                    (int)(slotX + 18 + pulseSize), 
-                    (int)(slotY + 18 + pulseSize), 
-                    glowColor
-                );
-            }
-            
-            guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
-            guiGraphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF373737);
-            
-            // Render item in slot if present
-            if (bettingSlot.hasItem()) {
-                guiGraphics.renderItem(bettingSlot.getItem(), slotX + 1, slotY + 1);
-                guiGraphics.renderItemDecorations(this.font, bettingSlot.getItem(), slotX + 1, slotY + 1);
-            }
-            
-            // Add label below the betting slot to indicate its purpose
-            guiGraphics.drawString(this.font, 
-                Component.literal("Bet Item"),
-                slotX - 8, slotY + 20, 0xFFAA00, false);
-        }
-        
-        // Render inventory slots only when in game mode AND using items
-        boolean shouldShowInventory = (currentMode != GameMode.MENU && currentMode != GameMode.STATS) && !useMoney;
-        if (shouldShowInventory) {
-            for (int i = 1; i < this.menu.slots.size(); i++) {
-                net.minecraft.world.inventory.Slot slot = this.menu.slots.get(i);
-                int slotX = this.leftPos + slot.x;
-                int slotY = this.topPos + slot.y;
+        // Skip slot/item/widget rendering during animation overlays to prevent z-bleed
+        if (!isTensionActive && !isEndingAnimation) {
+            // Render only betting slot (index 0)
+            net.minecraft.world.inventory.Slot bettingSlot = this.menu.slots.get(0);
+            if (bettingSlot.isActive()) {
+                int slotX = this.leftPos + bettingSlot.x;
+                int slotY = this.topPos + bettingSlot.y;
                 
-                // Render slot background
+                // Render slot background with glow effect when animating
+                if (isAnimating && lastResultWon) {
+                    float pulseSize = 2f + (float)Math.sin(winAnimationProgress * 10) * 2f;
+                    int glowColor = 0x40FFD700; // Translucent gold
+                    guiGraphics.fill(
+                        (int)(slotX - pulseSize), 
+                        (int)(slotY - pulseSize), 
+                        (int)(slotX + 18 + pulseSize), 
+                        (int)(slotY + 18 + pulseSize), 
+                        glowColor
+                    );
+                }
+                
                 guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
                 guiGraphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF373737);
                 
                 // Render item in slot if present
-                if (slot.hasItem()) {
-                    guiGraphics.renderItem(slot.getItem(), slotX + 1, slotY + 1);
-                    guiGraphics.renderItemDecorations(this.font, slot.getItem(), slotX + 1, slotY + 1);
+                if (bettingSlot.hasItem()) {
+                    guiGraphics.renderItem(bettingSlot.getItem(), slotX + 1, slotY + 1);
+                    guiGraphics.renderItemDecorations(this.font, bettingSlot.getItem(), slotX + 1, slotY + 1);
+                }
+                
+                // Add label below the betting slot to indicate its purpose
+                guiGraphics.drawString(this.font, 
+                    Component.literal("Bet Item"),
+                    slotX - 8, slotY + 20, 0xFFAA00, true);
+            }
+            
+            // Render inventory slots only when in game mode AND using items
+            boolean shouldShowInventory = (currentMode != GameMode.MENU && currentMode != GameMode.STATS) && !useMoney;
+            if (shouldShowInventory) {
+                for (int i = 1; i < this.menu.slots.size(); i++) {
+                    net.minecraft.world.inventory.Slot slot = this.menu.slots.get(i);
+                    int slotX = this.leftPos + slot.x;
+                    int slotY = this.topPos + slot.y;
+                    
+                    // Render slot background
+                    guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
+                    guiGraphics.fill(slotX + 1, slotY + 1, slotX + 17, slotY + 17, 0xFF373737);
+                    
+                    // Render item in slot if present
+                    if (slot.hasItem()) {
+                        guiGraphics.renderItem(slot.getItem(), slotX + 1, slotY + 1);
+                        guiGraphics.renderItemDecorations(this.font, slot.getItem(), slotX + 1, slotY + 1);
+                    }
                 }
             }
-        }
-        
-        // Render widgets (buttons, etc.)
-        for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
-            renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            
+            // Render widgets (buttons, etc.)
+            for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
+                renderable.render(guiGraphics, mouseX, mouseY, partialTick);
+            }
         }
         
         guiGraphics.pose().popPose();
@@ -849,52 +852,55 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        // Title (centered in header)
-        String title = currentMode == GameMode.MENU ? "MineStacks Casino" : getModeTitle();
-        guiGraphics.drawCenteredString(this.font, Component.literal(title),
-            centerX + this.imageWidth / 2, centerY + 10, 0xFFD700);
-        
-        // Balance display - use menu's synced balance for reliability
-        if (minecraft != null && minecraft.player != null) {
-            double balance = menu.getPlayerBalance();
-            // Fallback to ClientBankData if menu balance is 0 (shouldn't happen, but defensive)
-            if (balance == 0.0) {
-                balance = com.servermanagement.client.ClientBankData.getBalance();
+        // Skip rendering UI text/content when animation overlay is active to prevent z-bleed
+        if (!isTensionActive && !isEndingAnimation) {
+            // Title (centered in header)
+            String title = currentMode == GameMode.MENU ? "MineStacks Casino" : getModeTitle();
+            guiGraphics.drawCenteredString(this.font, Component.literal(title),
+                centerX + this.imageWidth / 2, centerY + 10, 0xFFD700);
+            
+            // Balance display - use menu's synced balance for reliability
+            if (minecraft != null && minecraft.player != null) {
+                double balance = menu.getPlayerBalance();
+                // Fallback to ClientBankData if menu balance is 0 (shouldn't happen, but defensive)
+                if (balance == 0.0) {
+                    balance = com.servermanagement.client.ClientBankData.getBalance();
+                }
+                String balanceStr = "Balance: " + currencyFormat.format(balance);
+                int balanceColor = balance >= 0 ? 0x55FF55 : 0xFF5555;
+                guiGraphics.drawString(this.font, Component.literal(balanceStr),
+                    centerX + this.imageWidth - this.font.width(balanceStr) - 5,
+                    centerY + 32, balanceColor, true);
             }
-            String balanceStr = "Balance: " + currencyFormat.format(balance);
-            int balanceColor = balance >= 0 ? 0x55FF55 : 0xFF5555;
-            guiGraphics.drawString(this.font, Component.literal(balanceStr),
-                centerX + this.imageWidth - this.font.width(balanceStr) - 5,
-                centerY + 32, balanceColor, false);
+            
+            // Render mode-specific content
+            switch (currentMode) {
+                case MENU:
+                    renderMainMenu(guiGraphics, centerX, centerY);
+                    break;
+                case STATS:
+                    renderStats(guiGraphics, centerX, centerY);
+                    break;
+                default:
+                    renderGameInfo(guiGraphics, centerX, centerY);
+                    break;
+            }
+            
+            // Render particles on top of everything
+            for (AnimatedParticle particle : particles) {
+                int size = (int)(particle.size * 3); // Use variable size from particle
+                guiGraphics.fill(
+                    (int)particle.x - size/2, 
+                    (int)particle.y - size/2, 
+                    (int)particle.x + size/2, 
+                    (int)particle.y + size/2, 
+                    particle.getAlphaColor()
+                );
+            }
         }
         
-        // Render mode-specific content
-        switch (currentMode) {
-            case MENU:
-                renderMainMenu(guiGraphics, centerX, centerY);
-                break;
-            case STATS:
-                renderStats(guiGraphics, centerX, centerY);
-                break;
-            default:
-                renderGameInfo(guiGraphics, centerX, centerY);
-                break;
-        }
-        
-        // Render particles on top of everything
-        for (AnimatedParticle particle : particles) {
-            int size = (int)(particle.size * 3); // Use variable size from particle
-            guiGraphics.fill(
-                (int)particle.x - size/2, 
-                (int)particle.y - size/2, 
-                (int)particle.x + size/2, 
-                (int)particle.y + size/2, 
-                particle.getAlphaColor()
-            );
-        }
-        
-        // Show result message with enhanced animation
-        if (!lastResult.isEmpty() && System.currentTimeMillis() - resultShowTime < 5000) {
+        // Show result message with enhanced animation (skip during animation overlays)
+        if (!isTensionActive && !isEndingAnimation && !lastResult.isEmpty() && System.currentTimeMillis() - resultShowTime < 5000) {
             long elapsed = System.currentTimeMillis() - resultShowTime;
             float messageAlpha = Math.min(1.0f, elapsed / 300f); // Fade in over 300ms
             
@@ -952,6 +958,10 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         long elapsed = System.currentTimeMillis() - tensionStartTime;
         float progress = elapsed / (float)TENSION_DURATION;
         
+        // Elevate z-level above all widget text
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 200);
+        
         // Dark overlay
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
         
@@ -960,7 +970,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         // Draw tension text
         guiGraphics.drawCenteredString(this.font,
-            Component.literal("§6Rolling..."),
+            Component.literal("┬º6Rolling..."),
             animX, animY - 40, 0xFFD700);
         
         // Cache locally to avoid null between check and switch
@@ -981,9 +991,14 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                     break;
             }
         }
+        
+        guiGraphics.pose().popPose();
     }
     
     private void renderCoinFlipTension(GuiGraphics guiGraphics, int x, int y, float progress) {
+        // Scissor clip to prevent rotation overflow
+        guiGraphics.enableScissor(x - 30, y - 30, x + 30, y + 30);
+        
         // Spinning coin effect
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0);
@@ -999,14 +1014,18 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         guiGraphics.fill(-coinWidth/2 + 2, -coinHeight/2 + 2, coinWidth/2 - 2, coinHeight/2 - 2, 0xFFFFA500);
         
         guiGraphics.pose().popPose();
+        guiGraphics.disableScissor();
         
-        // Draw "FLIPPING..." text below
+        // Draw "FLIPPING..." text below (outside scissor)
         guiGraphics.drawCenteredString(this.font,
             Component.literal("Flipping..."),
             x, y + 35, 0xFFFFFF);
     }
     
     private void renderDiceRollTension(GuiGraphics guiGraphics, int x, int y, float progress) {
+        // Scissor clip to prevent rotation overflow
+        guiGraphics.enableScissor(x - 25, y - 25, x + 25, y + 25);
+        
         // Tumbling dice effect
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0);
@@ -1026,6 +1045,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         }
         
         guiGraphics.pose().popPose();
+        guiGraphics.disableScissor();
         
         guiGraphics.drawCenteredString(this.font,
             Component.literal("Rolling..."),
@@ -1038,7 +1058,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
+        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1049,18 +1069,22 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             guiGraphics.fill(reelX - reelWidth/2 + 2, y - reelHeight/2 + 2, 
                            reelX + reelWidth/2 - 2, y + reelHeight/2 - 2, 0xFF111111);
             
+            // Scissor clip each reel to prevent symbol overflow
+            guiGraphics.enableScissor(reelX - reelWidth/2 + 2, y - reelHeight/2 + 2,
+                                      reelX + reelWidth/2 - 2, y + reelHeight/2 - 2);
+            
             // Spinning symbols
             int offset = (int)tensionReelOffset + i * 10;
             for (int j = -1; j <= 1; j++) {
                 int symbolIndex = ((offset / 16) + j + 100) % symbols.length;
                 int symbolY = y + (j * 20) - (offset % 16);
                 
-                if (symbolY > y - reelHeight/2 && symbolY < y + reelHeight/2) {
-                    guiGraphics.drawCenteredString(this.font,
-                        Component.literal(symbols[symbolIndex]),
-                        reelX, symbolY - 4, 0xFFFFFF);
-                }
+                guiGraphics.drawCenteredString(this.font,
+                    Component.literal(symbols[symbolIndex]),
+                    reelX, symbolY - 4, 0xFFFFFF);
             }
+            
+            guiGraphics.disableScissor();
         }
         
         guiGraphics.drawCenteredString(this.font,
@@ -1069,6 +1093,9 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     private void renderRouletteTension(GuiGraphics guiGraphics, int x, int y, float progress) {
+        // Scissor clip to prevent wheel overflow
+        guiGraphics.enableScissor(x - 45, y - 45, x + 45, y + 45);
+        
         // Spinning roulette wheel
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0);
@@ -1099,6 +1126,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         guiGraphics.fill(-3, -wheelRadius - 5, 3, -wheelRadius + 5, 0xFFFFFFFF);
         
         guiGraphics.pose().popPose();
+        guiGraphics.disableScissor();
         
         guiGraphics.drawCenteredString(this.font,
             Component.literal("Spinning..."),
@@ -1111,6 +1139,10 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private void renderEndingAnimation(GuiGraphics guiGraphics, int centerX, int centerY, float partialTick) {
         long elapsed = System.currentTimeMillis() - endingStartTime;
         float progress = elapsed / (float)ENDING_DURATION; // 0.0 to 1.0
+        
+        // Elevate z-level above all widget text
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 200);
         
         // Dark overlay (slightly lighter than tension)
         guiGraphics.fill(0, 0, this.width, this.height, 0x60000000);
@@ -1136,9 +1168,14 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                     break;
             }
         }
+        
+        guiGraphics.pose().popPose();
     }
     
     private void renderCoinFlipEnding(GuiGraphics guiGraphics, int x, int y, float progress) {
+        // Scissor clip to prevent rotation overflow
+        guiGraphics.enableScissor(x - 30, y - 30, x + 30, y + 30);
+        
         // Coin slowing down and landing flat
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0);
@@ -1158,8 +1195,9 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         guiGraphics.fill(-coinWidth/2 + 2, -coinHeight/2 + 2, coinWidth/2 - 2, coinHeight/2 - 2, 0xFFFFA500);
         
         guiGraphics.pose().popPose();
+        guiGraphics.disableScissor();
         
-        // Fade text
+        // Fade text (outside scissor)
         int alpha = (int)(255 * (1.0f - progress));
         guiGraphics.drawCenteredString(this.font,
             Component.literal("Landing..."),
@@ -1167,6 +1205,9 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     private void renderDiceRollEnding(GuiGraphics guiGraphics, int x, int y, float progress) {
+        // Scissor clip to prevent rotation overflow
+        guiGraphics.enableScissor(x - 25, y - 25, x + 25, y + 25);
+        
         // Dice slowing and landing
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0);
@@ -1190,6 +1231,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         }
         
         guiGraphics.pose().popPose();
+        guiGraphics.disableScissor();
         
         int alpha = (int)(255 * (1.0f - progress));
         guiGraphics.drawCenteredString(this.font,
@@ -1203,7 +1245,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
+        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1214,6 +1256,10 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             guiGraphics.fill(reelX - reelWidth/2 + 2, y - reelHeight/2 + 2, 
                            reelX + reelWidth/2 - 2, y + reelHeight/2 - 2, 0xFF111111);
             
+            // Scissor clip each reel to prevent symbol overflow
+            guiGraphics.enableScissor(reelX - reelWidth/2 + 2, y - reelHeight/2 + 2,
+                                      reelX + reelWidth/2 - 2, y + reelHeight/2 - 2);
+            
             // Slowing symbols - each reel stops at different times
             float reelProgress = Math.min(1.0f, progress + i * 0.2f);
             int offset = (int)(tensionReelOffset * (1.0f - reelProgress)) + i * 10;
@@ -1222,12 +1268,12 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                 int symbolIndex = ((offset / 16) + j + 100) % symbols.length;
                 int symbolY = y + (j * 20) - (offset % 16);
                 
-                if (symbolY > y - reelHeight/2 && symbolY < y + reelHeight/2) {
-                    guiGraphics.drawCenteredString(this.font,
-                        Component.literal(symbols[symbolIndex]),
-                        reelX, symbolY - 4, 0xFFFFFF);
-                }
+                guiGraphics.drawCenteredString(this.font,
+                    Component.literal(symbols[symbolIndex]),
+                    reelX, symbolY - 4, 0xFFFFFF);
             }
+            
+            guiGraphics.disableScissor();
         }
         
         int alpha = (int)(255 * (1.0f - progress));
@@ -1237,6 +1283,9 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     private void renderRouletteEnding(GuiGraphics guiGraphics, int x, int y, float progress) {
+        // Scissor clip to prevent wheel overflow
+        guiGraphics.enableScissor(x - 45, y - 45, x + 45, y + 45);
+        
         // Wheel slowing, ball settling
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(x, y, 0);
@@ -1273,6 +1322,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         guiGraphics.fill(ballX - 3, ballY - 3, ballX + 3, ballY + 3, 0xFFFFFFFF);
         
         guiGraphics.pose().popPose();
+        guiGraphics.disableScissor();
         
         int alpha = (int)(255 * (1.0f - progress));
         guiGraphics.drawCenteredString(this.font,
@@ -1299,7 +1349,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                 String value = ItemValuation.getValueString(bettingItem);
                 guiGraphics.drawString(this.font, 
                     Component.literal("Item Value: " + value),
-                    centerX + 240, infoY - 22, 0xFFAA00, false);
+                    centerX + 240, infoY - 22, 0xFFAA00, true);
             }
         }
     }
@@ -1327,45 +1377,45 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         guiGraphics.drawString(this.font, 
             Component.literal(String.format("Total Bets: %d", totalBets)),
-            centerX + 30, infoY, 0xFFFFFF, false);
+            centerX + 30, infoY, 0xFFFFFF, true);
         infoY += lineHeight;
         
         guiGraphics.drawString(this.font, 
             Component.literal(String.format("Wins: %d | Losses: %d", totalWins, totalLosses)),
-            centerX + 30, infoY, 0xFFFFFF, false);
+            centerX + 30, infoY, 0xFFFFFF, true);
         infoY += lineHeight;
         
         guiGraphics.drawString(this.font, 
             Component.literal(String.format("Win Rate: %.1f%%", winRate * 100)),
-            centerX + 30, infoY, 0xFFAA00, false);
+            centerX + 30, infoY, 0xFFAA00, true);
         infoY += lineHeight;
         
         guiGraphics.drawString(this.font, 
             Component.literal(String.format("Total Wagered: $%.2f", totalWagered)),
-            centerX + 30, infoY, 0xAAAAAA, false);
+            centerX + 30, infoY, 0xAAAAAA, true);
         infoY += lineHeight;
         
         int color = netProfit >= 0 ? 0x55FF55 : 0xFF5555;
         guiGraphics.drawString(this.font, 
             Component.literal(String.format("Net Profit: $%.2f", netProfit)),
-            centerX + 30, infoY, color, false);
+            centerX + 30, infoY, color, true);
         infoY += lineHeight;
         
         guiGraphics.drawString(this.font, 
             Component.literal(String.format("Biggest Win: $%.2f", biggestWin)),
-            centerX + 30, infoY, 0x55FF55, false);
+            centerX + 30, infoY, 0x55FF55, true);
         infoY += lineHeight;
         
         guiGraphics.drawString(this.font, 
             Component.literal(String.format("Biggest Loss: $%.2f", biggestLoss)),
-            centerX + 30, infoY, 0xFF5555, false);
+            centerX + 30, infoY, 0xFF5555, true);
     }
     
     /**
      * Render the item being dragged by the cursor
      */
     private void renderFloatingItem(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Get the carried item (item being dragged) — cache locally
+        // Get the carried item (item being dragged) ÔÇö cache locally
         ItemStack carriedStack = this.menu.getCarried();
         if (carriedStack != null && !carriedStack.isEmpty()) {
             // Render the item centered on the cursor

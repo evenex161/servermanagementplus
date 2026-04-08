@@ -83,6 +83,15 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.ECONOMY_MANAGEMENT, ""))
         ));
         
+        // Performance Settings
+        this.addRenderableWidget(new DashboardCard(
+            centerX + cardWidth * 2 + 30, row2Y, cardWidth, cardHeight,
+            Component.literal("Performance"),
+            "~", "TPS & Optimization",
+            DashboardCard.CardStyle.RED,
+            () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.PERFORMANCE_SETTINGS, ""))
+        ));
+        
         // Row 3: Mod Settings
         // Mod Settings
         this.addRenderableWidget(new DashboardCard(

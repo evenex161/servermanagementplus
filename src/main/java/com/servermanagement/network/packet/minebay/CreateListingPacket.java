@@ -1,43 +1,43 @@
 package com.servermanagement.network.packet.minebay;
 
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import com.servermanagement.ServerManagementMod;
-
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.PriceItemEntry;
 import com.servermanagement.network.packet.IPacket;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Packet sent from client to server to create a new MineBay listing
  */
 public class CreateListingPacket implements IPacket {
-    public static final CustomPacketPayload.Type<CreateListingPacket> TYPE = 
-        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "create_listing_packet"));
-    
-    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateListingPacket> STREAM_CODEC = 
+    public static final CustomPacketPayload.Type<CreateListingPacket> TYPE =
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "create_listing"));
+
+    public static final StreamCodec<FriendlyByteBuf, CreateListingPacket> STREAM_CODEC =
         StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateListingPacket::new);
-    
+
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final ItemStack itemToSell;
     private final double moneyPrice;
+    private final double marginPercent; // Seller's desired margin %
     private final MineBayListing.OfferType offerType;
     private final List<PriceItemEntry> priceItems;
     
-    public CreateListingPacket(ItemStack itemToSell, double moneyPrice, MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) {
+    public CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent, MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) {
         this.itemToSell = itemToSell.copy();
         this.moneyPrice = moneyPrice;
+        this.marginPercent = marginPercent;
         this.offerType = offerType;
         this.priceItems = new ArrayList<>(priceItems);
     }
@@ -45,6 +45,7 @@ public class CreateListingPacket implements IPacket {
     public CreateListingPacket(FriendlyByteBuf buf) {
         this.itemToSell = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
         this.moneyPrice = buf.readDouble();
+        this.marginPercent = buf.readDouble();
         this.offerType = buf.readEnum(MineBayListing.OfferType.class);
         
         // Read price items
@@ -64,6 +65,7 @@ public class CreateListingPacket implements IPacket {
     public void encode(FriendlyByteBuf buf) {
         ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, itemToSell);
         buf.writeDouble(moneyPrice);
+        buf.writeDouble(marginPercent);
         buf.writeEnum(offerType);
         
         // Write price items
@@ -83,15 +85,35 @@ public class CreateListingPacket implements IPacket {
                 MineBayManager manager = MineBayManager.getInstance();
                 
                 if (!itemToSell.isEmpty()) {
-                    // Create the listing with the item sent from client
+                    // Calculate dynamic market pricing on the server
+                    com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
+                        com.servermanagement.features.economy.MarketPricingEngine.getInstance();
+                    pricingEngine.ensureFresh(player.server);
+                    
+                    double baseMarketPrice = pricingEngine.getStackPrice(itemToSell);
+                    double clampedMargin = Math.max(-50.0, Math.min(500.0, marginPercent));
+                    double finalPrice = pricingEngine.calculateFinalPrice(baseMarketPrice, clampedMargin);
+                    
+                    // Create the listing with market pricing data
                     MineBayListing listing = manager.createListing(
                         player.getUUID(),
                         player.getName().getString(),
                         itemToSell,
-                        moneyPrice,
-                        priceItems, // Use the price items sent from client
+                        finalPrice,
+                        priceItems,
                         offerType
                     );
+                    
+                    if (listing != null) {
+                        // Set market pricing fields
+                        listing.setBaseMarketPrice(baseMarketPrice);
+                        listing.setMarginPercent(clampedMargin);
+                        listing.setMoneyPrice(finalPrice);
+                        
+                        // Log margin to history for future pricing calculations
+                        com.servermanagement.features.economy.MarginHistoryTracker.getInstance()
+                            .recordMargin(itemToSell, clampedMargin, finalPrice, baseMarketPrice, player.getUUID());
+                    }
                     
                     if (listing == null) {
                         // Max listings reached - return item to player
@@ -99,7 +121,7 @@ public class CreateListingPacket implements IPacket {
                         player.getInventory().add(itemToSell.copy());
                         player.sendSystemMessage(
                             net.minecraft.network.chat.Component.literal(
-                                "§c✗ You have reached the maximum number of active listings (" + maxListings + ")"
+                                "┬ºcÔ£ù You have reached the maximum number of active listings (" + maxListings + ")"
                             )
                         );
                         return;
@@ -121,7 +143,7 @@ public class CreateListingPacket implements IPacket {
                     // Send success message
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "§a✓ Listing created successfully!"
+                            "┬ºaÔ£ô Listing created successfully!"
                         )
                     );
                     
@@ -130,12 +152,11 @@ public class CreateListingPacket implements IPacket {
                 } else {
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "§c✗ Error: No item was placed for listing"
+                            "┬ºcÔ£ù Error: No item was placed for listing"
                         )
                     );
                 }
             }
         });
-        
     }
 }

@@ -36,6 +36,18 @@ public class EconomyServerHandler {
                 ServerManagementMod.LOGGER.debug("Economy auto-save triggered");
             }
 
+            // Periodic supply/demand save and decay
+            ItemSupplyDemandTracker tracker = ItemSupplyDemandTracker.getInstance();
+            net.minecraft.server.MinecraftServer server = 
+                net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (server != null) {
+                tracker.applyDecay();
+                tracker.tickSave(server);
+
+                // Periodic margin history save
+                MarginHistoryTracker.getInstance().save(server);
+            }
+
             // Periodic session cleanup to prevent memory leak
             com.servermanagement.security.SessionManager.getInstance().cleanupExpiredSessions();
         }

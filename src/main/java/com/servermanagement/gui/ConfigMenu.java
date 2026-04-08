@@ -11,6 +11,7 @@ public class ConfigMenu extends AbstractContainerMenu {
     private boolean playerManagerEnabled;
     private boolean economyEnabled;
     private boolean slimeHeadEnabled;
+    private boolean serverPerformanceEnabled;
     
     public ConfigMenu(int windowId, Inventory playerInventory) {
         super(ModMenuTypes.CONFIG_MENU.get(), windowId);
@@ -24,6 +25,7 @@ public class ConfigMenu extends AbstractContainerMenu {
         this.playerManagerEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("player_manager");
         this.economyEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("economy");
         this.slimeHeadEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("slimehead");
+        this.serverPerformanceEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("server_performance");
     }
     
     public boolean isWorldManagerEnabled() {
@@ -56,6 +58,14 @@ public class ConfigMenu extends AbstractContainerMenu {
     
     public void setSlimeHeadEnabled(boolean enabled) {
         this.slimeHeadEnabled = enabled;
+    }
+
+    public boolean isServerPerformanceEnabled() {
+        return this.serverPerformanceEnabled;
+    }
+
+    public void setServerPerformanceEnabled(boolean enabled) {
+        this.serverPerformanceEnabled = enabled;
     }
 
     @Override

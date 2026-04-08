@@ -65,7 +65,7 @@ public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettings
         
         // Back to Dashboard button
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("← Dashboard"),
+            Component.literal("ÔåÉ Dashboard"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
             .bounds(centerX + 10, centerY + this.imageHeight - 35, 120, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)
@@ -97,9 +97,9 @@ public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettings
         
         // Labels
         guiGraphics.drawString(this.font, "Chat Isolation:", 
-            this.leftPos + 20, this.topPos + 63, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 63, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Tab Isolation:", 
-            this.leftPos + 20, this.topPos + 98, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 98, 0xFFFFFF, true);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

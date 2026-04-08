@@ -95,7 +95,7 @@ public class ModCommands {
                         String featureId = StringArgumentType.getString(context, "feature");
                         boolean currentState = com.servermanagement.features.FeatureManager.isFeatureEnabled(featureId);
                         com.servermanagement.features.FeatureManager.toggleFeature(featureId, !currentState);
-                        context.getSource().sendSuccess(() -> Component.literal("§aToggled " + featureId + " to: " + (!currentState ? "ON" : "OFF")), true);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§aToggled " + featureId + " to: " + (!currentState ? "ON" : "OFF")), true);
                         return 1;
                     })
                 )
@@ -107,17 +107,17 @@ public class ModCommands {
                     int currentVersion = com.servermanagement.config.ModConfig.CONFIG_VERSION.get();
                     int targetVersion = com.servermanagement.config.ModConfig.CURRENT_CONFIG_VERSION;
                     
-                    context.getSource().sendSuccess(() -> Component.literal("§e=== Config Information ==="), false);
-                    context.getSource().sendSuccess(() -> Component.literal("§7Current Version: §f" + currentVersion), false);
-                    context.getSource().sendSuccess(() -> Component.literal("§7Expected Version: §f" + targetVersion), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§e=== Config Information ==="), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§7Current Version: Â§f" + currentVersion), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§7Expected Version: Â§f" + targetVersion), false);
                     
                     if (currentVersion == targetVersion) {
-                        context.getSource().sendSuccess(() -> Component.literal("§aConfig is up to date!"), false);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§aConfig is up to date!"), false);
                     } else if (currentVersion < targetVersion) {
-                        context.getSource().sendSuccess(() -> Component.literal("§eMigration needed: v" + currentVersion + " -> v" + targetVersion), false);
-                        context.getSource().sendSuccess(() -> Component.literal("§7Run '/smconfig migrate' to update"), false);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§eMigration needed: v" + currentVersion + " -> v" + targetVersion), false);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§7Run '/smconfig migrate' to update"), false);
                     } else {
-                        context.getSource().sendSuccess(() -> Component.literal("§cConfig is from a newer mod version!"), false);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§cConfig is from a newer mod version!"), false);
                     }
                     
                     return 1;
@@ -128,18 +128,18 @@ public class ModCommands {
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
                     if (!com.servermanagement.config.ConfigMigration.needsMigration()) {
-                        context.getSource().sendSuccess(() -> Component.literal("§aNo migration needed - config is up to date!"), false);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§aNo migration needed - config is up to date!"), false);
                         return 1;
                     }
                     
-                    context.getSource().sendSuccess(() -> Component.literal("§eStarting config migration..."), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§eStarting config migration..."), false);
                     boolean success = com.servermanagement.config.ConfigMigration.checkAndMigrate();
                     
                     if (success) {
-                        context.getSource().sendSuccess(() -> Component.literal("§aMigration completed successfully!"), true);
-                        context.getSource().sendSuccess(() -> Component.literal("§eA backup of your old config was created."), false);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§aMigration completed successfully!"), true);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§eA backup of your old config was created."), false);
                     } else {
-                        context.getSource().sendFailure(Component.literal("§cMigration failed! Check server logs for details."));
+                        context.getSource().sendFailure(Component.literal("Â§cMigration failed! Check server logs for details."));
                     }
                     
                     return success ? 1 : 0;
@@ -149,12 +149,12 @@ public class ModCommands {
             .then(Commands.literal("validate")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
-                    context.getSource().sendSuccess(() -> Component.literal("§eValidating configuration..."), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§eValidating configuration..."), false);
                     boolean valid = com.servermanagement.config.ConfigValidator.validateAndRepair();
                     if (valid) {
-                        context.getSource().sendSuccess(() -> Component.literal("§aConfiguration is valid!"), true);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§aConfiguration is valid!"), true);
                     } else {
-                        context.getSource().sendFailure(Component.literal("§cConfiguration validation failed! Check server logs for details."));
+                        context.getSource().sendFailure(Component.literal("Â§cConfiguration validation failed! Check server logs for details."));
                     }
                     return valid ? 1 : 0;
                 })
@@ -163,19 +163,19 @@ public class ModCommands {
             .then(Commands.literal("reset")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
-                    context.getSource().sendSuccess(() -> Component.literal("§c§lWARNING: This will reset ALL configuration to defaults!"), false);
-                    context.getSource().sendSuccess(() -> Component.literal("§eRun '/smconfig reset confirm' to proceed."), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§cÂ§lWARNING: This will reset ALL configuration to defaults!"), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§eRun '/smconfig reset confirm' to proceed."), false);
                     return 1;
                 })
                 .then(Commands.literal("confirm")
                     .executes(context -> {
-                        context.getSource().sendSuccess(() -> Component.literal("§eResetting configuration to defaults..."), false);
+                        context.getSource().sendSuccess(() -> Component.literal("Â§eResetting configuration to defaults..."), false);
                         boolean success = com.servermanagement.config.ConfigValidator.forceReset();
                         if (success) {
-                            context.getSource().sendSuccess(() -> Component.literal("§aConfiguration reset successfully! A backup was created."), true);
-                            context.getSource().sendSuccess(() -> Component.literal("§eRestart the server for changes to take full effect."), false);
+                            context.getSource().sendSuccess(() -> Component.literal("Â§aConfiguration reset successfully! A backup was created."), true);
+                            context.getSource().sendSuccess(() -> Component.literal("Â§eRestart the server for changes to take full effect."), false);
                         } else {
-                            context.getSource().sendFailure(Component.literal("§cFailed to reset configuration! Check server logs."));
+                            context.getSource().sendFailure(Component.literal("Â§cFailed to reset configuration! Check server logs."));
                         }
                         return success ? 1 : 0;
                     })
@@ -185,9 +185,9 @@ public class ModCommands {
             .then(Commands.literal("backup")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
-                    context.getSource().sendSuccess(() -> Component.literal("§eCleaning up old config backups..."), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§eCleaning up old config backups..."), false);
                     com.servermanagement.config.ConfigValidator.cleanupOldBackups();
-                    context.getSource().sendSuccess(() -> Component.literal("§aBackup cleanup complete!"), true);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§aBackup cleanup complete!"), true);
                     return 1;
                 })
             )
@@ -404,7 +404,7 @@ public class ModCommands {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     // Check if Economy feature is enabled
                     if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                        player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                        player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                         return 0;
                     }
                     
@@ -429,7 +429,7 @@ public class ModCommands {
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                             return 0;
                         }
                         
@@ -457,7 +457,7 @@ public class ModCommands {
                         .executes(context -> {
                             if (context.getSource().getEntity() instanceof ServerPlayer sender) {
                                 if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                    sender.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                    sender.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                                     return 0;
                                 }
                                 
@@ -469,12 +469,12 @@ public class ModCommands {
                                     .getPlayerByName(targetName);
                                 
                                 if (target == null) {
-                                    sender.sendSystemMessage(Component.literal("§cPlayer not found"));
+                                    sender.sendSystemMessage(Component.literal("Â§cPlayer not found"));
                                     return 0;
                                 }
                                 
                                 if (target.getUUID().equals(sender.getUUID())) {
-                                    sender.sendSystemMessage(Component.literal("§cYou cannot pay yourself"));
+                                    sender.sendSystemMessage(Component.literal("Â§cYou cannot pay yourself"));
                                     return 0;
                                 }
                                 
@@ -489,7 +489,7 @@ public class ModCommands {
                                     com.servermanagement.features.economy.notifications.NotificationManager
                                         .sendReceivedPaymentNotification(target, sender.getName().getString(), amount);
                                 } else {
-                                    sender.sendSystemMessage(Component.literal("§cInsufficient funds"));
+                                    sender.sendSystemMessage(Component.literal("Â§cInsufficient funds"));
                                 }
                             }
                             return 1;
@@ -530,7 +530,7 @@ public class ModCommands {
                                 );
                                 
                                 target.sendSystemMessage(Component.literal(
-                                    "§eYour balance has been set to §a$" + amount
+                                    "Â§eYour balance has been set to Â§a$" + amount
                                 ));
                                 
                                 return 1;
@@ -574,7 +574,7 @@ public class ModCommands {
                                 );
                                 
                                 target.sendSystemMessage(Component.literal(
-                                    "§aYou received §e$" + amount + "§a from an admin"
+                                    "Â§aYou received Â§e$" + amount + "Â§a from an admin"
                                 ));
                                 
                                 return 1;
@@ -619,7 +619,7 @@ public class ModCommands {
                                     );
                                     
                                     target.sendSystemMessage(Component.literal(
-                                        "§c$" + amount + " was deducted from your account"
+                                        "Â§c$" + amount + " was deducted from your account"
                                     ));
                                 } else {
                                     context.getSource().sendFailure(Component.literal("Player has insufficient funds"));
@@ -635,7 +635,7 @@ public class ModCommands {
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                             return 0;
                         }
                         
@@ -644,12 +644,12 @@ public class ModCommands {
                         int achievementCount = manager.getAchievementTracker()
                             .getRewardedCount(player.getUUID());
                         
-                        player.sendSystemMessage(Component.literal("§6=== Bank Statistics ==="));
+                        player.sendSystemMessage(Component.literal("Â§6=== Bank Statistics ==="));
                         player.sendSystemMessage(Component.literal(
-                            "§aBalance: §e$" + String.format("%.2f", balance)
+                            "Â§aBalance: Â§e$" + String.format("%.2f", balance)
                         ));
                         player.sendSystemMessage(Component.literal(
-                            "§aRewarded Achievements: §e" + achievementCount
+                            "Â§aRewarded Achievements: Â§e" + achievementCount
                         ));
                     }
                     return 1;
@@ -659,7 +659,7 @@ public class ModCommands {
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                             return 0;
                         }
                         
@@ -698,7 +698,7 @@ public class ModCommands {
                         .executes(context -> {
                             if (context.getSource().getEntity() instanceof ServerPlayer player) {
                                 if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                    player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                    player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                                     return 0;
                                 }
                                 
@@ -722,7 +722,7 @@ public class ModCommands {
                                         .sendRewardClaimedNotification(player, reward);
                                 } else {
                                     player.sendSystemMessage(Component.literal(
-                                        "§cTask not completed or already claimed"
+                                        "Â§cTask not completed or already claimed"
                                     ));
                                 }
                             }
@@ -734,7 +734,7 @@ public class ModCommands {
                     .executes(context -> {
                         if (context.getSource().getEntity() instanceof ServerPlayer player) {
                             if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                                 return 0;
                             }
                             
@@ -758,7 +758,7 @@ public class ModCommands {
                                     .getOrCreatePlayerTasks(player.getUUID());
                                 long timeRemaining = playerTasks.getTimeUntilFreeReward();
                                 player.sendSystemMessage(Component.literal(
-                                    "§cFree reward not available. Next reward in: " +
+                                    "Â§cFree reward not available. Next reward in: " +
                                     com.servermanagement.features.economy.PlayerDailyTasks.formatTimeRemaining(timeRemaining)
                                 ));
                             }
@@ -773,7 +773,7 @@ public class ModCommands {
                         .executes(context -> {
                             if (context.getSource().getEntity() instanceof ServerPlayer requester) {
                                 if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                    requester.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                    requester.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                                     return 0;
                                 }
                                 
@@ -785,12 +785,12 @@ public class ModCommands {
                                     .getPlayerByName(targetName);
                                 
                                 if (target == null) {
-                                    requester.sendSystemMessage(Component.literal("§cPlayer not found or not online"));
+                                    requester.sendSystemMessage(Component.literal("Â§cPlayer not found or not online"));
                                     return 0;
                                 }
                                 
                                 if (target.getUUID().equals(requester.getUUID())) {
-                                    requester.sendSystemMessage(Component.literal("§cYou cannot request money from yourself"));
+                                    requester.sendSystemMessage(Component.literal("Â§cYou cannot request money from yourself"));
                                     return 0;
                                 }
                                 
@@ -802,18 +802,18 @@ public class ModCommands {
                                     manager.save();
                                     
                                     requester.sendSystemMessage(Component.literal(
-                                        "§aRequest sent to §e" + targetName + "§a for §e$" + amount
+                                        "Â§aRequest sent to Â§e" + targetName + "Â§a for Â§e$" + amount
                                     ));
                                     
                                     target.sendSystemMessage(Component.literal(
-                                        "§e" + requester.getName().getString() + "§a is requesting §e$" + amount
+                                        "Â§e" + requester.getName().getString() + "Â§a is requesting Â§e$" + amount
                                     ));
                                     target.sendSystemMessage(Component.literal(
-                                        "§7Use §e/bank requests§7 to view and respond"
+                                        "Â§7Use Â§e/bank requestsÂ§7 to view and respond"
                                     ));
                                 } else {
                                     requester.sendSystemMessage(Component.literal(
-                                        "§cYou have too many pending requests. Cancel some first."
+                                        "Â§cYou have too many pending requests. Cancel some first."
                                     ));
                                 }
                             }
@@ -826,7 +826,7 @@ public class ModCommands {
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                             return 0;
                         }
                         
@@ -836,10 +836,10 @@ public class ModCommands {
                         var outgoing = manager.getRequestManager()
                             .getPendingRequestsByRequester(player.getUUID());
                         
-                        player.sendSystemMessage(Component.literal("§6=== Money Requests ==="));
+                        player.sendSystemMessage(Component.literal("Â§6=== Money Requests ==="));
                         
                         if (!incoming.isEmpty()) {
-                            player.sendSystemMessage(Component.literal("§eIncoming Requests:"));
+                            player.sendSystemMessage(Component.literal("Â§eIncoming Requests:"));
                             for (var req : incoming) {
                                 ServerPlayer requesterPlayer = context.getSource().getServer()
                                     .getPlayerList()
@@ -848,18 +848,18 @@ public class ModCommands {
                                     requesterPlayer.getName().getString() : "Unknown";
                                 
                                 player.sendSystemMessage(Component.literal(
-                                    "§a• §f" + requesterName + " §7requests §e$" + String.format("%.0f", req.getAmount()) +
-                                    " §7(" + req.getFormattedAge() + ")"
+                                    "Â§aâ€¢ Â§f" + requesterName + " Â§7requests Â§e$" + String.format("%.0f", req.getAmount()) +
+                                    " Â§7(" + req.getFormattedAge() + ")"
                                 ));
                                 player.sendSystemMessage(Component.literal(
-                                    "  §7ID: §e" + req.getRequestId().toString().substring(0, 8) + 
-                                    " §7- Use §e/bank accept <id>§7 or §e/bank deny <id>"
+                                    "  Â§7ID: Â§e" + req.getRequestId().toString().substring(0, 8) + 
+                                    " Â§7- Use Â§e/bank accept <id>Â§7 or Â§e/bank deny <id>"
                                 ));
                             }
                         }
                         
                         if (!outgoing.isEmpty()) {
-                            player.sendSystemMessage(Component.literal("§eOutgoing Requests:"));
+                            player.sendSystemMessage(Component.literal("Â§eOutgoing Requests:"));
                             for (var req : outgoing) {
                                 ServerPlayer targetPlayer = context.getSource().getServer()
                                     .getPlayerList()
@@ -868,14 +868,14 @@ public class ModCommands {
                                     targetPlayer.getName().getString() : "Unknown";
                                 
                                 player.sendSystemMessage(Component.literal(
-                                    "§a• §7To §f" + targetName + "§7: §e$" + String.format("%.0f", req.getAmount()) +
-                                    " §7(" + req.getFormattedAge() + ")"
+                                    "Â§aâ€¢ Â§7To Â§f" + targetName + "Â§7: Â§e$" + String.format("%.0f", req.getAmount()) +
+                                    " Â§7(" + req.getFormattedAge() + ")"
                                 ));
                             }
                         }
                         
                         if (incoming.isEmpty() && outgoing.isEmpty()) {
-                            player.sendSystemMessage(Component.literal("§7No pending requests"));
+                            player.sendSystemMessage(Component.literal("Â§7No pending requests"));
                         }
                     }
                     return 1;
@@ -886,7 +886,7 @@ public class ModCommands {
                     .executes(context -> {
                         if (context.getSource().getEntity() instanceof ServerPlayer player) {
                             if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                                 return 0;
                             }
                             
@@ -902,7 +902,7 @@ public class ModCommands {
                                 .orElse(null);
                             
                             if (request == null) {
-                                player.sendSystemMessage(Component.literal("§cRequest not found"));
+                                player.sendSystemMessage(Component.literal("Â§cRequest not found"));
                                 return 0;
                             }
                             
@@ -918,7 +918,7 @@ public class ModCommands {
                                 manager.save();
                                 
                                 player.sendSystemMessage(Component.literal(
-                                    "§aAccepted request and sent §e$" + String.format("%.0f", request.getAmount())
+                                    "Â§aAccepted request and sent Â§e$" + String.format("%.0f", request.getAmount())
                                 ));
                                 
                                 // Notify requester if online
@@ -927,12 +927,12 @@ public class ModCommands {
                                     .getPlayer(request.getRequesterUUID());
                                 if (requester != null) {
                                     requester.sendSystemMessage(Component.literal(
-                                        "§a" + player.getName().getString() + " accepted your request and sent §e$" + 
+                                        "Â§a" + player.getName().getString() + " accepted your request and sent Â§e$" + 
                                         String.format("%.0f", request.getAmount())
                                     ));
                                 }
                             } else {
-                                player.sendSystemMessage(Component.literal("§cInsufficient funds"));
+                                player.sendSystemMessage(Component.literal("Â§cInsufficient funds"));
                             }
                         }
                         return 1;
@@ -944,7 +944,7 @@ public class ModCommands {
                     .executes(context -> {
                         if (context.getSource().getEntity() instanceof ServerPlayer player) {
                             if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                player.sendSystemMessage(Component.literal("Â§cEconomy feature is disabled"));
                                 return 0;
                             }
                             
@@ -960,14 +960,14 @@ public class ModCommands {
                                 .orElse(null);
                             
                             if (request == null) {
-                                player.sendSystemMessage(Component.literal("§cRequest not found"));
+                                player.sendSystemMessage(Component.literal("Â§cRequest not found"));
                                 return 0;
                             }
                             
                             manager.getRequestManager().denyRequest(request.getRequestId(), player.getUUID());
                             manager.save();
                             
-                            player.sendSystemMessage(Component.literal("§cDenied money request"));
+                            player.sendSystemMessage(Component.literal("Â§cDenied money request"));
                             
                             // Notify requester if online
                             ServerPlayer requester = context.getSource().getServer()
@@ -975,7 +975,7 @@ public class ModCommands {
                                 .getPlayer(request.getRequesterUUID());
                             if (requester != null) {
                                 requester.sendSystemMessage(Component.literal(
-                                    "§c" + player.getName().getString() + " denied your request for §e$" + 
+                                    "Â§c" + player.getName().getString() + " denied your request for Â§e$" + 
                                     String.format("%.0f", request.getAmount())
                                 ));
                             }
@@ -985,6 +985,10 @@ public class ModCommands {
                 )
             )
         );
+        
+        // Server Performance command (/smperformance or /smperf)
+        registerPerformanceCommand(dispatcher, "smperformance");
+        registerPerformanceCommand(dispatcher, "smperf");
         
         // Performance metrics command
         dispatcher.register(Commands.literal("smmetrics")
@@ -997,7 +1001,7 @@ public class ModCommands {
             .then(Commands.literal("reset")
                 .executes(context -> {
                     com.servermanagement.util.PerformanceMetrics.getInstance().reset();
-                    context.getSource().sendSuccess(() -> Component.literal("§aPerformance metrics reset"), false);
+                    context.getSource().sendSuccess(() -> Component.literal("Â§aPerformance metrics reset"), false);
                     return 1;
                 })
             )
@@ -1009,6 +1013,201 @@ public class ModCommands {
         ServerManagementMod.LOGGER.info("Registered all mod commands");
     }
     
+    private static int executePerformanceStatus(net.minecraft.commands.CommandSourceStack source) {
+        var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
+        boolean enabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("server_performance");
+        
+        source.sendSuccess(() -> Component.literal("Â§6=== Server Performance ==="), false);
+        source.sendSuccess(() -> Component.literal("Â§7Feature: " + (enabled ? "Â§aEnabled" : "Â§cDisabled")), false);
+        
+        if (!enabled) {
+            source.sendSuccess(() -> Component.literal("Â§7Enable via /smconfig toggle server_performance"), false);
+            return 1;
+        }
+        
+        var status = manager.getTpsStatus();
+        String tpsColor = status.getColorCode();
+        source.sendSuccess(() -> Component.literal(
+            tpsColor + "TPS: " + String.format("%.1f", manager.getCurrentTps()) +
+            " Â§7| Â§fMSPT: " + String.format("%.1f", manager.getAverageMspt()) + "ms"
+        ), false);
+        
+        boolean autoOpt = com.servermanagement.config.ModConfig.TPS_AUTO_OPTIMIZE.get();
+        source.sendSuccess(() -> Component.literal(
+            "Â§7Auto-Optimize: " + (autoOpt ? (manager.isAutoOptimizeActive() ? "Â§eACTIVE" : "Â§aStandby") : "Â§cOff")
+        ), false);
+        
+        source.sendSuccess(() -> Component.literal("Â§7--- Subsystems ---"), false);
+        source.sendSuccess(() -> Component.literal(
+            "Â§7Item Merging: " + (com.servermanagement.config.ModConfig.ITEM_MERGING_ENABLED.get() ? "Â§aON" : "Â§cOFF") +
+            " Â§7| Mob Spawn Limiter: " + (com.servermanagement.config.ModConfig.MOB_SPAWN_LIMITER_ENABLED.get() ? "Â§aON" : "Â§cOFF")
+        ), false);
+        source.sendSuccess(() -> Component.literal(
+            "Â§7Entity Range: " + (com.servermanagement.config.ModConfig.ENTITY_ACTIVATION_RANGE_ENABLED.get() ? "Â§aON" : "Â§cOFF") +
+            " Â§7| Villager Throttle: " + (com.servermanagement.config.ModConfig.VILLAGER_THROTTLE_ENABLED.get() ? "Â§aON" : "Â§cOFF")
+        ), false);
+        source.sendSuccess(() -> Component.literal(
+            "Â§7Redstone Throttle: " + (com.servermanagement.config.ModConfig.REDSTONE_THROTTLE_ENABLED.get() ? "Â§aON" : "Â§cOFF") +
+            " Â§7| TPS Monitor: " + (com.servermanagement.config.ModConfig.TPS_MONITOR_ENABLED.get() ? "Â§aON" : "Â§cOFF")
+        ), false);
+        
+        return 1;
+    }
+    
+    private static int executePerformanceStats(net.minecraft.commands.CommandSourceStack source) {
+        var manager = com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance();
+        boolean enabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("server_performance");
+        
+        if (!enabled) {
+            source.sendSuccess(() -> Component.literal("Â§cServer Performance feature is disabled"), false);
+            return 0;
+        }
+        
+        source.sendSuccess(() -> Component.literal("Â§6=== Performance Stats ==="), false);
+        source.sendSuccess(() -> Component.literal("Â§7Items Merged: Â§e" + manager.getTotalItemsMerged()), false);
+        source.sendSuccess(() -> Component.literal("Â§7Spawns Cancelled: Â§e" + manager.getTotalSpawnsCancelled()), false);
+        source.sendSuccess(() -> Component.literal("Â§7Entities Throttled: Â§e" + manager.getTotalEntitiesThrottled()), false);
+        source.sendSuccess(() -> Component.literal("Â§7Redstone Updates Throttled: Â§e" + manager.getTotalRedstoneThrottled()), false);
+        
+        return 1;
+    }
+    
+    /**
+     * Registers a full performance command tree under the given root literal.
+     */
+    private static void registerPerformanceCommand(CommandDispatcher<net.minecraft.commands.CommandSourceStack> dispatcher, String name) {
+        dispatcher.register(Commands.literal(name)
+            .requires(source -> source.hasPermission(2))
+            .executes(ctx -> executePerformanceStatus(ctx.getSource()))
+            .then(Commands.literal("status")
+                .executes(ctx -> executePerformanceStatus(ctx.getSource())))
+            .then(Commands.literal("stats")
+                .executes(ctx -> executePerformanceStats(ctx.getSource())))
+            .then(Commands.literal("reset")
+                .executes(ctx -> {
+                    com.servermanagement.features.serverperformance.ServerPerformanceManager.getInstance().resetStats();
+                    ctx.getSource().sendSuccess(() -> Component.literal("Â§aPerformance stats reset"), true);
+                    return 1;
+                }))
+            .then(Commands.literal("toggle")
+                .then(Commands.argument("subsystem", StringArgumentType.string())
+                    .suggests((ctx, builder) -> {
+                        for (String s : new String[]{"feature", "item_merging", "mob_spawn_limiter",
+                                "entity_activation_range", "villager_throttle", "redstone_throttle",
+                                "tps_monitor", "auto_optimize"}) {
+                            builder.suggest(s);
+                        }
+                        return builder.buildFuture();
+                    })
+                    .executes(ctx -> {
+                        String subsystem = StringArgumentType.getString(ctx, "subsystem");
+                        return executePerformanceToggle(ctx.getSource(), subsystem);
+                    })
+                    .then(Commands.argument("enabled", BoolArgumentType.bool())
+                        .executes(ctx -> {
+                            String subsystem = StringArgumentType.getString(ctx, "subsystem");
+                            boolean enabled = BoolArgumentType.getBool(ctx, "enabled");
+                            return executePerformanceSet(ctx.getSource(), subsystem, enabled);
+                        })
+                    )
+                )
+            )
+            .then(Commands.literal("set")
+                .then(Commands.argument("setting", StringArgumentType.string())
+                    .suggests((ctx, builder) -> {
+                        for (String s : new String[]{"item_merge_radius", "item_merge_interval",
+                                "mob_cap_multiplier", "monster_activation_range", "animal_activation_range",
+                                "misc_activation_range", "villager_tick_interval", "redstone_updates_per_tick",
+                                "tps_warning_threshold", "tps_critical_threshold"}) {
+                            builder.suggest(s);
+                        }
+                        return builder.buildFuture();
+                    })
+                    .then(Commands.argument("value", StringArgumentType.string())
+                        .executes(ctx -> {
+                            String setting = StringArgumentType.getString(ctx, "setting");
+                            String value = StringArgumentType.getString(ctx, "value");
+                            return executePerformanceSetValue(ctx.getSource(), setting, value);
+                        })
+                    )
+                )
+            )
+            .then(Commands.literal("gui")
+                .executes(ctx -> {
+                    if (ctx.getSource().getEntity() instanceof ServerPlayer player) {
+                        com.servermanagement.network.packet.SyncPerformanceSettingsPacket.syncToPlayer(player);
+                        player.openMenu(new com.servermanagement.gui.provider.PerformanceSettingsMenuProvider());
+                    }
+                    return 1;
+                })
+            )
+        );
+    }
+    
+    private static int executePerformanceToggle(net.minecraft.commands.CommandSourceStack source, String subsystem) {
+        boolean current = getPerformanceToggle(subsystem);
+        return executePerformanceSet(source, subsystem, !current);
+    }
+    
+    private static boolean getPerformanceToggle(String subsystem) {
+        return switch (subsystem) {
+            case "feature" -> com.servermanagement.config.ModConfig.SERVER_PERFORMANCE_ENABLED.get();
+            case "item_merging" -> com.servermanagement.config.ModConfig.ITEM_MERGING_ENABLED.get();
+            case "mob_spawn_limiter" -> com.servermanagement.config.ModConfig.MOB_SPAWN_LIMITER_ENABLED.get();
+            case "entity_activation_range" -> com.servermanagement.config.ModConfig.ENTITY_ACTIVATION_RANGE_ENABLED.get();
+            case "villager_throttle" -> com.servermanagement.config.ModConfig.VILLAGER_THROTTLE_ENABLED.get();
+            case "redstone_throttle" -> com.servermanagement.config.ModConfig.REDSTONE_THROTTLE_ENABLED.get();
+            case "tps_monitor" -> com.servermanagement.config.ModConfig.TPS_MONITOR_ENABLED.get();
+            case "auto_optimize" -> com.servermanagement.config.ModConfig.TPS_AUTO_OPTIMIZE.get();
+            default -> false;
+        };
+    }
+    
+    private static int executePerformanceSet(net.minecraft.commands.CommandSourceStack source, String subsystem, boolean enabled) {
+        switch (subsystem) {
+            case "feature" -> com.servermanagement.config.ModConfig.SERVER_PERFORMANCE_ENABLED.set(enabled);
+            case "item_merging" -> com.servermanagement.config.ModConfig.ITEM_MERGING_ENABLED.set(enabled);
+            case "mob_spawn_limiter" -> com.servermanagement.config.ModConfig.MOB_SPAWN_LIMITER_ENABLED.set(enabled);
+            case "entity_activation_range" -> com.servermanagement.config.ModConfig.ENTITY_ACTIVATION_RANGE_ENABLED.set(enabled);
+            case "villager_throttle" -> com.servermanagement.config.ModConfig.VILLAGER_THROTTLE_ENABLED.set(enabled);
+            case "redstone_throttle" -> com.servermanagement.config.ModConfig.REDSTONE_THROTTLE_ENABLED.set(enabled);
+            case "tps_monitor" -> com.servermanagement.config.ModConfig.TPS_MONITOR_ENABLED.set(enabled);
+            case "auto_optimize" -> com.servermanagement.config.ModConfig.TPS_AUTO_OPTIMIZE.set(enabled);
+            default -> {
+                source.sendFailure(Component.literal("Â§cUnknown subsystem: " + subsystem));
+                return 0;
+            }
+        }
+        source.sendSuccess(() -> Component.literal("Â§aSet " + subsystem + " to " + (enabled ? "Â§aON" : "Â§cOFF")), true);
+        return 1;
+    }
+    
+    private static int executePerformanceSetValue(net.minecraft.commands.CommandSourceStack source, String setting, String value) {
+        try {
+            switch (setting) {
+                case "item_merge_radius" -> com.servermanagement.config.ModConfig.ITEM_MERGE_RADIUS.set(Double.parseDouble(value));
+                case "item_merge_interval" -> com.servermanagement.config.ModConfig.ITEM_MERGE_INTERVAL.set(Integer.parseInt(value));
+                case "mob_cap_multiplier" -> com.servermanagement.config.ModConfig.MOB_CAP_MULTIPLIER.set(Integer.parseInt(value));
+                case "monster_activation_range" -> com.servermanagement.config.ModConfig.MONSTER_ACTIVATION_RANGE.set(Integer.parseInt(value));
+                case "animal_activation_range" -> com.servermanagement.config.ModConfig.ANIMAL_ACTIVATION_RANGE.set(Integer.parseInt(value));
+                case "misc_activation_range" -> com.servermanagement.config.ModConfig.MISC_ACTIVATION_RANGE.set(Integer.parseInt(value));
+                case "villager_tick_interval" -> com.servermanagement.config.ModConfig.VILLAGER_TICK_INTERVAL.set(Integer.parseInt(value));
+                case "redstone_updates_per_tick" -> com.servermanagement.config.ModConfig.REDSTONE_UPDATES_PER_TICK.set(Integer.parseInt(value));
+                case "tps_warning_threshold" -> com.servermanagement.config.ModConfig.TPS_WARNING_THRESHOLD.set(Double.parseDouble(value));
+                case "tps_critical_threshold" -> com.servermanagement.config.ModConfig.TPS_CRITICAL_THRESHOLD.set(Double.parseDouble(value));
+                default -> {
+                    source.sendFailure(Component.literal("Â§cUnknown setting: " + setting));
+                    return 0;
+                }
+            }
+            source.sendSuccess(() -> Component.literal("Â§aSet " + setting + " to Â§e" + value), true);
+            return 1;
+        } catch (NumberFormatException e) {
+            source.sendFailure(Component.literal("Â§cInvalid value: " + value));
+            return 0;
+        }
+    }
+
     /**
      * Syncs feature states from server to client before opening GUI.
      */

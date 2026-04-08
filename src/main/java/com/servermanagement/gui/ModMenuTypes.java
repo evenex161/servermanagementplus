@@ -58,6 +58,9 @@ public class ModMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<com.servermanagement.gui.gambling.MineStacksMenu>> MINESTACKS_MENU =
         MENUS.register("minestacks_menu", () -> IMenuTypeExtension.create((windowId, inv, data) -> new com.servermanagement.gui.gambling.MineStacksMenu(windowId, inv)));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<com.servermanagement.gui.menu.PerformanceSettingsMenu>> PERFORMANCE_SETTINGS_MENU =
+        MENUS.register("performance_settings_menu", () -> IMenuTypeExtension.create((windowId, inv, data) -> new com.servermanagement.gui.menu.PerformanceSettingsMenu(windowId, inv)));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

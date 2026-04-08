@@ -93,6 +93,13 @@ public class ModNetworking {
         registrar.playBidirectional(RespondMoneyRequestPacket.TYPE, RespondMoneyRequestPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(SyncMoneyRequestsPacket.TYPE, SyncMoneyRequestsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
+        // Market pricing packets
+        registrar.playBidirectional(com.servermanagement.network.packet.SyncMarketPricesPacket.TYPE, com.servermanagement.network.packet.SyncMarketPricesPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        
+        // Performance settings packets
+        registrar.playBidirectional(com.servermanagement.network.packet.SyncPerformanceSettingsPacket.TYPE, com.servermanagement.network.packet.SyncPerformanceSettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.UpdatePerformanceSettingPacket.TYPE, com.servermanagement.network.packet.UpdatePerformanceSettingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        
         ServerManagementMod.LOGGER.info("Registered network packets");
     }
 

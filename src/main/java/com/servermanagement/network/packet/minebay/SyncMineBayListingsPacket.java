@@ -1,35 +1,34 @@
 package com.servermanagement.network.packet.minebay;
 
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import com.servermanagement.ServerManagementMod;
-
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.PriceItemEntry;
 import com.servermanagement.network.packet.IPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 /**
  * Packet sent from server to client to sync active MineBay listings
  */
 public class SyncMineBayListingsPacket implements IPacket {
-    public static final CustomPacketPayload.Type<SyncMineBayListingsPacket> TYPE = 
-        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_mine_bay_listings_packet"));
-    
-    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncMineBayListingsPacket> STREAM_CODEC = 
+    public static final CustomPacketPayload.Type<SyncMineBayListingsPacket> TYPE =
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "sync_minebay_listings"));
+
+    public static final StreamCodec<FriendlyByteBuf, SyncMineBayListingsPacket> STREAM_CODEC =
         StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncMineBayListingsPacket::new);
-    
+
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
+
     private final List<MineBayListing> listings;
     
     public SyncMineBayListingsPacket(List<MineBayListing> listings) {
@@ -60,8 +59,12 @@ public class SyncMineBayListingsPacket implements IPacket {
                 priceItems.add(new PriceItemEntry(priceItem, amount, useStacks));
             }
             
+            // Read market pricing data
+            double baseMarketPrice = buf.readDouble();
+            double marginPercent = buf.readDouble();
+            
             // Create listing
-            MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, priceItems, offerType);
+            MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, baseMarketPrice, marginPercent, priceItems, offerType);
             listing.setListingId(listingId);
             listing.setCreatedTime(createdTime);
             
@@ -89,6 +92,10 @@ public class SyncMineBayListingsPacket implements IPacket {
                 buf.writeInt(priceItem.getAmount());
                 buf.writeBoolean(priceItem.isUseStacks());
             }
+            
+            // Write market pricing data
+            buf.writeDouble(listing.getBaseMarketPrice());
+            buf.writeDouble(listing.getMarginPercent());
         }
     }
     
@@ -104,6 +111,5 @@ public class SyncMineBayListingsPacket implements IPacket {
                 screen.updateListings(listings);
             }
         });
-        
     }
 }
