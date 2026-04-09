@@ -8,7 +8,7 @@ import java.util.Properties;
 
 /**
  * Manages OTA version tracking with build numbers, Minecraft version, and mod loader awareness.
- * Version format: v1.0.3-b04-release (network) / v1.0.3-b04-mc1.21.1-neoforge-release (display)
+ * Version format: v1.0.4-b01-pre-release (network) / v1.0.4-b01-mc1.21.1-neoforge-pre-release (display)
  */
 public class OTAVersion {
     
@@ -190,7 +190,7 @@ public class OTAVersion {
                 int build = 0;
                 String mcVersion = null;
                 String loader = null;
-                String releaseType = "unknown";
+                java.util.List<String> releaseTypeParts = new java.util.ArrayList<>();
                 
                 // Known loader names for disambiguation
                 java.util.Set<String> knownLoaders = java.util.Set.of("forge", "neoforge", "fabric", "quilt");
@@ -203,9 +203,11 @@ public class OTAVersion {
                     } else if (knownLoaders.contains(parts[i].toLowerCase())) {
                         loader = parts[i].toLowerCase();
                     } else {
-                        releaseType = parts[i];
+                        releaseTypeParts.add(parts[i]);
                     }
                 }
+                
+                String releaseType = releaseTypeParts.isEmpty() ? "unknown" : String.join("-", releaseTypeParts);
                 
                 return new OTAVersion(version, build, mcVersion, loader, releaseType, "");
             }
