@@ -1,4 +1,4 @@
-# Changelog - v1.0.4-b01 (Dynamic Economy & MineBay Overhaul)
+ÿþ# Changelog - v1.0.4-b01 (Dynamic Economy & MineBay Overhaul)
 
 **Release Date**: April 6, 2026  
 **Previous Version**: v1.0.3-b05  
