@@ -1,9 +1,9 @@
 # Changelog - v1.0.4-b01 (Dynamic Economy & MineBay Overhaul)
 
-**Release Date**: April 6, 2026  
-**Previous Version**: v1.0.3-b05  
-**Minecraft Version**: 1.21.1  
-**Forge Version**: 52.1.0+  
+**Release Date**: April 6, 2026
+**Previous Version**: v1.0.3-b05
+**Minecraft Version**: 1.21.1
+**Forge Version**: 52.1.0+
 **Release Type**: Pre-release (Beta)
 
 ---
@@ -153,7 +153,7 @@
 
 ## 📦 Build Info
 
-- **Version**: `v1.0.4-b01-mc1.21.1-forge-release`
+- **Version**: `v1.0.4-b01-mc1.21.1-forge-pre-release`
 - **Java**: 21
 - **Forge**: 52.1.0
 - **Minecraft**: 1.21.1
