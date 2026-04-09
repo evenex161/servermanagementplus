@@ -25,6 +25,7 @@ bin/
 
 # Minecraft
 run/
+runs/
 run-data/
 logs/
 forge-server/
