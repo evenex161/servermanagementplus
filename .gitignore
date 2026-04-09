@@ -37,7 +37,8 @@ curseforge.properties
 *.key
 *.secret
 
-# Internal development docs (keep CHANGELOG_*, CURSEFORGE_PAGE.md)
+# Internal development docs (keep CHANGELOG_*)
+CURSEFORGE_PAGE.md
 CONFIG_MIGRATION_GUIDE.md
 CONFIG_SCREEN_FIXES.md
 CRASH_FIX_DOCUMENTATION.md
@@ -100,7 +101,8 @@ curseforge.properties
 *.key
 *.secret
 
-# Internal development docs (keep CHANGELOG_*, CURSEFORGE_PAGE.md)
+# Internal development docs (keep CHANGELOG_*)
+CURSEFORGE_PAGE.md
 CONFIG_MIGRATION_GUIDE.md
 CONFIG_SCREEN_FIXES.md
 CRASH_FIX_DOCUMENTATION.md
