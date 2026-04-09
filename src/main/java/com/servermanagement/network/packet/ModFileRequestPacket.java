@@ -1,14 +1,10 @@
 package com.servermanagement.network.packet;
 
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.server.ModFileTransferManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
@@ -16,14 +12,6 @@ import java.util.function.Supplier;
  * Packet sent from client to server to request the mod JAR file for OTA update.
  */
 public class ModFileRequestPacket implements IPacket {
-    public static final CustomPacketPayload.Type<ModFileRequestPacket> TYPE = 
-        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ServerManagementMod.MOD_ID, "mod_file_request_packet"));
-    
-    public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ModFileRequestPacket> STREAM_CODEC = 
-        StreamCodec.of((buf, pkt) -> pkt.encode(buf), ModFileRequestPacket::new);
-    
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
     private final String requestedVersion;
     private final String clientVersion;
     private final String clientMinecraftVersion;
@@ -46,9 +34,10 @@ public class ModFileRequestPacket implements IPacket {
         buf.writeUtf(clientMinecraftVersion, 32);
     }
     
-    public void handle(IPayloadContext context) {
+    public void handle(CustomPayloadEvent.Context contextSupplier) {
+        CustomPayloadEvent.Context context = contextSupplier;
         context.enqueueWork(() -> {
-            ServerPlayer player = (ServerPlayer) context.player();
+            ServerPlayer player = context.getSender();
             if (player != null) {
                 ServerManagementMod.LOGGER.info("Player {} requested mod update from {} to {} (MC {})", 
                     player.getName().getString(), clientVersion, requestedVersion, clientMinecraftVersion);
@@ -65,7 +54,7 @@ public class ModFileRequestPacket implements IPacket {
                 ModFileTransferManager.startTransfer(player, requestedVersion);
             }
         });
-        
+        context.setPacketHandled(true);
     }
     
     public String getRequestedVersion() {
