@@ -68,6 +68,8 @@ public class ModNetworking {
         registrar.playBidirectional(com.servermanagement.network.packet.minebay.CreateOfferPacket.TYPE, com.servermanagement.network.packet.minebay.CreateOfferPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(com.servermanagement.network.packet.minebay.AcceptOfferPacket.TYPE, com.servermanagement.network.packet.minebay.AcceptOfferPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(com.servermanagement.network.packet.minebay.RejectOfferPacket.TYPE, com.servermanagement.network.packet.minebay.RejectOfferPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.RequestListingOffersPacket.TYPE, com.servermanagement.network.packet.minebay.RequestListingOffersPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(com.servermanagement.network.packet.minebay.SyncListingOffersPacket.TYPE, com.servermanagement.network.packet.minebay.SyncListingOffersPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(com.servermanagement.network.packet.minebay.DeleteListingPacket.TYPE, com.servermanagement.network.packet.minebay.DeleteListingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // Bank inventory packets
@@ -99,6 +101,14 @@ public class ModNetworking {
         // Performance settings packets
         registrar.playBidirectional(com.servermanagement.network.packet.SyncPerformanceSettingsPacket.TYPE, com.servermanagement.network.packet.SyncPerformanceSettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(com.servermanagement.network.packet.UpdatePerformanceSettingPacket.TYPE, com.servermanagement.network.packet.UpdatePerformanceSettingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        
+        // MOTD packets
+        registrar.playBidirectional(SyncMotdPacket.TYPE, SyncMotdPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(SaveMotdPacket.TYPE, SaveMotdPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        
+        // Economy stats packets
+        registrar.playBidirectional(SyncEconomyStatsPacket.TYPE, SyncEconomyStatsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(RequestEconomyStatsPacket.TYPE, RequestEconomyStatsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         ServerManagementMod.LOGGER.info("Registered network packets");
     }

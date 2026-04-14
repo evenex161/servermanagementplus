@@ -5,6 +5,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import com.mojang.logging.LogUtils;
 import com.servermanagement.commands.MineBayCommand;
 import com.servermanagement.commands.MineStacksCommand;
+import com.servermanagement.commands.OverflowCommand;
 import com.servermanagement.config.ModConfig;
 import com.servermanagement.features.FeatureRegistry;
 import com.servermanagement.gui.ModMenuTypes;
@@ -122,6 +123,10 @@ public class ServerManagementMod {
         com.servermanagement.features.minebay.MineBayManager.getInstance().initialize(event.getServer());
         LOGGER.info("MineBay marketplace initialized");
         
+        // Initialize overflow inventory manager
+        com.servermanagement.features.economy.OverflowInventoryManager.getInstance().initialize(event.getServer());
+        LOGGER.info("Overflow inventory manager initialized");
+        
         // Initialize gambling system
         com.servermanagement.features.gambling.GamblingManager.getInstance().initialize(event.getServer());
         LOGGER.info("MineStacks gambling system initialized");
@@ -130,14 +135,33 @@ public class ServerManagementMod {
         com.servermanagement.server.ModFileTransferManager.initialize();
         LOGGER.info("OTA update system initialized");
         
+        // Initialize MOTD Manager
+        if (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor")) {
+            com.servermanagement.features.motd.MotdManager.getInstance().initialize(event.getServer());
+            LOGGER.info("MOTD Manager initialized");
+        }
+        
         LOGGER.info("ServerManagement v{} fully initialized and ready!", getModVersion());
+    }
+    
+    @SubscribeEvent
+    public void onServerStopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
+        com.servermanagement.features.motd.MotdManager.getInstance().saveAndShutdown();
+        LOGGER.info("MOTD Manager saved and shut down");
+        
+        com.servermanagement.features.gambling.GamblingManager.getInstance().forceSave();
+        LOGGER.info("Gambling stats saved");
+        
+        com.servermanagement.features.economy.OverflowInventoryManager.getInstance().save();
+        LOGGER.info("Overflow inventory saved");
     }
     
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         MineBayCommand.register(event.getDispatcher());
         MineStacksCommand.register(event.getDispatcher());
-        LOGGER.info("Registered GUI commands: /minebay, /minestacks, /casino");
+        OverflowCommand.register(event.getDispatcher());
+        LOGGER.info("Registered GUI commands: /minebay, /minestacks, /casino, /overflow");
     }
     
     public static ModConfig getConfig() {

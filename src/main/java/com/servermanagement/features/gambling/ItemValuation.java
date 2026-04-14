@@ -75,6 +75,14 @@ public class ItemValuation {
     }
     
     /**
+     * Returns an unmodifiable view of the hardcoded base prices.
+     * Used by RecipeBasedPricing to seed anchor prices for raw materials.
+     */
+    public static Map<String, Double> getHardcodedValues() {
+        return java.util.Collections.unmodifiableMap(ITEM_VALUES);
+    }
+
+    /**
      * Get the monetary value of an item stack
      */
     public static double getItemValue(ItemStack stack) {

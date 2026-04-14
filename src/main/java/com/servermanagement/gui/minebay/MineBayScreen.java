@@ -15,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Main MineBay screen - Browse and create listings
@@ -56,6 +57,17 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     // Buy confirmation state
     private MineBayListing listingToBuy = null;
+    private PaymentMode buyPaymentMode = PaymentMode.NONE;
+    private java.util.Set<Integer> selectedPaymentSlots = new java.util.HashSet<>();
+    
+    private enum PaymentMode { NONE, BALANCE, ITEMS }
+    
+    // View offers state
+    private MineBayListing selectedListingForOffers = null;
+    private int offerScrollOffset = 0;
+    private static final int OFFERS_PER_PAGE = 3;
+    private List<com.servermanagement.features.minebay.MineBayOffer> cachedOffers = new ArrayList<>();
+    private boolean offersLoading = false;
     
     // Status message (shown briefly after actions)
     private String statusMessage = null;
@@ -71,7 +83,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         MAKE_OFFER,          // Make an offer on a negotiable listing
         VIEW_MY_LISTINGS,    // View your own listings and manage offers
         DELETE_CONFIRM,      // Confirmation dialog for deleting a listing
-        BUY_CONFIRM          // Confirmation dialog for buying a listing
+        BUY_CONFIRM,         // Confirmation dialog for buying a listing
+        VIEW_OFFERS          // View and manage offers on own listing
     }
     
     public MineBayScreen(MineBayMenu menu, Inventory playerInventory, Component title) {
@@ -146,6 +159,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 break;
             case BUY_CONFIRM:
                 initBuyConfirm(centerX, centerY);
+                break;
+            case VIEW_OFFERS:
+                initViewOffers(centerX, centerY);
                 break;
         }
     }
@@ -750,7 +766,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         boolean isOwnListing = minecraft != null && minecraft.player != null && 
             listing.getSellerId().equals(minecraft.player.getUUID());
         
-        int buttonY = centerY + 185;
+        int buttonY = centerY + 210;
         
         if (!isOwnListing) {
             if (listing.getOfferType() == MineBayListing.OfferType.FIXED) {
@@ -770,15 +786,130 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
         } else {
             this.addRenderableWidget(new ModernButton(
-                centerX + 150, buttonY, 100, 25,
+                centerX + 100, buttonY, 100, 25,
                 Component.literal("Edit"),
                 button -> editListing(listing),
                 ModernButton.ButtonStyle.PRIMARY
             ));
+            
+            // View Offers button for negotiable own listings
+            if (listing.getOfferType() == MineBayListing.OfferType.NEGOTIABLE) {
+                int pendingCount = listing.getPendingOfferCount();
+                String btnText = pendingCount > 0 ? "Offers (" + pendingCount + ")" : "Offers";
+                this.addRenderableWidget(new ModernButton(
+                    centerX + 210, buttonY, 100, 25,
+                    Component.literal(btnText),
+                    button -> {
+                        selectedListingForOffers = listing;
+                        offerScrollOffset = 0;
+                        cachedOffers.clear();
+                        offersLoading = true;
+                        // Request offers from server
+                        ModNetworking.sendToServer(
+                            new com.servermanagement.network.packet.minebay.RequestListingOffersPacket(
+                                listing.getListingId()));
+                        switchState(ScreenState.VIEW_OFFERS);
+                    },
+                    pendingCount > 0 ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
+                ));
+            }
+            
             this.addRenderableWidget(new ModernButton(
-                centerX + 260, buttonY, 100, 25,
+                centerX + 320, buttonY, 100, 25,
                 Component.literal("Delete"),
                 button -> deleteListing(listing),
+                ModernButton.ButtonStyle.DANGER
+            ));
+        }
+    }
+    
+    private void initViewOffers(int centerX, int centerY) {
+        if (selectedListingForOffers == null) {
+            switchState(ScreenState.BROWSE);
+            return;
+        }
+        
+        // Back button (always available, even while loading)
+        this.addRenderableWidget(new ModernButton(
+            centerX + 10, centerY + 5, 100, 20,
+            Component.literal("\u25C0 Back"),
+            button -> {
+                selectedListingForOffers = null;
+                cachedOffers.clear();
+                switchState(ScreenState.VIEW_DETAILS);
+            },
+            ModernButton.ButtonStyle.SECONDARY
+        ));
+        
+        // Refresh button (always available)
+        this.addRenderableWidget(new ModernButton(
+            centerX + 120, centerY + 5, 80, 20,
+            Component.literal("Refresh"),
+            button -> {
+                offersLoading = true;
+                ModNetworking.sendToServer(
+                    new com.servermanagement.network.packet.minebay.RequestListingOffersPacket(
+                        selectedListingForOffers.getListingId()));
+                this.rebuildWidgets();
+            },
+            ModernButton.ButtonStyle.SECONDARY
+        ));
+        
+        // Wait for server response before rendering offer cards
+        if (offersLoading || cachedOffers.isEmpty()) return;
+        
+        // Pagination
+        int navY = centerY + this.imageHeight - 40;
+        if (offerScrollOffset > 0) {
+            this.addRenderableWidget(new ModernButton(
+                centerX + 50, navY, 90, 18,
+                Component.literal("\u25C4 Previous"),
+                button -> { offerScrollOffset--; this.rebuildWidgets(); },
+                ModernButton.ButtonStyle.SECONDARY
+            ));
+        }
+        if (offerScrollOffset + OFFERS_PER_PAGE < cachedOffers.size()) {
+            this.addRenderableWidget(new ModernButton(
+                centerX + this.imageWidth - 140, navY, 90, 18,
+                Component.literal("Next \u25BA"),
+                button -> { offerScrollOffset++; this.rebuildWidgets(); },
+                ModernButton.ButtonStyle.SECONDARY
+            ));
+        }
+        
+        // Accept/Reject buttons per offer
+        for (int i = 0; i < Math.min(OFFERS_PER_PAGE, cachedOffers.size() - offerScrollOffset); i++) {
+            int offerIndex = i + offerScrollOffset;
+            com.servermanagement.features.minebay.MineBayOffer offer = cachedOffers.get(offerIndex);
+            int cardY = centerY + 90 + (i * 80);
+            
+            this.addRenderableWidget(new ModernButton(
+                centerX + this.imageWidth - 130, cardY + 10, 100, 20,
+                Component.literal("\u2714 Accept"),
+                button -> {
+                    ModNetworking.sendToServer(
+                        new com.servermanagement.network.packet.minebay.AcceptOfferPacket(
+                            selectedListingForOffers.getListingId(), offer.getOfferId()));
+                    showStatusMessage("Offer accepted!", 0x55FF55);
+                    selectedListingForOffers = null;
+                    cachedOffers.clear();
+                    switchState(ScreenState.BROWSE);
+                },
+                ModernButton.ButtonStyle.SUCCESS
+            ));
+            
+            this.addRenderableWidget(new ModernButton(
+                centerX + this.imageWidth - 130, cardY + 35, 100, 20,
+                Component.literal("\u2718 Reject"),
+                button -> {
+                    ModNetworking.sendToServer(
+                        new com.servermanagement.network.packet.minebay.RejectOfferPacket(
+                            selectedListingForOffers.getListingId(), offer.getOfferId()));
+                    showStatusMessage("Offer rejected.", 0xFF5555);
+                    // Remove from cached list and rebuild
+                    cachedOffers.remove(offer);
+                    this.rebuildWidgets();
+                },
                 ModernButton.ButtonStyle.DANGER
             ));
         }
@@ -850,6 +981,119 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             button -> cancelBuy(),
             ModernButton.ButtonStyle.SECONDARY
         ));
+    }
+    
+    private void renderViewOffers(GuiGraphics guiGraphics, int centerX, int centerY) {
+        if (selectedListingForOffers == null) return;
+        
+        // Header
+        Component title = Component.literal("Offers on: " + selectedListingForOffers.getItemForSale().getHoverName().getString());
+        int tw = this.font.width(title);
+        if (tw > this.imageWidth - 130) {
+            String shortened = selectedListingForOffers.getItemForSale().getHoverName().getString();
+            while (this.font.width("Offers on: " + shortened + "...") > this.imageWidth - 130 && shortened.length() > 5) {
+                shortened = shortened.substring(0, shortened.length() - 1);
+            }
+            title = Component.literal("Offers on: " + shortened + "...");
+            tw = this.font.width(title);
+        }
+        guiGraphics.drawString(this.font, title, centerX + 15, centerY + 50, 0xFFD700, true);
+        guiGraphics.fill(centerX + 15, centerY + 61, centerX + 15 + tw, centerY + 62, 0x60FFD700);
+        
+        // Asking price
+        String askingStr = "Asking: $" + String.format(Locale.US, "%.2f", selectedListingForOffers.getMoneyPrice());
+        guiGraphics.drawString(this.font, Component.literal(askingStr), centerX + 15, centerY + 67, 0x999999, true);
+        
+        // Loading state
+        if (offersLoading) {
+            guiGraphics.drawString(this.font, Component.literal("Loading offers..."),
+                centerX + (this.imageWidth - this.font.width("Loading offers...")) / 2, 
+                centerY + 130, 0xFFFF55, true);
+            return;
+        }
+        
+        if (cachedOffers.isEmpty()) {
+            guiGraphics.drawString(this.font, Component.literal("No pending offers."),
+                centerX + (this.imageWidth - this.font.width("No pending offers.")) / 2, 
+                centerY + 130, 0x888888, true);
+            return;
+        }
+        
+        // Page info
+        int totalPages = (int) Math.ceil((double) cachedOffers.size() / OFFERS_PER_PAGE);
+        int currentPage = offerScrollOffset + 1;
+        String pageStr = "Page " + currentPage + "/" + totalPages + " (" + cachedOffers.size() + " offers)";
+        guiGraphics.drawString(this.font, Component.literal(pageStr),
+            centerX + (this.imageWidth - this.font.width(pageStr)) / 2, centerY + 78, 0xAAAAAA, true);
+        
+        // Render offer cards
+        for (int i = 0; i < Math.min(OFFERS_PER_PAGE, cachedOffers.size() - offerScrollOffset); i++) {
+            int offerIndex = i + offerScrollOffset;
+            com.servermanagement.features.minebay.MineBayOffer offer = cachedOffers.get(offerIndex);
+            int cardY = centerY + 90 + (i * 80);
+            int cardX = centerX + 15;
+            int cardRight = centerX + this.imageWidth - 140;
+            
+            // Card background
+            guiGraphics.fill(cardX, cardY, cardRight, cardY + 72, 0xFF333333);
+            guiGraphics.fill(cardX + 1, cardY + 1, cardRight - 1, cardY + 71, 0xFF1E1E1E);
+            
+            // Buyer name
+            guiGraphics.drawString(this.font, Component.literal("From: \u00A7e" + offer.getBuyerName()),
+                cardX + 8, cardY + 5, 0xFFFFFF, true);
+            
+            // Money offer
+            if (offer.getMoneyOffer() > 0) {
+                String moneyStr = "Money: $" + String.format(Locale.US, "%.2f", offer.getMoneyOffer());
+                int moneyColor = offer.getMoneyOffer() >= selectedListingForOffers.getMoneyPrice() ? 0x55FF55 : 0xFFAA00;
+                guiGraphics.drawString(this.font, Component.literal(moneyStr),
+                    cardX + 8, cardY + 18, moneyColor, true);
+            }
+            
+            // Item offers
+            List<ItemStack> itemOffers = offer.getItemOffers();
+            if (!itemOffers.isEmpty()) {
+                guiGraphics.drawString(this.font, Component.literal("Items:"),
+                    cardX + 8, cardY + 31, 0xAAAAAA, true);
+                
+                int itemDrawX = cardX + 45;
+                for (int j = 0; j < Math.min(itemOffers.size(), 5); j++) {
+                    ItemStack stack = itemOffers.get(j);
+                    if (!stack.isEmpty()) {
+                        guiGraphics.renderItem(stack, itemDrawX + (j * 20), cardY + 27);
+                        guiGraphics.renderItemDecorations(this.font, stack, itemDrawX + (j * 20), cardY + 27);
+                    }
+                }
+            }
+            
+            // Total value
+            double totalValue = offer.getMoneyOffer();
+            for (ItemStack stack : itemOffers) {
+                totalValue += com.servermanagement.client.ClientMarketData.getStackPrice(stack);
+            }
+            String totalStr = "Total Value: $" + String.format(Locale.US, "%.2f", totalValue);
+            int totalColor = totalValue >= selectedListingForOffers.getMoneyPrice() ? 0x55FF55 : 0xFFAA00;
+            guiGraphics.drawString(this.font, Component.literal(totalStr),
+                cardX + 8, cardY + 55, totalColor, true);
+            
+            // Time ago
+            long elapsed = System.currentTimeMillis() - offer.getCreatedTimestamp();
+            String timeStr = formatTimeAgo(elapsed);
+            int timeW = this.font.width(timeStr);
+            guiGraphics.drawString(this.font, Component.literal(timeStr),
+                cardRight - timeW - 8, cardY + 55, 0x666666, true);
+        }
+    }
+    
+    private String formatTimeAgo(long millis) {
+        long seconds = millis / 1000;
+        if (seconds < 60) return seconds + "s ago";
+        long minutes = seconds / 60;
+        if (minutes < 60) return minutes + "m ago";
+        long hours = minutes / 60;
+        if (hours < 24) return hours + "h ago";
+        long days = hours / 24;
+        return days + "d ago";
     }
     
     private void submitOffer() {
@@ -1111,6 +1355,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 break;
             case BUY_CONFIRM:
                 renderBuyConfirm(guiGraphics, centerX, centerY);
+                break;
+            case VIEW_OFFERS:
+                renderViewOffers(guiGraphics, centerX, centerY);
                 break;
         }
         
@@ -2124,5 +2371,16 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     public void onClose() {
         // Don't clear item placement data - it persists
         super.onClose();
+    }
+    
+    /**
+     * Called from SyncListingOffersPacket when server sends offers for a listing
+     */
+    public void receiveOffers(String listingId, List<com.servermanagement.features.minebay.MineBayOffer> offers) {
+        if (selectedListingForOffers != null && selectedListingForOffers.getListingId().equals(listingId)) {
+            this.cachedOffers = new ArrayList<>(offers);
+            this.offersLoading = false;
+            this.rebuildWidgets();
+        }
     }
 }

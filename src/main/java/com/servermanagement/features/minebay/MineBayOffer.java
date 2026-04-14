@@ -132,4 +132,12 @@ public class MineBayOffer {
     public void setStatus(OfferStatus status) {
         this.status = status;
     }
+
+    public void setOfferId(String offerId) {
+        this.offerId = offerId;
+    }
+
+    public void setCreatedTimestamp(long timestamp) {
+        this.createdTimestamp = timestamp;
+    }
 }

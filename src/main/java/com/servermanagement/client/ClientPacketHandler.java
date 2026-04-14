@@ -20,6 +20,17 @@ public class ClientPacketHandler {
     private static boolean cachedChatIsolationEnabled = false;
     private static boolean cachedTabIsolationEnabled = false;
 
+    // MOTD cache
+    private static String cachedMotdText = "";
+
+    public static void handleMotdSync(String motdText) {
+        cachedMotdText = motdText;
+    }
+
+    public static String getCachedMotdText() {
+        return cachedMotdText;
+    }
+
     public static void handleWorldList(List<SyncWorldListPacket.WorldInfo> worlds) {
         cachedWorldList = new ArrayList<>(worlds);
     }
@@ -195,4 +206,77 @@ public class ClientPacketHandler {
     public static long getPerfTotalSpawnsCancelled() { return perfTotalSpawnsCancelled; }
     public static long getPerfTotalEntitiesThrottled() { return perfTotalEntitiesThrottled; }
     public static long getPerfTotalRedstoneThrottled() { return perfTotalRedstoneThrottled; }
+
+    // --- Economy Statistics cache ---
+    private static int statTotalAccounts = 0;
+    private static double statTotalMoney = 0;
+    private static double statAverageBalance = 0;
+    private static double statRichestBalance = 0;
+    private static String statRichestPlayerName = "N/A";
+    private static double statInflation = 1.0;
+    private static int statActiveListings = 0;
+    private static int statTotalTemplates = 0;
+    private static int statEnabledTemplates = 0;
+    private static int statTotalTransactions = 0;
+    private static int statPurchaseCount = 0;
+    private static int statSaleCount = 0;
+    private static int statGamblingBetCount = 0;
+    private static int statGamblingWinCount = 0;
+    private static int statFreeRewardCount = 0;
+    private static int statTransferCount = 0;
+    private static double statTotalPurchaseVolume = 0;
+    private static double statTotalSaleVolume = 0;
+    private static double statTotalGamblingWagered = 0;
+    private static double statTotalGamblingWon = 0;
+
+    public static void handleEconomyStats(
+            int totalAccounts, double totalMoney, double averageBalance,
+            double richestBalance, String richestPlayerName, double inflation,
+            int activeListings, int totalTemplates, int enabledTemplates,
+            int totalTransactions, int purchaseCount, int saleCount,
+            int gamblingBetCount, int gamblingWinCount, int freeRewardCount,
+            int transferCount, double totalPurchaseVolume, double totalSaleVolume,
+            double totalGamblingWagered, double totalGamblingWon) {
+        statTotalAccounts = totalAccounts;
+        statTotalMoney = totalMoney;
+        statAverageBalance = averageBalance;
+        statRichestBalance = richestBalance;
+        statRichestPlayerName = richestPlayerName;
+        statInflation = inflation;
+        statActiveListings = activeListings;
+        statTotalTemplates = totalTemplates;
+        statEnabledTemplates = enabledTemplates;
+        statTotalTransactions = totalTransactions;
+        statPurchaseCount = purchaseCount;
+        statSaleCount = saleCount;
+        statGamblingBetCount = gamblingBetCount;
+        statGamblingWinCount = gamblingWinCount;
+        statFreeRewardCount = freeRewardCount;
+        statTransferCount = transferCount;
+        statTotalPurchaseVolume = totalPurchaseVolume;
+        statTotalSaleVolume = totalSaleVolume;
+        statTotalGamblingWagered = totalGamblingWagered;
+        statTotalGamblingWon = totalGamblingWon;
+    }
+
+    public static int getStatTotalAccounts() { return statTotalAccounts; }
+    public static double getStatTotalMoney() { return statTotalMoney; }
+    public static double getStatAverageBalance() { return statAverageBalance; }
+    public static double getStatRichestBalance() { return statRichestBalance; }
+    public static String getStatRichestPlayerName() { return statRichestPlayerName; }
+    public static double getStatInflation() { return statInflation; }
+    public static int getStatActiveListings() { return statActiveListings; }
+    public static int getStatTotalTemplates() { return statTotalTemplates; }
+    public static int getStatEnabledTemplates() { return statEnabledTemplates; }
+    public static int getStatTotalTransactions() { return statTotalTransactions; }
+    public static int getStatPurchaseCount() { return statPurchaseCount; }
+    public static int getStatSaleCount() { return statSaleCount; }
+    public static int getStatGamblingBetCount() { return statGamblingBetCount; }
+    public static int getStatGamblingWinCount() { return statGamblingWinCount; }
+    public static int getStatFreeRewardCount() { return statFreeRewardCount; }
+    public static int getStatTransferCount() { return statTransferCount; }
+    public static double getStatTotalPurchaseVolume() { return statTotalPurchaseVolume; }
+    public static double getStatTotalSaleVolume() { return statTotalSaleVolume; }
+    public static double getStatTotalGamblingWagered() { return statTotalGamblingWagered; }
+    public static double getStatTotalGamblingWon() { return statTotalGamblingWon; }
 }

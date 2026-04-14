@@ -21,6 +21,7 @@ public class MineBayListing {
     private ListingStatus status;
     private long createdTimestamp;
     private List<MineBayOffer> counteroffers;
+    private int pendingOfferCount; // Cached count for client sync (not persisted)
     
     public static final int MAX_PRICE_ITEMS = 3;
     
@@ -209,7 +210,23 @@ public class MineBayListing {
     public List<MineBayOffer> getCounteroffers() {
         return new ArrayList<>(counteroffers);
     }
-    
+
+    public int getPendingOfferCount() {
+        // If cached count is set (from sync), use it; otherwise compute from counteroffers
+        if (pendingOfferCount > 0 || counteroffers.isEmpty()) {
+            return pendingOfferCount;
+        }
+        int count = 0;
+        for (MineBayOffer offer : counteroffers) {
+            if (offer.getStatus() == MineBayOffer.OfferStatus.PENDING) count++;
+        }
+        return count;
+    }
+
+    public void setPendingOfferCount(int count) {
+        this.pendingOfferCount = count;
+    }
+
     // Setters
     public void setStatus(ListingStatus status) {
         this.status = status;
