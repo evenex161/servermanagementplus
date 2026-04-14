@@ -22,8 +22,8 @@ import net.minecraft.world.entity.player.Inventory;
  */
 public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
 
-    private static final int SCREEN_WIDTH = 380;
-    private static final int SCREEN_HEIGHT = 300;
+    private static final int SCREEN_WIDTH = 420;
+    private static final int SCREEN_HEIGHT = 330;
 
     /** MOTD supports two lines separated by \n */
     private EditBox line1Box;
@@ -175,15 +175,17 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
                     COLOR_VALUES[i], COLOR_NAMES[i], () -> insertCode('&', code)));
         }
 
-        // --- Formatting buttons ---
+        // --- Formatting buttons (positioned relative to imageWidth) ---
         int fmtY = paletteY;
-        int fmtStartX = cx + 195;
+        int fmtStartX = cx + this.imageWidth / 2 + 10;
+        int fmtBtnW = Math.min(24, (cx + this.imageWidth - 10 - fmtStartX - 5 * 4) / 6);
+        int fmtBtnSpacing = fmtBtnW + 4;
         for (int i = 0; i < FORMAT_CODES.length; i++) {
             final char code = FORMAT_CODES[i];
             final int idx = i;
-            int bx = fmtStartX + i * 28;
+            int bx = fmtStartX + i * fmtBtnSpacing;
             ModernButton btn = new ModernButton(
-                    bx, fmtY, 24, 18,
+                    bx, fmtY, fmtBtnW, 18,
                     Component.literal(FORMAT_LABELS[i]),
                     b -> {
                         if (code == 'r') {
@@ -202,16 +204,17 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
 
         // --- Second row formatting: animation helpers ---
         int animY = paletteY + 24;
+        int animBtnW = (cx + this.imageWidth - 10 - fmtStartX - 4) / 2;
         // Rainbow text shortcut
         this.addRenderableWidget(new ModernButton(
-                fmtStartX, animY, 80, 18,
+                fmtStartX, animY, animBtnW, 18,
                 Component.literal("Rainbow"),
                 btn -> insertRainbowCodes(),
                 ModernButton.ButtonStyle.PRIMARY
         ));
         // Gradient shortcut
         this.addRenderableWidget(new ModernButton(
-                fmtStartX + 84, animY, 80, 18,
+                fmtStartX + animBtnW + 4, animY, animBtnW, 18,
                 Component.literal("Gradient"),
                 btn -> insertGradientCodes(),
                 ModernButton.ButtonStyle.PRIMARY
@@ -228,12 +231,16 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
 
         // --- Action buttons ---
         int btnY = cy + this.imageHeight - 35;
+        int actionAreaW = this.imageWidth - 20;
+        int dashBtnW = (int)(actionAreaW * 0.30);
+        int clearBtnW = (int)(actionAreaW * 0.20);
+        int saveBtnW = actionAreaW - dashBtnW - clearBtnW - 16;
 
         // Back to Dashboard
         this.addRenderableWidget(new ModernButton.Builder(
                 Component.literal("\u2190 Dashboard"),
                 btn -> attemptExit(() -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, ""))))
-                .bounds(cx + 10, btnY, 100, 24)
+                .bounds(cx + 10, btnY, dashBtnW, 24)
                 .style(ModernButton.ButtonStyle.SECONDARY)
                 .build());
 
@@ -253,7 +260,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
                     }
                     updateMenuMotd();
                 })
-                .bounds(cx + 120, btnY, 60, 24)
+                .bounds(cx + 10 + dashBtnW + 8, btnY, clearBtnW, 24)
                 .style(ModernButton.ButtonStyle.DANGER)
                 .build());
 
@@ -269,7 +276,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
                     ModNetworking.sendToServer(new SaveMotdPacket(this.menu.getMotdText()));
                     this.originalMotdText = this.menu.getMotdText();
                 })
-                .bounds(cx + this.imageWidth - 120, btnY, 110, 24)
+                .bounds(cx + this.imageWidth - saveBtnW - 10, btnY, saveBtnW, 24)
                 .style(ModernButton.ButtonStyle.SUCCESS)
                 .build());
 
@@ -496,12 +503,18 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
         int cx = this.leftPos;
         int cy = this.topPos;
 
+        // Render widgets first (super.render calls renderBg internally)
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        // Draw all labels AFTER super.render() so they don't get covered
+        // by the second renderBg call inside AbstractContainerScreen.render()
+
         // Title
         guiGraphics.drawString(this.font, "MOTD Editor",
                 cx + 15, cy + 8, 0xFFD700, true);
         guiGraphics.drawString(this.font, "Server Message of the Day",
                 cx + 15, cy + 20, 0xAAAAAA, true);
-        guiGraphics.drawString(this.font, "Mode:", cx + this.imageWidth - 125, cy + 13, 0x888888, true);
+        guiGraphics.drawString(this.font, "Mode:", cx + this.imageWidth - 130, cy + 13, 0x888888, true);
 
         // Labels
         guiGraphics.drawString(this.font, "Line 1:", cx + 15, cy + 48, 0xFFFFFF, true);
@@ -511,14 +524,16 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
         guiGraphics.drawString(this.font, "Colors:", cx + 15, cy + 120, 0xCCCCCC, true);
 
         // Formatting label
-        guiGraphics.drawString(this.font, "Format:", cx + 195, cy + 120, 0xCCCCCC, true);
+        guiGraphics.drawString(this.font, "Format:", cx + this.imageWidth / 2 + 10, cy + 120, 0xCCCCCC, true);
 
         // Format button tooltips
-        int fmtStartX = cx + 195;
+        int fmtStartX = cx + this.imageWidth / 2 + 10;
+        int fmtBtnW = Math.min(24, (cx + this.imageWidth - 10 - fmtStartX - 5 * 4) / 6);
+        int fmtBtnSpacing = fmtBtnW + 4;
         int fmtY = cy + 130;
         for (int i = 0; i < FORMAT_NAMES.length; i++) {
-            int bx = fmtStartX + i * 28;
-            if (mouseX >= bx && mouseX < bx + 24 && mouseY >= fmtY && mouseY < fmtY + 18) {
+            int bx = fmtStartX + i * fmtBtnSpacing;
+            if (mouseX >= bx && mouseX < bx + fmtBtnW && mouseY >= fmtY && mouseY < fmtY + 18) {
                 guiGraphics.renderTooltip(this.font, Component.literal("&" + FORMAT_CODES[i] + " - " + FORMAT_NAMES[i]), mouseX, mouseY);
             }
         }
@@ -543,9 +558,6 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
         String previewL2 = advancedMode ? (this.line2Box != null ? this.line2Box.getValue() : "") : this.line2Formatted;
         renderFormattedLine(guiGraphics, previewL1, previewBoxX + 8, previewY + 8);
         renderFormattedLine(guiGraphics, previewL2, previewBoxX + 8, previewY + 22);
-
-        // Render widgets
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
 
         // Update format button toggle states based on cursor position
         updateFormatButtonStates();
@@ -1129,8 +1141,8 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
 
             // Swatch fill
             guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, swatchColor);
-            // Border
-            int border = hovered ? 0xFFFFFFFF : 0x80888888;
+            // Border (bright enough to distinguish dark swatches from background)
+            int border = hovered ? 0xFFFFFFFF : 0xFF888888;
             guiGraphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + 1, border);
             guiGraphics.fill(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, border);
             guiGraphics.fill(this.getX(), this.getY(), this.getX() + 1, this.getY() + this.height, border);

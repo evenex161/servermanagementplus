@@ -35,7 +35,7 @@ public class CancelListingPacket implements IPacket {
                 
                 if (!heldItem.isEmpty()) {
                     // Try to add to player inventory
-                    boolean added = player.getInventory().add(heldItem);
+                    boolean added = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, heldItem);
                     
                     if (!added) {
                         // Drop at player position if inventory is full

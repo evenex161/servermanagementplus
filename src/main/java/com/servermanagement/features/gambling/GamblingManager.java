@@ -3,6 +3,8 @@ package com.servermanagement.features.gambling;
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
+import com.servermanagement.features.economy.Transaction;
+import com.servermanagement.features.economy.TransactionType;
 import com.servermanagement.util.AsyncSaveScheduler;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -83,12 +85,29 @@ public class GamblingManager {
             
             // Play the game
             double payout = game.play(amount);
+            
+            // Validate payout to prevent exploits
+            if (Double.isNaN(payout) || Double.isInfinite(payout) || payout < 0) {
+                account.deposit(amount); // Refund bet
+                return new GamblingResult(false, 0.0, "Game error - bet refunded");
+            }
+            
             boolean won = payout > amount;
             double profit = payout - amount;
             
             // Add payout to account
             if (payout > 0) {
                 account.deposit(payout);
+            }
+            
+            // Record transactions
+            account.addTransaction(new Transaction(
+                TransactionType.GAMBLING_BET, amount,
+                game.getName() + " bet"));
+            if (won) {
+                account.addTransaction(new Transaction(
+                    TransactionType.GAMBLING_WIN, profit,
+                    game.getName() + " win (+$" + String.format("%.2f", profit) + ")"));
             }
             
             // Update stats
@@ -105,10 +124,12 @@ public class GamblingManager {
     }
     
     /**
-     * Place a bet with an item (item is valued and converted to currency)
+     * Place a bet with an item (item is valued using market pricing engine)
      */
     public GamblingResult placeBetWithItem(ServerPlayer player, ItemStack item, GamblingGame game) {
-        double itemValue = ItemValuation.getItemValue(item);
+        // Use MarketPricingEngine for item value (consistent with GUI display)
+        double itemValue = com.servermanagement.features.economy.MarketPricingEngine.getInstance()
+            .getBasePrice(item) * item.getCount();
         
         if (itemValue < MIN_BET) {
             return new GamblingResult(false, 0.0, "Item value too low (min $" + (int)MIN_BET + ")");
@@ -130,6 +151,22 @@ public class GamblingManager {
         if (payout > 0) {
             BankAccount account = EconomyManager.getInstance().getOrCreateAccount(player.getUUID());
             account.deposit(payout);
+            
+            // Record transactions
+            account.addTransaction(new Transaction(
+                TransactionType.GAMBLING_BET, itemValue,
+                game.getName() + " bet (item)"));
+            if (won) {
+                account.addTransaction(new Transaction(
+                    TransactionType.GAMBLING_WIN, profit,
+                    game.getName() + " win (+$" + String.format("%.2f", profit) + ")"));
+            }
+        } else {
+            // Lost everything - still record the bet
+            BankAccount account = EconomyManager.getInstance().getOrCreateAccount(player.getUUID());
+            account.addTransaction(new Transaction(
+                TransactionType.GAMBLING_BET, itemValue,
+                game.getName() + " bet (item) - lost"));
         }
         
         // Update stats
@@ -155,7 +192,9 @@ public class GamblingManager {
         }
         
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(statsFile))) {
-            playerStats = (Map<UUID, GamblingStats>) ois.readObject();
+            @SuppressWarnings("unchecked")
+            Map<UUID, GamblingStats> loaded = (Map<UUID, GamblingStats>) ois.readObject();
+            playerStats = new ConcurrentHashMap<>(loaded);
             ServerManagementMod.LOGGER.info("Loaded gambling stats for {} players", playerStats.size());
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to load gambling stats", e);

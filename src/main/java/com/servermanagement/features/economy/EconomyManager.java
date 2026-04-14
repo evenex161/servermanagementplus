@@ -34,7 +34,7 @@ public class EconomyManager {
     private EconomyManager() {
     }
 
-    public static EconomyManager getInstance() {
+    public static synchronized EconomyManager getInstance() {
         if (instance == null) {
             instance = new EconomyManager();
         }
@@ -44,7 +44,7 @@ public class EconomyManager {
     /**
      * Get instance by server (ensures initialization)
      */
-    public static EconomyManager getInstance(MinecraftServer server) {
+    public static synchronized EconomyManager getInstance(MinecraftServer server) {
         EconomyManager manager = getInstance();
         if (manager.server == null && server != null) {
             manager.initialize(server);

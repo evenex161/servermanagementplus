@@ -162,7 +162,7 @@ public class MarketPricingEngine {
      * @return the final price buyers must pay
      */
     public static double calculateFinalPrice(double basePrice, double marginPercent) {
-        double clamped = Math.max(-50.0, Math.min(500.0, marginPercent));
+        double clamped = Math.max(-50.0, Math.min(200.0, marginPercent));
         return Math.max(FLOOR_PRICE, basePrice * (1.0 + clamped / 100.0));
     }
 

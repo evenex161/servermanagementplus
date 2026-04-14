@@ -1,6 +1,8 @@
 package com.servermanagement.network.packet.minebay;
 
 import com.servermanagement.features.economy.EconomyManager;
+import com.servermanagement.features.economy.Transaction;
+import com.servermanagement.features.economy.TransactionType;
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.MineBayOffer;
@@ -31,8 +33,9 @@ public class CreateOfferPacket implements IPacket {
     
     public CreateOfferPacket(FriendlyByteBuf buf) {
         this.listingId = buf.readUtf(36);
-        this.moneyOffer = buf.readDouble();
+        this.moneyOffer = Math.max(0.0, buf.readDouble()); // Clamp negative values
         int itemCount = buf.readInt();
+        if (itemCount < 0 || itemCount > 27) itemCount = 0; // Cap to prevent memory exhaustion
         this.itemOffers = new ArrayList<>();
         for (int i = 0; i < itemCount; i++) {
             this.itemOffers.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
@@ -111,6 +114,32 @@ public class CreateOfferPacket implements IPacket {
                 }
             }
             
+            // Escrow money from buyer's account
+            if (moneyOffer > 0) {
+                com.servermanagement.features.economy.BankAccount buyerAccount = 
+                    economyManager.getOrCreateAccount(buyer.getUUID());
+                buyerAccount.withdraw(moneyOffer);
+                buyerAccount.addTransaction(new Transaction(
+                    TransactionType.MINEBAY_ESCROW, moneyOffer,
+                    "Offer on " + listing.getItemForSale().getHoverName().getString(),
+                    listing.getSellerId()));
+            }
+            
+            // Remove offered items from buyer's inventory (escrow)
+            for (ItemStack offeredStack : itemOffers) {
+                if (offeredStack.isEmpty()) continue;
+                
+                int remaining = offeredStack.getCount();
+                for (int i = 0; i < buyer.getInventory().items.size() && remaining > 0; i++) {
+                    ItemStack invStack = buyer.getInventory().items.get(i);
+                    if (ItemStack.isSameItemSameComponents(invStack, offeredStack)) {
+                        int toRemove = Math.min(remaining, invStack.getCount());
+                        invStack.shrink(toRemove);
+                        remaining -= toRemove;
+                    }
+                }
+            }
+            
             // Create the offer
             MineBayOffer offer = new MineBayOffer(
                 listingId,
@@ -124,21 +153,31 @@ public class CreateOfferPacket implements IPacket {
             listing.addCounteroffer(offer);
             mineBayManager.saveListing(listing);
             
-            // Notify buyer
-            buyer.sendSystemMessage(Component.literal("§aOffer submitted successfully!"));
-            buyer.sendSystemMessage(Component.literal("§7The seller will be notified of your offer."));
+            // Notify buyer (action bar)
+            String offerSummary = "";
+            if (moneyOffer > 0) {
+                offerSummary += "§6$" + String.format("%.2f", moneyOffer);
+            }
+            if (!itemOffers.isEmpty()) {
+                offerSummary += (offerSummary.isEmpty() ? "" : " + ") + "§f" + itemOffers.size() + " item(s)";
+            }
+            buyer.displayClientMessage(Component.literal(
+                "§a§l✓ §r§aOffer submitted: " + offerSummary + " §a(escrowed)"), true);
             
-            // Notify seller if online
+            // Sync buyer's bank account after escrow
+            com.servermanagement.features.economy.BankAccount buyerAccountSync = economyManager.getOrCreateAccount(buyer.getUUID());
+            com.servermanagement.network.ModNetworking.sendToPlayer(
+                new com.servermanagement.network.packet.SyncBankAccountPacket(
+                    buyerAccountSync.getBalance(), buyerAccountSync.getRecentTransactions(10)),
+                buyer
+            );
+            
+            // Notify seller if online (action bar)
             ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
             if (seller != null) {
-                seller.sendSystemMessage(Component.literal("§e[MineBay] New offer received!"));
-                seller.sendSystemMessage(Component.literal("§7" + buyer.getName().getString() + 
-                    " made an offer on your " + listing.getItemForSale().getDisplayName().getString()));
-                seller.sendSystemMessage(Component.literal("§7Money: $" + String.format("%.2f", moneyOffer)));
-                if (!itemOffers.isEmpty()) {
-                    seller.sendSystemMessage(Component.literal("§7Items: " + itemOffers.size() + " item(s)"));
-                }
-                seller.sendSystemMessage(Component.literal("§7Use /minebay to view and accept/reject offers"));
+                seller.displayClientMessage(Component.literal(
+                    "§e[MineBay] §6" + buyer.getName().getString() + " §emade an offer on your §f" + 
+                    listing.getItemForSale().getHoverName().getString()), true);
             }
         });
         ctx.setPacketHandled(true);

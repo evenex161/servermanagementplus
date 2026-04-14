@@ -3,7 +3,6 @@ package com.servermanagement.gui.gambling;
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.gambling.GamblingResult;
-import com.servermanagement.features.gambling.ItemValuation;
 import com.servermanagement.features.gambling.games.*;
 import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
@@ -280,33 +279,33 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         int choiceY = centerY + 85;
         int spacing = 27;
+        int btnW = (this.imageWidth - 40) / 3; // 3 buttons with gaps
+        int gap = 5;
         
-        // Bet type buttons (smaller, 3 rows)
-        addDiceButton(centerX + 10, choiceY, "High (8-12)", DiceRollGame.BetType.HIGH, "2x");
-        addDiceButton(centerX + this.imageWidth / 2 - 60, choiceY, "Low (2-6)", DiceRollGame.BetType.LOW, "2x");
-        addDiceButton(centerX + this.imageWidth - 130, choiceY, "Seven (7)", DiceRollGame.BetType.SEVEN, "5x");
+        // Bet type buttons (row 1: 3 buttons)
+        addDiceButton(centerX + 10, choiceY, "High (8-12)", DiceRollGame.BetType.HIGH, "2x", btnW);
+        addDiceButton(centerX + 10 + btnW + gap, choiceY, "Low (2-6)", DiceRollGame.BetType.LOW, "2x", btnW);
+        addDiceButton(centerX + 10 + (btnW + gap) * 2, choiceY, "Seven (7)", DiceRollGame.BetType.SEVEN, "5x", btnW);
         
-        addDiceButton(centerX + 10, choiceY + spacing, "Doubles", DiceRollGame.BetType.DOUBLES, "6x");
-        addDiceButton(centerX + this.imageWidth / 2 - 60, choiceY + spacing, "Roll!", null, "");
+        // Row 2: Doubles + Roll button
+        addDiceButton(centerX + 10, choiceY + spacing, "Doubles", DiceRollGame.BetType.DOUBLES, "6x", btnW);
+        
+        int rollWidth = btnW * 2 + gap;
+        this.addRenderableWidget(new ModernButton(
+            centerX + 10 + btnW + gap, choiceY + spacing, rollWidth, 22,
+            Component.literal("Roll!!"),
+            button -> playDiceRoll(),
+            ModernButton.ButtonStyle.PRIMARY
+        ));
     }
     
-    private void addDiceButton(int x, int y, String label, DiceRollGame.BetType type, String payout) {
-        if (type == null) {
-            // Play button
-            this.addRenderableWidget(new ModernButton(
-                x, y, 120, 22,
-                Component.literal(label),
-                button -> playDiceRoll(),
-                ModernButton.ButtonStyle.PRIMARY
-            ));
-        } else {
-            this.addRenderableWidget(new ModernButton(
-                x, y, 120, 22,
-                Component.literal(label + " " + payout),
-                button -> { diceType = type; this.init(); },
-                diceType == type ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
-            ));
-        }
+    private void addDiceButton(int x, int y, String label, DiceRollGame.BetType type, String payout, int width) {
+        this.addRenderableWidget(new ModernButton(
+            x, y, width, 22,
+            Component.literal(label + " " + payout),
+            button -> { diceType = type; this.init(); },
+            diceType == type ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
+        ));
     }
     
     private void initSlotMachine(int centerX, int centerY) {
@@ -819,9 +818,10 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                 }
                 
                 // Add label below the betting slot to indicate its purpose
-                guiGraphics.drawString(this.font, 
-                    Component.literal("Bet Item"),
-                    slotX - 8, slotY + 20, 0xFFAA00, true);
+                Component betLabel = Component.literal("Bet Item");
+                int betLabelW = this.font.width(betLabel);
+                guiGraphics.drawString(this.font, betLabel,
+                    slotX + 9 - betLabelW / 2, slotY + 20, 0xFFAA00, true);
             }
             
             // Render inventory slots only when in game mode AND using items
@@ -848,6 +848,21 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
                 renderable.render(guiGraphics, mouseX, mouseY, partialTick);
             }
+            
+            // Update hoveredSlot for slot highlighting and tooltip support
+            // (since we don't call super.render(), AbstractContainerScreen never sets this)
+            this.hoveredSlot = null;
+            for (int i = 0; i < this.menu.slots.size(); i++) {
+                net.minecraft.world.inventory.Slot slot = this.menu.slots.get(i);
+                if (slot.isActive() && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                    this.hoveredSlot = slot;
+                    // Draw hover highlight centered on the 16x16 item area (inside the 18x18 slot border)
+                    int hx = this.leftPos + slot.x + 1;
+                    int hy = this.topPos + slot.y + 1;
+                    guiGraphics.fill(hx, hy, hx + 16, hy + 16, 0x80FFFFFF);
+                    break;
+                }
+            }
         }
         
         guiGraphics.pose().popPose();
@@ -864,7 +879,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             guiGraphics.drawCenteredString(this.font, Component.literal(title),
                 centerX + this.imageWidth / 2, centerY + 10, 0xFFD700);
             
-            // Balance display - use menu's synced balance for reliability
+            // Balance display - positioned top-left, after admin dashboard button if present
             if (minecraft != null && minecraft.player != null) {
                 double balance = menu.getPlayerBalance();
                 // Fallback to ClientBankData if menu balance is 0 (shouldn't happen, but defensive)
@@ -873,9 +888,11 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                 }
                 String balanceStr = "Balance: " + currencyFormat.format(balance);
                 int balanceColor = balance >= 0 ? 0x55FF55 : 0xFF5555;
+                // Position after admin dashboard button (20+5 = 25px) if admin, else at left edge
+                boolean isAdmin = minecraft.player.hasPermissions(2);
+                int balanceX = centerX + (isAdmin ? 30 : 5);
                 guiGraphics.drawString(this.font, Component.literal(balanceStr),
-                    centerX + this.imageWidth - this.font.width(balanceStr) - 5,
-                    centerY + 32, balanceColor, true);
+                    balanceX, centerY + 10, balanceColor, true);
             }
             
             // Render mode-specific content
@@ -1346,15 +1363,18 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     private void renderGameInfo(GuiGraphics guiGraphics, int centerX, int centerY) {
-        int infoY = centerY + 70;
-        
         if (!useMoney) {
             ItemStack bettingItem = menu.getBettingItem();
             if (!bettingItem.isEmpty()) {
-                String value = ItemValuation.getValueString(bettingItem);
-                guiGraphics.drawString(this.font, 
-                    Component.literal("Item Value: " + value),
-                    centerX + 240, infoY - 22, 0xFFAA00, true);
+                // Use economy engine market price instead of hardcoded ItemValuation
+                double marketPrice = com.servermanagement.client.ClientMarketData.getStackPrice(bettingItem);
+                String value = String.format("$%.2f", marketPrice);
+                // Show below the centered betting slot
+                net.minecraft.world.inventory.Slot betSlot = this.menu.slots.get(0);
+                int labelX = this.leftPos + betSlot.x + 9;
+                guiGraphics.drawCenteredString(this.font, 
+                    Component.literal("Value: " + value),
+                    labelX, this.topPos + betSlot.y + 34, 0xFFAA00);
             }
         }
     }

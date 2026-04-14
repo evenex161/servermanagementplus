@@ -5,23 +5,27 @@ package com.servermanagement.gui;
  * <p>
  * Screens display at their preferred (designed) size when the GUI workspace is at least
  * as large as the reference dimensions (roughly 1440p at GUI scale 2). On smaller
- * resolutions (e.g. 1080p) screens shrink proportionally so they don't dominate the view.
+ * resolutions (e.g. 1080p at GUI scale 2) screens shrink by ~5% so they feel less
+ * dominant without breaking text layouts. A minimum floor prevents extreme shrinking.
  */
 public final class ScreenScaler {
 
-    /** GUI-unit width at which screens reach their full preferred size. */
-    private static final float REF_WIDTH = 1250.0f;
+    /** GUI-unit width at which screens reach their full preferred size (~1440p scale 2). */
+    private static final float REF_WIDTH = 1010.0f;
     /** GUI-unit height at which screens reach their full preferred size. */
-    private static final float REF_HEIGHT = 700.0f;
+    private static final float REF_HEIGHT = 570.0f;
+    /** Minimum scale factor to prevent text overlap on very small windows. */
+    private static final float MIN_SCALE = 0.85f;
 
     private ScreenScaler() {}
 
     /**
      * Compute a uniform scale factor for the current screen dimensions.
-     * Returns 1.0 at 1440p+, and proportionally less on smaller screens.
+     * Returns 1.0 at 1440p+, ~0.95 at 1080p, never below MIN_SCALE.
      */
     public static float scaleFactor(int screenWidth, int screenHeight) {
-        return Math.min(1.0f, Math.min(screenWidth / REF_WIDTH, screenHeight / REF_HEIGHT));
+        float raw = Math.min(1.0f, Math.min(screenWidth / REF_WIDTH, screenHeight / REF_HEIGHT));
+        return Math.max(raw, MIN_SCALE);
     }
 
     /**

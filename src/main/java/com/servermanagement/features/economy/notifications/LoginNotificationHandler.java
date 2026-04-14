@@ -35,6 +35,20 @@ public class LoginNotificationHandler {
         // Sync market prices to the joining player
         EconomyManager.getInstance(player.getServer()).syncMarketPrices(player);
         
+        // Deliver overflow items
+        com.servermanagement.features.economy.OverflowInventoryManager overflow = 
+            com.servermanagement.features.economy.OverflowInventoryManager.getInstance();
+        if (overflow.hasItems(player.getUUID())) {
+            int remaining = overflow.deliverItems(player);
+            if (remaining > 0) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§e[MineBay] You have " + remaining + " overflow item(s) that couldn't fit in your inventory. Use /overflow to claim them."));
+            } else {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§a[MineBay] Overflow items have been delivered to your inventory!"));
+            }
+        }
+        
         // Check if player is admin
         boolean isAdmin = SessionManager.getInstance().hasAdminPermission(player);
 

@@ -266,6 +266,18 @@ public class ModNetworking {
             .consumer(com.servermanagement.network.packet.minebay.RejectOfferPacket::handle)
             .add();
         
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.RequestListingOffersPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.RequestListingOffersPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.RequestListingOffersPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.RequestListingOffersPacket::handle)
+            .add();
+        
+        INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.SyncListingOffersPacket.class, id())
+            .encoder(com.servermanagement.network.packet.minebay.SyncListingOffersPacket::encode)
+            .decoder(com.servermanagement.network.packet.minebay.SyncListingOffersPacket::new)
+            .consumer(com.servermanagement.network.packet.minebay.SyncListingOffersPacket::handle)
+            .add();
+        
         INSTANCE.messageBuilder(com.servermanagement.network.packet.minebay.DeleteListingPacket.class, id())
             .encoder(com.servermanagement.network.packet.minebay.DeleteListingPacket::encode)
             .decoder(com.servermanagement.network.packet.minebay.DeleteListingPacket::new)
@@ -396,6 +408,18 @@ public class ModNetworking {
             .encoder(SaveMotdPacket::encode)
             .decoder(SaveMotdPacket::new)
             .consumer(SaveMotdPacket::handle)
+            .add();
+        
+        INSTANCE.messageBuilder(SyncEconomyStatsPacket.class, id())
+            .encoder(SyncEconomyStatsPacket::encode)
+            .decoder(SyncEconomyStatsPacket::new)
+            .consumer(SyncEconomyStatsPacket::handle)
+            .add();
+        
+        INSTANCE.messageBuilder(RequestEconomyStatsPacket.class, id())
+            .encoder(RequestEconomyStatsPacket::encode)
+            .decoder(RequestEconomyStatsPacket::new)
+            .consumer(RequestEconomyStatsPacket::handle)
             .add();
         
         INSTANCE.build();

@@ -99,10 +99,12 @@ public class OpenGuiPacket implements IPacket {
                         break;
                     case ECONOMY_MANAGEMENT:
                         SyncEconomyTemplatesPacket.syncToPlayer(player, player.getServer());
+                        SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
                         player.openMenu(new com.servermanagement.gui.economy.EconomyManagementMenuProvider());
                         break;
                     case MINEBAY:
                         // Available to all players
+                        syncBankAccount(player); // Sync balance for price display
                         syncMineBayListings(player);
                         player.openMenu(new com.servermanagement.gui.minebay.MineBayMenuProvider());
                         break;

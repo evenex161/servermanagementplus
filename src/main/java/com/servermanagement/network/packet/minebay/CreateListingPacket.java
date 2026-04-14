@@ -80,7 +80,7 @@ public class CreateListingPacket implements IPacket {
                     pricingEngine.ensureFresh(player.server);
                     
                     double baseMarketPrice = pricingEngine.getStackPrice(itemToSell);
-                    double clampedMargin = Math.max(-50.0, Math.min(500.0, marginPercent));
+                    double clampedMargin = Math.max(-50.0, Math.min(200.0, marginPercent));
                     double finalPrice = pricingEngine.calculateFinalPrice(baseMarketPrice, clampedMargin);
                     
                     // Create the listing with market pricing data
@@ -130,10 +130,10 @@ public class CreateListingPacket implements IPacket {
                     }
                     
                     // Send success message
-                    player.sendSystemMessage(
+                    player.displayClientMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "§a✓ Listing created successfully!"
-                        )
+                            "§a§l✓ §r§6[MineBay] §aListing created for §f" + listing.getItemForSale().getHoverName().getString()
+                        ), true
                     );
                     
                     // Sync listings to all online players immediately

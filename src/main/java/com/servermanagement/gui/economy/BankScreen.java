@@ -667,6 +667,14 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
             case PLAYER_TRANSFER_RECEIVED -> "RECV";
             case ADMIN_GIVE -> "GIFT";
             case ADMIN_TAKE -> "DEDUCT";
+            case MINEBAY_PURCHASE -> "BUY";
+            case MINEBAY_SALE -> "SALE";
+            case MINEBAY_REFUND -> "REFUND";
+            case MINEBAY_ESCROW -> "ESCROW";
+            case MINEBAY_ESCROW_RETURN -> "RETURN";
+            case GAMBLING_BET -> "BET";
+            case GAMBLING_WIN -> "WIN";
+            case FREE_REWARD -> "FREE";
         };
     }
 

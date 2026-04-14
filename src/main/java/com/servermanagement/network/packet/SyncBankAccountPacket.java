@@ -1,12 +1,13 @@
 package com.servermanagement.network.packet;
 
 import com.servermanagement.features.economy.Transaction;
+import com.servermanagement.features.economy.TransactionType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.UUID;
 
 /**
  * Packet to sync bank account data from server to client
@@ -26,8 +27,20 @@ public class SyncBankAccountPacket implements IPacket {
         int transactionCount = buf.readInt();
         this.recentTransactions = new ArrayList<>();
         for (int i = 0; i < transactionCount; i++) {
-            // Read transaction data - for now just skip as we'll display in GUI
-            // In a full implementation, we'd serialize Transaction objects
+            String typeName = buf.readUtf(64);
+            double amount = buf.readDouble();
+            long timestamp = buf.readLong();
+            String description = buf.readUtf(256);
+            boolean hasOtherParty = buf.readBoolean();
+            UUID otherParty = hasOtherParty ? buf.readUUID() : null;
+            
+            TransactionType type;
+            try {
+                type = TransactionType.valueOf(typeName);
+            } catch (IllegalArgumentException e) {
+                type = TransactionType.ADMIN_GIVE; // fallback
+            }
+            recentTransactions.add(new Transaction(type, amount, timestamp, description, otherParty));
         }
     }
 
@@ -35,14 +48,21 @@ public class SyncBankAccountPacket implements IPacket {
     public void encode(FriendlyByteBuf buf) {
         buf.writeDouble(balance);
         buf.writeInt(recentTransactions.size());
-        // For now, we don't serialize full transactions
-        // They'll be loaded from server-side data when GUI opens
+        for (Transaction t : recentTransactions) {
+            buf.writeUtf(t.getType().name(), 64);
+            buf.writeDouble(t.getAmount());
+            buf.writeLong(t.getTimestamp());
+            buf.writeUtf(t.getDescription() != null ? t.getDescription() : "", 256);
+            buf.writeBoolean(t.getOtherParty() != null);
+            if (t.getOtherParty() != null) {
+                buf.writeUUID(t.getOtherParty());
+            }
+        }
     }
 
     @Override
     public void handle(CustomPayloadEvent.Context ctx) {
         ctx.enqueueWork(() -> {
-            // Store balance on client side for GUI display
             com.servermanagement.client.ClientBankData.setBalance(balance);
             com.servermanagement.client.ClientBankData.setTransactions(recentTransactions);
         });

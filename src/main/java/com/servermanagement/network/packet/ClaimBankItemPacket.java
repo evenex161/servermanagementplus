@@ -44,7 +44,7 @@ public class ClaimBankItemPacket implements IPacket {
                 
                 if (!item.isEmpty()) {
                     // Try to add to player inventory
-                    boolean added = player.getInventory().add(item);
+                    boolean added = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, item);
                     
                     if (!added) {
                         // If inventory still full, add back to bank inventory

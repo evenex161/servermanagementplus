@@ -54,7 +54,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     
     public DailyTasksScreen(DailyTasksMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageHeight = 380; // Increased to fit free reward section
+        this.imageHeight = 430; // Tall enough to fit 3 tasks + free reward section
         this.imageWidth = 400;
         
         // Initialize animations
@@ -68,9 +68,15 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(400, 380, this.width, this.height);
+        int[] dim = ScreenScaler.scale(400, 430, this.width, this.height);
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
+        
+        // Dynamically compute task slot height so free reward section does not overlap
+        int availableForTasks = this.imageHeight - 70 - FREE_REWARD_HEIGHT - 25;
+        this.taskSlotHeight = availableForTasks / MAX_TASKS;
+        this.taskCardHeight = Math.max(TASK_HEIGHT, this.taskSlotHeight - TASK_PADDING);
+        
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         

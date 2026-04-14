@@ -26,13 +26,13 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
 
     public WorldListScreen(WorldListMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 320;
+        this.imageWidth = 350;
         this.imageHeight = 240;
     }
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(320, 240, this.width, this.height);
+        int[] dim = ScreenScaler.scale(350, 240, this.width, this.height);
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
@@ -100,7 +100,7 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
                     // Open world detail screen for this dimension
                     ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_DETAIL, world.dimensionId));
                 })
-                .bounds(centerX + 10, yPos, 300, 24)
+                .bounds(centerX + 10, yPos, this.imageWidth - 20, 24)
                 .style(world.areAllPortalsEnabled() ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.DANGER)
                 .build();
             
