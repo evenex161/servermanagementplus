@@ -2,6 +2,7 @@ package com.servermanagement.gui.screen;
 
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.WorldListMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -31,6 +32,9 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(320, 240, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         // Request world list from server

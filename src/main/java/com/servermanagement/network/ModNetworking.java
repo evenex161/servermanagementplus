@@ -384,6 +384,19 @@ public class ModNetworking {
             .decoder(com.servermanagement.network.packet.SyncMarketPricesPacket::new)
             .consumer(com.servermanagement.network.packet.SyncMarketPricesPacket::handle)
             .add();
+
+        // MOTD Editor packets
+        INSTANCE.messageBuilder(SyncMotdPacket.class, id())
+            .encoder(SyncMotdPacket::encode)
+            .decoder(SyncMotdPacket::new)
+            .consumer(SyncMotdPacket::handle)
+            .add();
+
+        INSTANCE.messageBuilder(SaveMotdPacket.class, id())
+            .encoder(SaveMotdPacket::encode)
+            .decoder(SaveMotdPacket::new)
+            .consumer(SaveMotdPacket::handle)
+            .add();
         
         INSTANCE.build();
         

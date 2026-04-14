@@ -1,5 +1,6 @@
 package com.servermanagement.gui.economy;
 
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -36,6 +37,9 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(400, 300, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -60,7 +64,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         
         // Navigation buttons
         prevPageButton = new ModernButton(
-            centerX + 20, centerY + 270, 80, 20,
+            centerX + 20, centerY + this.imageHeight - 30, 80, 20,
             Component.literal("← Previous"),
             button -> {
                 if (currentPage > 0) {
@@ -72,7 +76,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         this.addRenderableWidget(prevPageButton);
         
         nextPageButton = new ModernButton(
-            centerX + this.imageWidth - 100, centerY + 270, 80, 20,
+            centerX + this.imageWidth - 100, centerY + this.imageHeight - 30, 80, 20,
             Component.literal("Next →"),
             button -> {
                 if (currentPage < maxPages - 1) {

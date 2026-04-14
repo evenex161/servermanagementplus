@@ -2,6 +2,7 @@ package com.servermanagement.gui.screen;
 
 import com.servermanagement.gui.ConsoleMenu;
 import com.servermanagement.gui.widgets.ConsoleOutput;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.ConsoleCommandPacket;
@@ -37,6 +38,9 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(500, 300, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -45,7 +49,7 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
         // Console output area
         this.consoleOutput = new ConsoleOutput(
             centerX + 10, centerY + 40,
-            this.imageWidth - 20, 200
+            this.imageWidth - 20, this.imageHeight - 100
         );
         this.addRenderableWidget(this.consoleOutput);
         
@@ -62,7 +66,7 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
             .build());
         
         // Command input row at bottom
-        int inputY = centerY + 250;
+        int inputY = centerY + this.imageHeight - 50;
         this.commandInput = new EditBox(this.font, centerX + 10, inputY, this.imageWidth - 130, 20,
             Component.literal("Command"));
         this.commandInput.setMaxLength(256);

@@ -16,6 +16,17 @@ public class ClientPacketHandler {
     private static boolean cachedChatConnected = false;
     private static String cachedTimerPortalType = "both";
     
+    // MOTD cache
+    private static String cachedMotdText = "";
+
+    public static void handleMotdSync(String motdText) {
+        cachedMotdText = motdText;
+    }
+
+    public static String getCachedMotdText() {
+        return cachedMotdText;
+    }
+
     // Global settings cache
     private static boolean cachedChatIsolationEnabled = false;
     private static boolean cachedTabIsolationEnabled = false;

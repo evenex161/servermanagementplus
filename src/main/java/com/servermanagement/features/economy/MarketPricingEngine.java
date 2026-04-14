@@ -104,16 +104,38 @@ public class MarketPricingEngine {
 
     /**
      * Get the dynamic market base price for an item stack (single item, count=1).
-     * Uses ItemValuation's static values scaled by inflation and supply/demand factors.
+     * Uses recipe-based pricing (if available) or ItemValuation's static values,
+     * scaled by inflation and supply/demand factors.
      * 
      * Formula: marketPrice = staticValue * inflationMultiplier * supplyFactor
      */
     public double getBasePrice(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
 
-        // Get static base value from ItemValuation (for a single item, ignoring stack count)
+        // Get static base value — prefer recipe-based pricing over flat ItemValuation
         ItemStack singleItem = stack.copyWithCount(1);
-        double staticValue = ItemValuation.getItemValue(singleItem);
+        double staticValue;
+        RecipeBasedPricing recipePricing = RecipeBasedPricing.getInstance();
+        if (recipePricing.isInitialized()) {
+            staticValue = recipePricing.getItemBasePrice(singleItem);
+        } else {
+            staticValue = ItemValuation.getItemValue(singleItem);
+        }
+
+        // Apply enchantment bonus
+        if (singleItem.isEnchanted()) {
+            var enchantments = singleItem.getOrDefault(
+                    net.minecraft.core.component.DataComponents.ENCHANTMENTS,
+                    net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+            int enchantmentCount = enchantments.size();
+            staticValue *= (1.0 + (enchantmentCount * 0.2));
+        }
+
+        // Apply durability penalty
+        if (singleItem.isDamageableItem() && singleItem.getDamageValue() > 0) {
+            double durabilityPercent = 1.0 - ((double) singleItem.getDamageValue() / singleItem.getMaxDamage());
+            staticValue *= durabilityPercent;
+        }
 
         // Apply inflation multiplier
         double marketPrice = staticValue * inflationMultiplier;

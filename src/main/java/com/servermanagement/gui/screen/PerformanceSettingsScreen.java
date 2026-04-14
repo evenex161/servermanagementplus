@@ -1,6 +1,7 @@
 package com.servermanagement.gui.screen;
 
 import com.servermanagement.gui.menu.PerformanceSettingsMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
@@ -57,6 +58,9 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(380, 340, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         rebuildWidgets();
     }
@@ -157,35 +161,36 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
     }
 
     private void buildSettingsPage(int cX, int contentY) {
+        int valBtnX = cX + this.imageWidth - 120;
         int row = 0;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "item_merge_radius",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "item_merge_radius",
             this.menu.getItemMergeRadius(), 0.5, 1.0, 10.0, true);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "item_merge_interval",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "item_merge_interval",
             this.menu.getItemMergeInterval(), 10, 10, 200, false);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "mob_cap_multiplier",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "mob_cap_multiplier",
             this.menu.getMobCapMultiplier(), 5, 10, 100, false);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "monster_activation_range",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "monster_activation_range",
             this.menu.getMonsterActivationRange(), 4, 8, 128, false);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "animal_activation_range",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "animal_activation_range",
             this.menu.getAnimalActivationRange(), 4, 8, 128, false);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "misc_activation_range",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "misc_activation_range",
             this.menu.getMiscActivationRange(), 2, 4, 64, false);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "villager_tick_interval",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "villager_tick_interval",
             this.menu.getVillagerTickInterval(), 1, 1, 10, false);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "redstone_updates_per_tick",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "redstone_updates_per_tick",
             this.menu.getRedstoneUpdatesPerTick(), 100, 100, 100000, false);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "tps_warning_threshold",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "tps_warning_threshold",
             this.menu.getTpsWarningThreshold(), 0.5, 5.0, 20.0, true);
         row++;
-        addValueButtonsIfVisible(cX + 260, contentY + ROW_SPACING * row, "tps_critical_threshold",
+        addValueButtonsIfVisible(valBtnX, contentY + ROW_SPACING * row, "tps_critical_threshold",
             this.menu.getTpsCriticalThreshold(), 0.5, 5.0, 20.0, true);
     }
 
@@ -337,7 +342,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
             // Value centered between - and + buttons
             String valStr = labels[i][1];
             int valWidth = this.font.width(valStr);
-            int valCenter = cX + 260 + 52;
+            int valCenter = cX + this.imageWidth - 120 + 52;
             g.drawString(this.font, valStr, valCenter - valWidth / 2, y, 0x55FF55, true);
         }
     }

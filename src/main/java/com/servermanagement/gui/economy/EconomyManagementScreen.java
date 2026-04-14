@@ -1,6 +1,7 @@
 package com.servermanagement.gui.economy;
 
 import com.servermanagement.features.economy.TaskType;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.DeleteTemplatePacket;
@@ -62,6 +63,9 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(600, 450, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -93,22 +97,23 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         ));
         
         // Tab buttons
+        int tabW = (this.imageWidth - 40) / 3;
         this.addRenderableWidget(new ModernButton(
-            centerX + 10, centerY + 50, 130, 25,
+            centerX + 10, centerY + 50, tabW, 25,
             Component.literal("Task Templates"),
             button -> switchTab(Tab.TASK_TEMPLATES),
             currentTab == Tab.TASK_TEMPLATES ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
         
         this.addRenderableWidget(new ModernButton(
-            centerX + 145, centerY + 50, 130, 25,
+            centerX + 10 + tabW + 5, centerY + 50, tabW, 25,
             Component.literal("Free Reward"),
             button -> switchTab(Tab.FREE_REWARD),
             currentTab == Tab.FREE_REWARD ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
         
         this.addRenderableWidget(new ModernButton(
-            centerX + 280, centerY + 50, 130, 25,
+            centerX + 10 + (tabW + 5) * 2, centerY + 50, tabW, 25,
             Component.literal("Statistics"),
             button -> switchTab(Tab.STATISTICS),
             currentTab == Tab.STATISTICS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
@@ -130,7 +135,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         if (!editMode) {
             // Search box (only visible in list mode)
             if (searchBox == null) {
-                searchBox = new EditBox(this.font, centerX + 420, centerY + 55, 160, 15, Component.literal("Search"));
+                searchBox = new EditBox(this.font, centerX + this.imageWidth - 180, centerY + 55, 160, 15, Component.literal("Search"));
                 searchBox.setMaxLength(50);
                 searchBox.setHint(Component.literal("Search templates..."));
             }
@@ -218,7 +223,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         
         // Description input
         if (editDescriptionBox == null) {
-            editDescriptionBox = new EditBox(this.font, formX, formY + 50, 500, 20, Component.literal("Description"));
+            editDescriptionBox = new EditBox(this.font, formX, formY + 50, this.imageWidth - 100, 20, Component.literal("Description"));
             editDescriptionBox.setMaxLength(100);
             editDescriptionBox.setHint(Component.literal("Task description..."));
         }
@@ -426,7 +431,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         } else if (editMode) {
             // Edit form background
             guiGraphics.fill(centerX + 15, centerY + 100, centerX + this.imageWidth - 15, 
-                centerY + 350, 0xE0252525);
+                centerY + this.imageHeight - 100, 0xE0252525);
         }
     }
     

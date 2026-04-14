@@ -4,6 +4,7 @@ import com.servermanagement.client.ClientBankData;
 import com.servermanagement.client.ClientMoneyRequestData;
 import com.servermanagement.features.economy.Transaction;
 import com.servermanagement.features.economy.TransactionType;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.BankTransferPacket;
@@ -63,6 +64,9 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(440, 340, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets();
 

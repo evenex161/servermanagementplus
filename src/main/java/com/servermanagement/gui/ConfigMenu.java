@@ -12,6 +12,7 @@ public class ConfigMenu extends AbstractContainerMenu {
     private boolean economyEnabled;
     private boolean slimeHeadEnabled;
     private boolean serverPerformanceEnabled;
+    private boolean motdEnabled;
     
     public ConfigMenu(int windowId, Inventory playerInventory) {
         super(ModMenuTypes.CONFIG_MENU.get(), windowId);
@@ -26,6 +27,7 @@ public class ConfigMenu extends AbstractContainerMenu {
         this.economyEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("economy");
         this.slimeHeadEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("slimehead");
         this.serverPerformanceEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("server_performance");
+        this.motdEnabled = com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor");
     }
     
     public boolean isWorldManagerEnabled() {
@@ -66,6 +68,14 @@ public class ConfigMenu extends AbstractContainerMenu {
 
     public void setServerPerformanceEnabled(boolean enabled) {
         this.serverPerformanceEnabled = enabled;
+    }
+
+    public boolean isMotdEnabled() {
+        return this.motdEnabled;
+    }
+
+    public void setMotdEnabled(boolean enabled) {
+        this.motdEnabled = enabled;
     }
 
     @Override

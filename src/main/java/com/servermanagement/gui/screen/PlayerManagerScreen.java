@@ -1,6 +1,7 @@
 package com.servermanagement.gui.screen;
 
 import com.servermanagement.gui.PlayerManagerMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -35,6 +36,9 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(320, 240, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         if (!showingActionMenu) {

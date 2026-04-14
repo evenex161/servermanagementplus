@@ -2,6 +2,7 @@ package com.servermanagement.gui.screen;
 
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.WorldDetailMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
@@ -39,12 +40,15 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(320, 230, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
         int leftCol = centerX + 20;
-        int rightCol = centerX + 260;
+        int rightCol = centerX + this.imageWidth - 60;
         int startY = centerY + 45;
         int spacing = 28;
         
@@ -239,31 +243,31 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         // Nether portal labels
         if (showNether) {
             guiGraphics.drawString(this.font, "Nether Portals", 
-                leftCol, currentY + 6, 0xFFFFFF, false);
+                leftCol, currentY + 6, 0xFFFFFF, true);
             guiGraphics.drawString(this.font, "Enable/disable nether portal travel", 
-                leftCol, currentY + 16, 0x808080, false);
+                leftCol, currentY + 16, 0xAAAAAA, true);
             currentY += spacing;
         }
         
         // End portal labels
         if (showEnd) {
             guiGraphics.drawString(this.font, "End Portals", 
-                leftCol, currentY + 6, 0xFFFFFF, false);
+                leftCol, currentY + 6, 0xFFFFFF, true);
             guiGraphics.drawString(this.font, "Enable/disable end portal travel", 
-                leftCol, currentY + 16, 0x808080, false);
+                leftCol, currentY + 16, 0xAAAAAA, true);
             currentY += spacing;
         }
         
         // Chat labels
         guiGraphics.drawString(this.font, "Chat", 
-            leftCol, currentY + 6, 0xFFFFFF, false);
+            leftCol, currentY + 6, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Connect to global chat", 
-            leftCol, currentY + 16, 0x808080, false);
+            leftCol, currentY + 16, 0xAAAAAA, true);
         currentY += spacing + 10;
         
         // Timer label
         guiGraphics.drawString(this.font, "Portal Timer", 
-            leftCol, currentY + 24, 0xFFFFFF, false);
+            leftCol, currentY + 24, 0xFFFFFF, true);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

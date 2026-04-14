@@ -1,6 +1,7 @@
 package com.servermanagement.gui.screen;
 
 import com.servermanagement.gui.GlobalSettingsMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
@@ -28,12 +29,15 @@ public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettings
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(320, 200, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        int rightCol = centerX + 220;
+        int rightCol = centerX + this.imageWidth - 100;
         int startY = centerY + 60;
         int spacing = 35;
         

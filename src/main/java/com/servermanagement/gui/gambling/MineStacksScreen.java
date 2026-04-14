@@ -5,6 +5,7 @@ import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.gambling.GamblingResult;
 import com.servermanagement.features.gambling.ItemValuation;
 import com.servermanagement.features.gambling.games.*;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -125,6 +126,9 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(400, 220, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -196,7 +200,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         ));
 
         int buttonY = centerY + 55;
-        int buttonWidth = 180;
+        int buttonWidth = (this.imageWidth - 60) / 2;
         int buttonHeight = 25;
 
         // Game buttons (2x2 grid)
@@ -209,7 +213,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         ));
 
         this.addRenderableWidget(new ModernButton(
-            centerX + 200, buttonY,
+            centerX + this.imageWidth / 2, buttonY,
             buttonWidth, buttonHeight,
             Component.literal("Dice Roll  |  3% edge"),
             button -> switchMode(GameMode.DICE_ROLL),
@@ -225,7 +229,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         ));
 
         this.addRenderableWidget(new ModernButton(
-            centerX + 200, buttonY + 30,
+            centerX + this.imageWidth / 2, buttonY + 30,
             buttonWidth, buttonHeight,
             Component.literal("Roulette  |  2.7% edge"),
             button -> switchMode(GameMode.ROULETTE),
@@ -234,7 +238,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
 
         // Statistics button
         this.addRenderableWidget(new ModernButton(
-            centerX + 110, buttonY + 65,
+            centerX + (this.imageWidth - buttonWidth) / 2, buttonY + 65,
             buttonWidth, buttonHeight,
             Component.literal("Your Statistics"),
             button -> switchMode(GameMode.STATS),
@@ -279,11 +283,11 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         // Bet type buttons (smaller, 3 rows)
         addDiceButton(centerX + 10, choiceY, "High (8-12)", DiceRollGame.BetType.HIGH, "2x");
-        addDiceButton(centerX + 140, choiceY, "Low (2-6)", DiceRollGame.BetType.LOW, "2x");
-        addDiceButton(centerX + 270, choiceY, "Seven (7)", DiceRollGame.BetType.SEVEN, "5x");
+        addDiceButton(centerX + this.imageWidth / 2 - 60, choiceY, "Low (2-6)", DiceRollGame.BetType.LOW, "2x");
+        addDiceButton(centerX + this.imageWidth - 130, choiceY, "Seven (7)", DiceRollGame.BetType.SEVEN, "5x");
         
         addDiceButton(centerX + 10, choiceY + spacing, "Doubles", DiceRollGame.BetType.DOUBLES, "6x");
-        addDiceButton(centerX + 140, choiceY + spacing, "Roll!", null, "");
+        addDiceButton(centerX + this.imageWidth / 2 - 60, choiceY + spacing, "Roll!", null, "");
     }
     
     private void addDiceButton(int x, int y, String label, DiceRollGame.BetType type, String payout) {
@@ -310,7 +314,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         // Play button
         this.addRenderableWidget(new ModernButton(
-            centerX + 120, centerY + 95, 160, 30,
+            centerX + (this.imageWidth - 160) / 2, centerY + 95, 160, 30,
             Component.literal("SPIN!"),
             button -> playSlotMachine(),
             ModernButton.ButtonStyle.PRIMARY
@@ -324,14 +328,15 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int spacing = 27;
         
         // Bet type buttons
+        int rbtnW = (this.imageWidth - 50) / 4;
         addRouletteButton(centerX + 10, choiceY, "Red", RouletteGame.BetType.RED, "2x");
-        addRouletteButton(centerX + 100, choiceY, "Black", RouletteGame.BetType.BLACK, "2x");
-        addRouletteButton(centerX + 190, choiceY, "Even", RouletteGame.BetType.EVEN, "2x");
-        addRouletteButton(centerX + 280, choiceY, "Odd", RouletteGame.BetType.ODD, "2x");
+        addRouletteButton(centerX + 10 + rbtnW + 10, choiceY, "Black", RouletteGame.BetType.BLACK, "2x");
+        addRouletteButton(centerX + 10 + (rbtnW + 10) * 2, choiceY, "Even", RouletteGame.BetType.EVEN, "2x");
+        addRouletteButton(centerX + this.imageWidth - rbtnW - 10, choiceY, "Odd", RouletteGame.BetType.ODD, "2x");
         
         addRouletteButton(centerX + 10, choiceY + spacing, "Low (1-18)", RouletteGame.BetType.LOW, "2x");
-        addRouletteButton(centerX + 140, choiceY + spacing, "High (19-36)", RouletteGame.BetType.HIGH, "2x");
-        addRouletteButton(centerX + 270, choiceY + spacing, "Spin!", null, "");
+        addRouletteButton(centerX + this.imageWidth / 2 - 60, choiceY + spacing, "High (19-36)", RouletteGame.BetType.HIGH, "2x");
+        addRouletteButton(centerX + this.imageWidth - 130, choiceY + spacing, "Spin!", null, "");
     }
     
     private void addRouletteButton(int x, int y, String label, RouletteGame.BetType type, String payout) {

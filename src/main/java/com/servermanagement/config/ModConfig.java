@@ -36,6 +36,9 @@ public class ModConfig {
 
     // Server Performance Settings
     public static final BooleanValue SERVER_PERFORMANCE_ENABLED;
+
+    // MOTD Settings
+    public static final BooleanValue MOTD_ENABLED;
     public static final BooleanValue ITEM_MERGING_ENABLED;
     public static final DoubleValue ITEM_MERGE_RADIUS;
     public static final IntValue ITEM_MERGE_INTERVAL;
@@ -189,6 +192,12 @@ public class ModConfig {
             .define("tpsAutoOptimize", false);
         BUILDER.pop();
 
+        BUILDER.pop();
+
+        BUILDER.push("MOTD");
+        MOTD_ENABLED = BUILDER
+            .comment("Enable the MOTD Editor feature")
+            .define("motdEnabled", true);
         BUILDER.pop();
 
         SPEC = BUILDER.build();

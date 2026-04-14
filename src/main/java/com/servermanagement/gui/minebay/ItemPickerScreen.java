@@ -1,6 +1,7 @@
 package com.servermanagement.gui.minebay;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.servermanagement.gui.ScreenScaler;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -27,6 +28,9 @@ public class ItemPickerScreen extends Screen {
     private static final int SLOT_SIZE = 18;
     private static final int GUI_WIDTH = 195;
     private static final int GUI_HEIGHT = 280;
+    
+    private int guiW = GUI_WIDTH;
+    private int guiH = GUI_HEIGHT;
     
     private final Screen parent;
     private final Consumer<ItemStack> onItemSelected;
@@ -76,12 +80,14 @@ public class ItemPickerScreen extends Screen {
     protected void init() {
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
+        this.guiW = Math.min(GUI_WIDTH, this.width - 20);
+        this.guiH = Math.min(GUI_HEIGHT, this.height - 20);
         
-        int centerX = (this.width - GUI_WIDTH) / 2;
-        int centerY = (this.height - GUI_HEIGHT) / 2;
+        int centerX = (this.width - guiW) / 2;
+        int centerY = (this.height - guiH) / 2;
         
         // Search box at top
-        this.searchBox = new EditBox(this.font, centerX + 5, centerY + 10, GUI_WIDTH - 10, 20, Component.literal("Search"));
+        this.searchBox = new EditBox(this.font, centerX + 5, centerY + 10, guiW - 10, 20, Component.literal("Search"));
         this.searchBox.setHint(Component.literal("Search items..."));
         this.searchBox.setResponder(this::onSearchChanged);
         this.searchBox.setFocused(true);
@@ -136,16 +142,16 @@ public class ItemPickerScreen extends Screen {
         // Dark background overlay
         guiGraphics.fill(0, 0, this.width, this.height, 0xC0101010);
         
-        int centerX = (this.width - GUI_WIDTH) / 2;
-        int centerY = (this.height - GUI_HEIGHT) / 2;
+        int centerX = (this.width - guiW) / 2;
+        int centerY = (this.height - guiH) / 2;
         
         // Main GUI background
-        guiGraphics.fill(centerX, centerY, centerX + GUI_WIDTH, centerY + GUI_HEIGHT, 0xE0202020);
+        guiGraphics.fill(centerX, centerY, centerX + guiW, centerY + guiH, 0xE0202020);
         
         // Title
         Component title = Component.literal("Select Price Item");
         int titleWidth = this.font.width(title);
-        guiGraphics.drawString(this.font, title, centerX + (GUI_WIDTH - titleWidth) / 2, centerY - 15, 0xFFD700, true);
+        guiGraphics.drawString(this.font, title, centerX + (guiW - titleWidth) / 2, centerY - 15, 0xFFD700, true);
         
         // Search box
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -196,7 +202,7 @@ public class ItemPickerScreen extends Screen {
         
         // Scrollbar
         if (maxScroll > 0) {
-            int scrollbarX = centerX + GUI_WIDTH - 10;
+            int scrollbarX = centerX + guiW - 10;
             int scrollbarY = gridStartY;
             int scrollbarHeight = GRID_ROWS * SLOT_SIZE;
             
@@ -215,7 +221,7 @@ public class ItemPickerScreen extends Screen {
         }
         
         // Instructions at bottom
-        int instructY = centerY + GUI_HEIGHT - 12;
+        int instructY = centerY + guiH - 12;
         guiGraphics.drawString(this.font, 
             Component.literal("Click an item to select • ESC to cancel"),
             centerX + 5, instructY, 0xAAAAAA, false);
@@ -228,8 +234,8 @@ public class ItemPickerScreen extends Screen {
             return true;
         }
         
-        int centerX = (this.width - GUI_WIDTH) / 2;
-        int centerY = (this.height - GUI_HEIGHT) / 2;
+        int centerX = (this.width - guiW) / 2;
+        int centerY = (this.height - guiH) / 2;
         
         int gridStartX = centerX + 5;
         int gridStartY = centerY + 35;

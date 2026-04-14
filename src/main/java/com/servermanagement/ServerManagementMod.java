@@ -133,9 +133,21 @@ public class ServerManagementMod {
         com.servermanagement.server.ModFileTransferManager.initialize();
         LOGGER.info("OTA update system initialized");
         
+        // Initialize MOTD Manager
+        if (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor")) {
+            com.servermanagement.features.motd.MotdManager.getInstance().initialize(event.getServer());
+            LOGGER.info("MOTD Manager initialized");
+        }
+        
         LOGGER.info("ServerManagement v{} fully initialized and ready!", getModVersion());
     }
     
+    @SubscribeEvent
+    public void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+        com.servermanagement.features.motd.MotdManager.getInstance().saveAndShutdown();
+        LOGGER.info("MOTD Manager saved and shut down");
+    }
+
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event) {
         MineBayCommand.register(event.getDispatcher());
