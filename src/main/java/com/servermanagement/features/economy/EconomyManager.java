@@ -77,6 +77,9 @@ public class EconomyManager {
         // Load bank inventories
         loadBankInventories();
         
+        // Initialize recipe-based pricing (needs RecipeManager, available after datapack load)
+        RecipeBasedPricing.getInstance().initialize(server);
+        
         // Initialize market pricing engine
         MarketPricingEngine.getInstance().recalculate(server);
         
@@ -100,7 +103,9 @@ public class EconomyManager {
                 engine.getInflationMultiplier(),
                 engine.getAverageBalance(),
                 engine.getTotalPlayerCount(),
-                engine.getStarterMoney()
+                engine.getStarterMoney(),
+                ItemSupplyDemandTracker.getInstance().getAllSupplyData(),
+                RecipeBasedPricing.getInstance().getAllPrices()
             ),
             player
         );
@@ -117,7 +122,9 @@ public class EconomyManager {
                 engine.getInflationMultiplier(),
                 engine.getAverageBalance(),
                 engine.getTotalPlayerCount(),
-                engine.getStarterMoney()
+                engine.getStarterMoney(),
+                ItemSupplyDemandTracker.getInstance().getAllSupplyData(),
+                RecipeBasedPricing.getInstance().getAllPrices()
             )
         );
     }
@@ -201,7 +208,7 @@ public class EconomyManager {
         try {
             saveSync();
         } catch (Exception e) {
-            ServerManagementMod.LOGGER.error("Failed to save economy data during shutdown ÔÇö data may be lost", e);
+            ServerManagementMod.LOGGER.error("Failed to save economy data during shutdown — data may be lost", e);
         }
         
         // Clear caches

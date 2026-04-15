@@ -66,7 +66,7 @@ public class DeleteListingPacket implements IPacket {
             // Return the item to the player
             ItemStack itemForSale = listing.getItemForSale();
             if (!itemForSale.isEmpty()) {
-                boolean added = player.getInventory().add(itemForSale);
+                boolean added = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, itemForSale);
                 if (!added) {
                     player.drop(itemForSale, false);
                 }

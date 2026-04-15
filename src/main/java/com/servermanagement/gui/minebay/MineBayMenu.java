@@ -21,21 +21,44 @@ public class MineBayMenu extends AbstractContainerMenu {
     private ToggleableSlot offeringSlot;
     private volatile boolean shouldReturnItem = true; // Track if item should be returned on close
     
+    // Container for offer items (3 slots for items buyer offers to seller)
+    private final SimpleContainer offerContainer;
+    private final java.util.List<ToggleableSlot> offerSlots = new java.util.ArrayList<>();
+    private volatile boolean shouldReturnOfferItems = true; // Track if offer items should be returned on close
+    
     public MineBayMenu(int containerId, Inventory playerInventory) {
         super(ModMenuTypes.MINEBAY_MENU.get(), containerId);
+        
+        // Calculate scaled panel width for slot positioning
+        int panelWidth = getScaledPanelWidth(playerInventory);
         
         // Initialize offering container (1 slot for item to sell)
         this.offeringContainer = new SimpleContainer(1);
         
-        // Add offering slot (centered, visible only in CREATE_STEP2)
-        int offeringX = 300; // Center of 600px width
-        int offeringY = 85; // Below title
-        offeringSlot = new ToggleableSlot(offeringContainer, 0, offeringX - 9, offeringY);
+        // Add offering slot (centered, visible only in CREATE_STEP1)
+        int offeringX = panelWidth / 2 - 8;
+        int offeringY = 85;
+        offeringSlot = new ToggleableSlot(offeringContainer, 0, offeringX, offeringY);
         offeringSlot.setVisible(false); // Hidden by default
         this.addSlot(offeringSlot);
         
-        // Position inventory at bottom of 600x400 GUI
-        int inventoryX = 221; // Centered
+        // Initialize offer container (3 slots for items buyer offers)
+        this.offerContainer = new SimpleContainer(3);
+        
+        // Add 3 offer slots (evenly spaced, visible only in MAKE_OFFER)
+        int offerSlotSpacing = 50;
+        int offerStartX = (panelWidth - (3 * 18 + 2 * (offerSlotSpacing - 18))) / 2;
+        int offerSlotY = 148;
+        for (int i = 0; i < 3; i++) {
+            ToggleableSlot slot = new ToggleableSlot(offerContainer, i, 
+                offerStartX + (i * offerSlotSpacing), offerSlotY);
+            slot.setVisible(false); // Hidden by default
+            this.addSlot(slot);
+            offerSlots.add(slot);
+        }
+        
+        // Position inventory centered at bottom of panel
+        int inventoryX = (panelWidth - 162) / 2; // Center 9-column inventory (9*18=162px)
         int inventoryY = 230;
         
         // Add player inventory slots (3 rows)
@@ -53,6 +76,35 @@ public class MineBayMenu extends AbstractContainerMenu {
             this.addSlot(slot);
             inventorySlots.add(slot);
         }
+    }
+    
+    /**
+     * Get the scaled panel width, using ScreenScaler on client or defaulting to 600 on server
+     */
+    private static int getScaledPanelWidth(Inventory playerInventory) {
+        if (playerInventory.player.level().isClientSide()) {
+            return getClientPanelWidth();
+        }
+        return 600;
+    }
+    
+    private static int getClientPanelWidth() {
+        try {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            int guiW = mc.getWindow().getGuiScaledWidth();
+            int guiH = mc.getWindow().getGuiScaledHeight();
+            return com.servermanagement.gui.ScreenScaler.scale(600, 400, guiW, guiH)[0];
+        } catch (Throwable t) {
+            return 600;
+        }
+    }
+    
+    public int getOfferingSlotX() {
+        return offeringSlot.x;
+    }
+    
+    public int getOfferingSlotY() {
+        return offeringSlot.y;
     }
     
     /**
@@ -103,6 +155,56 @@ public class MineBayMenu extends AbstractContainerMenu {
         offeringContainer.setItem(0, ItemStack.EMPTY);
     }
     
+    /**
+     * Set whether offer slots should be visible (MAKE_OFFER state)
+     */
+    public void setOfferSlotsVisible(boolean visible) {
+        for (ToggleableSlot slot : offerSlots) {
+            slot.setVisible(visible);
+        }
+    }
+    
+    /**
+     * Get items from offer slots (non-empty only)
+     */
+    public java.util.List<ItemStack> getOfferItems() {
+        java.util.List<ItemStack> items = new java.util.ArrayList<>();
+        for (int i = 0; i < offerContainer.getContainerSize(); i++) {
+            ItemStack stack = offerContainer.getItem(i);
+            if (!stack.isEmpty()) {
+                items.add(stack.copy());
+            }
+        }
+        return items;
+    }
+    
+    /**
+     * Clear all offer slots without returning items (items sent to server)
+     */
+    public void clearOfferItems() {
+        shouldReturnOfferItems = false;
+        for (int i = 0; i < offerContainer.getContainerSize(); i++) {
+            offerContainer.setItem(i, ItemStack.EMPTY);
+        }
+    }
+    
+    /**
+     * Get the offer slot positions for rendering
+     */
+    public int getOfferSlotX(int index) {
+        if (index >= 0 && index < offerSlots.size()) {
+            return offerSlots.get(index).x;
+        }
+        return 0;
+    }
+    
+    public int getOfferSlotY(int index) {
+        if (index >= 0 && index < offerSlots.size()) {
+            return offerSlots.get(index).y;
+        }
+        return 0;
+    }
+    
     public boolean isInventoryVisible() {
         return inventoryVisible;
     }
@@ -136,13 +238,20 @@ public class MineBayMenu extends AbstractContainerMenu {
         
         // If clicking offering slot (index 0), return item to inventory
         if (index == 0) {
-            if (!this.moveItemStackTo(slotStack, 1, this.slots.size(), true)) {
+            if (!this.moveItemStackTo(slotStack, 4, this.slots.size(), true)) {
                 return ItemStack.EMPTY;
             }
             slot.onQuickCraft(slotStack, itemstack);
         }
-        // If clicking inventory, try to move to offering slot
+        // If clicking an offer slot (index 1-3), return item to inventory
+        else if (index >= 1 && index <= 3) {
+            if (!this.moveItemStackTo(slotStack, 4, this.slots.size(), true)) {
+                return ItemStack.EMPTY;
+            }
+        }
+        // If clicking inventory, try to move to offering slot or offer slots
         else {
+            // Try offering slot first if visible and empty
             if (offeringSlot != null && offeringContainer.isEmpty() && offeringSlot.isActive()) {
                 ItemStack singleItem = slotStack.copy();
                 singleItem.setCount(1);
@@ -150,6 +259,12 @@ public class MineBayMenu extends AbstractContainerMenu {
                 if (this.moveItemStackTo(singleItem, 0, 1, false)) {
                     slotStack.shrink(1);
                 } else {
+                    return ItemStack.EMPTY;
+                }
+            }
+            // Try offer slots if visible
+            else if (!offerSlots.isEmpty() && offerSlots.get(0).isActive()) {
+                if (!this.moveItemStackTo(slotStack, 1, 4, false)) {
                     return ItemStack.EMPTY;
                 }
             } else {
@@ -181,18 +296,25 @@ public class MineBayMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         
-        // Return offering item to player if menu is closed AND item should be returned
-        if (!player.level().isClientSide && shouldReturnItem) {
-            ItemStack offeringItem = offeringContainer.getItem(0);
-            if (!offeringItem.isEmpty()) {
-                // Play item pickup sound
-                player.level().playSound(null, player.blockPosition(), 
-                    net.minecraft.sounds.SoundEvents.ITEM_PICKUP, 
-                    net.minecraft.sounds.SoundSource.PLAYERS, 
-                    0.2F, ((player.level().random.nextFloat() - player.level().random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
-                
-                player.getInventory().placeItemBackInInventory(offeringItem);
-                offeringContainer.setItem(0, ItemStack.EMPTY);
+        if (!player.level().isClientSide) {
+            // Return offering item to player if menu is closed AND item should be returned
+            if (shouldReturnItem) {
+                ItemStack offeringItem = offeringContainer.getItem(0);
+                if (!offeringItem.isEmpty()) {
+                    player.getInventory().placeItemBackInInventory(offeringItem);
+                    offeringContainer.setItem(0, ItemStack.EMPTY);
+                }
+            }
+            
+            // Return offer items to player if menu is closed AND items should be returned
+            if (shouldReturnOfferItems) {
+                for (int i = 0; i < offerContainer.getContainerSize(); i++) {
+                    ItemStack offerItem = offerContainer.getItem(i);
+                    if (!offerItem.isEmpty()) {
+                        player.getInventory().placeItemBackInInventory(offerItem);
+                        offerContainer.setItem(i, ItemStack.EMPTY);
+                    }
+                }
             }
         }
     }

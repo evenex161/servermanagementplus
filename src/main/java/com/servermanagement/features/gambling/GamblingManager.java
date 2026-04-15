@@ -85,13 +85,13 @@ public class GamblingManager {
             
             // Play the game
             double payout = game.play(amount);
-
+            
             // Validate payout to prevent exploits
             if (Double.isNaN(payout) || Double.isInfinite(payout) || payout < 0) {
                 account.deposit(amount); // Refund bet
                 return new GamblingResult(false, 0.0, "Game error - bet refunded");
             }
-
+            
             boolean won = payout > amount;
             double profit = payout - amount;
             
@@ -99,7 +99,7 @@ public class GamblingManager {
             if (payout > 0) {
                 account.deposit(payout);
             }
-
+            
             // Record transactions
             account.addTransaction(new Transaction(
                 TransactionType.GAMBLING_BET, amount,
@@ -163,7 +163,7 @@ public class GamblingManager {
         if (payout > 0) {
             BankAccount account = EconomyManager.getInstance().getOrCreateAccount(player.getUUID());
             account.deposit(payout);
-
+            
             // Record transactions
             account.addTransaction(new Transaction(
                 TransactionType.GAMBLING_BET, itemValue,

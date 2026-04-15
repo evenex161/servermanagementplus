@@ -16,6 +16,10 @@ import net.neoforged.fml.common.Mod;
 public class EconomyServerHandler {
     private static int autoSaveTicks = 0;
     private static final int AUTOSAVE_INTERVAL = 12000; // 10 minutes (20 ticks/sec * 60 * 10)
+
+    /** Shorter interval for market price recalculation and sync (2 minutes) */
+    private static int marketSyncTicks = 0;
+    private static final int MARKET_SYNC_INTERVAL = 2400; // 2 minutes (20 ticks/sec * 60 * 2)
     
     /**
      * Periodic auto-save to prevent data loss
@@ -27,6 +31,22 @@ public class EconomyServerHandler {
         }
         
         autoSaveTicks++;
+        marketSyncTicks++;
+
+        // Periodic market price recalculation and sync to all clients (every 2 minutes)
+        if (marketSyncTicks >= MARKET_SYNC_INTERVAL) {
+            marketSyncTicks = 0;
+
+            EconomyManager manager = EconomyManager.getInstance();
+            net.minecraft.server.MinecraftServer srv =
+                net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            if (manager != null && srv != null) {
+                MarketPricingEngine.getInstance().recalculate(srv);
+                manager.syncMarketPricesToAll();
+                ServerManagementMod.LOGGER.debug("Market prices recalculated and synced to all players");
+            }
+        }
+
         if (autoSaveTicks >= AUTOSAVE_INTERVAL) {
             autoSaveTicks = 0;
             

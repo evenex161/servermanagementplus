@@ -128,6 +128,10 @@ public class OpenGuiPacket implements IPacket {
                         com.servermanagement.network.packet.SyncPerformanceSettingsPacket.syncToPlayer(player);
                         player.openMenu(new com.servermanagement.gui.provider.PerformanceSettingsMenuProvider());
                         break;
+                    case MOTD_EDITOR:
+                        syncMotd(player);
+                        player.openMenu(new com.servermanagement.gui.MotdEditorMenuProvider());
+                        break;
                 }
             }
         });
@@ -283,6 +287,14 @@ public class OpenGuiPacket implements IPacket {
         SendMoneyRequestPacket.syncRequestsToPlayer(player, economyManager);
     }
 
+    private void syncMotd(ServerPlayer player) {
+        var motdManager = com.servermanagement.features.motd.MotdManager.getInstance();
+        com.servermanagement.network.ModNetworking.sendToPlayer(
+            new SyncMotdPacket(motdManager.getMotdText()),
+            player
+        );
+    }
+
     public enum GuiType {
         CONFIG,
         DASHBOARD,
@@ -298,7 +310,8 @@ public class OpenGuiPacket implements IPacket {
         ECONOMY_MANAGEMENT,
         MINEBAY,
         MINESTACKS,
-        PERFORMANCE_SETTINGS;
+        PERFORMANCE_SETTINGS,
+        MOTD_EDITOR;
 
         public boolean isAdminOnly() {
             return switch (this) {

@@ -141,6 +141,11 @@ public class ConfigValidator {
             ServerManagementMod.LOGGER.debug("Config values read successfully");
             return true;
             
+        } catch (IllegalStateException e) {
+            // NeoForge: config values are not available during mod construction
+            // This is normal — config will be loaded later by the framework
+            ServerManagementMod.LOGGER.debug("Config not loaded yet, skipping value validation");
+            return true;
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to read config values", e);
             return false;
@@ -174,6 +179,11 @@ public class ConfigValidator {
             try {
                 ModConfig.SPEC.save();
                 ServerManagementMod.LOGGER.info("Created fresh config file with default values");
+            } catch (NullPointerException | IllegalStateException e) {
+                // NeoForge: config isn't bound yet during mod construction,
+                // so save() will fail. The framework will create the file later.
+                ServerManagementMod.LOGGER.info("Config not bound yet, framework will create defaults on load");
+                return true;
             } catch (Exception e) {
                 ServerManagementMod.LOGGER.error("Failed to save new config file!", e);
                 return false;

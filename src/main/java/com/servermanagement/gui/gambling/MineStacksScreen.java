@@ -3,8 +3,8 @@ package com.servermanagement.gui.gambling;
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.gambling.GamblingResult;
-import com.servermanagement.features.gambling.ItemValuation;
 import com.servermanagement.features.gambling.games.*;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -125,6 +125,9 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(400, 220, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -196,7 +199,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         ));
 
         int buttonY = centerY + 55;
-        int buttonWidth = 180;
+        int buttonWidth = (this.imageWidth - 60) / 2;
         int buttonHeight = 25;
 
         // Game buttons (2x2 grid)
@@ -209,7 +212,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         ));
 
         this.addRenderableWidget(new ModernButton(
-            centerX + 200, buttonY,
+            centerX + this.imageWidth / 2, buttonY,
             buttonWidth, buttonHeight,
             Component.literal("Dice Roll  |  3% edge"),
             button -> switchMode(GameMode.DICE_ROLL),
@@ -225,7 +228,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         ));
 
         this.addRenderableWidget(new ModernButton(
-            centerX + 200, buttonY + 30,
+            centerX + this.imageWidth / 2, buttonY + 30,
             buttonWidth, buttonHeight,
             Component.literal("Roulette  |  2.7% edge"),
             button -> switchMode(GameMode.ROULETTE),
@@ -234,7 +237,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
 
         // Statistics button
         this.addRenderableWidget(new ModernButton(
-            centerX + 110, buttonY + 65,
+            centerX + (this.imageWidth - buttonWidth) / 2, buttonY + 65,
             buttonWidth, buttonHeight,
             Component.literal("Your Statistics"),
             button -> switchMode(GameMode.STATS),
@@ -276,33 +279,33 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         int choiceY = centerY + 85;
         int spacing = 27;
+        int btnW = (this.imageWidth - 40) / 3; // 3 buttons with gaps
+        int gap = 5;
         
-        // Bet type buttons (smaller, 3 rows)
-        addDiceButton(centerX + 10, choiceY, "High (8-12)", DiceRollGame.BetType.HIGH, "2x");
-        addDiceButton(centerX + 140, choiceY, "Low (2-6)", DiceRollGame.BetType.LOW, "2x");
-        addDiceButton(centerX + 270, choiceY, "Seven (7)", DiceRollGame.BetType.SEVEN, "5x");
+        // Bet type buttons (row 1: 3 buttons)
+        addDiceButton(centerX + 10, choiceY, "High (8-12)", DiceRollGame.BetType.HIGH, "2x", btnW);
+        addDiceButton(centerX + 10 + btnW + gap, choiceY, "Low (2-6)", DiceRollGame.BetType.LOW, "2x", btnW);
+        addDiceButton(centerX + 10 + (btnW + gap) * 2, choiceY, "Seven (7)", DiceRollGame.BetType.SEVEN, "5x", btnW);
         
-        addDiceButton(centerX + 10, choiceY + spacing, "Doubles", DiceRollGame.BetType.DOUBLES, "6x");
-        addDiceButton(centerX + 140, choiceY + spacing, "Roll!", null, "");
+        // Row 2: Doubles + Roll button
+        addDiceButton(centerX + 10, choiceY + spacing, "Doubles", DiceRollGame.BetType.DOUBLES, "6x", btnW);
+        
+        int rollWidth = btnW * 2 + gap;
+        this.addRenderableWidget(new ModernButton(
+            centerX + 10 + btnW + gap, choiceY + spacing, rollWidth, 22,
+            Component.literal("Roll!!"),
+            button -> playDiceRoll(),
+            ModernButton.ButtonStyle.PRIMARY
+        ));
     }
     
-    private void addDiceButton(int x, int y, String label, DiceRollGame.BetType type, String payout) {
-        if (type == null) {
-            // Play button
-            this.addRenderableWidget(new ModernButton(
-                x, y, 120, 22,
-                Component.literal(label),
-                button -> playDiceRoll(),
-                ModernButton.ButtonStyle.PRIMARY
-            ));
-        } else {
-            this.addRenderableWidget(new ModernButton(
-                x, y, 120, 22,
-                Component.literal(label + " " + payout),
-                button -> { diceType = type; this.init(); },
-                diceType == type ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
-            ));
-        }
+    private void addDiceButton(int x, int y, String label, DiceRollGame.BetType type, String payout, int width) {
+        this.addRenderableWidget(new ModernButton(
+            x, y, width, 22,
+            Component.literal(label + " " + payout),
+            button -> { diceType = type; this.init(); },
+            diceType == type ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
+        ));
     }
     
     private void initSlotMachine(int centerX, int centerY) {
@@ -310,7 +313,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         // Play button
         this.addRenderableWidget(new ModernButton(
-            centerX + 120, centerY + 95, 160, 30,
+            centerX + (this.imageWidth - 160) / 2, centerY + 95, 160, 30,
             Component.literal("SPIN!"),
             button -> playSlotMachine(),
             ModernButton.ButtonStyle.PRIMARY
@@ -324,14 +327,15 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int spacing = 27;
         
         // Bet type buttons
+        int rbtnW = (this.imageWidth - 50) / 4;
         addRouletteButton(centerX + 10, choiceY, "Red", RouletteGame.BetType.RED, "2x");
-        addRouletteButton(centerX + 100, choiceY, "Black", RouletteGame.BetType.BLACK, "2x");
-        addRouletteButton(centerX + 190, choiceY, "Even", RouletteGame.BetType.EVEN, "2x");
-        addRouletteButton(centerX + 280, choiceY, "Odd", RouletteGame.BetType.ODD, "2x");
+        addRouletteButton(centerX + 10 + rbtnW + 10, choiceY, "Black", RouletteGame.BetType.BLACK, "2x");
+        addRouletteButton(centerX + 10 + (rbtnW + 10) * 2, choiceY, "Even", RouletteGame.BetType.EVEN, "2x");
+        addRouletteButton(centerX + this.imageWidth - rbtnW - 10, choiceY, "Odd", RouletteGame.BetType.ODD, "2x");
         
         addRouletteButton(centerX + 10, choiceY + spacing, "Low (1-18)", RouletteGame.BetType.LOW, "2x");
-        addRouletteButton(centerX + 140, choiceY + spacing, "High (19-36)", RouletteGame.BetType.HIGH, "2x");
-        addRouletteButton(centerX + 270, choiceY + spacing, "Spin!", null, "");
+        addRouletteButton(centerX + this.imageWidth / 2 - 60, choiceY + spacing, "High (19-36)", RouletteGame.BetType.HIGH, "2x");
+        addRouletteButton(centerX + this.imageWidth - 130, choiceY + spacing, "Spin!", null, "");
     }
     
     private void addRouletteButton(int x, int y, String label, RouletteGame.BetType type, String payout) {
@@ -377,7 +381,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -411,7 +415,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -442,7 +446,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private boolean validateBet() {
         if (useMoney) {
             if (betAmountBox == null || betAmountBox.getValue().isEmpty()) {
-                lastResult = "┬ºcEnter a bet amount!";
+                lastResult = "§cEnter a bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -450,19 +454,19 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             try {
                 double amount = Double.parseDouble(betAmountBox.getValue());
                 if (amount < 10.0) {
-                    lastResult = "┬ºcMinimum bet is $10";
+                    lastResult = "§cMinimum bet is $10";
                     resultShowTime = System.currentTimeMillis();
                     return false;
                 }
             } catch (NumberFormatException e) {
-                lastResult = "┬ºcInvalid bet amount!";
+                lastResult = "§cInvalid bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
         } else {
             ItemStack bettingItem = menu.getBettingItem();
             if (bettingItem.isEmpty()) {
-                lastResult = "┬ºcPlace an item in the slot!";
+                lastResult = "§cPlace an item in the slot!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -501,7 +505,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         }
         
         // Show pending message
-        lastResult = "┬ºePlacing bet...";
+        lastResult = "§ePlacing bet...";
         resultShowTime = System.currentTimeMillis();
     }
     
@@ -524,7 +528,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private void showPendingResult() {
         if (!hasPendingResult) return;
         
-        lastResult = pendingResultWon ? "┬ºa" + pendingResultMessage : "┬ºc" + pendingResultMessage;
+        lastResult = pendingResultWon ? "§a" + pendingResultMessage : "§c" + pendingResultMessage;
         lastResultWon = pendingResultWon;
         resultShowTime = System.currentTimeMillis();
         
@@ -814,9 +818,10 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                 }
                 
                 // Add label below the betting slot to indicate its purpose
-                guiGraphics.drawString(this.font, 
-                    Component.literal("Bet Item"),
-                    slotX - 8, slotY + 20, 0xFFAA00, true);
+                Component betLabel = Component.literal("Bet Item");
+                int betLabelW = this.font.width(betLabel);
+                guiGraphics.drawString(this.font, betLabel,
+                    slotX + 9 - betLabelW / 2, slotY + 20, 0xFFAA00, true);
             }
             
             // Render inventory slots only when in game mode AND using items
@@ -843,6 +848,21 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
                 renderable.render(guiGraphics, mouseX, mouseY, partialTick);
             }
+            
+            // Update hoveredSlot for slot highlighting and tooltip support
+            // (since we don't call super.render(), AbstractContainerScreen never sets this)
+            this.hoveredSlot = null;
+            for (int i = 0; i < this.menu.slots.size(); i++) {
+                net.minecraft.world.inventory.Slot slot = this.menu.slots.get(i);
+                if (slot.isActive() && this.isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
+                    this.hoveredSlot = slot;
+                    // Draw hover highlight centered on the 16x16 item area (inside the 18x18 slot border)
+                    int hx = this.leftPos + slot.x + 1;
+                    int hy = this.topPos + slot.y + 1;
+                    guiGraphics.fill(hx, hy, hx + 16, hy + 16, 0x80FFFFFF);
+                    break;
+                }
+            }
         }
         
         guiGraphics.pose().popPose();
@@ -859,7 +879,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             guiGraphics.drawCenteredString(this.font, Component.literal(title),
                 centerX + this.imageWidth / 2, centerY + 10, 0xFFD700);
             
-            // Balance display - use menu's synced balance for reliability
+            // Balance display - positioned top-left, after admin dashboard button if present
             if (minecraft != null && minecraft.player != null) {
                 double balance = menu.getPlayerBalance();
                 // Fallback to ClientBankData if menu balance is 0 (shouldn't happen, but defensive)
@@ -868,9 +888,11 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
                 }
                 String balanceStr = "Balance: " + currencyFormat.format(balance);
                 int balanceColor = balance >= 0 ? 0x55FF55 : 0xFF5555;
+                // Position after admin dashboard button (20+5 = 25px) if admin, else at left edge
+                boolean isAdmin = minecraft.player.hasPermissions(2);
+                int balanceX = centerX + (isAdmin ? 30 : 5);
                 guiGraphics.drawString(this.font, Component.literal(balanceStr),
-                    centerX + this.imageWidth - this.font.width(balanceStr) - 5,
-                    centerY + 32, balanceColor, true);
+                    balanceX, centerY + 10, balanceColor, true);
             }
             
             // Render mode-specific content
@@ -970,7 +992,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         // Draw tension text
         guiGraphics.drawCenteredString(this.font,
-            Component.literal("┬º6Rolling..."),
+            Component.literal("§6Rolling..."),
             animX, animY - 40, 0xFFD700);
         
         // Cache locally to avoid null between check and switch
@@ -1058,7 +1080,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
+        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1245,7 +1267,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
+        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1341,15 +1363,18 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     private void renderGameInfo(GuiGraphics guiGraphics, int centerX, int centerY) {
-        int infoY = centerY + 70;
-        
         if (!useMoney) {
             ItemStack bettingItem = menu.getBettingItem();
             if (!bettingItem.isEmpty()) {
-                String value = ItemValuation.getValueString(bettingItem);
-                guiGraphics.drawString(this.font, 
-                    Component.literal("Item Value: " + value),
-                    centerX + 240, infoY - 22, 0xFFAA00, true);
+                // Use economy engine market price instead of hardcoded ItemValuation
+                double marketPrice = com.servermanagement.client.ClientMarketData.getStackPrice(bettingItem);
+                String value = String.format("$%.2f", marketPrice);
+                // Show below the centered betting slot
+                net.minecraft.world.inventory.Slot betSlot = this.menu.slots.get(0);
+                int labelX = this.leftPos + betSlot.x + 9;
+                guiGraphics.drawCenteredString(this.font, 
+                    Component.literal("Value: " + value),
+                    labelX, this.topPos + betSlot.y + 34, 0xFFAA00);
             }
         }
     }
@@ -1415,7 +1440,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
      * Render the item being dragged by the cursor
      */
     private void renderFloatingItem(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Get the carried item (item being dragged) ÔÇö cache locally
+        // Get the carried item (item being dragged) — cache locally
         ItemStack carriedStack = this.menu.getCarried();
         if (carriedStack != null && !carriedStack.isEmpty()) {
             // Render the item centered on the cursor

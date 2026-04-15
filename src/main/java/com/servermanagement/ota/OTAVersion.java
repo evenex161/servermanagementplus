@@ -8,7 +8,7 @@ import java.util.Properties;
 
 /**
  * Manages OTA version tracking with build numbers, Minecraft version, and mod loader awareness.
- * Version format: v1.0.4-b01-pre-release (network) / v1.0.4-b01-mc1.21.1-neoforge-pre-release (display)
+ * Version format: v1.0.4-b01-pre-release (network) / v1.0.4-b01-mc1.21.1-forge-pre-release (display)
  */
 public class OTAVersion {
     
@@ -77,7 +77,7 @@ public class OTAVersion {
     
     /**
      * Get the display version string including MC version and mod loader.
-     * Format: v1.0.3-b04-mc1.21.1-neoforge-release
+     * Format: v1.0.3-b04-mc1.21.1-forge-release
      */
     public String getDisplayVersion() {
         StringBuilder sb = new StringBuilder();
@@ -139,13 +139,11 @@ public class OTAVersion {
      */
     public boolean isCompatibleWith(OTAVersion other) {
         if (other == null) return false;
-        // Check Minecraft version compatibility
         if (!"unknown".equals(this.minecraftVersion) && !"unknown".equals(other.minecraftVersion)) {
             if (!this.minecraftVersion.equals(other.minecraftVersion)) {
                 return false;
             }
         }
-        // Check mod loader compatibility
         if (!"unknown".equals(this.modLoader) && !"unknown".equals(other.modLoader)) {
             if (!this.modLoader.equals(other.modLoader)) {
                 return false;
@@ -178,7 +176,7 @@ public class OTAVersion {
     /**
      * Parse version string from network packet or display string.
      * Supports formats:
-     *   New: "v1.0.3-b04-release" or "v1.0.3-b04-mc1.21.1-neoforge-release"
+     *   New: "v1.0.3-b04-release" or "v1.0.3-b04-mc1.21.1-release"
      *   Old: "v1.0.3-release.3" or "v1.0.3-release.3:1.21.1"
      */
     public static OTAVersion parseFromString(String versionString) {
@@ -192,7 +190,6 @@ public class OTAVersion {
                 String loader = null;
                 java.util.List<String> releaseTypeParts = new java.util.ArrayList<>();
                 
-                // Known loader names for disambiguation
                 java.util.Set<String> knownLoaders = java.util.Set.of("forge", "neoforge", "fabric", "quilt");
                 
                 for (int i = 1; i < parts.length; i++) {

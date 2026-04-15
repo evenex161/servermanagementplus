@@ -19,9 +19,8 @@ public class WorldManagerEvents {
     }
 
     @SubscribeEvent
-    public void onServerTick(ServerTickEvent.Post event) {        {
-            WorldManager.getInstance().tick();
-        }
+    public void onServerTick(ServerTickEvent.Post event) {
+        WorldManager.getInstance().tick();
     }
 
     @SubscribeEvent

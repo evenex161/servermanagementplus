@@ -31,6 +31,7 @@ public class ClientSetup {
         event.register(ModMenuTypes.MINEBAY_MENU.get(), com.servermanagement.gui.minebay.MineBayScreen::new);
         event.register(ModMenuTypes.MINESTACKS_MENU.get(), com.servermanagement.gui.gambling.MineStacksScreen::new);
         event.register(ModMenuTypes.PERFORMANCE_SETTINGS_MENU.get(), com.servermanagement.gui.screen.PerformanceSettingsScreen::new);
+        event.register(ModMenuTypes.MOTD_EDITOR_MENU.get(), MotdEditorScreen::new);
         
         ServerManagementMod.LOGGER.info("Registered GUI screens");
     }

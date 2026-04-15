@@ -36,6 +36,7 @@ public class ModConfig {
 
     // Server Performance Settings
     public static final BooleanValue SERVER_PERFORMANCE_ENABLED;
+    public static final BooleanValue MOTD_ENABLED;
     public static final BooleanValue ITEM_MERGING_ENABLED;
     public static final DoubleValue ITEM_MERGE_RADIUS;
     public static final IntValue ITEM_MERGE_INTERVAL;
@@ -119,6 +120,9 @@ public class ModConfig {
         SERVER_PERFORMANCE_ENABLED = BUILDER
             .comment("Enable the Server Performance optimization system")
             .define("serverPerformanceEnabled", true);
+        MOTD_ENABLED = BUILDER
+            .comment("Enable the MOTD Editor feature")
+            .define("motdEnabled", true);
 
         BUILDER.push("Item Merging");
         ITEM_MERGING_ENABLED = BUILDER

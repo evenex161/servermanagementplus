@@ -141,11 +141,29 @@ public class ServerManagementMod {
             LOGGER.info("MOTD Manager initialized");
         }
         
+        // Initialize Server Console log streaming
+        com.servermanagement.server.ServerConsoleManager.getInstance().initialize(event.getServer());
+        LOGGER.info("Server console log streaming initialized");
+
         LOGGER.info("ServerManagement v{} fully initialized and ready!", getModVersion());
     }
-    
+
+    @SubscribeEvent
+    public void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        com.servermanagement.server.ServerConsoleManager.getInstance().tick();
+    }
+
+    @SubscribeEvent
+    public void onPlayerLoggedOut(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer) {
+            com.servermanagement.server.ServerConsoleManager.getInstance().unsubscribe(event.getEntity().getUUID());
+        }
+    }
+
     @SubscribeEvent
     public void onServerStopping(net.neoforged.neoforge.event.server.ServerStoppingEvent event) {
+        com.servermanagement.server.ServerConsoleManager.getInstance().shutdown();
+        LOGGER.info("Server console log streaming shut down");
         com.servermanagement.features.motd.MotdManager.getInstance().saveAndShutdown();
         LOGGER.info("MOTD Manager saved and shut down");
         

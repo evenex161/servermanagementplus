@@ -1,21 +1,21 @@
 package com.servermanagement.gui.minebay;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 import com.servermanagement.features.minebay.MineBayListing;
-import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.PriceItemEntry;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
-import com.servermanagement.network.packet.OpenGuiPacket;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * Main MineBay screen - Browse and create listings
@@ -106,13 +106,17 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             offerItems[i] = ItemStack.EMPTY;
         }
         
-        // Adjust label positions
-        this.inventoryLabelY = this.imageHeight - 94;
+        // Adjust label positions - fixed Y just below the inventory separator (218-220), above slots (230)
+        this.inventoryLabelY = 222;
         this.titleLabelY = 1000; // Hide title
     }
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(600, 400, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
+        this.inventoryLabelY = 222;
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -177,6 +181,10 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Show offering slot only on CREATE_STEP1
         boolean shouldShowOffering = (currentState == ScreenState.CREATE_STEP1);
         this.menu.setOfferingSlotVisible(shouldShowOffering);
+        
+        // Show offer slots only on MAKE_OFFER
+        boolean shouldShowOfferSlots = (currentState == ScreenState.MAKE_OFFER);
+        this.menu.setOfferSlotsVisible(shouldShowOfferSlots);
     }
     
     private void initBrowseScreen(int centerX, int centerY) {
@@ -225,7 +233,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (scrollOffset > 0) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 50, navY, 90, 18,
-                Component.literal("ÔùÇ Previous"),
+                Component.literal("◀ Previous"),
                 button -> {
                     scrollOffset--;
                     this.rebuildWidgets();
@@ -237,7 +245,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (scrollOffset + LISTINGS_PER_PAGE < listings.size()) {
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 140, navY, 90, 18,
-                Component.literal("Next ÔûÂ"),
+                Component.literal("Next ▶"),
                 button -> {
                     scrollOffset++;
                     this.rebuildWidgets();
@@ -313,7 +321,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 // Clear edit mode when going back
                 isEditMode = false;
@@ -323,14 +331,14 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             ModernButton.ButtonStyle.SECONDARY
         ));
         
-        // Action button positioned below inventory area
-        // Changes text and color based on whether an item has been placed
-        int buttonY = centerY + 350;
+        // Action button positioned inside content area (above inventory)
+        int contentBottom = centerY + 46 + (menu.isInventoryVisible() ? 165 : (this.imageHeight - 60));
+        int buttonY = contentBottom - 40;
         ItemStack currentOffering = this.menu.getOfferingItem();
         boolean hasItem = !currentOffering.isEmpty();
         
         this.addRenderableWidget(new ModernButton(
-            centerX + 220, buttonY, 160, 30,
+            centerX + (this.imageWidth - 170) / 2, buttonY, 170, 30,
             Component.literal(hasItem ? "Next: Set Prices \u2192" : "Place Item"),
             button -> {
                 ItemStack offeringItem = this.menu.getOfferingItem();
@@ -352,21 +360,27 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> switchState(ScreenState.CREATE_STEP1),
             ModernButton.ButtonStyle.SECONDARY
         ));
         
+        // Layout widths relative to imageWidth
+        int availWidth = this.imageWidth - 30; // total form width
+        int priceW = (int)(availWidth * 0.40); // 40% for price input
+        int marginW = (int)(availWidth * 0.20); // 20% for margin input
+        int typeW = (int)(availWidth * 0.35); // 35% for type button
+        
         // Money price input
         if (moneyPriceBox == null) {
-            moneyPriceBox = new EditBox(this.font, formX, formY, 120, 18, Component.literal("Money Price"));
+            moneyPriceBox = new EditBox(this.font, formX, formY, priceW, 18, Component.literal("Money Price"));
             moneyPriceBox.setMaxLength(10);
             if (isEditMode && listingBeingEdited != null) {
-                moneyPriceBox.setValue(String.valueOf((int) listingBeingEdited.getMoneyPrice()));
+                moneyPriceBox.setValue(String.format(Locale.US, "%.2f", listingBeingEdited.getMoneyPrice()));
             } else if (!placedItem.isEmpty()) {
                 // Auto-populate with market base price for the placed item
                 double basePrice = com.servermanagement.client.ClientMarketData.getStackPrice(placedItem);
-                moneyPriceBox.setValue(String.format("%.2f", basePrice));
+                moneyPriceBox.setValue(String.format(Locale.US, "%.2f", basePrice));
             } else {
                 moneyPriceBox.setValue("0");
             }
@@ -374,12 +388,14 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             moneyPriceBox.setFilter(s -> s.matches("\\d*\\.?\\d*"));
         } else {
             moneyPriceBox.setPosition(formX, formY);
+            moneyPriceBox.setWidth(priceW);
         }
         this.addRenderableWidget(moneyPriceBox);
         
         // Margin % input (dynamic pricing)
+        int marginX = formX + priceW + 10;
         if (marginPercentBox == null) {
-            marginPercentBox = new EditBox(this.font, formX + 130, formY, 60, 18, Component.literal("Margin %"));
+            marginPercentBox = new EditBox(this.font, marginX, formY, marginW, 18, Component.literal("Margin %"));
             marginPercentBox.setMaxLength(5);
             if (isEditMode && listingBeingEdited != null) {
                 marginPercentBox.setValue(String.valueOf((int) listingBeingEdited.getMarginPercent()));
@@ -389,13 +405,15 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             marginPercentBox.setHint(Component.literal("%"));
             marginPercentBox.setFilter(s -> s.matches("-?\\d*"));
         } else {
-            marginPercentBox.setPosition(formX + 130, formY);
+            marginPercentBox.setPosition(marginX, formY);
+            marginPercentBox.setWidth(marginW);
         }
         this.addRenderableWidget(marginPercentBox);
         
         // Offer type selector
+        int typeX = marginX + marginW + 10;
         this.addRenderableWidget(new ModernButton(
-            formX + 200, formY - 2, 100, 22,
+            typeX, formY - 2, typeW, 22,
             Component.literal(selectedOfferType == MineBayListing.OfferType.FIXED ? 
                 "Fixed Price" : "Negotiable"),
             button -> {
@@ -407,7 +425,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         ));
         
         // Price Items section (3 slots)
-        int priceItemY = formY + 38;
+        int priceItemY = formY + 65;
         for (int i = 0; i < 3; i++) {
             int slotY = priceItemY + (i * 28);
             
@@ -477,18 +495,29 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Cancel button - returns item
         this.addRenderableWidget(new ModernButton(
             centerX + 150, buttonY, 120, 30,
-            Component.literal("Ô£ù Cancel"),
+            Component.literal("✗ Cancel"),
             button -> {
+                boolean wasEditMode = isEditMode;
                 // Clear edit mode when canceling
                 isEditMode = false;
                 listingBeingEdited = null;
-                cancelListing();
+                if (wasEditMode) {
+                    // In edit mode, the item was copied from the existing listing,
+                    // not taken from inventory. Just clear the offering slot without
+                    // returning the item to prevent duplication.
+                    this.menu.clearOfferingSlot();
+                    itemPlaced = false;
+                    placedItem = ItemStack.EMPTY;
+                    switchState(ScreenState.BROWSE);
+                } else {
+                    cancelListing();
+                }
             },
             ModernButton.ButtonStyle.DANGER
         ));
         
         // Confirm button - creates listing (or updates if editing)
-        String confirmText = isEditMode ? "Ô£ô Update Listing" : "Ô£ô Create Listing";
+        String confirmText = isEditMode ? "✓ Update Listing" : "✓ Create Listing";
         this.addRenderableWidget(new ModernButton(
             centerX + 280, buttonY, 140, 30,
             Component.literal(confirmText),
@@ -552,6 +581,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     private void buyListing(MineBayListing listing) {
         // Show buy confirmation dialog
         listingToBuy = listing;
+        buyPaymentMode = PaymentMode.NONE;
+        selectedPaymentSlots.clear();
         switchState(ScreenState.BUY_CONFIRM);
     }
     
@@ -561,9 +592,22 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             return;
         }
         
-        // Send purchase packet to server
+        boolean hasMoneyPrice = listingToBuy.getMoneyPrice() > 0;
+        // Determine effective payment mode
+        int paymentModeId;
+        int[] slotsArray;
+        if (!hasMoneyPrice || buyPaymentMode == PaymentMode.BALANCE) {
+            paymentModeId = 0; // BALANCE
+            slotsArray = new int[0];
+        } else {
+            paymentModeId = 1; // ITEMS
+            slotsArray = selectedPaymentSlots.stream().mapToInt(Integer::intValue).toArray();
+        }
+        
+        // Send purchase packet to server with payment mode
         com.servermanagement.network.ModNetworking.sendToServer(
-            new com.servermanagement.network.packet.minebay.PurchaseListingPacket(listingToBuy.getListingId())
+            new com.servermanagement.network.packet.minebay.PurchaseListingPacket(
+                listingToBuy.getListingId(), paymentModeId, slotsArray)
         );
         
         // Show status message and return to browse
@@ -573,12 +617,30 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         allListings.remove(listingToBuy);
         listings.remove(listingToBuy);
         listingToBuy = null;
+        buyPaymentMode = PaymentMode.NONE;
+        selectedPaymentSlots.clear();
         
         switchState(ScreenState.BROWSE);
     }
     
+    private double getSelectedItemsTotal() {
+        if (minecraft == null || minecraft.player == null) return 0.0;
+        double total = 0.0;
+        for (int slot : selectedPaymentSlots) {
+            if (slot >= 0 && slot < minecraft.player.getInventory().items.size()) {
+                ItemStack stack = minecraft.player.getInventory().items.get(slot);
+                if (!stack.isEmpty()) {
+                    total += com.servermanagement.client.ClientMarketData.getStackPrice(stack);
+                }
+            }
+        }
+        return total;
+    }
+    
     private void cancelBuy() {
         listingToBuy = null;
+        buyPaymentMode = PaymentMode.NONE;
+        selectedPaymentSlots.clear();
         switchState(ScreenState.BROWSE);
     }
     
@@ -680,12 +742,12 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         }
         
         int formX = centerX + 15;
-        int formY = centerY + 45;
+        int formY = centerY + 50; // Header area
         
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 selectedListingForOffer = null;
                 switchState(ScreenState.BROWSE);
@@ -693,12 +755,10 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             ModernButton.ButtonStyle.SECONDARY
         ));
         
-        // Show what they're offering on
-        int detailsY = formY - 20;
-        
         // Money offer input
-        EditBox moneyInput = new EditBox(this.font, formX, formY + 30, 200, 20, Component.literal("Money Offer"));
-        moneyInput.setValue(String.format("%.2f", offerMoney));
+        int inputWidth = Math.min(250, this.imageWidth - 40);
+        EditBox moneyInput = new EditBox(this.font, formX, formY + 55, inputWidth, 20, Component.literal("Money Offer"));
+        moneyInput.setValue(String.format(Locale.US, "%.2f", offerMoney));
         moneyInput.setResponder(value -> {
             try {
                 offerMoney = Double.parseDouble(value);
@@ -708,26 +768,15 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         });
         this.addRenderableWidget(moneyInput);
         
-        // Item offer slots (3 slots like price items)
-        for (int i = 0; i < 3; i++) {
-            int slotX = formX + (i * 80);
-            int slotY = formY + 80;
-            
-            final int index = i;
-            this.addRenderableWidget(new ModernButton(
-                slotX, slotY + 40, 70, 20,
-                Component.literal("Clear"),
-                button -> {
-                    offerItems[index] = ItemStack.EMPTY;
-                    this.rebuildWidgets();
-                },
-                ModernButton.ButtonStyle.SECONDARY
-            ));
-        }
+        // Offer slots are real container slots (handled by the menu system)
+        // Player places items from inventory into these slots
         
-        // Submit offer button
+        // Submit offer button (positioned above inventory separator at Y=218)
+        int btnWidth = (this.imageWidth - 50) / 2;
+        int btnHeight = 22;
+        int btnY = centerY + 218 - btnHeight - 3; // 3px gap above separator
         this.addRenderableWidget(new ModernButton(
-            formX, formY + 160, 150, 25,
+            formX, btnY, btnWidth, btnHeight,
             Component.literal("Submit Offer"),
             button -> submitOffer(),
             ModernButton.ButtonStyle.SUCCESS
@@ -735,7 +784,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // Cancel button
         this.addRenderableWidget(new ModernButton(
-            formX + 160, formY + 160, 100, 25,
+            formX + btnWidth + 10, btnY, btnWidth, btnHeight,
             Component.literal("Cancel"),
             button -> {
                 selectedListingForOffer = null;
@@ -745,6 +794,29 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         ));
     }
     
+    /**
+     * Calculate the dynamic card bottom Y for the view details card.
+     * Used by both initViewDetails (button placement) and renderViewDetails (card rendering).
+     */
+    private int calculateDetailsCardBottom(MineBayListing listing) {
+        int contentH = 55; // item + padding from top of card (card starts at 68, item at 80)
+        contentH += 30; // seller
+        contentH += 15; // type
+        contentH += 20; // price header
+        contentH += 15; // total price line (or "no price")
+        if (listing.getMoneyPrice() > 0 && listing.getBaseMarketPrice() > 0) {
+            contentH += 27; // market base + margin
+        }
+        List<PriceItemEntry> pi = listing.getPriceItems();
+        if (pi != null && !pi.isEmpty()) {
+            contentH += 14; // "Required Items:" label
+            for (PriceItemEntry e : pi) {
+                if (e != null && !e.isEmpty()) contentH += 20;
+            }
+        }
+        return 68 + contentH + 8; // 8px bottom padding inside card
+    }
+
     private void initViewDetails(int centerX, int centerY) {
         if (selectedListingForDetails == null) {
             switchState(ScreenState.BROWSE);
@@ -754,7 +826,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 selectedListingForDetails = null;
                 switchState(ScreenState.BROWSE);
@@ -766,7 +838,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         boolean isOwnListing = minecraft != null && minecraft.player != null && 
             listing.getSellerId().equals(minecraft.player.getUUID());
         
-        int buttonY = centerY + 210;
+        // Place buttons just below the dynamic card
+        int cardBottomRel = calculateDetailsCardBottom(listing);
+        int buttonY = centerY + cardBottomRel + 5;
         
         if (!isOwnListing) {
             if (listing.getOfferType() == MineBayListing.OfferType.FIXED) {
@@ -823,6 +897,169 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         }
     }
     
+    private void initMyListings(int centerX, int centerY) {
+        // My Listings is handled by the browse screen filter, redirect there
+        showingMyListings = true;
+        filterMyListings();
+        switchState(ScreenState.BROWSE);
+    }
+    
+    private void initDeleteConfirm(int centerX, int centerY) {
+        if (listingToDelete == null) {
+            switchState(ScreenState.BROWSE);
+            return;
+        }
+        
+        // Create a centered confirmation dialog
+        int dialogWidth = 400;
+        int dialogHeight = 200;
+        int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
+        int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
+        
+        // Title label is rendered in render method
+        
+        // Item info label is rendered in render method
+        
+        // Confirm button (destructive action)
+        this.addRenderableWidget(new ModernButton(
+            dialogX + 30, dialogY + dialogHeight - 50, 160, 30,
+            Component.literal("✓ Yes, Delete"),
+            button -> confirmDelete(),
+            ModernButton.ButtonStyle.DANGER
+        ));
+        
+        // Cancel button
+        this.addRenderableWidget(new ModernButton(
+            dialogX + dialogWidth - 190, dialogY + dialogHeight - 50, 160, 30,
+            Component.literal("✗ Cancel"),
+            button -> cancelDelete(),
+            ModernButton.ButtonStyle.SECONDARY
+        ));
+    }
+    
+    private void initBuyConfirm(int centerX, int centerY) {
+        if (listingToBuy == null) {
+            switchState(ScreenState.BROWSE);
+            return;
+        }
+        
+        boolean hasMoneyPrice = listingToBuy.getMoneyPrice() > 0;
+        
+        // Calculate dynamic dialog height based on content
+        int dialogWidth = 400;
+        int dialogHeight = calculateBuyDialogHeight();
+        int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
+        int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
+        
+        // Calculate contentY offset for required items to position buttons after them
+        int requiredItemsHeight = getRequiredItemsHeight();
+        int btnBaseY = dialogY + (hasMoneyPrice ? 80 : 65) + requiredItemsHeight;
+        
+        if (buyPaymentMode == PaymentMode.NONE && hasMoneyPrice) {
+            // Payment method selection buttons
+            double balance = com.servermanagement.client.ClientBankData.getBalance();
+            boolean canPayWithBalance = balance >= listingToBuy.getMoneyPrice();
+            
+            int btnWidth = 170;
+            int btnY = btnBaseY + 30;
+            
+            // Pay with Balance button
+            ModernButton balanceBtn = new ModernButton(
+                dialogX + (dialogWidth / 2) - btnWidth - 5, btnY, btnWidth, 25,
+                Component.literal("Pay with Balance"),
+                button -> { buyPaymentMode = PaymentMode.BALANCE; this.rebuildWidgets(); },
+                canPayWithBalance ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
+            );
+            if (!canPayWithBalance) balanceBtn.active = false;
+            this.addRenderableWidget(balanceBtn);
+            
+            // Pay with Items button
+            this.addRenderableWidget(new ModernButton(
+                dialogX + (dialogWidth / 2) + 5, btnY, btnWidth, 25,
+                Component.literal("Pay with Items"),
+                button -> { buyPaymentMode = PaymentMode.ITEMS; selectedPaymentSlots.clear(); this.rebuildWidgets(); },
+                ModernButton.ButtonStyle.PRIMARY
+            ));
+            
+            // Cancel button
+            this.addRenderableWidget(new ModernButton(
+                dialogX + (dialogWidth - 100) / 2, dialogY + dialogHeight - 40, 100, 25,
+                Component.literal("Cancel"),
+                button -> cancelBuy(),
+                ModernButton.ButtonStyle.SECONDARY
+            ));
+        } else if (buyPaymentMode == PaymentMode.BALANCE || !hasMoneyPrice) {
+            // Balance payment - simple confirm/cancel
+            this.addRenderableWidget(new ModernButton(
+                dialogX + 30, dialogY + dialogHeight - 45, 160, 28,
+                Component.literal("Confirm Purchase"),
+                button -> confirmBuy(),
+                ModernButton.ButtonStyle.SUCCESS
+            ));
+            
+            this.addRenderableWidget(new ModernButton(
+                dialogX + dialogWidth - 190, dialogY + dialogHeight - 45, 160, 28,
+                Component.literal("Cancel"),
+                button -> cancelBuy(),
+                ModernButton.ButtonStyle.SECONDARY
+            ));
+        } else if (buyPaymentMode == PaymentMode.ITEMS) {
+            // Item payment - confirm only when total selected >= price
+            double selectedTotal = getSelectedItemsTotal();
+            boolean canConfirm = selectedTotal >= listingToBuy.getMoneyPrice();
+            
+            ModernButton confirmBtn = new ModernButton(
+                dialogX + 30, dialogY + dialogHeight - 45, 160, 28,
+                Component.literal("Confirm Purchase"),
+                button -> confirmBuy(),
+                canConfirm ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
+            );
+            if (!canConfirm) confirmBtn.active = false;
+            this.addRenderableWidget(confirmBtn);
+            
+            this.addRenderableWidget(new ModernButton(
+                dialogX + dialogWidth - 190, dialogY + dialogHeight - 45, 160, 28,
+                Component.literal("Cancel"),
+                button -> cancelBuy(),
+                ModernButton.ButtonStyle.SECONDARY
+            ));
+        }
+    }
+    
+    /**
+     * Calculate the height needed for required items in the buy dialog
+     */
+    private int getRequiredItemsHeight() {
+        if (listingToBuy == null) return 0;
+        List<PriceItemEntry> reqItems = listingToBuy.getPriceItems();
+        if (reqItems == null || reqItems.isEmpty()) return 0;
+        int height = 12; // "Required items:" label
+        for (PriceItemEntry entry : reqItems) {
+            if (entry != null && !entry.isEmpty()) height += 12;
+        }
+        return height + 5; // Extra padding
+    }
+    
+    /**
+     * Calculate dynamic dialog height based on required items and payment mode
+     */
+    private int calculateBuyDialogHeight() {
+        boolean hasMoneyPrice = listingToBuy != null && listingToBuy.getMoneyPrice() > 0;
+        int baseHeight = hasMoneyPrice ? 80 : 65; // Top section (title + item + price)
+        int reqHeight = getRequiredItemsHeight();
+        
+        if (buyPaymentMode == PaymentMode.ITEMS) {
+            // Need space for item grid (4 rows * 18px + header + buttons)
+            return baseHeight + reqHeight + 30 + 96 + 60;
+        } else if (buyPaymentMode == PaymentMode.NONE && hasMoneyPrice) {
+            // Payment selection: choose label + buttons + balance + cancel
+            return baseHeight + reqHeight + 30 + 25 + 30 + 40;
+        } else {
+            // Balance confirm or no money: confirm/cancel buttons
+            return baseHeight + reqHeight + 30 + 50;
+        }
+    }
+    
     private void initViewOffers(int centerX, int centerY) {
         if (selectedListingForOffers == null) {
             switchState(ScreenState.BROWSE);
@@ -832,7 +1069,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button (always available, even while loading)
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("\u25C0 Back"),
+            Component.literal("← Back"),
             button -> {
                 selectedListingForOffers = null;
                 cachedOffers.clear();
@@ -863,7 +1100,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (offerScrollOffset > 0) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 50, navY, 90, 18,
-                Component.literal("\u25C4 Previous"),
+                Component.literal("◀ Previous"),
                 button -> { offerScrollOffset--; this.rebuildWidgets(); },
                 ModernButton.ButtonStyle.SECONDARY
             ));
@@ -871,7 +1108,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (offerScrollOffset + OFFERS_PER_PAGE < cachedOffers.size()) {
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 140, navY, 90, 18,
-                Component.literal("Next \u25BA"),
+                Component.literal("Next ▶"),
                 button -> { offerScrollOffset++; this.rebuildWidgets(); },
                 ModernButton.ButtonStyle.SECONDARY
             ));
@@ -885,7 +1122,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 130, cardY + 10, 100, 20,
-                Component.literal("\u2714 Accept"),
+                Component.literal("✓ Accept"),
                 button -> {
                     ModNetworking.sendToServer(
                         new com.servermanagement.network.packet.minebay.AcceptOfferPacket(
@@ -900,7 +1137,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 130, cardY + 35, 100, 20,
-                Component.literal("\u2718 Reject"),
+                Component.literal("✗ Reject"),
                 button -> {
                     ModNetworking.sendToServer(
                         new com.servermanagement.network.packet.minebay.RejectOfferPacket(
@@ -913,74 +1150,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 ModernButton.ButtonStyle.DANGER
             ));
         }
-    }
-    
-    private void initMyListings(int centerX, int centerY) {
-        // My Listings is handled by the browse screen filter, redirect there
-        showingMyListings = true;
-        filterMyListings();
-        switchState(ScreenState.BROWSE);
-    }
-    
-    private void initDeleteConfirm(int centerX, int centerY) {
-        if (listingToDelete == null) {
-            switchState(ScreenState.BROWSE);
-            return;
-        }
-        
-        // Create a centered confirmation dialog
-        int dialogWidth = 400;
-        int dialogHeight = 200;
-        int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
-        int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
-        
-        // Title label is rendered in render method
-        
-        // Item info label is rendered in render method
-        
-        // Confirm button (destructive action)
-        this.addRenderableWidget(new ModernButton(
-            dialogX + 30, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("Ô£ô Yes, Delete"),
-            button -> confirmDelete(),
-            ModernButton.ButtonStyle.DANGER
-        ));
-        
-        // Cancel button
-        this.addRenderableWidget(new ModernButton(
-            dialogX + dialogWidth - 190, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("Ô£ù Cancel"),
-            button -> cancelDelete(),
-            ModernButton.ButtonStyle.SECONDARY
-        ));
-    }
-    
-    private void initBuyConfirm(int centerX, int centerY) {
-        if (listingToBuy == null) {
-            switchState(ScreenState.BROWSE);
-            return;
-        }
-        
-        int dialogWidth = 400;
-        int dialogHeight = 200;
-        int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
-        int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
-        
-        // Confirm button
-        this.addRenderableWidget(new ModernButton(
-            dialogX + 30, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("Ô£ô Confirm Purchase"),
-            button -> confirmBuy(),
-            ModernButton.ButtonStyle.SUCCESS
-        ));
-        
-        // Cancel button
-        this.addRenderableWidget(new ModernButton(
-            dialogX + dialogWidth - 190, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("Ô£ù Cancel"),
-            button -> cancelBuy(),
-            ModernButton.ButtonStyle.SECONDARY
-        ));
     }
     
     private void renderViewOffers(GuiGraphics guiGraphics, int centerX, int centerY) {
@@ -1039,7 +1208,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             guiGraphics.fill(cardX + 1, cardY + 1, cardRight - 1, cardY + 71, 0xFF1E1E1E);
             
             // Buyer name
-            guiGraphics.drawString(this.font, Component.literal("From: \u00A7e" + offer.getBuyerName()),
+            guiGraphics.drawString(this.font, Component.literal("From: §e" + offer.getBuyerName()),
                 cardX + 8, cardY + 5, 0xFFFFFF, true);
             
             // Money offer
@@ -1101,13 +1270,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             return;
         }
         
-        // Collect non-empty offer items
-        List<ItemStack> itemOffers = new ArrayList<>();
-        for (ItemStack stack : offerItems) {
-            if (!stack.isEmpty()) {
-                itemOffers.add(stack.copy());
-            }
-        }
+        // Collect non-empty offer items from the container slots
+        List<ItemStack> itemOffers = this.menu.getOfferItems();
         
         // Validate offer
         if (offerMoney <= 0 && itemOffers.isEmpty()) {
@@ -1115,7 +1279,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             return;
         }
         
-        // Send offer packet
+        // Send offer packet — items will be taken from inventory by server
         com.servermanagement.network.ModNetworking.sendToServer(
             new com.servermanagement.network.packet.minebay.CreateOfferPacket(
                 selectedListingForOffer.getListingId(),
@@ -1123,6 +1287,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 itemOffers
             )
         );
+        
+        // Mark offer items as submitted (don't return on close)
+        this.menu.clearOfferItems();
         
         // Show feedback and return to browse
         selectedListingForOffer = null;
@@ -1247,29 +1414,28 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 46, 0xE0202020);
         guiGraphics.fill(centerX, centerY + 45, centerX + this.imageWidth, centerY + 46, 0xFF333333);
         
-        // Content area - constrained bounds
-        int contentAreaHeight = menu.isInventoryVisible() ? 165 : 340;
+        // Content area - constrained bounds (extends to just above inventory separator at Y=218)
+        int contentAreaHeight = menu.isInventoryVisible() ? 170 : (this.imageHeight - 60);
         guiGraphics.fill(centerX + 10, centerY + 46, centerX + this.imageWidth - 10, 
             centerY + 46 + contentAreaHeight, 0xE01A1A1A);
         
         // Inventory area background (only when inventory is visible)
-        if (menu.isInventoryVisible()) {
-            guiGraphics.fill(centerX + 210, centerY + 220, centerX + this.imageWidth - 210, 
-                centerY + this.imageHeight - 5, 0xE0202020);
+        if (menu.isInventoryVisible() && this.imageWidth > 420) {
+            int invMargin = Math.max(10, (this.imageWidth - 180) / 2);
+            // Tight fit: inventory slots at Y=230 (3 rows * 18 = 54) + 4px gap + hotbar (18) = Y=306 + 4px padding
+            int invBottom = centerY + 230 + 54 + 4 + 18 + 4;
+            guiGraphics.fill(centerX + invMargin, centerY + 220, centerX + this.imageWidth - invMargin, 
+                invBottom, 0xE0202020);
             
             // Inventory border
-            guiGraphics.fill(centerX + 208, centerY + 218, centerX + this.imageWidth - 208, centerY + 220, 0xFF555555);
+            guiGraphics.fill(centerX + invMargin - 2, centerY + 218, centerX + this.imageWidth - invMargin + 2, centerY + 220, 0xFF555555);
         }
     }
     
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Only draw the inventory label when inventory is visible, centered above inventory area
+        // Only draw inventory value when inventory is visible (no vanilla "Inventory" label)
         if (menu.isInventoryVisible()) {
-            int labelX = (this.imageWidth - this.font.width(this.playerInventoryTitle)) / 2;
-            guiGraphics.drawString(this.font, this.playerInventoryTitle, labelX, this.inventoryLabelY, 0xAAAAAA, true);
-            
-            // Total inventory value display
             if (minecraft != null && minecraft.player != null) {
                 double totalValue = 0.0;
                 for (ItemStack invStack : minecraft.player.getInventory().items) {
@@ -1282,12 +1448,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 int valueW = this.font.width(valueStr);
                 int valueX = (this.imageWidth - valueW) / 2;
                 
-                // Background pill behind the value text
-                guiGraphics.fill(valueX - 4, this.inventoryLabelY + 10, valueX + valueW + 4, this.inventoryLabelY + 22, 0xC0000000);
-                guiGraphics.fill(valueX - 4, this.inventoryLabelY + 10, valueX + valueW + 4, this.inventoryLabelY + 11, 0xFF555555);
-                
                 guiGraphics.drawString(this.font, Component.literal(valueStr),
-                    valueX, this.inventoryLabelY + 12, 0x55FFFF, true);
+                    valueX, this.inventoryLabelY, 0x55FFFF, true);
             }
         }
         // Never draw the title label (we render our own)
@@ -1320,7 +1482,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         }
         
         // Enable scissor for content area to prevent overflow
-        int contentHeight = menu.isInventoryVisible() ? 165 : 340;
+        int contentHeight = menu.isInventoryVisible() ? 165 : (this.imageHeight - 60);
         guiGraphics.enableScissor(
             centerX + 10,
             centerY + 46,
@@ -1386,29 +1548,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     }
     
     @Override
-    protected void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
-        if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
-            ItemStack stack = this.hoveredSlot.getItem();
-            List<Component> tooltip = this.getTooltipFromContainerItem(stack);
-            
-            // Add market price info to tooltip
-            double basePrice = com.servermanagement.client.ClientMarketData.getBasePrice(stack);
-            double stackPrice = com.servermanagement.client.ClientMarketData.getStackPrice(stack);
-            
-            tooltip.add(Component.empty());
-            tooltip.add(Component.literal("\u00A76\u2022 Market Price: \u00A7a$" + String.format("%.2f", basePrice) + " each"));
-            if (stack.getCount() > 1) {
-                tooltip.add(Component.literal("\u00A76\u2022 Stack Value: \u00A7a$" + String.format("%.2f", stackPrice) + 
-                    " \u00A77(" + stack.getCount() + " items)"));
-            }
-            
-            guiGraphics.renderTooltip(this.font, tooltip, stack.getTooltipImage(), x, y);
-        } else {
-            super.renderTooltip(guiGraphics, x, y);
-        }
-    }
-    
-    @Override
     public void containerTick() {
         super.containerTick();
         
@@ -1446,13 +1585,13 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             guiGraphics.fill(boxX + 1, boxY + 1, boxX + 23, boxY + 19, 0xFF333333);
             guiGraphics.fill(boxX + 1, boxY + 8, boxX + 23, boxY + 10, 0xFF555555);
             
-            guiGraphics.drawString(this.font, 
-                Component.literal("No Active Listings"),
-                centerX + (this.imageWidth / 2) - 60, centerY + 115, 0xFFFFFF, true);
+            Component noListingsText = Component.literal("No Active Listings");
+            guiGraphics.drawCenteredString(this.font, noListingsText,
+                centerX + (this.imageWidth / 2), centerY + 115, 0xFFFFFF);
             
-            guiGraphics.drawString(this.font, 
-                Component.literal("Create a listing to start trading!"),
-                centerX + (this.imageWidth / 2) - 80, centerY + 130, 0xBBBBBB, true);
+            Component createHintText = Component.literal("Create a listing to start trading!");
+            guiGraphics.drawCenteredString(this.font, createHintText,
+                centerX + (this.imageWidth / 2), centerY + 130, 0xBBBBBB);
         } else {
             // Render listing cards
             for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
@@ -1503,15 +1642,15 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 // Money price
                 if (listing.getMoneyPrice() > 0) {
                     guiGraphics.drawString(this.font, 
-                        Component.literal("$" + String.format("%.0f", listing.getMoneyPrice())),
+                        Component.literal("$" + String.format(Locale.US, "%.2f", listing.getMoneyPrice())),
                         priceX, priceY, 0x55FF55, true);
                     priceY += 11;
                     
                     // Show margin indicator if market pricing data is available
                     if (listing.getBaseMarketPrice() > 0) {
                         String marginStr = listing.getMarginPercent() >= 0 
-                            ? "+" + String.format("%.0f", listing.getMarginPercent()) + "%" 
-                            : String.format("%.0f", listing.getMarginPercent()) + "%";
+                            ? "+" + String.format(Locale.US, "%.0f", listing.getMarginPercent()) + "%" 
+                            : String.format(Locale.US, "%.0f", listing.getMarginPercent()) + "%";
                         int marginColor = listing.getMarginPercent() >= 0 ? 0x55FFFF : 0xFFAA00;
                         guiGraphics.drawString(this.font,
                             Component.literal(marginStr),
@@ -1569,8 +1708,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
             
             // Page indicator (always visible, below cards)
-            int currentPage = (scrollOffset / LISTINGS_PER_PAGE) + 1;
-            int totalPages = Math.max(1, (int) Math.ceil((double) listings.size() / LISTINGS_PER_PAGE));
+            int currentPage = scrollOffset + 1;
+            int totalPages = Math.max(1, listings.size() - LISTINGS_PER_PAGE + 1);
             String pageStr = "Page " + currentPage + " / " + totalPages;
             int pageW = this.font.width(pageStr);
             guiGraphics.drawString(this.font, 
@@ -1591,9 +1730,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             Component.literal("Place or drag an item into the slot below:"),
             centerX + 30, centerY + 68, 0xFFFFFF, true);
         
-        // Offering slot is rendered by the menu system at (300, 85)
-        int slotX = centerX + 300 - 10;
-        int slotY = centerY + 85 - 1;
+        // Offering slot rendered by menu system - use actual slot position
+        int slotX = centerX + this.menu.getOfferingSlotX();
+        int slotY = centerY + this.menu.getOfferingSlotY();
         
         ItemStack offeringItem = this.menu.getOfferingItem();
         
@@ -1601,7 +1740,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             // Empty slot - draw animated highlight
             int alpha = (int)((Math.sin(System.currentTimeMillis() / 300.0) + 1) * 127) + 128;
             int color = (alpha << 24) | 0xFFD700;
-            guiGraphics.fill(slotX - 2, slotY - 2, slotX + 20, slotY + 20, color);
+            guiGraphics.fill(slotX - 2, slotY - 2, slotX + 18, slotY + 18, color);
             
             Component placeHint = Component.literal(">> Place item here");
             int hintW = this.font.width(placeHint);
@@ -1609,7 +1748,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 slotX + 9 - hintW / 2, slotY + 25, 0xFFAA00, true);
         } else {
             // Item placed - show success
-            guiGraphics.fill(slotX - 2, slotY - 2, slotX + 20, slotY + 20, 0xFF55FF55);
+            guiGraphics.fill(slotX - 2, slotY - 2, slotX + 18, slotY + 18, 0xFF55FF55);
             
             String itemNameStr = offeringItem.getHoverName().getString();
             Component itemText = Component.literal(itemNameStr);
@@ -1640,15 +1779,20 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             Component.literal("Price ($):"),
             formX, formY - 12, 0xFFFFFF, true);
         
-        // Margin % label
+        // Margin % label (positioned relative to imageWidth)
+        int availWidth = this.imageWidth - 30;
+        int priceW = (int)(availWidth * 0.40);
+        int marginX = formX + priceW + 10;
         guiGraphics.drawString(this.font, 
             Component.literal("Margin %:"),
-            formX + 130, formY - 12, 0xFFFFFF, true);
+            marginX, formY - 12, 0xFFFFFF, true);
         
         // Offer type label
+        int marginW = (int)(availWidth * 0.20);
+        int typeX = marginX + marginW + 10;
         guiGraphics.drawString(this.font, 
             Component.literal("Type:"),
-            formX + 200, formY - 12, 0xFFFFFF, true);
+            typeX, formY - 12, 0xFFFFFF, true);
         
         // Show market pricing info (item is always placed at this step)
         if (!placedItem.isEmpty()) {
@@ -1659,32 +1803,42 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
             double finalPrice = com.servermanagement.client.ClientMarketData.calculateFinalPrice(basePrice, margin);
             
-            // Item being listed preview (with count)
+            // Market base price (left side)
+            guiGraphics.drawString(this.font,
+                Component.literal("Market Base: $" + String.format(Locale.US, "%.2f", basePrice)),
+                formX, formY + 22, 0x55FFFF, true);
+            
+            // Final price preview (right-aligned)
+            String finalStr = "Final Price: $" + String.format(Locale.US, "%.2f", finalPrice);
+            int finalColor = margin >= 0 ? 0x55FF55 : 0xFFAA00;
+            int finalW = this.font.width(finalStr);
+            guiGraphics.drawString(this.font,
+                Component.literal(finalStr),
+                centerX + this.imageWidth - 15 - finalW, formY + 22, finalColor, true);
+            
+            // Listing preview (item icon + truncated name below market info)
             guiGraphics.drawString(this.font,
                 Component.literal("Listing: "),
-                formX + 320, formY - 12, 0x999999, true);
-            guiGraphics.renderItem(placedItem, formX + 370, formY - 16);
+                formX, formY + 34, 0x999999, true);
+            guiGraphics.renderItem(placedItem, formX + 50, formY + 30);
             String listingLabel = placedItem.getCount() > 1 
                 ? placedItem.getCount() + "x " + placedItem.getHoverName().getString()
                 : placedItem.getHoverName().getString();
+            // Truncate to fit available space
+            int maxNameWidth = this.imageWidth - 100;
+            if (this.font.width(listingLabel) > maxNameWidth) {
+                while (this.font.width(listingLabel + "...") > maxNameWidth && listingLabel.length() > 3) {
+                    listingLabel = listingLabel.substring(0, listingLabel.length() - 1);
+                }
+                listingLabel += "...";
+            }
             guiGraphics.drawString(this.font,
                 Component.literal(listingLabel),
-                formX + 390, formY - 12, 0xFFFFFF, true);
-            
-            // Market base price
-            guiGraphics.drawString(this.font,
-                Component.literal("Market Base: $" + String.format("%.2f", basePrice)),
-                formX, formY + 22, 0x55FFFF, true);
-            
-            // Final price preview
-            int finalColor = margin >= 0 ? 0x55FF55 : 0xFFAA00;
-            guiGraphics.drawString(this.font,
-                Component.literal("Final Price: $" + String.format("%.2f", finalPrice)),
-                formX + 160, formY + 22, finalColor, true);
+                formX + 70, formY + 34, 0xFFFFFF, true);
         }
         
-        // Price Items section header
-        int priceItemY = formY + 38; // Must match initCreateStep2 and mouseClicked
+        // Price Items section header (below market info with proper spacing)
+        int priceItemY = formY + 65; // Must match initCreateStep2 and mouseClicked
         guiGraphics.drawString(this.font, 
             Component.literal("Price Items (buyer provides):"),
             formX, priceItemY - 13, 0xFFAA00, true);
@@ -1713,7 +1867,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                     slotX + 145, slotY + 5, 0xFFFFFF, true);
             } else {
                 guiGraphics.drawString(this.font, 
-                    Component.literal("Click to select ->"),
+                    Component.literal("\u2190 Click to pick"),
                     slotX + 145, slotY + 5, 0x888888, true);
             }
         }
@@ -1805,62 +1959,87 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // Warning at bottom of card
         guiGraphics.drawString(this.font, 
-            Component.literal("ÔÜá Item cannot be retrieved until sold or cancelled."),
+            Component.literal("⚠ Item cannot be retrieved until sold or cancelled."),
             infoX, centerY + 166, 0xFF5555, true);
     }
     
     private void renderMakeOffer(GuiGraphics guiGraphics, int centerX, int centerY) {
         if (selectedListingForOffer == null) return;
         
-        int formY = centerY + 45;
+        int formX = centerX + 15;
+        int formY = centerY + 50;
         
-        // Section header with underline (inside scissor area)
+        // Section header with underline
         Component offerTitle = Component.literal("Make an Offer");
         int otw = this.font.width(offerTitle);
         guiGraphics.drawString(this.font, offerTitle,
-            centerX + 15, centerY + 50, 0xFFD700, true);
-        guiGraphics.fill(centerX + 15, centerY + 61, centerX + 15 + otw, centerY + 62, 0x60FFD700);
+            formX, formY, 0xFFD700, true);
+        guiGraphics.fill(formX, formY + 11, formX + otw, formY + 12, 0x60FFD700);
         
-        // Item being offered on (compact single line)
+        // Item being offered on
+        String itemName = selectedListingForOffer.getItemForSale().getHoverName().getString();
+        int maxItemW = this.imageWidth - 120;
+        if (this.font.width(itemName) > maxItemW) {
+            while (this.font.width(itemName + "...") > maxItemW && itemName.length() > 3) {
+                itemName = itemName.substring(0, itemName.length() - 1);
+            }
+            itemName += "...";
+        }
         guiGraphics.drawString(this.font, 
-            Component.literal("Item: "),
-            centerX + 15, centerY + 63, 0x999999, true);
-        guiGraphics.drawString(this.font, selectedListingForOffer.getItemForSale().getHoverName(),
-            centerX + 50, centerY + 63, 0xFFFFFF, true);
-        String askingStr = " | Asking: $" + String.format("%.0f", selectedListingForOffer.getMoneyPrice());
-        int nameEnd = centerX + 50 + this.font.width(selectedListingForOffer.getItemForSale().getHoverName());
+            Component.literal("Item: " + itemName),
+            formX, formY + 16, 0xCCCCCC, true);
+        
+        // Asking price and market value
+        String askingStr = "Asking: $" + String.format(Locale.US, "%.2f", selectedListingForOffer.getMoneyPrice());
         guiGraphics.drawString(this.font, Component.literal(askingStr),
-            nameEnd, centerY + 63, 0x999999, true);
+            formX, formY + 28, 0x999999, true);
+        
+        double marketPrice = com.servermanagement.client.ClientMarketData.getStackPrice(
+            selectedListingForOffer.getItemForSale());
+        if (marketPrice > 0) {
+            String marketStr = "Market Value: $" + String.format(Locale.US, "%.2f", marketPrice);
+            guiGraphics.drawString(this.font, Component.literal(marketStr),
+                formX + this.font.width(askingStr) + 15, formY + 28, 0x55AAFF, true);
+        }
         
         // Money offer label
         guiGraphics.drawString(this.font, 
             Component.literal("Your Money Offer:"),
-            centerX + 15, formY + 15, 0xFFFFFF, true);
+            formX, formY + 43, 0xFFFFFF, true);
         
-        // Item offer labels and slots
+        // Items to Offer label
         guiGraphics.drawString(this.font, 
             Component.literal("Items to Offer (optional):"),
-            centerX + 15, formY + 65, 0xFFFFFF, true);
+            formX, formY + 82, 0xFFFFFF, true);
         
+        // Draw slot backgrounds for the 3 offer slots (container-backed)
         for (int i = 0; i < 3; i++) {
-            int slotX = centerX + 15 + (i * 80);
-            int slotY = formY + 80;
+            int slotX = centerX + this.menu.getOfferSlotX(i);
+            int slotY = centerY + this.menu.getOfferSlotY(i);
             
-            // Draw slot background
+            // Slot border and background
             guiGraphics.fill(slotX - 1, slotY - 1, slotX + 17, slotY + 17, 0xFF8B8B8B);
             guiGraphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0xFF373737);
-            
-            // Render item if present
-            if (!offerItems[i].isEmpty()) {
-                guiGraphics.renderItem(offerItems[i], slotX, slotY);
-                guiGraphics.renderItemDecorations(this.font, offerItems[i], slotX, slotY);
-            }
         }
         
-        // Instructions
+        // Calculate total offer value
+        double totalOfferValue = offerMoney;
+        java.util.List<ItemStack> offerItemsList = this.menu.getOfferItems();
+        for (ItemStack stack : offerItemsList) {
+            totalOfferValue += com.servermanagement.client.ClientMarketData.getStackPrice(stack);
+        }
+        
+        // Total offer value display (below the offer slots)
+        int valueY = formY + 120;
+        String totalStr = String.format("Total Offer Value: $%.2f", totalOfferValue);
+        int totalColor = totalOfferValue >= selectedListingForOffer.getMoneyPrice() ? 0x55FF55 : 0xFFAA00;
+        guiGraphics.drawString(this.font, Component.literal(totalStr),
+            formX, valueY, totalColor, true);
+        
+        // Help text
         guiGraphics.drawString(this.font, 
-            Component.literal("Click an item slot, then click an item from your inventory"),
-            centerX + 15, formY + 140, 0xAAAAAA, true);
+            Component.literal("Place items from your inventory into the slots above"),
+            formX, valueY + 14, 0x888888, true);
     }
     
     private void renderViewDetails(GuiGraphics guiGraphics, int centerX, int centerY) {
@@ -1876,9 +2055,13 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         guiGraphics.fill(centerX + (this.imageWidth - dtw) / 2, centerY + 61, 
             centerX + (this.imageWidth + dtw) / 2, centerY + 62, 0x60FFD700);
         
+        // Dynamic card height
+        int cardBottomRel = calculateDetailsCardBottom(listing);
+        int cardBottom = centerY + cardBottomRel;
+        
         // Details card background
-        guiGraphics.fill(centerX + 30, centerY + 68, centerX + this.imageWidth - 30, centerY + 210, 0xFF333333);
-        guiGraphics.fill(centerX + 31, centerY + 69, centerX + this.imageWidth - 31, centerY + 209, 0xFF1E1E1E);
+        guiGraphics.fill(centerX + 30, centerY + 68, centerX + this.imageWidth - 30, cardBottom, 0xFF333333);
+        guiGraphics.fill(centerX + 31, centerY + 69, centerX + this.imageWidth - 31, cardBottom - 1, 0xFF1E1E1E);
         
         // Item display
         ItemStack itemForSale = listing.getItemForSale();
@@ -1919,26 +2102,26 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Price section header
         infoY += 20;
         guiGraphics.drawString(this.font, 
-            Component.literal("ÔÇö Price ÔÇö"),
+            Component.literal("— Price —"),
             itemX, infoY, 0xFFD700, true);
         
         // Money price
         infoY += 15;
         if (listing.getMoneyPrice() > 0) {
             guiGraphics.drawString(this.font, 
-                Component.literal("Total: $" + String.format("%.2f", listing.getMoneyPrice())),
+                Component.literal("Total: $" + String.format(Locale.US, "%.2f", listing.getMoneyPrice())),
                 itemX, infoY, 0x55FF55, true);
             infoY += 15;
             
             // Show market pricing breakdown if available
             if (listing.getBaseMarketPrice() > 0) {
                 guiGraphics.drawString(this.font,
-                    Component.literal("Market Base: $" + String.format("%.2f", listing.getBaseMarketPrice())),
+                    Component.literal("Market Base: $" + String.format(Locale.US, "%.2f", listing.getBaseMarketPrice())),
                     itemX, infoY, 0x55FFFF, true);
                 infoY += 12;
                 String marginStr = listing.getMarginPercent() >= 0 
-                    ? "+" + String.format("%.0f", listing.getMarginPercent()) + "%" 
-                    : String.format("%.0f", listing.getMarginPercent()) + "%";
+                    ? "+" + String.format(Locale.US, "%.0f", listing.getMarginPercent()) + "%" 
+                    : String.format(Locale.US, "%.0f", listing.getMarginPercent()) + "%";
                 int marginColor = listing.getMarginPercent() >= 0 ? 0x55FF55 : 0xFFAA00;
                 guiGraphics.drawString(this.font,
                     Component.literal("Seller Margin: " + marginStr),
@@ -2020,7 +2203,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             0xFFFF5555); // Red border right
         
         // Draw title
-        Component titleText = Component.literal("ÔÜá Delete Listing?");
+        Component titleText = Component.literal("⚠ Delete Listing?");
         int titleWidth = this.font.width(titleText);
         guiGraphics.drawString(this.font, titleText,
             dialogX + (dialogWidth - titleWidth) / 2,
@@ -2062,8 +2245,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     private void renderBuyConfirm(GuiGraphics guiGraphics, int centerX, int centerY) {
         if (listingToBuy == null) return;
         
+        boolean hasMoneyPrice = listingToBuy.getMoneyPrice() > 0;
         int dialogWidth = 400;
-        int dialogHeight = 200;
+        int dialogHeight = calculateBuyDialogHeight();
         int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
         int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
         
@@ -2086,91 +2270,162 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Title
         Component title = Component.literal("Confirm Purchase");
         int titleW = this.font.width(title);
-        guiGraphics.drawString(this.font, title, dialogX + (dialogWidth - titleW) / 2, dialogY + 20, 0x55FF55, true);
+        guiGraphics.drawString(this.font, title, dialogX + (dialogWidth - titleW) / 2, dialogY + 12, 0x55FF55, true);
         
         // Item info - centered icon with name below
         ItemStack itemForSale = listingToBuy.getItemForSale();
         if (!itemForSale.isEmpty()) {
             int iconX = dialogX + dialogWidth / 2 - 8;
-            guiGraphics.renderItem(itemForSale, iconX, dialogY + 45);
-            guiGraphics.renderItemDecorations(this.font, itemForSale, iconX, dialogY + 45);
+            guiGraphics.renderItem(itemForSale, iconX, dialogY + 30);
+            guiGraphics.renderItemDecorations(this.font, itemForSale, iconX, dialogY + 30);
             
             Component itemName = itemForSale.getHoverName();
             int nameW = this.font.width(itemName);
             guiGraphics.drawString(this.font, itemName, 
-                dialogX + (dialogWidth - nameW) / 2, dialogY + 66, 0xFFFFFF, true);
+                dialogX + (dialogWidth - nameW) / 2, dialogY + 50, 0xFFFFFF, true);
         }
         
-        // Price info centered below item
-        String priceText = "Price: $" + String.format("%.2f", listingToBuy.getMoneyPrice());
-        Component priceComp = Component.literal(priceText);
-        int priceW = this.font.width(priceComp);
-        guiGraphics.drawString(this.font, priceComp, dialogX + (dialogWidth - priceW) / 2, dialogY + 82, 0x55FF55, true);
-        
-        // Smart payment breakdown
-        double totalPrice = listingToBuy.getMoneyPrice();
-        double balance = com.servermanagement.client.ClientBankData.getBalance();
-        
-        if (totalPrice > 0 && minecraft != null && minecraft.player != null) {
-            // Calculate what items from inventory could cover
-            com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
-                com.servermanagement.features.economy.MarketPricingEngine.getInstance();
-            double itemValueInInventory = 0.0;
-            for (net.minecraft.world.item.ItemStack invStack : minecraft.player.getInventory().items) {
-                if (!invStack.isEmpty()) {
-                    itemValueInInventory += com.servermanagement.client.ClientMarketData.getStackPrice(invStack);
-                }
-            }
-            
-            double itemPayment = Math.min(itemValueInInventory, totalPrice);
-            double bankPayment = Math.max(0, totalPrice - itemPayment);
-            
-            int payY = dialogY + 95;
-            guiGraphics.drawString(this.font, Component.literal("ÔÇö Payment Breakdown ÔÇö"),
-                dialogX + (dialogWidth - this.font.width("ÔÇö Payment Breakdown ÔÇö")) / 2, payY, 0xFFD700, true);
-            payY += 13;
-            guiGraphics.drawString(this.font, 
-                Component.literal("Items from inventory: $" + String.format("%.2f", itemPayment)),
-                dialogX + 80, payY, 0x55FFFF, true);
-            payY += 12;
-            guiGraphics.drawString(this.font, 
-                Component.literal("Bank balance: $" + String.format("%.2f", bankPayment)),
-                dialogX + 80, payY, 0xFFAA00, true);
+        // Price info centered
+        if (hasMoneyPrice) {
+            String priceText = "Price: $" + String.format(Locale.US, "%.2f", listingToBuy.getMoneyPrice());
+            Component priceComp = Component.literal(priceText);
+            int priceW = this.font.width(priceComp);
+            guiGraphics.drawString(this.font, priceComp, dialogX + (dialogWidth - priceW) / 2, dialogY + 65, 0x55FF55, true);
         }
         
-        // Required items
+        // Required items (always shown regardless of payment mode)
         List<PriceItemEntry> reqItems = listingToBuy.getPriceItems();
+        int contentY = dialogY + (hasMoneyPrice ? 80 : 65);
         if (reqItems != null && !reqItems.isEmpty()) {
-            int reqY = dialogY + 98;
-            guiGraphics.drawString(this.font, Component.literal("Also requires:"), 
-                dialogX + 50, reqY, 0xAAAAAA, true);
-            reqY += 12;
+            Component reqLabel = Component.literal("Required items:");
+            int reqLabelW = this.font.width(reqLabel);
+            guiGraphics.drawString(this.font, reqLabel, 
+                dialogX + (dialogWidth - reqLabelW) / 2, contentY, 0xAAAAAA, true);
+            contentY += 12;
             for (PriceItemEntry entry : reqItems) {
                 if (entry != null && !entry.isEmpty()) {
                     String text = entry.getAmount() + (entry.isUseStacks() ? " stacks of " : "x ") + 
                         entry.getItemStack().getHoverName().getString();
-                    guiGraphics.drawString(this.font, Component.literal("  ÔÇó " + text), 
-                        dialogX + 55, reqY, 0xFFFFFF, true);
-                    reqY += 12;
+                    Component reqComp = Component.literal(text);
+                    int reqW = this.font.width(reqComp);
+                    guiGraphics.drawString(this.font, reqComp, 
+                        dialogX + (dialogWidth - reqW) / 2, contentY, 0xFFFFFF, true);
+                    contentY += 12;
                 }
             }
         }
         
-        // Balance check (smart payment: items in inventory + bank balance)
-        double balanceCheck = com.servermanagement.client.ClientBankData.getBalance();
-        double invValue = 0.0;
-        if (minecraft != null && minecraft.player != null) {
-            for (net.minecraft.world.item.ItemStack invStack : minecraft.player.getInventory().items) {
-                if (!invStack.isEmpty()) {
-                    invValue += com.servermanagement.client.ClientMarketData.getStackPrice(invStack);
+        if (buyPaymentMode == PaymentMode.NONE && hasMoneyPrice) {
+            // Show payment method selection prompt - position after required items
+            contentY += 10;
+            Component chooseText = Component.literal("Choose payment method:");
+            int chooseW = this.font.width(chooseText);
+            guiGraphics.drawString(this.font, chooseText, 
+                dialogX + (dialogWidth - chooseW) / 2, contentY, 0xFFD700, true);
+            
+            // Show balance info below buttons
+            double balance = com.servermanagement.client.ClientBankData.getBalance();
+            Component balInfo = Component.literal("Balance: $" + String.format(Locale.US, "%.2f", balance));
+            int balW = this.font.width(balInfo);
+            guiGraphics.drawString(this.font, balInfo, 
+                dialogX + (dialogWidth - balW) / 2, contentY + 45, 0xAAAAAA, true);
+        } else if (buyPaymentMode == PaymentMode.BALANCE) {
+            // Balance payment confirmation - position after required items
+            contentY += 10;
+            double balance = com.servermanagement.client.ClientBankData.getBalance();
+            Component payText = Component.literal("Paying $" + String.format(Locale.US, "%.2f", listingToBuy.getMoneyPrice()) + " from bank balance");
+            int payW = this.font.width(payText);
+            guiGraphics.drawString(this.font, payText, dialogX + (dialogWidth - payW) / 2, contentY, 0x55FFFF, true);
+            
+            Component balText = Component.literal("Remaining balance: $" + String.format(Locale.US, "%.2f", balance - listingToBuy.getMoneyPrice()));
+            int balW = this.font.width(balText);
+            guiGraphics.drawString(this.font, balText, dialogX + (dialogWidth - balW) / 2, contentY + 15, 0xAAAAAA, true);
+        } else if (buyPaymentMode == PaymentMode.ITEMS) {
+            // Item payment - render inventory grid for selection
+            renderItemPaymentGrid(guiGraphics, dialogX, dialogY, dialogWidth, dialogHeight);
+        } else if (!hasMoneyPrice) {
+            // No money price - just item requirements 
+            Component freeText = Component.literal("No money cost - only required items above");
+            int freeW = this.font.width(freeText);
+            guiGraphics.drawString(this.font, freeText, dialogX + (dialogWidth - freeW) / 2, contentY + 5, 0xAAAAAA, true);
+        }
+    }
+    
+    private void renderItemPaymentGrid(GuiGraphics guiGraphics, int dialogX, int dialogY, int dialogWidth, int dialogHeight) {
+        if (minecraft == null || minecraft.player == null) return;
+        
+        Component selectText = Component.literal("Click items to select for payment:");
+        int selectW = this.font.width(selectText);
+        guiGraphics.drawString(this.font, selectText, dialogX + (dialogWidth - selectW) / 2, dialogY + 82, 0xFFD700, true);
+        
+        // Render 9x4 grid of main inventory (slots 0-35)
+        int gridCols = 9;
+        int gridRows = 4;
+        int slotSize = 18;
+        int gridWidth = gridCols * slotSize;
+        int gridStartX = dialogX + (dialogWidth - gridWidth) / 2;
+        int gridStartY = dialogY + 96;
+        
+        net.minecraft.world.entity.player.Inventory inv = minecraft.player.getInventory();
+        
+        for (int row = 0; row < gridRows; row++) {
+            for (int col = 0; col < gridCols; col++) {
+                // Hotbar (0-8) at bottom row, main inv (9-35) at top 3 rows
+                int slotIdx;
+                if (row < 3) {
+                    slotIdx = 9 + (row * 9) + col; // Main inventory rows
+                } else {
+                    slotIdx = col; // Hotbar
+                }
+                
+                int slotX = gridStartX + col * slotSize;
+                int slotY = gridStartY + row * slotSize;
+                
+                // Slot background
+                boolean isSelected = selectedPaymentSlots.contains(slotIdx);
+                guiGraphics.fill(slotX, slotY, slotX + slotSize - 1, slotY + slotSize - 1, 
+                    isSelected ? 0xFF335533 : 0xFF1A1A2E);
+                
+                // Selected highlight border
+                if (isSelected) {
+                    guiGraphics.fill(slotX - 1, slotY - 1, slotX + slotSize, slotY, 0xFF55FF55);
+                    guiGraphics.fill(slotX - 1, slotY + slotSize - 1, slotX + slotSize, slotY + slotSize, 0xFF55FF55);
+                    guiGraphics.fill(slotX - 1, slotY, slotX, slotY + slotSize - 1, 0xFF55FF55);
+                    guiGraphics.fill(slotX + slotSize - 1, slotY, slotX + slotSize, slotY + slotSize - 1, 0xFF55FF55);
+                }
+                
+                if (slotIdx < inv.items.size()) {
+                    ItemStack stack = inv.items.get(slotIdx);
+                    if (!stack.isEmpty()) {
+                        guiGraphics.renderItem(stack, slotX + 1, slotY + 1);
+                        guiGraphics.renderItemDecorations(this.font, stack, slotX + 1, slotY + 1);
+                    }
                 }
             }
         }
-        double totalAvailable = balanceCheck + invValue;
-        if (listingToBuy.getMoneyPrice() > totalAvailable) {
-            Component warning = Component.literal("ÔÜá Insufficient funds! Total available: $" + String.format("%.2f", totalAvailable));
-            int warnW = this.font.width(warning);
-            guiGraphics.drawString(this.font, warning, dialogX + (dialogWidth - warnW) / 2, dialogY + dialogHeight - 70, 0xFF5555, true);
+        
+        // Separator line between inventory and hotbar
+        int sepY = gridStartY + 3 * slotSize;
+        guiGraphics.fill(gridStartX, sepY, gridStartX + gridWidth, sepY + 1, 0xFF555555);
+        
+        // Summary line
+        double selectedTotal = getSelectedItemsTotal();
+        double price = listingToBuy.getMoneyPrice();
+        int summaryY = gridStartY + gridRows * slotSize + 5;
+        
+        String totalText = "Selected: $" + String.format(Locale.US, "%.2f", selectedTotal) + " / $" + String.format(Locale.US, "%.2f", price);
+        Component totalComp = Component.literal(totalText);
+        int totalW = this.font.width(totalComp);
+        int totalColor = selectedTotal >= price ? 0x55FF55 : 0xFFAA00;
+        guiGraphics.drawString(this.font, totalComp, dialogX + (dialogWidth - totalW) / 2, summaryY, totalColor, true);
+        
+        // Refund notice
+        if (selectedTotal > price) {
+            double refund = selectedTotal - price;
+            String overText = "Refund of $" + String.format(Locale.US, "%.2f", refund) + " added to balance";
+            Component overComp = Component.literal(overText);
+            int overW = this.font.width(overComp);
+            guiGraphics.drawString(this.font, overComp, dialogX + (dialogWidth - overW) / 2, summaryY + 12, 0xAAAAAA, true);
         }
     }
     
@@ -2185,11 +2440,52 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
+        // Handle item payment grid clicks in BUY_CONFIRM with ITEMS mode
+        if (currentState == ScreenState.BUY_CONFIRM && buyPaymentMode == PaymentMode.ITEMS && listingToBuy != null) {
+            int dialogWidth = 400;
+            int dialogHeight = calculateBuyDialogHeight();
+            int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
+            int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
+            
+            int gridCols = 9;
+            int slotSize = 18;
+            int gridWidth = gridCols * slotSize;
+            int gridStartX = dialogX + (dialogWidth - gridWidth) / 2;
+            int gridStartY = dialogY + 96;
+            
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 9; col++) {
+                    int slotX = gridStartX + col * slotSize;
+                    int slotY = gridStartY + row * slotSize;
+                    
+                    if (mouseX >= slotX && mouseX < slotX + slotSize &&
+                        mouseY >= slotY && mouseY < slotY + slotSize) {
+                        int slotIdx = row < 3 ? 9 + (row * 9) + col : col;
+                        
+                        // Only toggle if slot has an item with value
+                        if (minecraft != null && minecraft.player != null && 
+                            slotIdx < minecraft.player.getInventory().items.size()) {
+                            ItemStack stack = minecraft.player.getInventory().items.get(slotIdx);
+                            if (!stack.isEmpty() && com.servermanagement.client.ClientMarketData.getStackPrice(stack) > 0) {
+                                if (selectedPaymentSlots.contains(slotIdx)) {
+                                    selectedPaymentSlots.remove(slotIdx);
+                                } else {
+                                    selectedPaymentSlots.add(slotIdx);
+                                }
+                                this.rebuildWidgets();
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        
         // Handle price item slot clicks in CREATE_STEP2
         if (currentState == ScreenState.CREATE_STEP2) {
             int formX = centerX + 15;
             int formY = centerY + 76;
-            int priceItemY = formY + 38;
+            int priceItemY = formY + 65;
             
             for (int i = 0; i < 3; i++) {
                 int slotX = formX;
@@ -2203,21 +2499,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
         }
         
-        // Handle offer item slot clicks in MAKE_OFFER
-        if (currentState == ScreenState.MAKE_OFFER) {
-            int formY = centerY + 45;
-            
-            for (int i = 0; i < 3; i++) {
-                int slotX = centerX + 15 + (i * 80);
-                int slotY = formY + 80;
-                
-                if (mouseX >= slotX && mouseX < slotX + 16 &&
-                    mouseY >= slotY && mouseY < slotY + 16) {
-                    handleOfferItemSlotClick(i);
-                    return true;
-                }
-            }
-        }
+        // MAKE_OFFER slots are now handled by the container system (real slots)
         
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -2257,38 +2539,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     }
     
     /**
-     * Handle clicking on an offer item slot - opens item picker
-     */
-    private void handleOfferItemSlotClick(int slotIndex) {
-        if (this.minecraft != null) {
-            // Create item picker screen for selecting items from inventory
-            ItemPickerScreen picker = new ItemPickerScreen(this, selectedItem -> {
-                // Count how many of this item the player has
-                int available = 0;
-                for (ItemStack invStack : this.minecraft.player.getInventory().items) {
-                    if (ItemStack.isSameItemSameComponents(invStack, selectedItem)) {
-                        available += invStack.getCount();
-                    }
-                }
-                
-                // Create stack with available amount
-                ItemStack offerStack = selectedItem.copy();
-                offerStack.setCount(Math.min(available, selectedItem.getMaxStackSize()));
-                
-                offerItems[slotIndex] = offerStack;
-                this.rebuildWidgets(); // Refresh UI
-            });
-            
-            // If slot already has an item, highlight it in picker
-            if (!offerItems[slotIndex].isEmpty()) {
-                picker.setHighlightItem(offerItems[slotIndex]);
-            }
-            
-            this.minecraft.setScreen(picker);
-        }
-    }
-    
-    /**
      * Update listings from server sync packet
      */
     public void updateListings(List<MineBayListing> newListings) {
@@ -2310,6 +2560,17 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // Rebuild widgets to show new listings
         if (currentState == ScreenState.BROWSE) {
+            this.rebuildWidgets();
+        }
+    }
+    
+    /**
+     * Called from SyncListingOffersPacket when server sends offers for a listing
+     */
+    public void receiveOffers(String listingId, List<com.servermanagement.features.minebay.MineBayOffer> offers) {
+        if (selectedListingForOffers != null && selectedListingForOffers.getListingId().equals(listingId)) {
+            this.cachedOffers = new ArrayList<>(offers);
+            this.offersLoading = false;
             this.rebuildWidgets();
         }
     }
@@ -2371,16 +2632,5 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     public void onClose() {
         // Don't clear item placement data - it persists
         super.onClose();
-    }
-    
-    /**
-     * Called from SyncListingOffersPacket when server sends offers for a listing
-     */
-    public void receiveOffers(String listingId, List<com.servermanagement.features.minebay.MineBayOffer> offers) {
-        if (selectedListingForOffers != null && selectedListingForOffers.getListingId().equals(listingId)) {
-            this.cachedOffers = new ArrayList<>(offers);
-            this.offersLoading = false;
-            this.rebuildWidgets();
-        }
     }
 }

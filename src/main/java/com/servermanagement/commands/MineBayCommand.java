@@ -18,6 +18,17 @@ public class MineBayCommand {
     
     private static int openMineBayGUI(CommandContext<CommandSourceStack> context) {
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
+            // Sync balance before opening
+            var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+            var account = economyManager.getOrCreateAccount(player.getUUID());
+            com.servermanagement.network.ModNetworking.sendToPlayer(
+                new com.servermanagement.network.packet.SyncBankAccountPacket(
+                    account.getBalance(),
+                    account.getRecentTransactions(10)
+                ),
+                player
+            );
+            
             // Sync listings before opening
             var mineBayManager = com.servermanagement.features.minebay.MineBayManager.getInstance();
             var listings = mineBayManager.getActiveListings();

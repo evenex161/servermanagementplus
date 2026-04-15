@@ -34,14 +34,14 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>Collect all recipes (crafting, smelting, blasting, smoking, stonecutting, smithing)</li>
  *   <li>Iteratively resolve recipe costs until prices converge (worklist approach)</li>
  *   <li>For items with multiple recipes, use the cheapest one</li>
- *   <li>Anchor prices are never overridden upward ÔÇö if the recipe cost is higher than the
+ *   <li>Anchor prices are never overridden upward — if the recipe cost is higher than the
  *       anchor, the anchor wins (cheapest acquisition method)</li>
  * </ol>
  */
 public class RecipeBasedPricing {
     private static RecipeBasedPricing instance;
 
-    /** Anchor prices from ItemValuation ÔÇö raw materials, rare drops, unobtainables */
+    /** Anchor prices from ItemValuation — raw materials, rare drops, unobtainables */
     private final Map<String, Double> anchorPrices = new HashMap<>();
     /** Prices derived from recipe ingredient costs */
     private final Map<String, Double> recipePrices = new ConcurrentHashMap<>();
@@ -265,7 +265,7 @@ public class RecipeBasedPricing {
                 }
             }
         } catch (Exception e) {
-            // Reflection failed ÔÇö these items will fall back to anchor prices
+            // Reflection failed — these items will fall back to anchor prices
         }
     }
 

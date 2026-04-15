@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,8 +69,10 @@ public class CurseForgeUpdateChecker {
             }
             
             if (!configFound) {
+                createTemplateConfigFile();
                 ServerManagementMod.LOGGER.warn("CurseForge configuration file not found. Update checking disabled.");
-                ServerManagementMod.LOGGER.info("Create 'curseforge.properties' with your API key to enable CurseForge integration.");
+                ServerManagementMod.LOGGER.info("A template 'curseforge.properties' has been created in your server root.");
+                ServerManagementMod.LOGGER.info("Edit it and paste your CurseForge API key to enable update checking.");
                 return;
             }
             
@@ -91,6 +94,45 @@ public class CurseForgeUpdateChecker {
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to load CurseForge configuration", e);
             ENABLED = false;
+        }
+    }
+    
+    /**
+     * Creates a template curseforge.properties file in the server root so the
+     * operator knows exactly where to put their API key without having to read docs.
+     */
+    private static void createTemplateConfigFile() {
+        Path targetPath = Paths.get("curseforge.properties");
+        if (Files.exists(targetPath)) {
+            return; // Another thread beat us, nothing to do
+        }
+        
+        String template =
+            "# CurseForge API Configuration for ServerManagement+\n" +
+            "# KEEP THIS FILE SECURE - DO NOT COMMIT TO VERSION CONTROL!\n" +
+            "# Add this file to .gitignore\n" +
+            "#\n" +
+            "# How to obtain your API key:\n" +
+            "#   1. Log in at https://www.curseforge.com\n" +
+            "#   2. Go to Account Settings > API Keys\n" +
+            "#   3. Generate a new key and paste it below.\n" +
+            "#   4. Set curseforge.enabled=true to activate update checking.\n" +
+            "\n" +
+            "# Paste your CurseForge API key here\n" +
+            "curseforge.api.key=\n" +
+            "\n" +
+            "# Set to true once your API key is filled in\n" +
+            "curseforge.enabled=false\n" +
+            "\n" +
+            "# Cache duration in milliseconds (default: 1 hour = 3600000)\n" +
+            "curseforge.cache.duration=3600000\n";
+        
+        try {
+            Files.writeString(targetPath, template, StandardCharsets.UTF_8);
+            ServerManagementMod.LOGGER.info("Created template CurseForge config at: {}",
+                targetPath.toAbsolutePath());
+        } catch (IOException e) {
+            ServerManagementMod.LOGGER.error("Could not create template curseforge.properties: {}", e.getMessage());
         }
     }
     

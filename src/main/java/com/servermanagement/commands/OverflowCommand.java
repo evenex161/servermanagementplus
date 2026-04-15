@@ -33,18 +33,18 @@ public class OverflowCommand {
         List<ItemStack> items = overflow.getItems(player.getUUID());
 
         if (items.isEmpty()) {
-            player.displayClientMessage(Component.literal("┬º7No overflow items to claim."), true);
+            player.displayClientMessage(Component.literal("§7No overflow items to claim."), true);
             return 1;
         }
 
-        player.sendSystemMessage(Component.literal("┬º6ÔòÉÔòÉÔòÉ ┬ºeOverflow Inventory ┬º7(" + items.size() + " items) ┬º6ÔòÉÔòÉÔòÉ"));
+        player.sendSystemMessage(Component.literal("§6═══ §eOverflow Inventory §7(" + items.size() + " items) §6═══"));
         for (int i = 0; i < items.size(); i++) {
             ItemStack stack = items.get(i);
-            player.sendSystemMessage(Component.literal("┬º7" + (i + 1) + ". ┬ºf" +
+            player.sendSystemMessage(Component.literal("§7" + (i + 1) + ". §f" +
                 stack.getCount() + "x " + stack.getDisplayName().getString()));
         }
-        player.sendSystemMessage(Component.literal("┬º7Use ┬ºa/overflow claim <number> ┬º7to claim a specific item"));
-        player.sendSystemMessage(Component.literal("┬º7Use ┬ºa/overflow claim ┬º7to claim all items"));
+        player.sendSystemMessage(Component.literal("§7Use §a/overflow claim <number> §7to claim a specific item"));
+        player.sendSystemMessage(Component.literal("§7Use §a/overflow claim §7to claim all items"));
         return 1;
     }
 
@@ -56,18 +56,18 @@ public class OverflowCommand {
 
         ItemStack claimed = overflow.claimItem(player.getUUID(), index);
         if (claimed.isEmpty()) {
-            player.sendSystemMessage(Component.literal("┬ºcInvalid item number!"));
+            player.sendSystemMessage(Component.literal("§cInvalid item number!"));
             return 0;
         }
 
         if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, claimed)) {
-            // Can't fit ÔÇö put it back
+            // Can't fit — put it back
             overflow.addItem(player.getUUID(), claimed);
-            player.sendSystemMessage(Component.literal("┬ºcYour inventory is full! Make room first."));
+            player.sendSystemMessage(Component.literal("§cYour inventory is full! Make room first."));
             return 0;
         }
 
-        player.displayClientMessage(Component.literal("┬ºa┬ºlÔ£ô ┬ºr┬ºaClaimed: ┬ºf" + claimed.getCount() + "x " +
+        player.displayClientMessage(Component.literal("§a§l✓ §r§aClaimed: §f" + claimed.getCount() + "x " +
             claimed.getDisplayName().getString()), true);
         return 1;
     }
@@ -79,12 +79,12 @@ public class OverflowCommand {
         int remaining = overflow.deliverItems(player);
 
         if (remaining > 0) {
-            player.sendSystemMessage(Component.literal("┬ºeDelivered some items. ┬ºc" + remaining +
-                " item(s) ┬ºecouldn't fit ÔÇö make room and try again."));
+            player.sendSystemMessage(Component.literal("§eDelivered some items. §c" + remaining +
+                " item(s) §ecouldn't fit — make room and try again."));
         } else if (overflow.getItemCount(player.getUUID()) == 0) {
-            player.displayClientMessage(Component.literal("┬ºa┬ºlÔ£ô ┬ºr┬ºaAll overflow items claimed!"), true);
+            player.displayClientMessage(Component.literal("§a§l✓ §r§aAll overflow items claimed!"), true);
         } else {
-            player.displayClientMessage(Component.literal("┬º7No overflow items to claim."), true);
+            player.displayClientMessage(Component.literal("§7No overflow items to claim."), true);
         }
         return 1;
     }

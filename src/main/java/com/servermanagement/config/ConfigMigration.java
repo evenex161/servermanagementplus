@@ -38,10 +38,12 @@ public class ConfigMigration {
             @Override
             public void apply() throws Exception {
                 ServerManagementMod.LOGGER.info("Applying migration 0->1: Adding config version field");
-                // Version 0 configs don't have a version field at all
-                // This migration is implicit - just adding the version field updates it
-                ModConfig.CONFIG_VERSION.set(1);
-                ModConfig.SPEC.save();
+                // Write version directly to TOML file (ModConfigSpec not bound during mod construction)
+                Path configPath = getConfigPath();
+                java.util.List<String> lines = Files.readAllLines(configPath);
+                // Add configVersion = 1 at the beginning
+                lines.add(0, "configVersion = 1");
+                Files.write(configPath, lines);
             }
             
             @Override
@@ -110,12 +112,26 @@ public class ConfigMigration {
      */
     private static int getCurrentConfigVersion() {
         try {
-            // Try to read the version field
-            int version = ModConfig.CONFIG_VERSION.get();
-            ServerManagementMod.LOGGER.debug("Read config version from file: {}", version);
-            return version;
+            // Read version directly from TOML file instead of ModConfigSpec
+            // (ModConfigSpec values are not bound during mod construction on NeoForge)
+            Path configPath = getConfigPath();
+            if (!Files.exists(configPath)) return 0;
+
+            java.util.List<String> lines = Files.readAllLines(configPath);
+            for (String line : lines) {
+                String trimmed = line.trim();
+                if (trimmed.startsWith("configVersion")) {
+                    String[] parts = trimmed.split("=");
+                    if (parts.length >= 2) {
+                        int version = Integer.parseInt(parts[1].trim());
+                        ServerManagementMod.LOGGER.debug("Read config version from file: {}", version);
+                        return version;
+                    }
+                }
+            }
+            ServerManagementMod.LOGGER.info("No version field found in config - treating as version 0");
+            return 0;
         } catch (Exception e) {
-            // If reading fails, this is likely a pre-versioning config
             ServerManagementMod.LOGGER.info("No version field found in config - treating as version 0");
             return 0;
         }
@@ -158,9 +174,21 @@ public class ConfigMigration {
                 }
             }
             
-            // Final version update
-            ModConfig.CONFIG_VERSION.set(newVersion);
-            ModConfig.SPEC.save();
+            // Final version update - write directly to TOML file
+            Path configPath = getConfigPath();
+            java.util.List<String> lines = Files.readAllLines(configPath);
+            boolean found = false;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).trim().startsWith("configVersion")) {
+                    lines.set(i, "configVersion = " + newVersion);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                lines.add(0, "configVersion = " + newVersion);
+            }
+            Files.write(configPath, lines);
             
             ServerManagementMod.LOGGER.info("=== MIGRATION SUCCESSFUL ===");
             ServerManagementMod.LOGGER.info("Config updated from version {} to {}", oldVersion, newVersion);

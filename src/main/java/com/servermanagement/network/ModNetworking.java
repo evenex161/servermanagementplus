@@ -44,6 +44,7 @@ public class ModNetworking {
         registrar.playBidirectional(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(ConsoleCommandPacket.TYPE, ConsoleCommandPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(ConsoleResponsePacket.TYPE, ConsoleResponsePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(ConsoleSubscribePacket.TYPE, ConsoleSubscribePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playBidirectional(SyncGlobalSettingsPacket.TYPE, SyncGlobalSettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         
         // Economy Management admin packets

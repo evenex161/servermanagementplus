@@ -51,23 +51,26 @@ public class FeatureManager {
         featureStates.put("slimehead", com.servermanagement.config.ModConfig.SLIME_HEADS_ENABLED.get());
         featureStates.put("chatisolation", com.servermanagement.config.ModConfig.CHAT_ISOLATION_ENABLED.get());
         featureStates.put("tablist", com.servermanagement.config.ModConfig.TAB_ISOLATION_ENABLED.get());
+        featureStates.put("server_performance", com.servermanagement.config.ModConfig.SERVER_PERFORMANCE_ENABLED.get());
+        featureStates.put("motd_editor", com.servermanagement.config.ModConfig.MOTD_ENABLED.get());
     }
 
     public static void toggleFeature(String featureId, boolean enabled) {
+        featureStates.put(featureId, enabled);
+        
         if (features.containsKey(featureId)) {
-            featureStates.put(featureId, enabled);
             Feature feature = features.get(featureId);
             if (enabled) {
                 feature.onEnable();
             } else {
                 feature.onDisable();
             }
-            
-            // Also update the config file
-            updateConfig(featureId, enabled);
-            
-            ServerManagementMod.LOGGER.info("Feature {} set to: {}", featureId, enabled);
         }
+        
+        // Also update the config file
+        updateConfig(featureId, enabled);
+        
+        ServerManagementMod.LOGGER.info("Feature {} set to: {}", featureId, enabled);
     }
     
     private static void updateConfig(String featureId, boolean enabled) {
@@ -94,6 +97,12 @@ public class FeatureManager {
                 break;
             case "tablist":
                 com.servermanagement.config.ModConfig.TAB_ISOLATION_ENABLED.set(enabled);
+                break;
+            case "server_performance":
+                com.servermanagement.config.ModConfig.SERVER_PERFORMANCE_ENABLED.set(enabled);
+                break;
+            case "motd_editor":
+                com.servermanagement.config.ModConfig.MOTD_ENABLED.set(enabled);
                 break;
         }
         // Save config to disk

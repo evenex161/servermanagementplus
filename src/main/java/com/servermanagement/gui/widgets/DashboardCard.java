@@ -65,6 +65,10 @@ public class DashboardCard extends AbstractWidget {
         guiGraphics.fill(this.getX(), this.getY(), this.getX() + 1, this.getY() + this.height, borderColor);
         guiGraphics.fill(this.getX() + this.width - 1, this.getY(), this.getX() + this.width, this.getY() + this.height, borderColor);
         
+        // Clip text to card bounds
+        guiGraphics.enableScissor(this.getX() + 1, this.getY() + 1,
+            this.getX() + this.width - 1, this.getY() + this.height - 1);
+        
         // Icon (large text)
         var font = net.minecraft.client.Minecraft.getInstance().font;
         guiGraphics.drawString(font, this.iconText,
@@ -78,11 +82,21 @@ public class DashboardCard extends AbstractWidget {
             this.getY() + 30,
             0xFFFFFF);
         
-        // Description
-        guiGraphics.drawCenteredString(font, this.description,
+        // Description (truncated to fit within card)
+        String desc = this.description;
+        int maxDescW = this.width - 6;
+        if (font.width(desc) > maxDescW) {
+            while (font.width(desc + "..") > maxDescW && desc.length() > 1) {
+                desc = desc.substring(0, desc.length() - 1);
+            }
+            desc += "..";
+        }
+        guiGraphics.drawCenteredString(font, desc,
             this.getX() + this.width / 2,
             this.getY() + 42,
             0xCCCCCC);
+        
+        guiGraphics.disableScissor();
     }
     
     @Override
