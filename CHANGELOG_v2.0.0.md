@@ -79,6 +79,43 @@
 - Added `RequestEconomyStatsPacket` (client → server, admin-only with permission level 2)
 - Stats auto-sync when admin opens Economy Management screen
 
+## NeoForge Port
+
+All v2.0.0 features have been fully ported to NeoForge 21.1.222+ with platform-specific adaptations:
+
+### Networking Layer
+- All packets use NeoForge `CustomPacketPayload` API (`TYPE`, `STREAM_CODEC`, `IPayloadContext`) instead of Forge's `SimpleChannel`
+- Packet registration uses `PayloadRegistrar.playBidirectional()` in `RegisterPayloadHandlersEvent`
+- Added `ConsoleSubscribePacket` for server console log streaming
+- No `ctx.setPacketHandled(true)` calls (not needed on NeoForge)
+
+### Config System
+- `ConfigValidator` handles `IllegalStateException` gracefully when config values are accessed before `ModConfigSpec` is bound (normal during NeoForge mod construction)
+- `ConfigMigration` reads/writes TOML files directly instead of using `ModConfigSpec` API, which is not available during mod construction on NeoForge
+- `repairConfig()` catches `NullPointerException`/`IllegalStateException` from `SPEC.save()` when config isn't bound yet
+
+### Event System
+- Uses NeoForge event types: `ServerTickEvent.Post`, `PlayerEvent.PlayerLoggedOutEvent`, `ServerStartingEvent`, `ServerStoppingEvent`
+- Event bus: `NeoForge.EVENT_BUS` instead of `MinecraftForge.EVENT_BUS`
+- `@EventBusSubscriber` with `bus = Bus.MOD` for client setup
+
+### Menu & GUI Registration
+- Menu types use `DeferredHolder` + `IMenuTypeExtension.create()` instead of `RegistryObject` + `IForgeMenuType.create()`
+- Screen bindings use `RegisterMenuScreensEvent.register()` instead of `MenuScreens.register()`
+
+### All Ported Features
+- MOTD Editor (screen, menu, save/sync packets)
+- Server Console streaming (subscribe/unsubscribe, tick-based output)
+- Escrow system for MineBay offers (Accept/Create/Reject with rollback)
+- OverflowInventoryManager for safe item delivery
+- Market pricing sync timer (2-minute interval recalculation)
+- Economy Statistics Dashboard
+- Transaction Recording System
+- All GUI screens with ScreenScaler rescaling and contrast fixes
+- Daily Tasks & Free Rewards
+- MineStacks Casino
+- OTA Update System with multi-loader awareness
+
 ## Version Info
 - Mod version: 2.0.0
 - Release type: release

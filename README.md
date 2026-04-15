@@ -123,6 +123,17 @@ A fun cosmetic item — an unbreakable slime head block with a custom texture.
 
 ---
 
+### MOTD Editor
+Customize your server's Message of the Day with a visual editor.
+
+- **Rich text formatting** — Apply color codes and formatting (bold, italic, underline, strikethrough) with a live preview
+- **Multi-line support** — Edit both lines of the server MOTD
+- **Admin-only** — Accessible from the Dashboard, requires OP level 2
+- **Instant apply** — Changes take effect immediately without server restart
+- **Toggleable** — Enable/disable the custom MOTD via config
+
+---
+
 ### Notification System
 Clickable chat notifications keep players informed without being spammy.
 
