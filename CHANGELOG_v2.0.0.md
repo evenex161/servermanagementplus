@@ -21,11 +21,6 @@
 - Applied across all MineBay, gambling, overflow, and economy operations
 - Consistent color scheme: green checkmarks for success, red crosses for errors, gold for [MineBay] prefix
 
-### Overflow Inventory — Creative Mode Fix
-- Fixed items being silently destroyed when added to a creative mode player's inventory
-- Added `safeAddToInventory()` with pre-check for available inventory space
-- Overflow items are now correctly stored for later pickup in both survival and creative mode
-
 ## Bug Fixes
 
 ### Economy Management Screen
@@ -39,7 +34,10 @@
 
 ### Overflow System
 - Fixed "You have no overflow items" and "All overflow items claimed" text formatting
+- Fixed items being silently destroyed when added to a creative mode player's inventory
 - Added consistent gold-bordered, green-checkmark action bar messages
+- Added `safeAddToInventory()` with pre-check for available inventory space
+- Overflow items are now correctly stored for later pickup in both survival and creative mode
 
 ## Security & Performance Improvements
 
