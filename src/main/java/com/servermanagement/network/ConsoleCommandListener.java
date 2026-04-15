@@ -1,9 +1,10 @@
 package com.servermanagement.network;
 
+import com.servermanagement.network.packet.ConsoleResponsePacket;
+
 import net.minecraft.commands.CommandSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import com.servermanagement.network.packet.ConsoleResponsePacket;
 
 /**
  * Captures command output and relays it to the player's console screen.

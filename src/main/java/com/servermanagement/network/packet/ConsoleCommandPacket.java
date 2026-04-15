@@ -1,13 +1,9 @@
 package com.servermanagement.network.packet;
 
-import com.servermanagement.network.ModNetworking;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.network.CustomPayloadEvent;
-
-import java.util.function.Supplier;
 
 /**
  * Packet for executing console commands from the in-game GUI

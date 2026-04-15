@@ -1,12 +1,12 @@
 package com.servermanagement.gui.widgets;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Console output display widget with vertical scrolling, horizontal scrolling, and scissor clipping

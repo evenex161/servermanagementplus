@@ -106,8 +106,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             offerItems[i] = ItemStack.EMPTY;
         }
         
-        // Adjust label positions
-        this.inventoryLabelY = this.imageHeight - 94;
+        // Adjust label positions - fixed Y just below the inventory separator (218-220), above slots (230)
+        this.inventoryLabelY = 222;
         this.titleLabelY = 1000; // Hide title
     }
     
@@ -116,7 +116,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         int[] dim = ScreenScaler.scale(600, 400, this.width, this.height);
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
-        this.inventoryLabelY = this.imageHeight - 94;
+        this.inventoryLabelY = 222;
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -771,11 +771,12 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Offer slots are real container slots (handled by the menu system)
         // Player places items from inventory into these slots
         
-        // Submit offer button (above inventory slots which start at menu-relative Y=230)
+        // Submit offer button (positioned above inventory separator at Y=218)
         int btnWidth = (this.imageWidth - 50) / 2;
-        int btnY = centerY + 200;
+        int btnHeight = 22;
+        int btnY = centerY + 218 - btnHeight - 3; // 3px gap above separator
         this.addRenderableWidget(new ModernButton(
-            formX, btnY, btnWidth, 25,
+            formX, btnY, btnWidth, btnHeight,
             Component.literal("Submit Offer"),
             button -> submitOffer(),
             ModernButton.ButtonStyle.SUCCESS
@@ -783,7 +784,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // Cancel button
         this.addRenderableWidget(new ModernButton(
-            formX + btnWidth + 10, btnY, btnWidth, 25,
+            formX + btnWidth + 10, btnY, btnWidth, btnHeight,
             Component.literal("Cancel"),
             button -> {
                 selectedListingForOffer = null;
@@ -814,7 +815,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         boolean isOwnListing = minecraft != null && minecraft.player != null && 
             listing.getSellerId().equals(minecraft.player.getUUID());
         
-        int buttonY = centerY + 210;
+        int buttonY = centerY + 218 - 25 - 3; // Above inventory separator
         
         if (!isOwnListing) {
             if (listing.getOfferType() == MineBayListing.OfferType.FIXED) {
@@ -1350,8 +1351,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 46, 0xE0202020);
         guiGraphics.fill(centerX, centerY + 45, centerX + this.imageWidth, centerY + 46, 0xFF333333);
         
-        // Content area - constrained bounds
-        int contentAreaHeight = menu.isInventoryVisible() ? 165 : (this.imageHeight - 60);
+        // Content area - constrained bounds (extends to just above inventory separator at Y=218)
+        int contentAreaHeight = menu.isInventoryVisible() ? 170 : (this.imageHeight - 60);
         guiGraphics.fill(centerX + 10, centerY + 46, centerX + this.imageWidth - 10, 
             centerY + 46 + contentAreaHeight, 0xE01A1A1A);
         
@@ -1368,12 +1369,13 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Only draw the inventory label when inventory is visible, centered above inventory area
+        // Only draw the inventory label when inventory is visible
         if (menu.isInventoryVisible()) {
-            int labelX = (this.imageWidth - this.font.width(this.playerInventoryTitle)) / 2;
-            guiGraphics.drawString(this.font, this.playerInventoryTitle, labelX, this.inventoryLabelY, 0xAAAAAA, true);
+            // Draw inventory title on the left side of the inventory area
+            int invAreaLeft = Math.max(10, (this.imageWidth - 180) / 2);
+            guiGraphics.drawString(this.font, this.playerInventoryTitle, invAreaLeft, this.inventoryLabelY, 0xAAAAAA, true);
             
-            // Total inventory value display
+            // Total inventory value display - inline on the same line, right-aligned
             if (minecraft != null && minecraft.player != null) {
                 double totalValue = 0.0;
                 for (ItemStack invStack : minecraft.player.getInventory().items) {
@@ -1384,14 +1386,11 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 
                 String valueStr = String.format("Inventory Value: $%.2f", totalValue);
                 int valueW = this.font.width(valueStr);
-                int valueX = (this.imageWidth - valueW) / 2;
-                
-                // Background pill behind the value text
-                guiGraphics.fill(valueX - 4, this.inventoryLabelY + 10, valueX + valueW + 4, this.inventoryLabelY + 22, 0xC0000000);
-                guiGraphics.fill(valueX - 4, this.inventoryLabelY + 10, valueX + valueW + 4, this.inventoryLabelY + 11, 0xFF555555);
+                int invAreaRight = this.imageWidth - invAreaLeft;
+                int valueX = invAreaRight - valueW;
                 
                 guiGraphics.drawString(this.font, Component.literal(valueStr),
-                    valueX, this.inventoryLabelY + 12, 0x55FFFF, true);
+                    valueX, this.inventoryLabelY, 0x55FFFF, true);
             }
         }
         // Never draw the title label (we render our own)
