@@ -144,6 +144,12 @@ public class ModNetworking {
             .consumer(ConsoleResponsePacket::handle)
             .add();
         
+        INSTANCE.messageBuilder(ConsoleSubscribePacket.class, id())
+            .encoder(ConsoleSubscribePacket::encode)
+            .decoder(ConsoleSubscribePacket::new)
+            .consumer(ConsoleSubscribePacket::handle)
+            .add();
+        
         INSTANCE.messageBuilder(SyncGlobalSettingsPacket.class, id())
             .encoder(SyncGlobalSettingsPacket::encode)
             .decoder(SyncGlobalSettingsPacket::new)

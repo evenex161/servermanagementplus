@@ -144,11 +144,32 @@ public class ServerManagementMod {
             LOGGER.info("MOTD Manager initialized");
         }
         
+        // Initialize Server Console log streaming
+        com.servermanagement.server.ServerConsoleManager.getInstance().initialize(event.getServer());
+        LOGGER.info("Server console log streaming initialized");
+        
         LOGGER.info("ServerManagement v{} fully initialized and ready!", getModVersion());
     }
     
     @SubscribeEvent
+    public void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) {
+            com.servermanagement.server.ServerConsoleManager.getInstance().tick();
+        }
+    }
+    
+    @SubscribeEvent
+    public void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer) {
+            com.servermanagement.server.ServerConsoleManager.getInstance().unsubscribe(event.getEntity().getUUID());
+        }
+    }
+    
+    @SubscribeEvent
     public void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+        com.servermanagement.server.ServerConsoleManager.getInstance().shutdown();
+        LOGGER.info("Server console log streaming shut down");
+        
         com.servermanagement.features.motd.MotdManager.getInstance().saveAndShutdown();
         LOGGER.info("MOTD Manager saved and shut down");
         

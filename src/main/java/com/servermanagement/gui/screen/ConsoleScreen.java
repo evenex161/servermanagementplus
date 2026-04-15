@@ -6,6 +6,7 @@ import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.ConsoleCommandPacket;
+import com.servermanagement.network.packet.ConsoleSubscribePacket;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -53,9 +54,8 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
         );
         this.addRenderableWidget(this.consoleOutput);
         
-        // Add some initial lines (these will be populated by server in real implementation)
-        this.consoleOutput.addLine("[INFO] Server console ready");
-        this.consoleOutput.addLine("[INFO] Type 'help' for available commands");
+        // Subscribe to server log streaming
+        ModNetworking.sendToServer(new ConsoleSubscribePacket(true));
         
         // Back to Dashboard button (in header area)
         this.addRenderableWidget(new ModernButton.Builder(
@@ -100,6 +100,13 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
         
         // Set focus to command input
         this.commandInput.setFocused(true);
+    }
+    
+    @Override
+    public void onClose() {
+        // Unsubscribe from server log streaming
+        ModNetworking.sendToServer(new ConsoleSubscribePacket(false));
+        super.onClose();
     }
     
     @Override

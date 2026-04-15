@@ -773,7 +773,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // Submit offer button
         int btnWidth = (this.imageWidth - 50) / 2;
-        int btnY = centerY + this.imageHeight - 50;
+        int btnY = centerY + this.inventoryLabelY - 30;
         this.addRenderableWidget(new ModernButton(
             formX, btnY, btnWidth, 25,
             Component.literal("Submit Offer"),
