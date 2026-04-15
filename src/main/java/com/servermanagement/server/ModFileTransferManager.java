@@ -36,7 +36,7 @@ public class ModFileTransferManager {
             File modsDir = new File("mods");
             if (modsDir.exists() && modsDir.isDirectory()) {
                 File[] files = modsDir.listFiles((dir, name) -> 
-                    name.startsWith("servermanagementplus") && name.endsWith(".jar"));
+                    (name.startsWith("servermanagement") || name.startsWith("servermanagementplus")) && name.endsWith(".jar"));
                 
                 if (files != null && files.length > 0) {
                     // Use the first matching file (or most recent if multiple)

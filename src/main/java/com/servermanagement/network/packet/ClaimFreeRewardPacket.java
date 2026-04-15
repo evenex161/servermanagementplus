@@ -5,6 +5,8 @@ import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.BankInventory;
 import com.servermanagement.features.economy.PlayerDailyTasks;
 import com.servermanagement.features.economy.DailyTaskTemplateManager;
+import com.servermanagement.features.economy.Transaction;
+import com.servermanagement.features.economy.TransactionType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
@@ -56,6 +58,9 @@ public class ClaimFreeRewardPacket implements IPacket {
                 // Add money to player's bank account
                 BankAccount account = economyManager.getOrCreateAccount(player.getUUID());
                 account.deposit(reward);
+                account.addTransaction(new Transaction(
+                    TransactionType.FREE_REWARD, reward,
+                    "Free daily reward"));
                 
                 // Get item reward from template manager
                 ItemStack rewardItem = templateManager != null
@@ -64,7 +69,7 @@ public class ClaimFreeRewardPacket implements IPacket {
                 
                 // Give item reward if present
                 if (!rewardItem.isEmpty()) {
-                    boolean addedToInventory = player.getInventory().add(rewardItem.copy());
+                    boolean addedToInventory = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
                     
                     if (!addedToInventory) {
                         // Inventory full, add to bank inventory
@@ -73,14 +78,16 @@ public class ClaimFreeRewardPacket implements IPacket {
                             BankInventory.ItemSource.FREE_REWARD, 
                             "Free Daily Reward"
                         );
-                        player.sendSystemMessage(Component.literal("§e⚠ Inventory full! Item sent to Bank Inventory."));
+                        player.sendSystemMessage(Component.literal("§6[Reward] §eInventory full — item sent to Bank Inventory."));
                     }
                     
-                    player.sendSystemMessage(Component.literal("§a✓ Claimed free daily reward: $" + reward + " + " + 
-                        rewardItem.getHoverName().getString() + " x" + rewardItem.getCount()));
+                    player.displayClientMessage(Component.literal(String.format(
+                        "§a§l✓ §r§aClaimed daily reward: §6$%d §a+ §f%s x%d",
+                        reward, rewardItem.getHoverName().getString(), rewardItem.getCount())), true);
                 } else {
                     // Send success message (money only)
-                    player.sendSystemMessage(Component.literal("§a✓ Claimed free daily reward: $" + reward));
+                    player.displayClientMessage(Component.literal(String.format(
+                        "§a§l✓ §r§aClaimed daily reward: §6$%d", reward)), true);
                 }
                 
                 // Save data

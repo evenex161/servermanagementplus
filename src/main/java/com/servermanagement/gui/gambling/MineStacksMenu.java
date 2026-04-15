@@ -47,24 +47,22 @@ public class MineStacksMenu extends AbstractContainerMenu {
         this.data = data;
         this.addDataSlots(data);
         
+        // Calculate scaled panel dimensions for slot positioning
+        int panelWidth = getScaledPanelWidth(playerInventory);
+        
         // Initialize betting container (1 slot for item bets)
         this.bettingContainer = new SimpleContainer(1);
         
-        // Add betting slot positioned in upper-right area to avoid button overlap
-        // Moved from (192, 85) to (350, 30) to prevent clipping with game buttons
-        // Using GamblingSlot which can be toggled for visibility
-        bettingSlot = new GamblingSlot(bettingContainer, 0, 350, 30) {
-            @Override
-            public boolean mayPlace(ItemStack stack) {
-                return com.servermanagement.features.gambling.ItemValuation.isItemGambleable(stack);
-            }
-        };
+        // Add betting slot centered horizontally in panel
+        int betSlotX = (panelWidth - 18) / 2;
+        int betSlotY = 30;
+        bettingSlot = new GamblingSlot(bettingContainer, 0, betSlotX, betSlotY);
         // Start disabled - will be enabled when switching to item betting mode
         bettingSlot.setEnabled(false);
         this.addSlot(bettingSlot);
         
-        // Add player inventory (hidden by default)
-        int inventoryX = 8;
+        // Add player inventory centered in panel
+        int inventoryX = (panelWidth - 162) / 2; // Center 9-column inventory (9*18=162px)
         int inventoryY = 140;
         
         for (int row = 0; row < 3; row++) {
@@ -83,6 +81,27 @@ public class MineStacksMenu extends AbstractContainerMenu {
             slot.setEnabled(false); // Start disabled
             this.addSlot(slot);
             inventorySlots.add(slot);
+        }
+    }
+    
+    /**
+     * Get the scaled panel width, using ScreenScaler on client or defaulting to 400 on server
+     */
+    private static int getScaledPanelWidth(Inventory playerInventory) {
+        if (playerInventory.player.level().isClientSide()) {
+            return getClientPanelWidth();
+        }
+        return 400;
+    }
+    
+    private static int getClientPanelWidth() {
+        try {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            int guiW = mc.getWindow().getGuiScaledWidth();
+            int guiH = mc.getWindow().getGuiScaledHeight();
+            return com.servermanagement.gui.ScreenScaler.scale(400, 220, guiW, guiH)[0];
+        } catch (Throwable t) {
+            return 400;
         }
     }
     
@@ -164,6 +183,20 @@ public class MineStacksMenu extends AbstractContainerMenu {
     @Override
     public boolean stillValid(Player player) {
         return true;
+    }
+    
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        
+        // Return betting item to player if menu is closed with an item in the slot
+        if (!player.level().isClientSide) {
+            ItemStack bettingItem = bettingContainer.getItem(0);
+            if (!bettingItem.isEmpty()) {
+                player.getInventory().placeItemBackInInventory(bettingItem);
+                bettingContainer.setItem(0, ItemStack.EMPTY);
+            }
+        }
     }
     
     /**

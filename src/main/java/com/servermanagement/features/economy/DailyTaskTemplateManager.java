@@ -8,7 +8,6 @@ import net.minecraft.world.item.ItemStack;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Manages daily task templates that admins can configure.
@@ -131,20 +130,25 @@ public class DailyTaskTemplateManager {
      * Get enabled templates only
      */
     public List<DailyTaskTemplate> getEnabledTemplates() {
-        return templates.stream()
-                .filter(DailyTaskTemplate::isEnabled)
-                .filter(DailyTaskTemplate::isValid)
-                .collect(Collectors.toList());
+        List<DailyTaskTemplate> result = new ArrayList<>();
+        for (DailyTaskTemplate t : templates) {
+            if (t.isEnabled() && t.isValid()) {
+                result.add(t);
+            }
+        }
+        return result;
     }
 
     /**
      * Get template by ID
      */
     public DailyTaskTemplate getTemplate(String id) {
-        return templates.stream()
-                .filter(t -> t.getId().equals(id))
-                .findFirst()
-                .orElse(null);
+        for (DailyTaskTemplate t : templates) {
+            if (t.getId().equals(id)) {
+                return t;
+            }
+        }
+        return null;
     }
 
     /**
@@ -186,9 +190,8 @@ public class DailyTaskTemplateManager {
         }
 
         Collections.shuffle(enabled);
-        return enabled.stream()
-                .limit(Math.min(count, enabled.size()))
-                .collect(Collectors.toList());
+        int limit = Math.min(count, enabled.size());
+        return enabled.subList(0, limit);
     }
 
     /**
@@ -237,9 +240,13 @@ public class DailyTaskTemplateManager {
      * Get templates by type
      */
     public List<DailyTaskTemplate> getTemplatesByType(TaskType type) {
-        return templates.stream()
-                .filter(t -> t.getType() == type)
-                .collect(Collectors.toList());
+        List<DailyTaskTemplate> result = new ArrayList<>();
+        for (DailyTaskTemplate t : templates) {
+            if (t.getType() == type) {
+                result.add(t);
+            }
+        }
+        return result;
     }
 
     /**
@@ -248,16 +255,17 @@ public class DailyTaskTemplateManager {
     public Map<String, Integer> getStatistics() {
         Map<String, Integer> stats = new HashMap<>();
         stats.put("total", templates.size());
-        stats.put("enabled", (int) templates.stream().filter(DailyTaskTemplate::isEnabled).count());
-        stats.put("disabled", (int) templates.stream().filter(t -> !t.isEnabled()).count());
-        
-        for (TaskType type : TaskType.values()) {
-            int count = (int) templates.stream()
-                    .filter(t -> t.getType() == type)
-                    .count();
-            stats.put(type.name(), count);
+        int enabledCount = 0;
+        EnumMap<TaskType, Integer> typeCounts = new EnumMap<>(TaskType.class);
+        for (DailyTaskTemplate t : templates) {
+            if (t.isEnabled()) enabledCount++;
+            typeCounts.merge(t.getType(), 1, Integer::sum);
         }
-        
+        stats.put("enabled", enabledCount);
+        stats.put("disabled", templates.size() - enabledCount);
+        for (TaskType type : TaskType.values()) {
+            stats.put(type.name(), typeCounts.getOrDefault(type, 0));
+        }
         return stats;
     }
 }

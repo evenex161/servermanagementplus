@@ -2,6 +2,7 @@ package com.servermanagement.gui.screen;
 
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.WorldDetailMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
@@ -31,7 +32,7 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     public WorldDetailScreen(WorldDetailMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageHeight = 230;
-        this.imageWidth = 320;
+        this.imageWidth = 350;
         
         // Get dimension ID from cached data
         this.dimensionId = ClientPacketHandler.getCachedDimensionId();
@@ -39,12 +40,15 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(350, 230, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
         int leftCol = centerX + 20;
-        int rightCol = centerX + 260;
+        int rightCol = centerX + this.imageWidth - 60;
         int startY = centerY + 45;
         int spacing = 28;
         
@@ -135,7 +139,7 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
                         button.setMessage(Component.literal("Type: Both"));
                     }
                 })
-                .bounds(leftCol, currentY, 80, 20)
+                .bounds(leftCol, currentY, 70, 20)
                 .style(ModernButton.ButtonStyle.SECONDARY)
                 .build();
             this.addRenderableWidget(this.portalTypeButton);
@@ -145,8 +149,8 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         }
         
         // Timer input
-        int timerInputX = (showNether && showEnd) ? leftCol + 85 : leftCol;
-        int timerInputWidth = (showNether && showEnd) ? 65 : 80;
+        int timerInputX = (showNether && showEnd) ? leftCol + 75 : leftCol;
+        int timerInputWidth = (showNether && showEnd) ? 50 : 70;
         this.timerInput = new EditBox(this.font, timerInputX, currentY, timerInputWidth, 20, Component.literal("Seconds"));
         this.timerInput.setValue(hasTimer ? String.valueOf(timerSeconds) : "60");
         this.timerInput.setMaxLength(6);
@@ -167,7 +171,7 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
                     // Invalid input, ignore
                 }
             })
-            .bounds(btnX, currentY, 70, 20)
+            .bounds(btnX, currentY, 60, 20)
             .style(ModernButton.ButtonStyle.SUCCESS)
             .build());
         
@@ -179,17 +183,18 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
                 ModNetworking.sendToServer(new WMSetTimerPacket(dimensionId, 0, selectedPortalType, clientTick));
                 this.timerInput.setValue("60");
             })
-            .bounds(btnX + 75, currentY, 55, 20)
+            .bounds(btnX + 65, currentY, 50, 20)
             .style(ModernButton.ButtonStyle.DANGER)
             .build());
         
         currentY += 35;
         
         // Back to World List button
+        int backW = this.imageWidth / 2 - 15;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("← Back"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_LIST, "")))
-            .bounds(centerX + 30, currentY, 90, 24)
+            .bounds(centerX + 10, currentY, backW, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
         
@@ -197,7 +202,7 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Close"),
             button -> this.onClose())
-            .bounds(centerX + 190, currentY, 100, 24)
+            .bounds(centerX + this.imageWidth / 2 + 5, currentY, backW, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
     }
@@ -239,31 +244,31 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         // Nether portal labels
         if (showNether) {
             guiGraphics.drawString(this.font, "Nether Portals", 
-                leftCol, currentY + 6, 0xFFFFFF, false);
+                leftCol, currentY + 6, 0xFFFFFF, true);
             guiGraphics.drawString(this.font, "Enable/disable nether portal travel", 
-                leftCol, currentY + 16, 0x808080, false);
+                leftCol, currentY + 16, 0xAAAAAA, true);
             currentY += spacing;
         }
         
         // End portal labels
         if (showEnd) {
             guiGraphics.drawString(this.font, "End Portals", 
-                leftCol, currentY + 6, 0xFFFFFF, false);
+                leftCol, currentY + 6, 0xFFFFFF, true);
             guiGraphics.drawString(this.font, "Enable/disable end portal travel", 
-                leftCol, currentY + 16, 0x808080, false);
+                leftCol, currentY + 16, 0xAAAAAA, true);
             currentY += spacing;
         }
         
         // Chat labels
         guiGraphics.drawString(this.font, "Chat", 
-            leftCol, currentY + 6, 0xFFFFFF, false);
+            leftCol, currentY + 6, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Connect to global chat", 
-            leftCol, currentY + 16, 0x808080, false);
+            leftCol, currentY + 16, 0xAAAAAA, true);
         currentY += spacing + 10;
         
         // Timer label
         guiGraphics.drawString(this.font, "Portal Timer", 
-            leftCol, currentY + 24, 0xFFFFFF, false);
+            leftCol, currentY + 24, 0xFFFFFF, true);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

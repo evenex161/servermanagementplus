@@ -75,6 +75,14 @@ public class ItemValuation {
     }
     
     /**
+     * Returns an unmodifiable view of the hardcoded base prices.
+     * Used by RecipeBasedPricing to seed anchor prices for raw materials.
+     */
+    public static Map<String, Double> getHardcodedValues() {
+        return java.util.Collections.unmodifiableMap(ITEM_VALUES);
+    }
+
+    /**
      * Get the monetary value of an item stack
      */
     public static double getItemValue(ItemStack stack) {
@@ -92,7 +100,8 @@ public class ItemValuation {
         
         // Bonus for enchantments
         if (stack.isEnchanted()) {
-            int enchantmentCount = stack.getEnchantmentTags().size();
+            var enchantments = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantments(stack);
+            int enchantmentCount = enchantments.size();
             totalValue *= (1.0 + (enchantmentCount * 0.2)); // 20% bonus per enchantment
         }
         

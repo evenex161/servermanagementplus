@@ -47,10 +47,16 @@ public class SyncMineBayListingsPacket implements IPacket {
                 priceItems.add(new PriceItemEntry(priceItem, amount, useStacks));
             }
             
+            // Read market pricing data
+            double baseMarketPrice = buf.readDouble();
+            double marginPercent = buf.readDouble();
+            int pendingOfferCount = buf.readInt();
+            
             // Create listing
-            MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, priceItems, offerType);
+            MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, baseMarketPrice, marginPercent, priceItems, offerType);
             listing.setListingId(listingId);
             listing.setCreatedTime(createdTime);
+            listing.setPendingOfferCount(pendingOfferCount);
             
             this.listings.add(listing);
         }
@@ -76,6 +82,11 @@ public class SyncMineBayListingsPacket implements IPacket {
                 buf.writeInt(priceItem.getAmount());
                 buf.writeBoolean(priceItem.isUseStacks());
             }
+            
+            // Write market pricing data
+            buf.writeDouble(listing.getBaseMarketPrice());
+            buf.writeDouble(listing.getMarginPercent());
+            buf.writeInt(listing.getPendingOfferCount());
         }
     }
     

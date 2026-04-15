@@ -31,6 +31,8 @@ public class ClientSetup {
             MenuScreens.register(ModMenuTypes.ECONOMY_MANAGEMENT_MENU.get(), com.servermanagement.gui.economy.EconomyManagementScreen::new);
             MenuScreens.register(ModMenuTypes.MINEBAY_MENU.get(), com.servermanagement.gui.minebay.MineBayScreen::new);
             MenuScreens.register(ModMenuTypes.MINESTACKS_MENU.get(), com.servermanagement.gui.gambling.MineStacksScreen::new);
+            MenuScreens.register(ModMenuTypes.PERFORMANCE_SETTINGS_MENU.get(), PerformanceSettingsScreen::new);
+            MenuScreens.register(ModMenuTypes.MOTD_EDITOR_MENU.get(), MotdEditorScreen::new);
             
             ServerManagementMod.LOGGER.info("Registered GUI screens");
         });

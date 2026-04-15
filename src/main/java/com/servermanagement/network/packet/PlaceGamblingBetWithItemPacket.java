@@ -61,9 +61,16 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                 }
                 
                 if (!ItemValuation.isItemGambleable(bettingItem)) {
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cThis item cannot be used for gambling"));
-                    return;
+                    // Double-check with market pricing engine for items not in hardcoded list
+                    double marketValue = com.servermanagement.features.economy.MarketPricingEngine.getInstance()
+                        .getBasePrice(bettingItem) * bettingItem.getCount();
+                    if (marketValue < GamblingManager.MIN_BET) {
+                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                            "§cThis item cannot be used for gambling (value: $" + 
+                            String.format("%.2f", marketValue) + ", min: $" + 
+                            String.format("%.0f", GamblingManager.MIN_BET) + ")"));
+                        return;
+                    }
                 }
                 
                 GamblingManager gamblingManager = GamblingManager.getInstance();
@@ -122,24 +129,31 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                     
                     // Schedule delayed result reveal (3 seconds) without blocking server thread
                     net.minecraft.server.MinecraftServer server = gamblingManager.getServer();
+                    final java.util.UUID playerUUID = player.getUUID();
                     if (server != null) {
                         PlaceGamblingBetPacket.getDelayedExecutor().schedule(() -> {
                             // Execute on the main server thread for thread safety
                             server.execute(() -> {
+                                // Re-lookup player to avoid stale reference
+                                ServerPlayer onlinePlayer = server.getPlayerList().getPlayer(playerUUID);
+                                if (onlinePlayer == null) return; // Player disconnected
+                                
                                 // Send result back to client after delay
                                 com.servermanagement.network.ModNetworking.sendToPlayer(
                                     new GamblingResultPacket(result.isWon(), result.getPayout(), result.getMessage()),
-                                    player
+                                    onlinePlayer
                                 );
                                 
                                 // Sync updated balance to client
                                 com.servermanagement.network.ModNetworking.sendToPlayer(
                                     new SyncBankAccountPacket(account.getBalance(), account.getRecentTransactions(10)),
-                                    player
+                                    onlinePlayer
                                 );
                                 
-                                // Update MineStacks menu balance
-                                menu.updateBalance(account.getBalance());
+                                // Update MineStacks menu balance if the player still has it open
+                                if (onlinePlayer.containerMenu instanceof com.servermanagement.gui.gambling.MineStacksMenu mineStacksMenu) {
+                                    mineStacksMenu.updateBalance(account.getBalance());
+                                }
                                 
                                 // Sync gambling stats to client
                                 com.servermanagement.network.ModNetworking.sendToPlayer(
@@ -153,7 +167,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                                         stats.getBiggestWin(),
                                         stats.getBiggestLoss()
                                     ),
-                                    player
+                                    onlinePlayer
                                 );
                             });
                         }, 3, TimeUnit.SECONDS);

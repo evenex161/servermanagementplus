@@ -1,6 +1,7 @@
 package com.servermanagement.gui.screen;
 
 import com.servermanagement.gui.PlayerManagerMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -35,6 +36,9 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(320, 240, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         if (!showingActionMenu) {
@@ -74,7 +78,7 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
                     showingActionMenu = true;
                     this.rebuildWidgets();
                 })
-                .bounds(centerX + 10, yPos, 300, 24)
+                .bounds(centerX + 10, yPos, this.imageWidth - 20, 24)
                 .style(ModernButton.ButtonStyle.PRIMARY)
                 .build();
             
@@ -116,7 +120,7 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
                 ModNetworking.sendToServer(new PMSpectatePlayerPacket(selectedPlayer));
                 this.onClose();
             })
-            .bounds(centerX + 10, startY, 300, 24)
+            .bounds(centerX + 10, startY, this.imageWidth - 20, 24)
             .style(ModernButton.ButtonStyle.SUCCESS)
             .build());
         
@@ -127,7 +131,7 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
                 ModNetworking.sendToServer(new PMViewInventoryPacket(selectedPlayer));
                 this.onClose();
             })
-            .bounds(centerX + 10, startY + 30, 300, 24)
+            .bounds(centerX + 10, startY + 30, this.imageWidth - 20, 24)
             .style(ModernButton.ButtonStyle.PRIMARY)
             .build());
         

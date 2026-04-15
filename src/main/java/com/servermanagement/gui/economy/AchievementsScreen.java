@@ -1,5 +1,6 @@
 package com.servermanagement.gui.economy;
 
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -18,7 +19,8 @@ import java.util.Set;
  */
 public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu> {
     
-    private static final int ACHIEVEMENTS_PER_PAGE = 8;
+    private static final int ROW_HEIGHT = 14;
+    private int achievementsPerPage = 8;
     private int currentPage = 0;
     private int maxPages = 0;
     private List<String> achievementsList;
@@ -28,14 +30,23 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
     
     public AchievementsScreen(AchievementsMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageHeight = 300;
-        this.imageWidth = 400;
+        this.imageHeight = 260;
+        this.imageWidth = 350;
         Set<String> earned = menu.getEarnedAchievements();
         this.achievementsList = earned != null ? new ArrayList<>(earned) : new ArrayList<>();
     }
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(350, 260, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
+        
+        // Dynamically calculate how many achievements fit per page
+        // List area: from listTop (75 from top) + header (18px) to bottom buttons (imageHeight - 30)
+        int availableListHeight = this.imageHeight - 75 - 18 - 35;
+        this.achievementsPerPage = Math.max(3, availableListHeight / ROW_HEIGHT);
+        
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -60,7 +71,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         
         // Navigation buttons
         prevPageButton = new ModernButton(
-            centerX + 20, centerY + 270, 80, 20,
+            centerX + 20, centerY + this.imageHeight - 30, 80, 20,
             Component.literal("← Previous"),
             button -> {
                 if (currentPage > 0) {
@@ -72,7 +83,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         this.addRenderableWidget(prevPageButton);
         
         nextPageButton = new ModernButton(
-            centerX + this.imageWidth - 100, centerY + 270, 80, 20,
+            centerX + this.imageWidth - 100, centerY + this.imageHeight - 30, 80, 20,
             Component.literal("Next →"),
             button -> {
                 if (currentPage < maxPages - 1) {
@@ -87,7 +98,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
     }
     
     private void updatePagination() {
-        maxPages = Math.max(1, (achievementsList.size() + ACHIEVEMENTS_PER_PAGE - 1) / ACHIEVEMENTS_PER_PAGE);
+        maxPages = Math.max(1, (achievementsList.size() + achievementsPerPage - 1) / achievementsPerPage);
         
         if (currentPage >= maxPages) {
             currentPage = Math.max(0, maxPages - 1);
@@ -108,11 +119,17 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         // Header bar
         guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xE0202020);
         
+        // Background regions computed relative to imageHeight
+        int statsTop = centerY + 40;
+        int statsBottom = statsTop + 30;
+        int listTop = statsBottom + 5;
+        int listBottom = centerY + this.imageHeight - 35;
+        
         // Stats section background
-        guiGraphics.fill(centerX + 10, centerY + 50, centerX + this.imageWidth - 10, centerY + 90, 0xE01A1A1A);
+        guiGraphics.fill(centerX + 10, statsTop, centerX + this.imageWidth - 10, statsBottom, 0xE01A1A1A);
         
         // Achievements list background
-        guiGraphics.fill(centerX + 10, centerY + 100, centerX + this.imageWidth - 10, centerY + 260, 0xE01A1A1A);
+        guiGraphics.fill(centerX + 10, listTop, centerX + this.imageWidth - 10, listBottom, 0xE01A1A1A);
     }
     
     @Override
@@ -142,7 +159,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
             int pageWidth = this.font.width(pageText);
             guiGraphics.drawString(this.font, Component.literal(pageText),
                 centerX + (this.imageWidth - pageWidth) / 2, 
-                centerY + 275, 
+                centerY + this.imageHeight - 35, 
                 0x808080, false);
         }
     }
@@ -150,62 +167,64 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
     private void renderStats(GuiGraphics guiGraphics, int centerX, int centerY) {
         int achievementsCount = achievementsList.size();
         int totalRewards = menu.getTotalRewards();
+        int statsY = centerY + 44;
         
         // Achievements count
         guiGraphics.drawString(this.font, Component.literal("Achievements Earned:"),
-            centerX + 20, centerY + 58, 0xCCCCCC, false);
+            centerX + 20, statsY, 0xCCCCCC, false);
         guiGraphics.drawString(this.font, Component.literal(String.valueOf(achievementsCount)),
-            centerX + 180, centerY + 58, 0xFFAA00, false);
+            centerX + 160, statsY, 0xFFAA00, false);
         
         // Total rewards
         guiGraphics.drawString(this.font, Component.literal("Total Rewards:"),
-            centerX + 20, centerY + 73, 0xCCCCCC, false);
+            centerX + 20, statsY + 12, 0xCCCCCC, false);
         guiGraphics.drawString(this.font, Component.literal("$" + totalRewards),
-            centerX + 180, centerY + 73, 0x55FF55, false);
+            centerX + 160, statsY + 12, 0x55FF55, false);
     }
     
     private void renderAchievements(GuiGraphics guiGraphics, int centerX, int centerY) {
+        int listTop = centerY + 75;
         guiGraphics.drawString(this.font, Component.literal("Earned Achievements:"),
-            centerX + 20, centerY + 107, 0xCCCCCC, false);
+            centerX + 20, listTop + 2, 0xCCCCCC, false);
         
         if (achievementsList.isEmpty()) {
             guiGraphics.drawString(this.font, Component.literal("No achievements earned yet"),
-                centerX + 30, centerY + 150, 0x808080, false);
+                centerX + 30, listTop + 30, 0x808080, false);
             guiGraphics.drawString(this.font, Component.literal("Complete vanilla Minecraft achievements"),
-                centerX + 30, centerY + 165, 0x808080, false);
+                centerX + 30, listTop + 45, 0x808080, false);
             guiGraphics.drawString(this.font, Component.literal("to earn rewards!"),
-                centerX + 30, centerY + 180, 0x808080, false);
+                centerX + 30, listTop + 60, 0x808080, false);
             return;
         }
         
         updatePagination();
         
-        int startIndex = currentPage * ACHIEVEMENTS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ACHIEVEMENTS_PER_PAGE, achievementsList.size());
+        int startIndex = currentPage * achievementsPerPage;
+        int endIndex = Math.min(startIndex + achievementsPerPage, achievementsList.size());
         
-        int yOffset = 125;
+        int yOffset = listTop + 18;
         for (int i = startIndex; i < endIndex; i++) {
             String achievementId = achievementsList.get(i);
             
             // Alternating row background
             if ((i - startIndex) % 2 == 0) {
-                guiGraphics.fill(centerX + 15, centerY + yOffset - 2, 
-                    centerX + this.imageWidth - 15, centerY + yOffset + 14, 0x201A1A1A);
+            guiGraphics.fill(centerX + 15, yOffset - 2, 
+                    centerX + this.imageWidth - 15, yOffset + ROW_HEIGHT - 2, 0x201A1A1A);
             } else {
-                guiGraphics.fill(centerX + 15, centerY + yOffset - 2, 
-                    centerX + this.imageWidth - 15, centerY + yOffset + 14, 0x20252525);
+                guiGraphics.fill(centerX + 15, yOffset - 2, 
+                    centerX + this.imageWidth - 15, yOffset + ROW_HEIGHT - 2, 0x20252525);
             }
             
             // Achievement icon/checkmark
-            guiGraphics.drawString(this.font, Component.literal("✓"),
-                centerX + 20, centerY + yOffset, 0x55FF55, false);
+            guiGraphics.drawString(this.font, Component.literal("\u2713"),
+                centerX + 20, yOffset, 0x55FF55, false);
             
             // Achievement name (simplified ID)
             String displayName = formatAchievementName(achievementId);
             guiGraphics.drawString(this.font, Component.literal(displayName),
-                centerX + 35, centerY + yOffset, 0xFFFFFF, false);
+                centerX + 35, yOffset, 0xFFFFFF, false);
             
-            yOffset += 18;
+            yOffset += ROW_HEIGHT;
         }
     }
     

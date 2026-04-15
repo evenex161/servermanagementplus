@@ -99,10 +99,12 @@ public class OpenGuiPacket implements IPacket {
                         break;
                     case ECONOMY_MANAGEMENT:
                         SyncEconomyTemplatesPacket.syncToPlayer(player, player.getServer());
+                        SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
                         player.openMenu(new com.servermanagement.gui.economy.EconomyManagementMenuProvider());
                         break;
                     case MINEBAY:
                         // Available to all players
+                        syncBankAccount(player); // Sync balance for price display
                         syncMineBayListings(player);
                         player.openMenu(new com.servermanagement.gui.minebay.MineBayMenuProvider());
                         break;
@@ -111,6 +113,14 @@ public class OpenGuiPacket implements IPacket {
                         syncBankAccount(player); // Sync balance for display
                         syncGamblingStats(player); // Sync gambling statistics
                         com.servermanagement.gui.gambling.MineStacksMenuProvider.open(player);
+                        break;
+                    case PERFORMANCE_SETTINGS:
+                        SyncPerformanceSettingsPacket.syncToPlayer(player);
+                        player.openMenu(new com.servermanagement.gui.provider.PerformanceSettingsMenuProvider());
+                        break;
+                    case MOTD_EDITOR:
+                        syncMotd(player);
+                        player.openMenu(new com.servermanagement.gui.MotdEditorMenuProvider());
                         break;
                 }
             }
@@ -144,6 +154,14 @@ public class OpenGuiPacket implements IPacket {
         );
     }
     
+    private void syncMotd(ServerPlayer player) {
+        var motdManager = com.servermanagement.features.motd.MotdManager.getInstance();
+        com.servermanagement.network.ModNetworking.sendToPlayer(
+            new SyncMotdPacket(motdManager.getMotdText()),
+            player
+        );
+    }
+
     private void syncGlobalSettings(ServerPlayer player) {
         var worldManager = com.servermanagement.features.worldmanager.WorldManager.getInstance();
         var data = worldManager.getData();
@@ -281,7 +299,9 @@ public class OpenGuiPacket implements IPacket {
         ACHIEVEMENTS,
         ECONOMY_MANAGEMENT,
         MINEBAY,
-        MINESTACKS;
+        MINESTACKS,
+        PERFORMANCE_SETTINGS,
+        MOTD_EDITOR;
 
         public boolean isAdminOnly() {
             return switch (this) {

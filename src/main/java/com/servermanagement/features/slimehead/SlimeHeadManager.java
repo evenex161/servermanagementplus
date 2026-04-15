@@ -75,23 +75,21 @@ public class SlimeHeadManager implements Feature {
      */
     public static ItemStack createSlimeHead() {
         ItemStack head = new ItemStack(Items.PLAYER_HEAD);
-        CompoundTag tag = head.getOrCreateTag();
-        
-        // Mark as slime head (unbreakable)
-        tag.putBoolean(SLIME_HEAD_TAG, true);
-        tag.putBoolean("Unbreakable", true);
         
         // Create game profile with slime texture
         GameProfile profile = new GameProfile(UUID.randomUUID(), "Slime");
         profile.getProperties().put("textures", new Property("textures", SLIME_TEXTURE));
         
-        // Save profile to NBT
-        CompoundTag ownerTag = new CompoundTag();
-        NbtUtils.writeGameProfile(ownerTag, profile);
-        tag.put("SkullOwner", ownerTag);
+        // Set profile via NBT
+        CompoundTag skullTag = head.getOrCreateTag();
+        skullTag.put("SkullOwner", NbtUtils.writeGameProfile(new CompoundTag(), profile));
         
-        // Set display name
+        // Set custom name
         head.setHoverName(net.minecraft.network.chat.Component.literal("§aSlime Head"));
+        
+        // Set custom data for slime head identification
+        head.getOrCreateTag().putBoolean(SLIME_HEAD_TAG, true);
+        head.getOrCreateTag().putBoolean("Unbreakable", true);
         
         return head;
     }
@@ -144,7 +142,7 @@ public class SlimeHeadManager implements Feature {
             if (blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity) {
                 // Check if it has slime head data
                 var owner = skullEntity.getOwnerProfile();
-                if (owner != null && owner.getName() != null && owner.getName().equals("Slime")) {
+                if (owner != null && "Slime".equals(owner.getName())) {
                     // Check if player has permission to break
                     if (event.getPlayer() instanceof ServerPlayer player) {
                         if (!player.hasPermissions(2)) {
@@ -182,7 +180,7 @@ public class SlimeHeadManager implements Feature {
             var blockEntity = level.getBlockEntity(abovePos);
             if (blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity) {
                 var owner = skullEntity.getOwnerProfile();
-                if (owner != null && owner.getName() != null && owner.getName().equals("Slime")) {
+                if (owner != null && "Slime".equals(owner.getName())) {
                     // Cancel default noteblock sound
                     event.setCanceled(true);
                     

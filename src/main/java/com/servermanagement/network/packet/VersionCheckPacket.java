@@ -66,16 +66,14 @@ public class VersionCheckPacket implements IPacket {
                 clientOTAVersion.getVersion(), clientOTAVersion.getBuildNumber(), clientOTAVersion.getMinecraftVersion(), clientOTAVersion.getModLoader(),
                 serverOTAVersion.getVersion(), serverOTAVersion.getBuildNumber(), serverMinecraftVersion, serverModLoader);
             
-            // Check Minecraft version compatibility
-            String clientMcVersion = clientOTAVersion.getMinecraftVersion();
-            if (!"unknown".equals(clientMcVersion) && !"unknown".equals(serverMinecraftVersion) 
-                && !clientMcVersion.equals(serverMinecraftVersion)) {
-                ServerManagementMod.LOGGER.warn("Minecraft version mismatch: client MC {} vs server MC {}. Skipping OTA update.",
-                    clientMcVersion, serverMinecraftVersion);
+            // Verify Minecraft version compatibility
+            if (!clientOTAVersion.getMinecraftVersion().equals(serverMinecraftVersion)) {
+                ServerManagementMod.LOGGER.error("Minecraft version mismatch! Client MC {} vs Server MC {}. OTA update blocked.",
+                    clientOTAVersion.getMinecraftVersion(), serverMinecraftVersion);
                 return;
             }
             
-            // Check mod loader compatibility
+            // Verify mod loader compatibility
             if (!"unknown".equals(clientOTAVersion.getModLoader()) && !"unknown".equals(serverModLoader)
                     && !clientOTAVersion.getModLoader().equals(serverModLoader)) {
                 ServerManagementMod.LOGGER.error("Mod loader mismatch! Client {} vs Server {}. OTA update blocked.",
@@ -86,14 +84,14 @@ public class VersionCheckPacket implements IPacket {
             // Check if server version is newer
             if (serverOTAVersion.isNewerThan(clientOTAVersion)) {
                 ServerManagementMod.LOGGER.info("Update available: client {} -> server {}",
-                    clientOTAVersion.getFullVersion(), serverOTAVersion.getFullVersion());
+                    clientOTAVersion.getDisplayVersion(), serverOTAVersion.getDisplayVersion());
                 
                 // Notify client and offer to download update
                 if (context.getSender() == null) {
                     // We're on the client side
                     OTAUpdateManager.handleVersionMismatch(
-                        clientOTAVersion.getFullVersion(), 
-                        serverOTAVersion.getFullVersion(),
+                        clientOTAVersion.getDisplayVersion(), 
+                        serverOTAVersion.getDisplayVersion(),
                         serverDataVersion,
                         serverModJarName,
                         serverModJarHash,
@@ -106,7 +104,7 @@ public class VersionCheckPacket implements IPacket {
                 }
             } else {
                 ServerManagementMod.LOGGER.debug("Client and server OTA versions match: {}", 
-                    clientOTAVersion.getFullVersion());
+                    clientOTAVersion.getDisplayVersion());
             }
         });
         context.setPacketHandled(true);

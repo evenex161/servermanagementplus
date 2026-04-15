@@ -2,6 +2,7 @@ package com.servermanagement.gui.screen;
 
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.WorldListMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -25,12 +26,15 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
 
     public WorldListScreen(WorldListMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 320;
+        this.imageWidth = 350;
         this.imageHeight = 240;
     }
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(350, 240, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         // Request world list from server
@@ -96,7 +100,7 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
                     // Open world detail screen for this dimension
                     ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_DETAIL, world.dimensionId));
                 })
-                .bounds(centerX + 10, yPos, 300, 24)
+                .bounds(centerX + 10, yPos, this.imageWidth - 20, 24)
                 .style(world.areAllPortalsEnabled() ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.DANGER)
                 .build();
             

@@ -8,16 +8,16 @@ import java.util.Properties;
 
 /**
  * Manages OTA version tracking with build numbers, Minecraft version, and mod loader awareness.
- * Version format: v1.0.3-b04-release (network) / v1.0.3-b04-mc1.20.1-forge-release (display)
+ * Version format: v1.0.4-b01-pre-release (network) / v1.0.4-b01-mc1.21.1-forge-pre-release (display)
  */
 public class OTAVersion {
     
     private final String version;
     private final int buildNumber;
-    private final String minecraftVersion;
-    private final String modLoader;
     private final String releaseType;
     private final String releaseNotes;
+    private final String minecraftVersion;
+    private final String modLoader;
     
     private static OTAVersion CURRENT_VERSION = null;
     
@@ -50,10 +50,10 @@ public class OTAVersion {
             
             String version = props.getProperty("ota.version", "1.0.0");
             int build = Integer.parseInt(props.getProperty("ota.build", "1"));
-            String mcVersion = props.getProperty("ota.minecraft_version", "unknown");
-            String loader = props.getProperty("ota.mod_loader", "unknown");
             String releaseType = props.getProperty("ota.releaseType", "unknown");
             String releaseNotes = props.getProperty("ota.releaseNotes", "No release notes");
+            String mcVersion = props.getProperty("ota.minecraft_version", "unknown");
+            String loader = props.getProperty("ota.mod_loader", "unknown");
             
             CURRENT_VERSION = new OTAVersion(version, build, mcVersion, loader, releaseType, releaseNotes);
             
@@ -77,7 +77,7 @@ public class OTAVersion {
     
     /**
      * Get the display version string including MC version and mod loader.
-     * Format: v1.0.3-b04-mc1.20.1-forge-release
+     * Format: v1.0.3-b04-mc1.21.1-forge-release
      */
     public String getDisplayVersion() {
         StringBuilder sb = new StringBuilder();
@@ -93,7 +93,7 @@ public class OTAVersion {
     }
     
     /**
-     * Get just the semantic version (e.g., "v1.0.3")
+     * Get just the semantic version (without build number)
      */
     public String getVersion() {
         return version;
@@ -104,20 +104,6 @@ public class OTAVersion {
      */
     public int getBuildNumber() {
         return buildNumber;
-    }
-    
-    /**
-     * Get the Minecraft version this build targets
-     */
-    public String getMinecraftVersion() {
-        return minecraftVersion;
-    }
-    
-    /**
-     * Get the mod loader (e.g., "forge", "neoforge")
-     */
-    public String getModLoader() {
-        return modLoader;
     }
     
     /**
@@ -132,6 +118,20 @@ public class OTAVersion {
      */
     public String getReleaseNotes() {
         return releaseNotes;
+    }
+    
+    /**
+     * Get the Minecraft version this OTA version targets
+     */
+    public String getMinecraftVersion() {
+        return minecraftVersion;
+    }
+    
+    /**
+     * Get the mod loader (e.g., "forge", "neoforge")
+     */
+    public String getModLoader() {
+        return modLoader;
     }
     
     /**
@@ -176,8 +176,8 @@ public class OTAVersion {
     /**
      * Parse version string from network packet or display string.
      * Supports formats:
-     *   New: "v1.0.3-b04-release" or "v1.0.3-b04-mc1.20.1-release"
-     *   Old: "v1.0.3-release.3"
+     *   New: "v1.0.3-b04-release" or "v1.0.3-b04-mc1.21.1-release"
+     *   Old: "v1.0.3-release.3" or "v1.0.3-release.3:1.21.1"
      */
     public static OTAVersion parseFromString(String versionString) {
         try {
@@ -188,7 +188,7 @@ public class OTAVersion {
                 int build = 0;
                 String mcVersion = null;
                 String loader = null;
-                String releaseType = "unknown";
+                java.util.List<String> releaseTypeParts = new java.util.ArrayList<>();
                 
                 java.util.Set<String> knownLoaders = java.util.Set.of("forge", "neoforge", "fabric", "quilt");
                 
@@ -200,15 +200,25 @@ public class OTAVersion {
                     } else if (knownLoaders.contains(parts[i].toLowerCase())) {
                         loader = parts[i].toLowerCase();
                     } else {
-                        releaseType = parts[i];
+                        releaseTypeParts.add(parts[i]);
                     }
                 }
+                
+                String releaseType = releaseTypeParts.isEmpty() ? "unknown" : String.join("-", releaseTypeParts);
                 
                 return new OTAVersion(version, build, mcVersion, loader, releaseType, "");
             }
             
-            // Old format: "v1.0.3-release.3" (version.build with dot separator)
-            String[] parts = versionString.split("\\.");
+            // Old format with optional MC version: "v1.0.3-release.3:1.21.1"
+            String mcVersion = null;
+            String vPart = versionString;
+            if (versionString.contains(":")) {
+                String[] colonParts = versionString.split(":", 2);
+                vPart = colonParts[0];
+                mcVersion = colonParts[1];
+            }
+            
+            String[] parts = vPart.split("\\.");
             if (parts.length >= 4) {
                 int build = Integer.parseInt(parts[parts.length - 1]);
                 StringBuilder versionBuilder = new StringBuilder();
@@ -216,11 +226,11 @@ public class OTAVersion {
                     if (i > 0) versionBuilder.append(".");
                     versionBuilder.append(parts[i]);
                 }
-                return new OTAVersion(versionBuilder.toString(), build, null, null, "remote", "");
+                return new OTAVersion(versionBuilder.toString(), build, mcVersion, null, "remote", "");
             }
             
             // Fallback for unrecognized format
-            return new OTAVersion(versionString, 0, null, null, "unknown", "");
+            return new OTAVersion(vPart, 0, mcVersion, null, "unknown", "");
             
         } catch (Exception e) {
             ServerManagementMod.LOGGER.warn("Failed to parse version string: {}", versionString);
@@ -229,7 +239,7 @@ public class OTAVersion {
     }
     
     /**
-     * Compare two semantic version strings.
+     * Compare two semantic version strings
      * Returns: positive if v1 > v2, negative if v1 < v2, 0 if equal
      */
     private static int compareVersionStrings(String v1, String v2) {
@@ -251,10 +261,11 @@ public class OTAVersion {
     }
     
     /**
-     * Parse a version part, extracting numeric portion.
-     * Handles versions like "v1" or "3-release" by stripping non-numeric chars.
+     * Parse a version part, extracting numeric portion
+     * Handles versions like "1.0.0-EA" by stripping non-numeric suffixes
      */
     private static int parseVersionPart(String part) {
+        // Strip leading non-numeric prefix (e.g., "v" in "v1") and trailing non-numeric suffix (e.g., "-release", "-EA")
         String numericPart = part.replaceAll("^[^0-9]*", "").replaceAll("[^0-9].*$", "");
         try {
             return numericPart.isEmpty() ? 0 : Integer.parseInt(numericPart);

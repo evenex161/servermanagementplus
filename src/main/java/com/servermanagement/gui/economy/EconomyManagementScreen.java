@@ -1,6 +1,7 @@
 package com.servermanagement.gui.economy;
 
 import com.servermanagement.features.economy.TaskType;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.DeleteTemplatePacket;
@@ -25,8 +26,8 @@ import java.util.List;
  */
 public class EconomyManagementScreen extends AbstractContainerScreen<EconomyManagementMenu> {
     
-    private static final int TEMPLATE_HEIGHT = 100;
-    private static final int TEMPLATE_PADDING = 10;
+    private static final int TEMPLATE_HEIGHT = 90;
+    private static final int TEMPLATE_PADDING = 8;
     
     private enum Tab {
         TASK_TEMPLATES,
@@ -48,6 +49,10 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     private EditBox editRewardBox;
     private TaskType editTaskType = TaskType.BREAK_BLOCKS;
     private ItemStack editRewardItem = ItemStack.EMPTY; // Item reward for template editing
+    // Persisted edit values (survive rebuildWidgets)
+    private String pendingDescription = "";
+    private String pendingGoal = "";
+    private String pendingReward = "";
     
     // Free reward tab fields
     private EditBox freeRewardBox;
@@ -62,6 +67,9 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(600, 450, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -93,22 +101,23 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         ));
         
         // Tab buttons
+        int tabW = (this.imageWidth - 40) / 3;
         this.addRenderableWidget(new ModernButton(
-            centerX + 10, centerY + 50, 130, 25,
+            centerX + 10, centerY + 50, tabW, 25,
             Component.literal("Task Templates"),
             button -> switchTab(Tab.TASK_TEMPLATES),
             currentTab == Tab.TASK_TEMPLATES ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
         
         this.addRenderableWidget(new ModernButton(
-            centerX + 145, centerY + 50, 130, 25,
+            centerX + 10 + tabW + 5, centerY + 50, tabW, 25,
             Component.literal("Free Reward"),
             button -> switchTab(Tab.FREE_REWARD),
             currentTab == Tab.FREE_REWARD ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
         
         this.addRenderableWidget(new ModernButton(
-            centerX + 280, centerY + 50, 130, 25,
+            centerX + 10 + (tabW + 5) * 2, centerY + 50, tabW, 25,
             Component.literal("Statistics"),
             button -> switchTab(Tab.STATISTICS),
             currentTab == Tab.STATISTICS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
@@ -128,17 +137,18 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     
     private void initTaskTemplatesTab(int centerX, int centerY) {
         if (!editMode) {
-            // Search box (only visible in list mode)
+            // Search box (left side, below tabs)
             if (searchBox == null) {
-                searchBox = new EditBox(this.font, centerX + 420, centerY + 55, 160, 15, Component.literal("Search"));
+                searchBox = new EditBox(this.font, centerX + 20, centerY + 88, 180, 15, Component.literal("Search"));
                 searchBox.setMaxLength(50);
                 searchBox.setHint(Component.literal("Search templates..."));
             }
+            searchBox.setPosition(centerX + 20, centerY + 88);
             this.addRenderableWidget(searchBox);
             
-            // Create New Template button (only visible in list mode)
+            // Create New Template button (right side, below tabs)
             this.addRenderableWidget(new ModernButton(
-                centerX + this.imageWidth - 140, centerY + 85, 130, 25,
+                centerX + this.imageWidth - 150, centerY + 85, 130, 22,
                 Component.literal("+ New Template"),
                 button -> createNewTemplate(),
                 ModernButton.ButtonStyle.SUCCESS
@@ -146,17 +156,17 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             // Template list buttons (Edit/Delete for each template)
             for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                 int templateIndex = i + scrollOffset;
-                int yPos = centerY + 130 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                 
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 150, yPos + 35, 60, 20,
+                    centerX + this.imageWidth - 150, yPos + 28, 60, 20,
                     Component.literal("Edit"),
                     button -> editTemplate(templateIndex),
                     ModernButton.ButtonStyle.PRIMARY
                 ));
                 
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 80, yPos + 35, 70, 20,
+                    centerX + this.imageWidth - 80, yPos + 28, 70, 20,
                     Component.literal("Delete"),
                     button -> deleteTemplate(templateIndex),
                     ModernButton.ButtonStyle.DANGER
@@ -165,28 +175,29 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
                 // Enable/Disable toggle
                 SyncEconomyTemplatesPacket.TemplateData template = templates.get(templateIndex);
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 150, yPos + 60, 140, 20,
+                    centerX + this.imageWidth - 150, yPos + 52, 140, 20,
                     Component.literal(template.enabled() ? "Enabled" : "Disabled"),
                     button -> toggleTemplate(templateIndex),
                     template.enabled() ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
                 ));
             }
             
-            // Scroll buttons
+            // Scroll buttons (positioned below cards, side by side)
+            int scrollY = centerY + this.imageHeight - 42;
             if (scrollOffset > 0) {
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth / 2 - 40, centerY + this.imageHeight - 40, 80, 25,
+                    centerX + this.imageWidth / 2 - 85, scrollY, 80, 22,
                     Component.literal("▲ Previous"),
-                    button -> scrollOffset--,
+                    button -> { scrollOffset--; this.rebuildWidgets(); },
                     ModernButton.ButtonStyle.SECONDARY
                 ));
             }
             
             if (scrollOffset + 3 < templates.size()) {
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth / 2 - 40, centerY + this.imageHeight - 40,80, 25,
+                    centerX + this.imageWidth / 2 + 5, scrollY, 80, 22,
                     Component.literal("▼ Next"),
-                    button -> scrollOffset++,
+                    button -> { scrollOffset++; this.rebuildWidgets(); },
                     ModernButton.ButtonStyle.SECONDARY
                 ));
             }
@@ -216,32 +227,26 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         ));
         
         // Description input
-        if (editDescriptionBox == null) {
-            editDescriptionBox = new EditBox(this.font, formX, formY + 50, 500, 20, Component.literal("Description"));
-            editDescriptionBox.setMaxLength(100);
-            editDescriptionBox.setHint(Component.literal("Task description..."));
-        }
-        editDescriptionBox.setPosition(formX, formY + 50);
+        editDescriptionBox = new EditBox(this.font, formX, formY + 50, this.imageWidth - 100, 20, Component.literal("Description"));
+        editDescriptionBox.setMaxLength(100);
+        editDescriptionBox.setHint(Component.literal("Task description..."));
+        editDescriptionBox.setValue(pendingDescription);
         this.addRenderableWidget(editDescriptionBox);
         
         // Goal input
-        if (editGoalBox == null) {
-            editGoalBox = new EditBox(this.font, formX, formY + 100, 150, 20, Component.literal("Goal"));
-            editGoalBox.setMaxLength(10);
-            editGoalBox.setHint(Component.literal("Goal amount..."));
-            editGoalBox.setFilter(s -> s.matches("\\d*")); // Numbers only
-        }
-        editGoalBox.setPosition(formX, formY + 100);
+        editGoalBox = new EditBox(this.font, formX, formY + 100, 150, 20, Component.literal("Goal"));
+        editGoalBox.setMaxLength(10);
+        editGoalBox.setHint(Component.literal("Goal amount..."));
+        editGoalBox.setFilter(s -> s.matches("\\d*")); // Numbers only
+        editGoalBox.setValue(pendingGoal);
         this.addRenderableWidget(editGoalBox);
         
         // Reward input
-        if (editRewardBox == null) {
-            editRewardBox = new EditBox(this.font, formX + 170, formY + 100, 150, 20, Component.literal("Reward"));
-            editRewardBox.setMaxLength(10);
-            editRewardBox.setHint(Component.literal("Reward ($)..."));
-            editRewardBox.setFilter(s -> s.matches("\\d*")); // Numbers only
-        }
-        editRewardBox.setPosition(formX + 170, formY + 100);
+        editRewardBox = new EditBox(this.font, formX + 170, formY + 100, 150, 20, Component.literal("Reward"));
+        editRewardBox.setMaxLength(10);
+        editRewardBox.setHint(Component.literal("Reward ($)..."));
+        editRewardBox.setFilter(s -> s.matches("\\d*")); // Numbers only
+        editRewardBox.setValue(pendingReward);
         this.addRenderableWidget(editRewardBox);
         
         // Save button (below item slot row)
@@ -283,9 +288,9 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         }
         this.addRenderableWidget(cooldownBox);
         
-        // Save button (below item slot area)
+        // Save button (below item slot help text)
         this.addRenderableWidget(new ModernButton(
-            formX, formY + 140, 100, 25,
+            formX, formY + 125, 100, 25,
             Component.literal("Save"),
             button -> saveFreeRewardSettings(freeRewardBox.getValue(), cooldownBox.getValue()),
             ModernButton.ButtonStyle.SUCCESS
@@ -293,8 +298,15 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     }
     
     private void initStatisticsTab(int centerX, int centerY) {
-        // Placeholder for statistics display
-        // Could show: total tasks completed, total rewards claimed, etc.
+        // Refresh button
+        this.addRenderableWidget(new ModernButton(
+            centerX + this.imageWidth - 140, centerY + 88, 120, 20,
+            Component.literal("↻ Refresh"),
+            button -> {
+                ModNetworking.sendToServer(new com.servermanagement.network.packet.RequestEconomyStatsPacket());
+            },
+            ModernButton.ButtonStyle.SECONDARY
+        ));
     }
     
     private void switchTab(Tab tab) {
@@ -311,9 +323,9 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         editTemplateId = null;
         editTaskType = TaskType.BREAK_BLOCKS;
         editRewardItem = ItemStack.EMPTY;
-        if (editDescriptionBox != null) editDescriptionBox.setValue("");
-        if (editGoalBox != null) editGoalBox.setValue("");
-        if (editRewardBox != null) editRewardBox.setValue("");
+        pendingDescription = "";
+        pendingGoal = "";
+        pendingReward = "";
         this.rebuildWidgets();
     }
     
@@ -324,9 +336,9 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         editTemplateId = template.id();
         editTaskType = template.getTaskType();
         editRewardItem = template.rewardItem() != null ? template.rewardItem().copy() : ItemStack.EMPTY;
-        if (editDescriptionBox != null) editDescriptionBox.setValue(template.description() != null ? template.description() : "");
-        if (editGoalBox != null) editGoalBox.setValue(String.valueOf(template.goal()));
-        if (editRewardBox != null) editRewardBox.setValue(String.valueOf(template.rewardAmount()));
+        pendingDescription = template.description() != null ? template.description() : "";
+        pendingGoal = String.valueOf(template.goal());
+        pendingReward = String.valueOf(template.rewardAmount());
         this.rebuildWidgets();
     }
     
@@ -410,13 +422,13 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         
         // Tab content area
         guiGraphics.fill(centerX + 10, centerY + 80, centerX + this.imageWidth - 10, 
-            centerY + this.imageHeight - 50, 0xE01A1A1A);
+            centerY + this.imageHeight - 15, 0xE01A1A1A);
         
         if (currentTab == Tab.TASK_TEMPLATES && !editMode) {
             // Render template boxes
             for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                 int templateIndex = i + scrollOffset;
-                int yPos = centerY + 130 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                 
                 // Template background
                 guiGraphics.fill(centerX + 20, yPos, centerX + this.imageWidth - 20, 
@@ -425,7 +437,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         } else if (editMode) {
             // Edit form background
             guiGraphics.fill(centerX + 15, centerY + 100, centerX + this.imageWidth - 15, 
-                centerY + 350, 0xE0252525);
+                centerY + this.imageHeight - 100, 0xE0252525);
         }
     }
     
@@ -457,43 +469,43 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         if (!editMode) {
             if (templates.isEmpty()) {
                 guiGraphics.drawString(this.font, Component.literal("No templates created yet. Click '+ New Template' to create one."),
-                    centerX + 30, centerY + 150, 0x888888, false);
+                    centerX + 30, centerY + 150, 0x888888, true);
             } else {
                 // Render template list
                 for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                     int templateIndex = i + scrollOffset;
                     SyncEconomyTemplatesPacket.TemplateData template = templates.get(templateIndex);
-                    int yPos = centerY + 130 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                    int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                     
                     // Template number
                     guiGraphics.drawString(this.font, Component.literal("#" + (templateIndex + 1)),
-                        centerX + 30, yPos + 10, 0xFFAA00, true);
+                        centerX + 30, yPos + 8, 0xFFAA00, true);
                     
                     // Task type and description
                     guiGraphics.drawString(this.font, Component.literal(template.getTaskType().getDisplayName() + ": " + template.description()),
-                        centerX + 60, yPos + 10, 0xFFFFFF, false);
+                        centerX + 60, yPos + 8, 0xFFFFFF, true);
                     
                     // Goal and reward
                     guiGraphics.drawString(this.font, Component.literal("Goal: " + template.goal()),
-                        centerX + 30, yPos + 30, 0xCCCCCC, false);
+                        centerX + 30, yPos + 24, 0xCCCCCC, true);
                     
                     guiGraphics.drawString(this.font, Component.literal("Reward: $" + template.rewardAmount()),
-                        centerX + 30, yPos + 45, 0x55FF55, false);
+                        centerX + 30, yPos + 38, 0x55FF55, true);
                     
                     // Show reward item if set
                     if (template.rewardItem() != null && !template.rewardItem().isEmpty()) {
                         int itemX = centerX + 160;
-                        guiGraphics.renderItem(template.rewardItem(), itemX, yPos + 40);
+                        guiGraphics.renderItem(template.rewardItem(), itemX, yPos + 34);
                         guiGraphics.drawString(this.font, 
                             Component.literal("+ " + template.rewardItem().getHoverName().getString()),
-                            itemX + 20, yPos + 45, 0x55FFAA, false);
+                            itemX + 20, yPos + 38, 0x55FFAA, true);
                     }
                     
                     // Status
                     String status = template.enabled() ? "Active" : "Disabled";
                     int statusColor = template.enabled() ? 0x55FF55 : 0x888888;
                     guiGraphics.drawString(this.font, Component.literal(status),
-                        centerX + 30, yPos + 75, statusColor, false);
+                        centerX + 30, yPos + 66, statusColor, true);
                 }
             }
         } else {
@@ -505,7 +517,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             
             // Labels
             guiGraphics.drawString(this.font, Component.literal("Task Type:"),
-                centerX + 35, formY - 10, 0xFFFFFF, false);
+                centerX + 35, formY - 10, 0xFFFFFF, true);
             
             // Show current task type
             if (editTaskType != null) {
@@ -514,16 +526,16 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             }
             
             guiGraphics.drawString(this.font, Component.literal("Description:"),
-                centerX + 35, formY + 35, 0xFFFFFF, false);
+                centerX + 35, formY + 35, 0xFFFFFF, true);
             
             guiGraphics.drawString(this.font, Component.literal("Goal:"),
-                centerX + 35, formY + 85, 0xFFFFFF, false);
+                centerX + 35, formY + 85, 0xFFFFFF, true);
             
             guiGraphics.drawString(this.font, Component.literal("Reward ($):"),
-                centerX + 205, formY + 85, 0xFFFFFF, false);
+                centerX + 205, formY + 85, 0xFFFFFF, true);
             
             guiGraphics.drawString(this.font, Component.literal("Reward Item (optional):"),
-                centerX + 35, formY + 135, 0xFFFFFF, false);
+                centerX + 35, formY + 135, 0xFFFFFF, true);
             
             // Item slot visual
             int itemSlotX = centerX + 35;
@@ -537,16 +549,16 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
                 
                 guiGraphics.drawString(this.font, 
                     Component.literal(editRewardItem.getHoverName().getString() + " x" + editRewardItem.getCount()),
-                    itemSlotX + 25, itemSlotY + 5, 0x55FF55, false);
+                    itemSlotX + 25, itemSlotY + 5, 0x55FF55, true);
             } else {
                 guiGraphics.drawString(this.font, 
                     Component.literal("(None)"),
-                    itemSlotX + 25, itemSlotY + 5, 0x888888, false);
+                    itemSlotX + 25, itemSlotY + 5, 0x888888, true);
             }
             
             guiGraphics.drawString(this.font, 
                 Component.literal("Tip: Select an item in your hotbar and click the slot to set reward item"),
-                centerX + 35, itemSlotY + 30, 0x888888, false);
+                centerX + 35, itemSlotY + 30, 0x888888, true);
         }
     }
     
@@ -557,13 +569,13 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             centerX + 55, centerY + 95, 0xFFAA00, true);
         
         guiGraphics.drawString(this.font, Component.literal("Reward Amount ($):"),
-            centerX + 55, formY - 15, 0xFFFFFF, false);
+            centerX + 55, formY - 15, 0xFFFFFF, true);
         
         guiGraphics.drawString(this.font, Component.literal("Cooldown (hours):"),
-            centerX + 55, formY + 25, 0xFFFFFF, false);
+            centerX + 55, formY + 25, 0xFFFFFF, true);
         
         guiGraphics.drawString(this.font, Component.literal("Reward Item (optional):"),
-            centerX + 55, formY + 65, 0xFFFFFF, false);
+            centerX + 55, formY + 65, 0xFFFFFF, true);
         
         // Item slot visual
         int itemSlotX = centerX + 55;
@@ -577,27 +589,125 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             
             guiGraphics.drawString(this.font, 
                 Component.literal(freeRewardItemStack.getHoverName().getString() + " x" + freeRewardItemStack.getCount()),
-                itemSlotX + 25, itemSlotY + 5, 0x55FF55, false);
+                itemSlotX + 25, itemSlotY + 5, 0x55FF55, true);
         } else {
             guiGraphics.drawString(this.font, 
                 Component.literal("(None)"),
-                itemSlotX + 25, itemSlotY + 5, 0x888888, false);
+                itemSlotX + 25, itemSlotY + 5, 0x888888, true);
         }
         
-        guiGraphics.drawString(this.font, Component.literal("Tip: Players can claim this reward once per cooldown period"),
-            centerX + 55, formY + 160, 0x888888, false);
-            
         guiGraphics.drawString(this.font, 
             Component.literal("Select an item in your hotbar and click the slot to set reward item"),
-            centerX + 55, itemSlotY + 30, 0x888888, false);
+            centerX + 55, itemSlotY + 25, 0x888888, true);
+        
+        guiGraphics.drawString(this.font, Component.literal("Tip: Players can claim this reward once per cooldown period"),
+            centerX + 55, formY + 160, 0x888888, true);
     }
     
     private void renderStatisticsTab(GuiGraphics guiGraphics, int centerX, int centerY) {
-        guiGraphics.drawString(this.font, Component.literal("Economy Statistics"),
-            centerX + 30, centerY + 95, 0xFFAA00, true);
+        int x = centerX + 25;
+        int y = centerY + 90;
+        int col2 = centerX + this.imageWidth / 2 + 10;
+        int lineH = 14;
         
-        guiGraphics.drawString(this.font, Component.literal("Coming soon..."),
-            centerX + 30, centerY + 150, 0x888888, false);
+        // Section: Economy Overview
+        guiGraphics.drawString(this.font, Component.literal("Economy Overview"),
+            x, y, 0xFFD700, true);
+        y += lineH + 2;
+        
+        drawStatLine(guiGraphics, x, y, "Total Accounts:", 
+            String.valueOf(ClientPacketHandler.getStatTotalAccounts()), 0xFFFFFF, 0x55FF55);
+        y += lineH;
+        drawStatLine(guiGraphics, x, y, "Money in Circulation:", 
+            "$" + String.format("%,.2f", ClientPacketHandler.getStatTotalMoney()), 0xFFFFFF, 0xFFAA00);
+        y += lineH;
+        drawStatLine(guiGraphics, x, y, "Average Balance:", 
+            "$" + String.format("%,.2f", ClientPacketHandler.getStatAverageBalance()), 0xFFFFFF, 0x55FFFF);
+        y += lineH;
+        drawStatLine(guiGraphics, x, y, "Richest Player:", 
+            ClientPacketHandler.getStatRichestPlayerName() + " ($" + String.format("%,.2f", ClientPacketHandler.getStatRichestBalance()) + ")",
+            0xFFFFFF, 0xFFD700);
+        y += lineH;
+        drawStatLine(guiGraphics, x, y, "Inflation Multiplier:", 
+            String.format("%.2fx", ClientPacketHandler.getStatInflation()), 0xFFFFFF, getInflationColor(ClientPacketHandler.getStatInflation()));
+        y += lineH + 6;
+        
+        // Section: Marketplace
+        guiGraphics.drawString(this.font, Component.literal("Marketplace"),
+            x, y, 0xFFD700, true);
+        y += lineH + 2;
+        
+        drawStatLine(guiGraphics, x, y, "Active MineBay Listings:", 
+            String.valueOf(ClientPacketHandler.getStatActiveListings()), 0xFFFFFF, 0x55FF55);
+        y += lineH;
+        drawStatLine(guiGraphics, x, y, "Total Purchases:", 
+            ClientPacketHandler.getStatPurchaseCount() + " ($" + String.format("%,.2f", ClientPacketHandler.getStatTotalPurchaseVolume()) + ")",
+            0xFFFFFF, 0x55FFFF);
+        y += lineH;
+        drawStatLine(guiGraphics, x, y, "Total Sales:", 
+            ClientPacketHandler.getStatSaleCount() + " ($" + String.format("%,.2f", ClientPacketHandler.getStatTotalSaleVolume()) + ")",
+            0xFFFFFF, 0x55FF55);
+        y += lineH + 6;
+        
+        // Section: Gambling (right column or continue below)
+        int y2 = centerY + 90;
+        guiGraphics.drawString(this.font, Component.literal("MineStacks Gambling"),
+            col2, y2, 0xFFD700, true);
+        y2 += lineH + 2;
+        
+        drawStatLine(guiGraphics, col2, y2, "Total Bets:", 
+            String.valueOf(ClientPacketHandler.getStatGamblingBetCount()), 0xFFFFFF, 0xFFAA00);
+        y2 += lineH;
+        drawStatLine(guiGraphics, col2, y2, "Total Wins:", 
+            String.valueOf(ClientPacketHandler.getStatGamblingWinCount()), 0xFFFFFF, 0x55FF55);
+        y2 += lineH;
+        drawStatLine(guiGraphics, col2, y2, "Total Wagered:", 
+            "$" + String.format("%,.2f", ClientPacketHandler.getStatTotalGamblingWagered()), 0xFFFFFF, 0xFF5555);
+        y2 += lineH;
+        drawStatLine(guiGraphics, col2, y2, "Total Won:", 
+            "$" + String.format("%,.2f", ClientPacketHandler.getStatTotalGamblingWon()), 0xFFFFFF, 0x55FF55);
+        y2 += lineH;
+        double houseProfit = ClientPacketHandler.getStatTotalGamblingWagered() - ClientPacketHandler.getStatTotalGamblingWon();
+        int houseProfitColor = houseProfit >= 0 ? 0x55FF55 : 0xFF5555;
+        drawStatLine(guiGraphics, col2, y2, "House Profit:", 
+            "$" + String.format("%,.2f", houseProfit), 0xFFFFFF, houseProfitColor);
+        y2 += lineH + 6;
+        
+        // Section: Daily Tasks & Rewards
+        guiGraphics.drawString(this.font, Component.literal("Tasks & Rewards"),
+            col2, y2, 0xFFD700, true);
+        y2 += lineH + 2;
+        
+        drawStatLine(guiGraphics, col2, y2, "Task Templates:", 
+            ClientPacketHandler.getStatEnabledTemplates() + " / " + ClientPacketHandler.getStatTotalTemplates() + " enabled",
+            0xFFFFFF, 0x55FFFF);
+        y2 += lineH;
+        drawStatLine(guiGraphics, col2, y2, "Free Rewards Claimed:", 
+            String.valueOf(ClientPacketHandler.getStatFreeRewardCount()), 0xFFFFFF, 0x55FF55);
+        y2 += lineH;
+        drawStatLine(guiGraphics, col2, y2, "Player Transfers:", 
+            String.valueOf(ClientPacketHandler.getStatTransferCount()), 0xFFFFFF, 0xFFAA00);
+        y2 += lineH + 6;
+        
+        // Section: Transaction Summary
+        guiGraphics.drawString(this.font, Component.literal("Transaction Summary"),
+            col2, y2, 0xFFD700, true);
+        y2 += lineH + 2;
+        drawStatLine(guiGraphics, col2, y2, "Total Transactions:", 
+            String.valueOf(ClientPacketHandler.getStatTotalTransactions()), 0xFFFFFF, 0xFFFFFF);
+    }
+    
+    private void drawStatLine(GuiGraphics guiGraphics, int x, int y, String label, String value, int labelColor, int valueColor) {
+        guiGraphics.drawString(this.font, Component.literal(label), x, y, labelColor, true);
+        int labelWidth = this.font.width(label);
+        guiGraphics.drawString(this.font, Component.literal(" " + value), x + labelWidth, y, valueColor, true);
+    }
+    
+    private int getInflationColor(double inflation) {
+        if (inflation <= 1.0) return 0x55FF55;    // Green - low/normal
+        if (inflation <= 2.0) return 0xFFFF55;     // Yellow - moderate
+        if (inflation <= 5.0) return 0xFFAA00;     // Orange - high
+        return 0xFF5555;                            // Red - extreme
     }
     
     @Override

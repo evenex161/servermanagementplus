@@ -5,35 +5,59 @@ import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.PriceItemEntry;
+import com.servermanagement.features.economy.Transaction;
+import com.servermanagement.features.economy.TransactionType;
 import com.servermanagement.network.packet.IPacket;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
- * Packet sent from client to server to purchase a MineBay listing
+ * Packet sent from client to server to purchase a MineBay listing.
+ * Supports two payment modes: BALANCE (0) deducts from bank,
+ * ITEMS (1) removes selected inventory items as payment.
  */
 public class PurchaseListingPacket implements IPacket {
     private final String listingId;
+    private final int paymentMode; // 0=BALANCE, 1=ITEMS
+    private final int[] selectedSlots; // inventory slot indices for ITEMS mode
     
-    public PurchaseListingPacket(String listingId) {
+    public PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) {
         this.listingId = listingId;
+        this.paymentMode = paymentMode;
+        this.selectedSlots = selectedSlots;
     }
     
     public PurchaseListingPacket(FriendlyByteBuf buf) {
         this.listingId = buf.readUtf(36);
+        this.paymentMode = buf.readByte();
+        int slotCount = buf.readVarInt();
+        // Reject invalid slot counts to prevent buffer misalignment
+        if (slotCount < 0 || slotCount > 36) {
+            this.selectedSlots = new int[0];
+            return;
+        }
+        this.selectedSlots = new int[slotCount];
+        for (int i = 0; i < slotCount; i++) {
+            this.selectedSlots[i] = buf.readVarInt();
+        }
     }
     
     @Override
     public void encode(FriendlyByteBuf buf) {
         buf.writeUtf(this.listingId, 36);
+        buf.writeByte(this.paymentMode);
+        buf.writeVarInt(this.selectedSlots.length);
+        for (int slot : this.selectedSlots) {
+            buf.writeVarInt(slot);
+        }
     }
     
     @Override
@@ -58,6 +82,12 @@ public class PurchaseListingPacket implements IPacket {
                 return;
             }
             
+            // Check if listing is still active (prevents double-purchase)
+            if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
+                buyer.sendSystemMessage(Component.literal("§cThis listing is no longer available!"));
+                return;
+            }
+            
             // Check if listing is fixed price
             if (listing.getOfferType() != MineBayListing.OfferType.FIXED) {
                 buyer.sendSystemMessage(Component.literal("§cThis listing is negotiable only!"));
@@ -70,17 +100,18 @@ public class PurchaseListingPacket implements IPacket {
                 return;
             }
             
-            // Validate buyer has enough money
+            // === PAYMENT VALIDATION ===
             EconomyManager economyManager = EconomyManager.getInstance();
             BankAccount buyerAccount = economyManager.getOrCreateAccount(buyer.getUUID());
+            double totalMoneyPrice = listing.getMoneyPrice();
             
-            if (buyerAccount.getBalance() < listing.getMoneyPrice()) {
-                buyer.sendSystemMessage(Component.literal("§cInsufficient funds! Need $" + 
-                    String.format("%.2f", listing.getMoneyPrice())));
+            // Validate payment mode
+            if (this.paymentMode != 0 && this.paymentMode != 1) {
+                buyer.sendSystemMessage(Component.literal("§cInvalid payment mode!"));
                 return;
             }
             
-            // Validate buyer has required price items
+            // Validate buyer has required price items (item-for-item requirements)
             List<PriceItemEntry> priceItems = listing.getPriceItems();
             Map<PriceItemEntry, Integer> requiredItems = new HashMap<>();
             
@@ -89,7 +120,6 @@ public class PurchaseListingPacket implements IPacket {
                     priceItem.getAmount() * 64 : priceItem.getAmount();
                 requiredItems.put(priceItem, required);
                 
-                // Count how many buyer has
                 int count = 0;
                 for (ItemStack stack : buyer.getInventory().items) {
                     if (ItemStack.isSameItemSameTags(stack, priceItem.getItemStack())) {
@@ -104,12 +134,85 @@ public class PurchaseListingPacket implements IPacket {
                 }
             }
             
-            // All checks passed - execute purchase
+            // Payment mode specific validation
+            com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
+                com.servermanagement.features.economy.MarketPricingEngine.getInstance();
+            double itemPaymentTotal = 0.0;
             
-            // 1. Deduct money from buyer
-            buyerAccount.withdraw(listing.getMoneyPrice());
+            if (this.paymentMode == 0) {
+                // BALANCE mode - check bank balance
+                if (totalMoneyPrice > 0 && buyerAccount.getBalance() < totalMoneyPrice) {
+                    buyer.sendSystemMessage(Component.literal("§cInsufficient funds! Need $" + 
+                        String.format("%.2f", totalMoneyPrice) + " but you only have $" +
+                        String.format("%.2f", buyerAccount.getBalance()) + " in your bank."));
+                    return;
+                }
+            } else {
+                // ITEMS mode - validate selected slots and calculate total value
+                if (totalMoneyPrice > 0) {
+                    java.util.Set<Integer> validatedSlots = new java.util.HashSet<>();
+                    for (int slot : this.selectedSlots) {
+                        if (slot < 0 || slot >= buyer.getInventory().items.size()) continue;
+                        if (validatedSlots.contains(slot)) continue; // ignore duplicates
+                        validatedSlots.add(slot);
+                        
+                        ItemStack stack = buyer.getInventory().items.get(slot);
+                        if (!stack.isEmpty()) {
+                            itemPaymentTotal += pricingEngine.getStackPrice(stack);
+                        }
+                    }
+                    
+                    if (itemPaymentTotal < totalMoneyPrice) {
+                        buyer.sendSystemMessage(Component.literal("§cSelected items are worth $" + 
+                            String.format("%.2f", itemPaymentTotal) + " but you need $" +
+                            String.format("%.2f", totalMoneyPrice) + "!"));
+                        return;
+                    }
+                }
+            }
             
-            // 2. Remove required items from buyer
+            // === All checks passed - execute purchase ===
+            
+            // SECURITY: Mark listing as sold BEFORE processing payment
+            // to prevent a second packet from passing the ACTIVE check above.
+            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
+            
+            // 1. Process money payment
+            if (totalMoneyPrice > 0) {
+                if (this.paymentMode == 0) {
+                    // BALANCE mode: deduct from bank
+                    buyerAccount.withdraw(totalMoneyPrice);
+                    buyerAccount.addTransaction(new Transaction(
+                        TransactionType.MINEBAY_PURCHASE, totalMoneyPrice,
+                        "Bought " + listing.getItemForSale().getHoverName().getString(),
+                        listing.getSellerId()));
+                } else {
+                    // ITEMS mode: remove selected items, refund excess to balance
+                    java.util.Set<Integer> processedSlots = new java.util.HashSet<>();
+                    for (int slot : this.selectedSlots) {
+                        if (slot < 0 || slot >= buyer.getInventory().items.size()) continue;
+                        if (processedSlots.contains(slot)) continue;
+                        processedSlots.add(slot);
+                        buyer.getInventory().items.set(slot, ItemStack.EMPTY);
+                    }
+                    
+                    buyerAccount.addTransaction(new Transaction(
+                        TransactionType.MINEBAY_PURCHASE, totalMoneyPrice,
+                        "Bought " + listing.getItemForSale().getHoverName().getString() + " (items)",
+                        listing.getSellerId()));
+                    
+                    // Deposit refund to buyer's balance
+                    double refund = itemPaymentTotal - totalMoneyPrice;
+                    if (refund > 0.01) {
+                        buyerAccount.deposit(refund);
+                        buyerAccount.addTransaction(new Transaction(
+                            TransactionType.MINEBAY_REFUND, refund,
+                            "Item payment refund"));
+                    }
+                }
+            }
+            
+            // 2. Remove required price items from buyer
             for (Map.Entry<PriceItemEntry, Integer> entry : requiredItems.entrySet()) {
                 PriceItemEntry priceItem = entry.getKey();
                 int remaining = entry.getValue();
@@ -126,16 +229,25 @@ public class PurchaseListingPacket implements IPacket {
             
             // 3. Give purchased item to buyer
             ItemStack purchasedItem = listing.getItemForSale().copy();
-            if (!buyer.getInventory().add(purchasedItem)) {
-                // Inventory full, drop at player's feet
-                buyer.drop(purchasedItem, false);
+            String purchasedItemName = purchasedItem.getHoverName().getString();
+            if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, purchasedItem)) {
+                // Use overflow inventory instead of dropping on ground
+                com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
+                    .addItem(buyer.getUUID(), purchasedItem);
+                buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
             }
             
-            // 4. Give money to seller
+            // 4. Give money to seller (full listing price)
             BankAccount sellerAccount = economyManager.getOrCreateAccount(listing.getSellerId());
-            sellerAccount.deposit(listing.getMoneyPrice());
+            if (listing.getMoneyPrice() > 0) {
+                sellerAccount.deposit(listing.getMoneyPrice());
+                sellerAccount.addTransaction(new Transaction(
+                    TransactionType.MINEBAY_SALE, listing.getMoneyPrice(),
+                    "Sold " + purchasedItemName + " to " + buyer.getName().getString(),
+                    buyer.getUUID()));
+            }
             
-            // 5. Give price items to seller (if they're online, add to inventory, otherwise store)
+            // 5. Give price items to seller
             ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
             for (PriceItemEntry priceItem : priceItems) {
                 ItemStack itemToGive = priceItem.getItemStack().copy();
@@ -148,11 +260,12 @@ public class PurchaseListingPacket implements IPacket {
                     stack.setCount(stackSize);
                     
                     if (seller != null && seller.isAlive()) {
-                        if (!seller.getInventory().add(stack)) {
-                            seller.drop(stack, false);
+                        if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(seller, stack)) {
+                            com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
+                                .addItem(listing.getSellerId(), stack);
+                            seller.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
                         }
                     } else {
-                        // Seller offline - add to their bank inventory
                         economyManager.getBankInventory(listing.getSellerId())
                             .addItem(stack, 
                                 com.servermanagement.features.economy.BankInventory.ItemSource.MINEBAY_SALE, 
@@ -166,21 +279,33 @@ public class PurchaseListingPacket implements IPacket {
             // 6. Remove listing
             mineBayManager.removeListing(listingId);
             
-            // 7. Notify both parties
-            buyer.sendSystemMessage(Component.literal("§aPurchase successful! You bought " + 
-                purchasedItem.getHoverName().getString() + " for $" + 
-                String.format("%.2f", listing.getMoneyPrice())));
-            
-            if (seller != null && seller.isAlive()) {
-                seller.sendSystemMessage(Component.literal("§aYour listing was purchased by " + 
-                    buyer.getName().getString() + "! Received $" + 
-                    String.format("%.2f", listing.getMoneyPrice())));
+            // 7. Action bar success message (buyer)
+            if (totalMoneyPrice > 0) {
+                if (this.paymentMode == 0) {
+                    buyer.displayClientMessage(Component.literal(
+                        "§a§l✓ §r§aPurchased §f" + purchasedItemName + " §afor §6$" + String.format("%.2f", totalMoneyPrice)), true);
+                } else {
+                    double refund = itemPaymentTotal - totalMoneyPrice;
+                    String refundText = refund > 0.01 ? " §7(§a+$" + String.format("%.2f", refund) + " refund§7)" : "";
+                    buyer.displayClientMessage(Component.literal(
+                        "§a§l✓ §r§aPurchased §f" + purchasedItemName + " §awith items" + refundText), true);
+                }
+            } else {
+                buyer.displayClientMessage(Component.literal(
+                    "§a§l✓ §r§aPurchased §f" + purchasedItemName), true);
             }
             
-            // 8. Sync updated listings to all players
+            // 8. Notification to seller (action bar if online)
+            if (seller != null && seller.isAlive()) {
+                seller.displayClientMessage(Component.literal(
+                    "§6§l$ §r§6" + buyer.getName().getString() + " §abought your §f" + purchasedItemName +
+                    (listing.getMoneyPrice() > 0 ? " §afor §6$" + String.format("%.2f", listing.getMoneyPrice()) : "")), true);
+            }
+            
+            // 9. Sync updated listings to all players
             mineBayManager.syncListingsToAllPlayers(buyer.server);
             
-            // 9. Sync updated balances
+            // 10. Sync updated balances
             com.servermanagement.network.ModNetworking.sendToPlayer(
                 new com.servermanagement.network.packet.SyncBankAccountPacket(
                     buyerAccount.getBalance(), 

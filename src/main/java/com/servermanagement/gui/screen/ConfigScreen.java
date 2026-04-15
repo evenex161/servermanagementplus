@@ -1,6 +1,7 @@
 package com.servermanagement.gui.screen;
 
 import com.servermanagement.gui.ConfigMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
@@ -20,23 +21,28 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
     private ToggleSwitch playerManagerSwitch;
     private ToggleSwitch economySwitch;
     private ToggleSwitch slimeHeadSwitch;
+    private ToggleSwitch serverPerformanceSwitch;
+    private ToggleSwitch motdSwitch;
     
     public ConfigScreen(ConfigMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageWidth = 320;
-        this.imageHeight = 260; // Increased height for 4 toggles
+        this.imageHeight = 330; // Height for 6 toggles
     }
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(320, 330, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        int rightCol = centerX + 240;
+        int rightCol = centerX + this.imageWidth - 80;
         int startY = centerY + 50;
-        int spacing = 35;
+        int spacing = Math.min(35, (this.imageHeight - 120) / 6);
         
         // WorldManager toggle - ALWAYS shown
         this.worldManagerSwitch = new ToggleSwitch(
@@ -90,6 +96,32 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
         );
         this.addRenderableWidget(this.slimeHeadSwitch);
         
+        // Server Performance toggle - ALWAYS shown
+        this.serverPerformanceSwitch = new ToggleSwitch(
+            rightCol, startY + spacing * 4 + 3,
+            Component.literal("Server Performance"),
+            this.menu.isServerPerformanceEnabled(),
+            (newState) -> {
+                long clientTick = minecraft.player.tickCount;
+                ModNetworking.sendToServer(new ToggleFeaturePacket("server_performance", newState, clientTick));
+                this.menu.setServerPerformanceEnabled(newState);
+            }
+        );
+        this.addRenderableWidget(this.serverPerformanceSwitch);
+        
+        // MOTD Editor toggle - ALWAYS shown
+        this.motdSwitch = new ToggleSwitch(
+            rightCol, startY + spacing * 5 + 3,
+            Component.literal("MOTD Editor"),
+            this.menu.isMotdEnabled(),
+            (newState) -> {
+                long clientTick = minecraft.player.tickCount;
+                ModNetworking.sendToServer(new ToggleFeaturePacket("motd_editor", newState, clientTick));
+                this.menu.setMotdEnabled(newState);
+            }
+        );
+        this.addRenderableWidget(this.motdSwitch);
+        
         // Back to Dashboard button
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("← Dashboard"),
@@ -136,14 +168,19 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
             this.leftPos + 15, this.topPos + 20, 0xAAAAAA, true);
         
         // Labels
+        int labelSpacing = Math.min(35, (this.imageHeight - 120) / 6);
         guiGraphics.drawString(this.font, "World Manager:", 
-            this.leftPos + 20, this.topPos + 53, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 50 + labelSpacing * 0 + 3, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Player Manager:", 
-            this.leftPos + 20, this.topPos + 88, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 50 + labelSpacing * 1 + 3, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "Economy System:", 
-            this.leftPos + 20, this.topPos + 123, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 50 + labelSpacing * 2 + 3, 0xFFFFFF, true);
         guiGraphics.drawString(this.font, "SlimeHead Feature:", 
-            this.leftPos + 20, this.topPos + 158, 0xFFFFFF, false);
+            this.leftPos + 20, this.topPos + 50 + labelSpacing * 3 + 3, 0xFFFFFF, true);
+        guiGraphics.drawString(this.font, "Server Performance:", 
+            this.leftPos + 20, this.topPos + 50 + labelSpacing * 4 + 3, 0xFFFFFF, true);
+        guiGraphics.drawString(this.font, "MOTD Editor:", 
+            this.leftPos + 20, this.topPos + 50 + labelSpacing * 5 + 3, 0xFFFFFF, true);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

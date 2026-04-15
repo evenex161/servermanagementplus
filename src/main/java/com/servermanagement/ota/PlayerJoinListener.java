@@ -35,7 +35,7 @@ public class PlayerJoinListener {
             CurseForgeUpdateChecker.checkForUpdates().thenAccept(updateInfo -> {
                 if (updateInfo.updateAvailable) {
                     ServerManagementMod.LOGGER.info("CurseForge update available: {} -> {} ({})",
-                        serverOTAVersion.getFullVersion(), updateInfo.version.getFullVersion(), updateInfo.downloadUrl);
+                        serverOTAVersion.getDisplayVersion(), updateInfo.version.getDisplayVersion(), updateInfo.downloadUrl);
                 }
             });
             

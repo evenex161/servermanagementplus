@@ -2,6 +2,7 @@ package com.servermanagement.gui.screen;
 
 import com.servermanagement.gui.DashboardMenu;
 import com.servermanagement.gui.widgets.DashboardCard;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -23,13 +24,16 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(400, 330, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        int cardWidth = 120;
-        int cardHeight = 65;
+        int cardWidth = (this.imageWidth - 40) / 3;
+        int cardHeight = (this.imageHeight - 100) / 3;
         int spacing = 10;
         
         int row1Y = centerY + 40;
@@ -83,10 +87,28 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.ECONOMY_MANAGEMENT, ""))
         ));
         
-        // Row 3: Mod Settings
-        // Mod Settings
+        // Performance Settings
+        this.addRenderableWidget(new DashboardCard(
+            centerX + cardWidth * 2 + 30, row2Y, cardWidth, cardHeight,
+            Component.literal("Performance"),
+            "~", "TPS & Optimization",
+            DashboardCard.CardStyle.RED,
+            () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.PERFORMANCE_SETTINGS, ""))
+        ));
+        
+        // Row 3: Mod Settings & Server Customization
+        // MOTD Editor
         this.addRenderableWidget(new DashboardCard(
             centerX + 10, row3Y, cardWidth, cardHeight,
+            Component.literal("MOTD Editor"),
+            "=", "Server Message",
+            DashboardCard.CardStyle.BLUE,
+            () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.MOTD_EDITOR, ""))
+        ));
+        
+        // Mod Settings
+        this.addRenderableWidget(new DashboardCard(
+            centerX + cardWidth + 20, row3Y, cardWidth, cardHeight,
             Component.literal("Mod Settings"),
             "+", "Features Config",
             DashboardCard.CardStyle.GRAY,
@@ -97,7 +119,7 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Close"),
             button -> this.onClose())
-            .bounds(centerX + 150, row3Y + cardHeight + 15, 100, 24)
+            .bounds(centerX + (this.imageWidth - 100) / 2, row3Y + cardHeight + 15, 100, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
     }

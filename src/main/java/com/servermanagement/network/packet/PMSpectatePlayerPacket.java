@@ -4,8 +4,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 public class PMSpectatePlayerPacket implements IPacket {
+    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     private final String playerName;
 
     public PMSpectatePlayerPacket(String playerName) {
@@ -26,7 +28,7 @@ public class PMSpectatePlayerPacket implements IPacket {
         ctx.get().enqueueWork(() -> {
             var player = ctx.get().getSender();
             if (player != null && player.hasPermissions(2)) {
-                if (playerName == null || playerName.length() > 16 || !playerName.matches("[a-zA-Z0-9_]+")) {
+                if (playerName == null || playerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(playerName).matches()) {
                     return;
                 }
                 com.servermanagement.features.playermanager.PlayerManagerSingleton.spectatePlayer(player, playerName);

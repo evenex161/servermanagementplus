@@ -34,7 +34,7 @@ public class EconomyManager {
     private EconomyManager() {
     }
 
-    public static EconomyManager getInstance() {
+    public static synchronized EconomyManager getInstance() {
         if (instance == null) {
             instance = new EconomyManager();
         }
@@ -44,7 +44,7 @@ public class EconomyManager {
     /**
      * Get instance by server (ensures initialization)
      */
-    public static EconomyManager getInstance(MinecraftServer server) {
+    public static synchronized EconomyManager getInstance(MinecraftServer server) {
         EconomyManager manager = getInstance();
         if (manager.server == null && server != null) {
             manager.initialize(server);
@@ -77,7 +77,56 @@ public class EconomyManager {
         // Load bank inventories
         loadBankInventories();
         
+        // Initialize recipe-based pricing (needs RecipeManager, available after datapack load)
+        RecipeBasedPricing.getInstance().initialize(server);
+        
+        // Initialize market pricing engine
+        MarketPricingEngine.getInstance().recalculate(server);
+        
+        // Load supply/demand tracking data
+        ItemSupplyDemandTracker.getInstance().load(server);
+        
+        // Load margin history data
+        MarginHistoryTracker.getInstance().load(server);
+        
         ServerManagementMod.LOGGER.info("Economy system initialized with performance optimizations");
+    }
+
+    /**
+     * Sync market prices to a specific player (call on player join or when MineBay opens)
+     */
+    public void syncMarketPrices(ServerPlayer player) {
+        MarketPricingEngine engine = MarketPricingEngine.getInstance();
+        engine.ensureFresh(server);
+        com.servermanagement.network.ModNetworking.sendToPlayer(
+            new com.servermanagement.network.packet.SyncMarketPricesPacket(
+                engine.getInflationMultiplier(),
+                engine.getAverageBalance(),
+                engine.getTotalPlayerCount(),
+                engine.getStarterMoney(),
+                ItemSupplyDemandTracker.getInstance().getAllSupplyData(),
+                RecipeBasedPricing.getInstance().getAllPrices()
+            ),
+            player
+        );
+    }
+
+    /**
+     * Sync market prices to all online players
+     */
+    public void syncMarketPricesToAll() {
+        MarketPricingEngine engine = MarketPricingEngine.getInstance();
+        engine.ensureFresh(server);
+        com.servermanagement.network.ModNetworking.sendToAllPlayers(
+            new com.servermanagement.network.packet.SyncMarketPricesPacket(
+                engine.getInflationMultiplier(),
+                engine.getAverageBalance(),
+                engine.getTotalPlayerCount(),
+                engine.getStarterMoney(),
+                ItemSupplyDemandTracker.getInstance().getAllSupplyData(),
+                RecipeBasedPricing.getInstance().getAllPrices()
+            )
+        );
     }
 
     /**
@@ -165,6 +214,12 @@ public class EconomyManager {
         // Clear caches
         if (balanceCache != null) {
             balanceCache.clear();
+        }
+        
+        // Save and shutdown supply/demand tracker
+        if (server != null) {
+            ItemSupplyDemandTracker.getInstance().shutdown(server);
+            MarginHistoryTracker.getInstance().shutdown(server);
         }
     }
 

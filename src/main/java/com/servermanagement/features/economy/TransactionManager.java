@@ -29,7 +29,7 @@ public class TransactionManager {
     
     private TransactionManager() {}
     
-    public static TransactionManager getInstance() {
+    public static synchronized TransactionManager getInstance() {
         if (instance == null) {
             instance = new TransactionManager();
         }

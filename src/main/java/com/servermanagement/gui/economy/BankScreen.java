@@ -4,6 +4,7 @@ import com.servermanagement.client.ClientBankData;
 import com.servermanagement.client.ClientMoneyRequestData;
 import com.servermanagement.features.economy.Transaction;
 import com.servermanagement.features.economy.TransactionType;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.BankTransferPacket;
@@ -63,6 +64,9 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
 
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(440, 340, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets();
 
@@ -133,7 +137,10 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
 
         // Requests tab — show count badge if there are incoming
         List<ClientMoneyRequestData.RequestEntry> incoming = ClientMoneyRequestData.getIncomingRequests();
-        long pendingCount = incoming.stream().filter(ClientMoneyRequestData.RequestEntry::isPending).count();
+        int pendingCount = 0;
+        for (ClientMoneyRequestData.RequestEntry r : incoming) {
+            if (r.isPending()) pendingCount++;
+        }
         String reqLabel = pendingCount > 0 ? "Requests (" + pendingCount + ")" : "Requests";
         ModernButton.ButtonStyle reqStyle = currentTab == Tab.REQUESTS ? ModernButton.ButtonStyle.PRIMARY :
             (pendingCount > 0 ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY);
@@ -284,9 +291,10 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
             ClientMoneyRequestData.getOutgoingRequests();
 
         // Filter to pending only
-        List<ClientMoneyRequestData.RequestEntry> pending = requests.stream()
-            .filter(ClientMoneyRequestData.RequestEntry::isPending)
-            .toList();
+        List<ClientMoneyRequestData.RequestEntry> pending = new java.util.ArrayList<>();
+        for (ClientMoneyRequestData.RequestEntry r : requests) {
+            if (r.isPending()) pending.add(r);
+        }
 
         reqMaxPages = Math.max(1, (pending.size() + REQUESTS_PER_PAGE - 1) / REQUESTS_PER_PAGE);
         if (reqPage >= reqMaxPages) reqPage = Math.max(0, reqMaxPages - 1);
@@ -589,9 +597,10 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
             ClientMoneyRequestData.getIncomingRequests() :
             ClientMoneyRequestData.getOutgoingRequests();
 
-        List<ClientMoneyRequestData.RequestEntry> pending = requests.stream()
-            .filter(ClientMoneyRequestData.RequestEntry::isPending)
-            .toList();
+        List<ClientMoneyRequestData.RequestEntry> pending = new java.util.ArrayList<>();
+        for (ClientMoneyRequestData.RequestEntry r : requests) {
+            if (r.isPending()) pending.add(r);
+        }
 
         int entryY = contentY + 24;
 
@@ -658,6 +667,14 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
             case PLAYER_TRANSFER_RECEIVED -> "RECV";
             case ADMIN_GIVE -> "GIFT";
             case ADMIN_TAKE -> "DEDUCT";
+            case MINEBAY_PURCHASE -> "BUY";
+            case MINEBAY_SALE -> "SALE";
+            case MINEBAY_REFUND -> "REFUND";
+            case MINEBAY_ESCROW -> "ESCROW";
+            case MINEBAY_ESCROW_RETURN -> "RETURN";
+            case GAMBLING_BET -> "BET";
+            case GAMBLING_WIN -> "WIN";
+            case FREE_REWARD -> "FREE";
         };
     }
 

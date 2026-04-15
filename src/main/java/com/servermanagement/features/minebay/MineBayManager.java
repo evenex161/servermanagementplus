@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Manages all MineBay listings and offers with persistent file storage
@@ -25,7 +24,7 @@ public class MineBayManager {
     
     private MineBayManager() {}
     
-    public static MineBayManager getInstance() {
+    public static synchronized MineBayManager getInstance() {
         if (instance == null) {
             instance = new MineBayManager();
         }
@@ -97,9 +96,12 @@ public class MineBayManager {
                                         MineBayListing.OfferType offerType) {
         // Enforce max listings per player (synchronized to prevent TOCTOU race)
         int maxListings = com.servermanagement.config.ModConfig.MAX_LISTINGS_PER_PLAYER.get();
-        long activeCount = activeListings.values().stream()
-                .filter(l -> l.getSellerId().equals(sellerId) && l.getStatus() == MineBayListing.ListingStatus.ACTIVE)
-                .count();
+        int activeCount = 0;
+        for (MineBayListing l : activeListings.values()) {
+            if (l.getSellerId().equals(sellerId) && l.getStatus() == MineBayListing.ListingStatus.ACTIVE) {
+                activeCount++;
+            }
+        }
         if (activeCount >= maxListings) {
             ServerManagementMod.LOGGER.info("Player {} has reached max listings limit ({})", sellerName, maxListings);
             return null;
@@ -120,20 +122,28 @@ public class MineBayManager {
      * Get all active listings
      */
     public List<MineBayListing> getActiveListings() {
-        return activeListings.values().stream()
-                .filter(l -> l.getStatus() == MineBayListing.ListingStatus.ACTIVE)
-                .sorted(Comparator.comparingLong(MineBayListing::getCreatedTimestamp).reversed())
-                .collect(Collectors.toList());
+        List<MineBayListing> result = new ArrayList<>();
+        for (MineBayListing l : activeListings.values()) {
+            if (l.getStatus() == MineBayListing.ListingStatus.ACTIVE) {
+                result.add(l);
+            }
+        }
+        result.sort(Comparator.comparingLong(MineBayListing::getCreatedTimestamp).reversed());
+        return result;
     }
     
     /**
      * Get listings by seller
      */
     public List<MineBayListing> getListingsBySeller(UUID sellerId) {
-        return activeListings.values().stream()
-                .filter(l -> l.getSellerId().equals(sellerId))
-                .sorted(Comparator.comparingLong(MineBayListing::getCreatedTimestamp).reversed())
-                .collect(Collectors.toList());
+        List<MineBayListing> result = new ArrayList<>();
+        for (MineBayListing l : activeListings.values()) {
+            if (l.getSellerId().equals(sellerId)) {
+                result.add(l);
+            }
+        }
+        result.sort(Comparator.comparingLong(MineBayListing::getCreatedTimestamp).reversed());
+        return result;
     }
     
     /**
@@ -209,10 +219,12 @@ public class MineBayManager {
         
         if (offerId != null) {
             // Mark specific counteroffer as accepted
-            listing.getCounteroffers().stream()
-                    .filter(o -> o.getOfferId().equals(offerId))
-                    .findFirst()
-                    .ifPresent(o -> o.setStatus(MineBayOffer.OfferStatus.ACCEPTED));
+            for (MineBayOffer o : listing.getCounteroffers()) {
+                if (o.getOfferId().equals(offerId)) {
+                    o.setStatus(MineBayOffer.OfferStatus.ACCEPTED);
+                    break;
+                }
+            }
         }
         
         save();

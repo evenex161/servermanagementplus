@@ -24,6 +24,14 @@ public class Transaction {
         this(type, amount, description, null);
     }
 
+    public Transaction(TransactionType type, double amount, long timestamp, String description, UUID otherParty) {
+        this.type = type;
+        this.amount = amount;
+        this.timestamp = timestamp;
+        this.description = description;
+        this.otherParty = otherParty;
+    }
+
     public TransactionType getType() {
         return type;
     }

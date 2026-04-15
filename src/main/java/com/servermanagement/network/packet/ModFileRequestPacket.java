@@ -39,8 +39,16 @@ public class ModFileRequestPacket implements IPacket {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
-                ServerManagementMod.LOGGER.info("Player {} requested mod update from {} to {}", 
-                    player.getName().getString(), clientVersion, requestedVersion);
+                ServerManagementMod.LOGGER.info("Player {} requested mod update from {} to {} (MC {})", 
+                    player.getName().getString(), clientVersion, requestedVersion, clientMinecraftVersion);
+                
+                // Verify MC version matches before transferring
+                String serverMcVersion = com.servermanagement.ota.OTAVersion.loadFromResources().getMinecraftVersion();
+                if (!serverMcVersion.equals(clientMinecraftVersion)) {
+                    ServerManagementMod.LOGGER.error("MC version mismatch! Server: {}, Client: {}. Refusing transfer.",
+                        serverMcVersion, clientMinecraftVersion);
+                    return;
+                }
                 
                 // Start file transfer on server side
                 ModFileTransferManager.startTransfer(player, requestedVersion);

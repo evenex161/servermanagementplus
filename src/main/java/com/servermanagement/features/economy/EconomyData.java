@@ -6,6 +6,7 @@ import com.servermanagement.util.DataVersion;
 import net.minecraft.server.MinecraftServer;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -124,6 +125,6 @@ public class EconomyData {
      * Get all accounts
      */
     public Map<UUID, BankAccount> getAllAccounts() {
-        return new HashMap<>(accounts);
+        return Collections.unmodifiableMap(accounts);
     }
 }

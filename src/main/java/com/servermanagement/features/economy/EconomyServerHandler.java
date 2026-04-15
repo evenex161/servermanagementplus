@@ -15,6 +15,10 @@ public class EconomyServerHandler {
     private static int autoSaveTicks = 0;
     private static final int AUTOSAVE_INTERVAL = 12000; // 10 minutes (20 ticks/sec * 60 * 10)
     
+    /** Shorter interval for market price recalculation and sync (2 minutes) */
+    private static int marketSyncTicks = 0;
+    private static final int MARKET_SYNC_INTERVAL = 2400; // 2 minutes (20 ticks/sec * 60 * 2)
+    
     /**
      * Periodic auto-save to prevent data loss
      */
@@ -29,6 +33,20 @@ public class EconomyServerHandler {
         }
         
         autoSaveTicks++;
+        marketSyncTicks++;
+        
+        // Periodic market price recalculation and sync to all clients (every 2 minutes)
+        if (marketSyncTicks >= MARKET_SYNC_INTERVAL) {
+            marketSyncTicks = 0;
+            
+            EconomyManager manager = EconomyManager.getInstance();
+            if (manager != null && event.getServer() != null) {
+                MarketPricingEngine.getInstance().recalculate(event.getServer());
+                manager.syncMarketPricesToAll();
+                ServerManagementMod.LOGGER.debug("Market prices recalculated and synced to all players");
+            }
+        }
+        
         if (autoSaveTicks >= AUTOSAVE_INTERVAL) {
             autoSaveTicks = 0;
             
@@ -36,6 +54,16 @@ public class EconomyServerHandler {
             if (manager != null) {
                 manager.save(); // This will be debounced by AsyncSaveScheduler
                 ServerManagementMod.LOGGER.debug("Economy auto-save triggered");
+            }
+            
+            // Periodic supply/demand save and decay
+            ItemSupplyDemandTracker tracker = ItemSupplyDemandTracker.getInstance();
+            if (event.getServer() != null) {
+                tracker.applyDecay();
+                tracker.tickSave(event.getServer());
+                
+                // Periodic margin history save
+                MarginHistoryTracker.getInstance().save(event.getServer());
             }
 
             // Periodic session cleanup to prevent memory leak

@@ -18,6 +18,7 @@ public class TabListIsolationHandler {
     
     // Reuse collections to avoid per-tick allocation and GC pressure
     private static final Map<String, List<ServerPlayer>> dimensionPlayers = new HashMap<>();
+    private static final Set<UUID> visibleIds = new HashSet<>();
     
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -52,10 +53,7 @@ public class TabListIsolationHandler {
             );
             
             // Create player info entries for visible players
-            Set<UUID> visibleUUIDs = new HashSet<>();
-            for (ServerPlayer visible : visiblePlayers) {
-                visibleUUIDs.add(visible.getUUID());
-            }
+            // (visibleIds tracking handled inside getVisiblePlayersForDimension)
             
             // Send update packet to show only visible players
             // Note: Full tab list isolation requires packet manipulation which may need mixins
@@ -69,7 +67,7 @@ public class TabListIsolationHandler {
         net.minecraft.server.MinecraftServer server
     ) {
         List<ServerPlayer> visible = new ArrayList<>();
-        Set<UUID> visibleIds = new HashSet<>();
+        visibleIds.clear();
         
         // Add players from the same dimension
         for (ServerPlayer player : dimensionPlayers.getOrDefault(dimension, Collections.emptyList())) {

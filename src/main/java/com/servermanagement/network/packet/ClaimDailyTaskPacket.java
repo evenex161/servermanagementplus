@@ -61,7 +61,7 @@ public class ClaimDailyTaskPacket implements IPacket {
                 // Give item reward if present
                 ItemStack rewardItem = task.getRewardItem();
                 if (!rewardItem.isEmpty()) {
-                    boolean addedToInventory = player.getInventory().add(rewardItem.copy());
+                    boolean addedToInventory = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
                     
                     if (!addedToInventory) {
                         // Inventory full, add to bank inventory

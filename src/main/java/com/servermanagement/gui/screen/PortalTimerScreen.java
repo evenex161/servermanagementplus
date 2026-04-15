@@ -2,6 +2,7 @@ package com.servermanagement.gui.screen;
 
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.PortalTimerMenu;
+import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.WMSetTimerPacket;
 import net.minecraft.client.gui.GuiGraphics;
@@ -36,6 +37,9 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     
     @Override
     protected void init() {
+        int[] dim = ScreenScaler.scale(300, 240, this.width, this.height);
+        this.imageWidth = dim[0];
+        this.imageHeight = dim[1];
         super.init();
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -198,9 +202,9 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         int labelX = this.leftPos + 30;
         int labelY = this.topPos + 53;
         
-        guiGraphics.drawString(this.font, "H", labelX + 20, labelY, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, "M", labelX + 95, labelY, 0xAAAAAA, false);
-        guiGraphics.drawString(this.font, "S", labelX + 170, labelY, 0xAAAAAA, false);
+        guiGraphics.drawString(this.font, "H", labelX + 20, labelY, 0xAAAAAA, true);
+        guiGraphics.drawString(this.font, "M", labelX + 95, labelY, 0xAAAAAA, true);
+        guiGraphics.drawString(this.font, "S", labelX + 170, labelY, 0xAAAAAA, true);
         
         // Current timer status
         boolean hasTimer = ClientPacketHandler.hasTimer();

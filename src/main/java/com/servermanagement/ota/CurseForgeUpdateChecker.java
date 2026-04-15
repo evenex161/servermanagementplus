@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,9 +27,6 @@ public class CurseForgeUpdateChecker {
     // CurseForge project ID
     private static final int PROJECT_ID = 1381899;
     private static final String CURSEFORGE_API = "https://api.curseforge.com/v1/mods/%d/files";
-    
-    // Minecraft version loaded from OTA properties at runtime
-    private static String MINECRAFT_VERSION = null;
     
     // API key loaded from secure config file
     private static String API_KEY = null;
@@ -71,8 +69,10 @@ public class CurseForgeUpdateChecker {
             }
             
             if (!configFound) {
+                createTemplateConfigFile();
                 ServerManagementMod.LOGGER.warn("CurseForge configuration file not found. Update checking disabled.");
-                ServerManagementMod.LOGGER.info("Create 'curseforge.properties' with your API key to enable CurseForge integration.");
+                ServerManagementMod.LOGGER.info("A template 'curseforge.properties' has been created in your server root.");
+                ServerManagementMod.LOGGER.info("Edit it and paste your CurseForge API key to enable update checking.");
                 return;
             }
             
@@ -98,6 +98,45 @@ public class CurseForgeUpdateChecker {
     }
     
     /**
+     * Creates a template curseforge.properties file in the server root so the
+     * operator knows exactly where to put their API key without having to read docs.
+     */
+    private static void createTemplateConfigFile() {
+        Path targetPath = Paths.get("curseforge.properties");
+        if (Files.exists(targetPath)) {
+            return; // Another thread beat us, nothing to do
+        }
+        
+        String template =
+            "# CurseForge API Configuration for ServerManagement+\n" +
+            "# KEEP THIS FILE SECURE - DO NOT COMMIT TO VERSION CONTROL!\n" +
+            "# Add this file to .gitignore\n" +
+            "#\n" +
+            "# How to obtain your API key:\n" +
+            "#   1. Log in at https://www.curseforge.com\n" +
+            "#   2. Go to Account Settings > API Keys\n" +
+            "#   3. Generate a new key and paste it below.\n" +
+            "#   4. Set curseforge.enabled=true to activate update checking.\n" +
+            "\n" +
+            "# Paste your CurseForge API key here\n" +
+            "curseforge.api.key=\n" +
+            "\n" +
+            "# Set to true once your API key is filled in\n" +
+            "curseforge.enabled=false\n" +
+            "\n" +
+            "# Cache duration in milliseconds (default: 1 hour = 3600000)\n" +
+            "curseforge.cache.duration=3600000\n";
+        
+        try {
+            Files.writeString(targetPath, template, StandardCharsets.UTF_8);
+            ServerManagementMod.LOGGER.info("Created template CurseForge config at: {}",
+                targetPath.toAbsolutePath());
+        } catch (IOException e) {
+            ServerManagementMod.LOGGER.error("Could not create template curseforge.properties: {}", e.getMessage());
+        }
+    }
+    
+    /**
      * Check CurseForge for available updates (async)
      */
     public static CompletableFuture<UpdateInfo> checkForUpdates() {
@@ -119,13 +158,8 @@ public class CurseForgeUpdateChecker {
                 
                 OTAVersion currentVersion = OTAVersion.loadFromResources();
                 
-                // Load Minecraft version from OTA properties
-                if (MINECRAFT_VERSION == null) {
-                    MINECRAFT_VERSION = currentVersion.getMinecraftVersion();
-                }
-                
                 ServerManagementMod.LOGGER.info("Checking CurseForge for updates...");
-                ServerManagementMod.LOGGER.info("Current version: {} (MC {})", currentVersion.getFullVersion(), MINECRAFT_VERSION);
+                ServerManagementMod.LOGGER.info("Current version: {} (MC {})", currentVersion.getDisplayVersion(), currentVersion.getMinecraftVersion());
                 
                 // Get latest file from CurseForge
                 CurseForgeFile latestFile = getLatestFile();
@@ -145,7 +179,7 @@ public class CurseForgeUpdateChecker {
                 
                 if (updateAvailable) {
                     ServerManagementMod.LOGGER.info("Update available on CurseForge!");
-                    ServerManagementMod.LOGGER.info("Latest version: {}", remoteVersion.getFullVersion());
+                    ServerManagementMod.LOGGER.info("Latest version: {}", remoteVersion.getDisplayVersion());
                     ServerManagementMod.LOGGER.info("Download URL: {}", latestFile.downloadUrl);
                     
                     UpdateInfo result = new UpdateInfo(true, remoteVersion, latestFile.downloadUrl, latestFile.fileName);
@@ -174,6 +208,9 @@ public class CurseForgeUpdateChecker {
         if (!ENABLED || API_KEY == null) {
             return null;
         }
+        
+        // Get MC version from OTA properties
+        String minecraftVersion = OTAVersion.loadFromResources().getMinecraftVersion();
         
         try {
             String apiUrl = String.format(CURSEFORGE_API, PROJECT_ID);
@@ -208,7 +245,7 @@ public class CurseForgeUpdateChecker {
                     
                     boolean matchesVersion = false;
                     for (int j = 0; j < gameVersions.size(); j++) {
-                        if (gameVersions.get(j).getAsString().equals(MINECRAFT_VERSION)) {
+                        if (gameVersions.get(j).getAsString().equals(minecraftVersion)) {
                             matchesVersion = true;
                             break;
                         }
@@ -226,7 +263,7 @@ public class CurseForgeUpdateChecker {
                     }
                 }
                 
-                ServerManagementMod.LOGGER.warn("No files found for Minecraft {}", MINECRAFT_VERSION);
+                ServerManagementMod.LOGGER.warn("No files found for Minecraft {}", minecraftVersion);
             } else if (responseCode == 403) {
                 ServerManagementMod.LOGGER.error("CurseForge API authentication failed - Invalid API key");
             } else if (responseCode == 404) {

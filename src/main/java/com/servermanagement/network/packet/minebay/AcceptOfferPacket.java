@@ -2,6 +2,8 @@ package com.servermanagement.network.packet.minebay;
 
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
+import com.servermanagement.features.economy.Transaction;
+import com.servermanagement.features.economy.TransactionType;
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.MineBayOffer;
@@ -12,11 +14,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
-
 import java.util.function.Supplier;
 
 /**
- * Packet sent from client to server when a seller accepts an offer
+ * Packet sent from client to server when a seller accepts an offer.
+ * Items and money are already escrowed at offer creation time via CreateOfferPacket.
  */
 public class AcceptOfferPacket implements IPacket {
     private final String listingId;
@@ -79,112 +81,140 @@ public class AcceptOfferPacket implements IPacket {
                 return;
             }
             
-            ServerPlayer buyer = seller.server.getPlayerList().getPlayer(acceptedOffer.getBuyerId());
+            // Execute the transaction — items and money are already escrowed
             
-            // Validate buyer is online (for now, we'll require both parties online)
-            if (buyer == null) {
-                seller.sendSystemMessage(Component.literal("§cBuyer is not online! Transaction requires both parties online."));
-                return;
-            }
+            // SECURITY: Mark listing as COMPLETED immediately to prevent concurrent accept operations
+            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
             
-            // Validate buyer still has the money
-            BankAccount buyerAccount = economyManager.getOrCreateAccount(acceptedOffer.getBuyerId());
-            if (buyerAccount.getBalance() < acceptedOffer.getMoneyOffer()) {
-                seller.sendSystemMessage(Component.literal("§cBuyer no longer has enough money!"));
-                buyer.sendSystemMessage(Component.literal("§cYour offer was accepted but you don't have enough money!"));
-                return;
-            }
-            
-            // Validate buyer still has the items
-            for (ItemStack offeredStack : acceptedOffer.getItemOffers()) {
-                if (offeredStack.isEmpty()) continue;
-                
-                int found = 0;
-                for (ItemStack invStack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(invStack, offeredStack)) {
-                        found += invStack.getCount();
-                    }
-                }
-                
-                if (found < offeredStack.getCount()) {
-                    seller.sendSystemMessage(Component.literal("§cBuyer no longer has all the offered items!"));
-                    buyer.sendSystemMessage(Component.literal("§cYour offer was accepted but you no longer have all the items!"));
-                    return;
-                }
-            }
-            
-            // Execute the transaction
             BankAccount sellerAccount = economyManager.getOrCreateAccount(seller.getUUID());
             
-            // 1. Deduct money from buyer
-            if (acceptedOffer.getMoneyOffer() > 0) {
-                buyerAccount.withdraw(acceptedOffer.getMoneyOffer());
-            }
-            
-            // 2. Remove items from buyer's inventory
-            for (ItemStack offeredStack : acceptedOffer.getItemOffers()) {
-                if (offeredStack.isEmpty()) continue;
-                
-                int remaining = offeredStack.getCount();
-                for (ItemStack invStack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(invStack, offeredStack) && remaining > 0) {
-                        int toRemove = Math.min(remaining, invStack.getCount());
-                        invStack.shrink(toRemove);
-                        remaining -= toRemove;
-                    }
-                }
-            }
-            
-            // 3. Give purchased item to buyer
-            ItemStack purchasedItem = listing.getItemForSale().copy();
-            if (!buyer.getInventory().add(purchasedItem)) {
-                buyer.drop(purchasedItem, false);
-            }
-            
-            // 4. Pay seller
+            // 1. Pay seller the escrowed money
             if (acceptedOffer.getMoneyOffer() > 0) {
                 sellerAccount.deposit(acceptedOffer.getMoneyOffer());
+                sellerAccount.addTransaction(new Transaction(
+                    TransactionType.MINEBAY_SALE, acceptedOffer.getMoneyOffer(),
+                    "Sold " + listing.getItemForSale().getHoverName().getString(),
+                    acceptedOffer.getBuyerId()));
             }
             
-            // 5. Give offered items to seller
+            // 2. Give escrowed items to seller
             for (ItemStack offeredStack : acceptedOffer.getItemOffers()) {
                 if (offeredStack.isEmpty()) continue;
                 ItemStack stack = offeredStack.copy();
-                if (!seller.getInventory().add(stack)) {
-                    seller.drop(stack, false);
+                if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(seller, stack)) {
+                    // Overflow: add to seller's overflow inventory
+                    com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
+                        .addItem(seller.getUUID(), stack);
+                    seller.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
                 }
             }
             
-            // 6. Mark offer as accepted
+            // 3. Give purchased item to buyer (may be offline)
+            ItemStack purchasedItem = listing.getItemForSale().copy();
+            String purchasedItemName = purchasedItem.getHoverName().getString();
+            ServerPlayer buyer = seller.server.getPlayerList().getPlayer(acceptedOffer.getBuyerId());
+            
+            // Record buyer transaction
+            BankAccount buyerAccount = economyManager.getOrCreateAccount(acceptedOffer.getBuyerId());
+            if (acceptedOffer.getMoneyOffer() > 0) {
+                buyerAccount.addTransaction(new Transaction(
+                    TransactionType.MINEBAY_PURCHASE, acceptedOffer.getMoneyOffer(),
+                    "Bought " + purchasedItemName + " from " + seller.getName().getString(),
+                    seller.getUUID()));
+            }
+            
+            if (buyer != null) {
+                if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, purchasedItem)) {
+                    com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
+                        .addItem(buyer.getUUID(), purchasedItem);
+                    buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                }
+            } else {
+                // Buyer is offline — store in overflow
+                com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
+                    .addItem(acceptedOffer.getBuyerId(), purchasedItem);
+            }
+            
+            // 4. Reject all other pending offers on this listing (return their escrowed items/money)
+            for (MineBayOffer other : listing.getCounteroffers()) {
+                if (other != acceptedOffer && other.getStatus() == MineBayOffer.OfferStatus.PENDING) {
+                    returnEscrowedOffer(other, seller.server);
+                    other.setStatus(MineBayOffer.OfferStatus.REJECTED);
+                }
+            }
+            
+            // 5. Mark offer as accepted
             acceptedOffer.setStatus(MineBayOffer.OfferStatus.ACCEPTED);
             
-            // 7. Complete the listing
-            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
+            // 6. Complete the listing (status already set to COMPLETED above)
             mineBayManager.saveListing(listing);
             mineBayManager.removeListing(listingId);
             
-            // 8. Sync listings to all players
+            // 7. Sync listings to all players
             mineBayManager.syncListingsToAllPlayers(seller.server);
             
-            // 9. Sync bank accounts
-            com.servermanagement.network.ModNetworking.sendToPlayer(
-                new SyncBankAccountPacket(buyerAccount.getBalance(), buyerAccount.getRecentTransactions(10)),
-                buyer
-            );
+            // 8. Sync bank accounts
             com.servermanagement.network.ModNetworking.sendToPlayer(
                 new SyncBankAccountPacket(sellerAccount.getBalance(), sellerAccount.getRecentTransactions(10)),
                 seller
             );
+            if (buyer != null) {
+                com.servermanagement.network.ModNetworking.sendToPlayer(
+                    new SyncBankAccountPacket(buyerAccount.getBalance(), buyerAccount.getRecentTransactions(10)),
+                    buyer
+                );
+            }
             
-            // Notify both parties
-            seller.sendSystemMessage(Component.literal("§a✓ Offer accepted! Transaction complete."));
-            seller.sendSystemMessage(Component.literal("§7Sold " + listing.getItemForSale().getDisplayName().getString() + 
-                " to " + buyer.getName().getString()));
+            // Notify both parties (action bar)
+            String moneyStr = acceptedOffer.getMoneyOffer() > 0 ? 
+                " for §6$" + String.format("%.2f", acceptedOffer.getMoneyOffer()) : "";
+            seller.displayClientMessage(Component.literal(
+                "§a§l✓ §r§aOffer accepted! Sold §f" + purchasedItemName + moneyStr), true);
             
-            buyer.sendSystemMessage(Component.literal("§a✓ Your offer was accepted!"));
-            buyer.sendSystemMessage(Component.literal("§7Purchased " + listing.getItemForSale().getDisplayName().getString() + 
-                " from " + seller.getName().getString()));
+            if (buyer != null) {
+                buyer.displayClientMessage(Component.literal(
+                    "§a§l✓ §r§aYour offer was accepted! Purchased §f" + purchasedItemName + 
+                    " §afrom §6" + seller.getName().getString()), true);
+            }
         });
         ctx.get().setPacketHandled(true);
+    }
+    
+    /**
+     * Return escrowed items and money from a rejected/displaced offer back to the buyer
+     */
+    private void returnEscrowedOffer(MineBayOffer offer, net.minecraft.server.MinecraftServer server) {
+        EconomyManager economyManager = EconomyManager.getInstance();
+        
+        // Return money
+        if (offer.getMoneyOffer() > 0) {
+            BankAccount buyerAccount = economyManager.getOrCreateAccount(offer.getBuyerId());
+            buyerAccount.deposit(offer.getMoneyOffer());
+            buyerAccount.addTransaction(new Transaction(
+                TransactionType.MINEBAY_ESCROW_RETURN, offer.getMoneyOffer(),
+                "Offer auto-rejected (listing sold)"));
+        }
+        
+        // Return items
+        ServerPlayer buyer = server.getPlayerList().getPlayer(offer.getBuyerId());
+        for (ItemStack offeredStack : offer.getItemOffers()) {
+            if (offeredStack.isEmpty()) continue;
+            ItemStack stack = offeredStack.copy();
+            if (buyer != null) {
+                if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, stack)) {
+                    com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
+                        .addItem(buyer.getUUID(), stack);
+                    buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                }
+            } else {
+                com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
+                    .addItem(offer.getBuyerId(), stack);
+            }
+        }
+        
+        // Notify buyer if online (action bar)
+        if (buyer != null) {
+            buyer.displayClientMessage(Component.literal("§e[MineBay] §cYour offer was auto-rejected §7(listing sold) — escrowed items/money returned"), true);
+        }
     }
 }

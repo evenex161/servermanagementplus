@@ -76,6 +76,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_version: mod_version,
             mod_build: mod_build,
             mod_loader: mod_loader,
+            mod_release_type: mod_release_type,
             mod_authors: mod_authors,
             mod_description: mod_description
     ]

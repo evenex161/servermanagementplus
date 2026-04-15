@@ -1,12 +1,9 @@
 package com.servermanagement.network.packet;
 
-import com.servermanagement.network.ModNetworking;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-
 import java.util.function.Supplier;
 
 /**
@@ -37,18 +34,9 @@ public class ConsoleCommandPacket implements IPacket {
                 if (server != null) {
                     // Create a command source that captures output
                     CommandSourceStack source = server.createCommandSourceStack()
-                        .withSuppressedOutput()
                         .withSource(new com.servermanagement.network.ConsoleCommandListener(player));
                     
-                    int result = server.getCommands().performPrefixedCommand(source, command);
-                    
-                    // If no output was captured, send a result indicator
-                    if (result == 0) {
-                        ModNetworking.sendToPlayer(
-                            new ConsoleResponsePacket("[WARN] Command returned 0 (may have failed): " + command),
-                            player
-                        );
-                    }
+                    server.getCommands().performPrefixedCommand(source, command);
                     
                     com.servermanagement.ServerManagementMod.LOGGER.info(
                         "Console command executed by {}: {}", player.getName().getString(), 
