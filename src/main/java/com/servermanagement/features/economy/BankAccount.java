@@ -29,29 +29,42 @@ public class BankAccount {
         return playerUUID;
     }
 
-    public double getBalance() {
+    public synchronized double getBalance() {
         return balance;
     }
 
-    public void setBalance(double balance) {
+    public synchronized void setBalance(double balance) {
         this.balance = Math.max(0, balance); // Never allow negative balance
     }
 
     /**
-     * Add money to the account
+     * Add money to the account.
+     * Synchronized to prevent concurrent balance modifications.
      * @return true if successful
      */
-    public boolean deposit(double amount) {
+    public synchronized boolean deposit(double amount) {
         if (amount <= 0) return false;
         this.balance += amount;
         return true;
     }
 
     /**
-     * Remove money from the account
+     * Remove money from the account.
+     * Synchronized to prevent concurrent balance modifications.
      * @return true if successful, false if insufficient funds
      */
-    public boolean withdraw(double amount) {
+    public synchronized boolean withdraw(double amount) {
+        if (amount <= 0 || this.balance < amount) return false;
+        this.balance -= amount;
+        return true;
+    }
+
+    /**
+     * Atomically check balance and withdraw in one operation.
+     * Prevents TOCTOU race conditions where balance is checked then modified.
+     * @return true if the account had sufficient funds and withdrawal succeeded
+     */
+    public synchronized boolean tryWithdraw(double amount) {
         if (amount <= 0 || this.balance < amount) return false;
         this.balance -= amount;
         return true;
@@ -60,10 +73,10 @@ public class BankAccount {
     /**
      * Add a transaction to history, maintaining max size
      */
-    public void addTransaction(Transaction transaction) {
+    public synchronized void addTransaction(Transaction transaction) {
         transactions.add(0, transaction); // Add to front (newest first)
         
-        // Keep only last 50 transactions
+        // Keep only last MAX_TRANSACTION_HISTORY transactions
         if (transactions.size() > MAX_TRANSACTION_HISTORY) {
             transactions.remove(transactions.size() - 1);
         }
@@ -72,14 +85,14 @@ public class BankAccount {
     /**
      * Get transaction history (newest first)
      */
-    public List<Transaction> getTransactions() {
+    public synchronized List<Transaction> getTransactions() {
         return new ArrayList<>(transactions); // Return copy
     }
 
     /**
      * Get recent transactions (limited count)
      */
-    public List<Transaction> getRecentTransactions(int count) {
+    public synchronized List<Transaction> getRecentTransactions(int count) {
         int limit = Math.min(count, transactions.size());
         return new ArrayList<>(transactions.subList(0, limit));
     }

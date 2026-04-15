@@ -72,6 +72,12 @@ public class PurchaseListingPacket implements IPacket {
                 return;
             }
             
+            // Check if listing is still active (prevents double-purchase)
+            if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
+                buyer.sendSystemMessage(Component.literal("§cThis listing is no longer available!"));
+                return;
+            }
+            
             // Check if listing is fixed price
             if (listing.getOfferType() != MineBayListing.OfferType.FIXED) {
                 buyer.sendSystemMessage(Component.literal("┬ºcThis listing is negotiable only!"));
@@ -181,6 +187,10 @@ public class PurchaseListingPacket implements IPacket {
             }
             
             // === All checks passed - execute purchase ===
+            
+            // SECURITY: Mark listing as sold BEFORE processing payment
+            // to prevent a second packet from passing the ACTIVE check above.
+            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
             
             // 1. Remove auto-selected items from buyer inventory
             for (Map.Entry<Integer, Integer> entry : itemsToConsume.entrySet()) {

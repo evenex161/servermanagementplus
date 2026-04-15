@@ -443,7 +443,7 @@ public class EconomyManager {
             if (files != null) {
                 for (java.io.File file : files) {
                     try {
-                        net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                        net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024));
                         BankInventory inventory = BankInventory.fromNBT(tag);
                         bankInventories.put(inventory.playerId, inventory);
                     } catch (Exception e) {

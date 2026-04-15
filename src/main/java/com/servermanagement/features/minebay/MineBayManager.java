@@ -24,7 +24,7 @@ public class MineBayManager {
     
     private MineBayManager() {}
     
-    public static MineBayManager getInstance() {
+    public static synchronized MineBayManager getInstance() {
         if (instance == null) {
             instance = new MineBayManager();
         }
@@ -290,7 +290,7 @@ public class MineBayManager {
                 return;
             }
             
-            CompoundTag rootTag = NbtIo.readCompressed(listingsFile.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+            CompoundTag rootTag = NbtIo.readCompressed(listingsFile.toPath(), net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024));
             
             // Load active listings
             CompoundTag listingsTag = rootTag.getCompound("Listings");

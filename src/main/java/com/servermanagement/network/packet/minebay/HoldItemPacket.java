@@ -47,12 +47,26 @@ public class HoldItemPacket implements IPacket {
         ctx.enqueueWork(() -> {
             ServerPlayer player = (ServerPlayer) ctx.player();
             if (player != null) {
+                // Validate slot index
+                if (slotIndex < 0 || slotIndex >= player.getInventory().getContainerSize()) {
+                    return;
+                }
+                
                 // Get item from player inventory
                 ItemStack item = player.getInventory().getItem(slotIndex);
                 
                 if (!item.isEmpty()) {
+                    // SECURITY: Return any previously held item before holding a new one.
+                    // Without this, rapidly holding different items would lose the first one
+                    // because holdItem() overwrites the map entry.
+                    MineBayManager manager = MineBayManager.getInstance();
+                    ItemStack previouslyHeld = manager.releaseHeldItem(player.getUUID());
+                    if (!previouslyHeld.isEmpty()) {
+                        player.getInventory().placeItemBackInInventory(previouslyHeld);
+                    }
+                    
                     // Hold the item in MineBayManager
-                    MineBayManager.getInstance().holdItem(player.getUUID(), item.copy());
+                    manager.holdItem(player.getUUID(), item.copy());
                     
                     // Remove from player inventory
                     player.getInventory().setItem(slotIndex, ItemStack.EMPTY);

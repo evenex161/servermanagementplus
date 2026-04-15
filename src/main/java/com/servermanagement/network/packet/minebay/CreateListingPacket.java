@@ -84,78 +84,86 @@ public class CreateListingPacket implements IPacket {
             if (player != null) {
                 MineBayManager manager = MineBayManager.getInstance();
                 
-                if (!itemToSell.isEmpty()) {
-                    // Calculate dynamic market pricing on the server
-                    com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
-                        com.servermanagement.features.economy.MarketPricingEngine.getInstance();
-                    pricingEngine.ensureFresh(player.server);
-                    
-                    double baseMarketPrice = pricingEngine.getStackPrice(itemToSell);
-                    double clampedMargin = Math.max(-50.0, Math.min(500.0, marginPercent));
-                    double finalPrice = pricingEngine.calculateFinalPrice(baseMarketPrice, clampedMargin);
-                    
-                    // Create the listing with market pricing data
-                    MineBayListing listing = manager.createListing(
-                        player.getUUID(),
-                        player.getName().getString(),
-                        itemToSell,
-                        finalPrice,
-                        priceItems,
-                        offerType
-                    );
-                    
-                    if (listing != null) {
-                        // Set market pricing fields
-                        listing.setBaseMarketPrice(baseMarketPrice);
-                        listing.setMarginPercent(clampedMargin);
-                        listing.setMoneyPrice(finalPrice);
-                        
-                        // Log margin to history for future pricing calculations
-                        com.servermanagement.features.economy.MarginHistoryTracker.getInstance()
-                            .recordMargin(itemToSell, clampedMargin, finalPrice, baseMarketPrice, player.getUUID());
-                    }
-                    
-                    if (listing == null) {
-                        // Max listings reached - return item to player
-                        int maxListings = com.servermanagement.config.ModConfig.MAX_LISTINGS_PER_PLAYER.get();
-                        player.getInventory().add(itemToSell.copy());
-                        player.sendSystemMessage(
-                            net.minecraft.network.chat.Component.literal(
-                                "┬ºcÔ£ù You have reached the maximum number of active listings (" + maxListings + ")"
-                            )
-                        );
-                        return;
-                    }
-                    
-                    com.servermanagement.ServerManagementMod.LOGGER.info(
-                        "Created MineBay listing {} by {} for ${} with {} price items", 
-                        listing.getListingId(),
-                        player.getName().getString(),
-                        moneyPrice,
-                        priceItems.size()
-                    );
-                    
-                    // Clear the item from player's menu so it doesn't get returned
-                    if (player.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu menu) {
-                        menu.clearOfferingItem();
-                    }
-                    
-                    // Send success message
-                    player.sendSystemMessage(
-                        net.minecraft.network.chat.Component.literal(
-                            "┬ºaÔ£ô Listing created successfully!"
-                        )
-                    );
-                    
-                    // Sync listings to all online players immediately
-                    manager.syncListingsToAllPlayers(player.server);
-                } else {
-                    player.sendSystemMessage(
-                        net.minecraft.network.chat.Component.literal(
-                            "┬ºcÔ£ù Error: No item was placed for listing"
-                        )
-                    );
+                // SECURITY: Read item from the server-side menu container, NOT from packet data.
+                // The client-sent itemToSell could be spoofed with arbitrary items.
+                ItemStack serverItem = ItemStack.EMPTY;
+                if (player.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu menu) {
+                    serverItem = menu.getOfferingItem();
+                    // Immediately prevent the item from being returned on menu close.
+                    // This MUST happen before any listing creation to prevent the race condition
+                    // where removed() fires between listing creation and clearOfferingItem(),
+                    // which would duplicate the item (returned to player AND listed on MineBay).
+                    menu.clearOfferingItem();
                 }
+                
+                if (serverItem.isEmpty()) {
+                    player.sendSystemMessage(
+                        net.minecraft.network.chat.Component.literal(
+                            "§c✗ Error: No item was placed for listing"
+                        )
+                    );
+                    return;
+                }
+                
+                // Calculate dynamic market pricing on the server
+                com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
+                    com.servermanagement.features.economy.MarketPricingEngine.getInstance();
+                pricingEngine.ensureFresh(player.server);
+                
+                double baseMarketPrice = pricingEngine.getStackPrice(serverItem);
+                double clampedMargin = Math.max(-50.0, Math.min(200.0, marginPercent));
+                double finalPrice = pricingEngine.calculateFinalPrice(baseMarketPrice, clampedMargin);
+                
+                // Create the listing with the server-validated item
+                MineBayListing listing = manager.createListing(
+                    player.getUUID(),
+                    player.getName().getString(),
+                    serverItem,
+                    finalPrice,
+                    priceItems,
+                    offerType
+                );
+                
+                if (listing != null) {
+                    // Set market pricing fields
+                    listing.setBaseMarketPrice(baseMarketPrice);
+                    listing.setMarginPercent(clampedMargin);
+                    listing.setMoneyPrice(finalPrice);
+                    
+                    // Log margin to history for future pricing calculations
+                    com.servermanagement.features.economy.MarginHistoryTracker.getInstance()
+                        .recordMargin(serverItem, clampedMargin, finalPrice, baseMarketPrice, player.getUUID());
+                }
+                
+                if (listing == null) {
+                    // Max listings reached - return item to player
+                    int maxListings = com.servermanagement.config.ModConfig.MAX_LISTINGS_PER_PLAYER.get();
+                    player.getInventory().placeItemBackInInventory(serverItem);
+                    player.sendSystemMessage(
+                        net.minecraft.network.chat.Component.literal(
+                            "§c✗ You have reached the maximum number of active listings (" + maxListings + ")"
+                        )
+                    );
+                    return;
+                }
+                
+                com.servermanagement.ServerManagementMod.LOGGER.info(
+                    "Created MineBay listing {} by {} for ${} with {} price items", 
+                    listing.getListingId(),
+                    player.getName().getString(),
+                    finalPrice,
+                    priceItems.size()
+                );
+                
+                // Send success message
+                player.displayClientMessage(
+                    net.minecraft.network.chat.Component.literal(
+                        "§a§l✓ §r§6[MineBay] §aListing created for §f" + listing.getItemForSale().getHoverName().getString()
+                    ), true
+                );
+                
+                // Sync listings to all online players immediately
+                manager.syncListingsToAllPlayers(player.server);
             }
         });
     }

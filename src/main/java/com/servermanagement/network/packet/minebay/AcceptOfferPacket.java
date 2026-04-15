@@ -92,6 +92,9 @@ public class AcceptOfferPacket implements IPacket {
                 return;
             }
             
+            // SECURITY: Mark listing as COMPLETED immediately to prevent concurrent accept operations
+            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
+            
             ServerPlayer buyer = seller.server.getPlayerList().getPlayer(acceptedOffer.getBuyerId());
             
             // Validate buyer is online (for now, we'll require both parties online)
@@ -171,8 +174,7 @@ public class AcceptOfferPacket implements IPacket {
             // 6. Mark offer as accepted
             acceptedOffer.setStatus(MineBayOffer.OfferStatus.ACCEPTED);
             
-            // 7. Complete the listing
-            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
+            // 7. Complete the listing (status already set to COMPLETED above)
             mineBayManager.saveListing(listing);
             mineBayManager.removeListing(listingId);
             

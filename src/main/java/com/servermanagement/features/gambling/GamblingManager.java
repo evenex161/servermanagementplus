@@ -144,6 +144,18 @@ public class GamblingManager {
         
         // Play the game
         double payout = game.play(itemValue);
+        
+        // Validate payout to prevent exploits
+        if (Double.isNaN(payout) || Double.isInfinite(payout) || payout < 0) {
+            // Refund item value as money since item is already consumed
+            BankAccount refundAccount = EconomyManager.getInstance().getOrCreateAccount(player.getUUID());
+            refundAccount.deposit(itemValue);
+            refundAccount.addTransaction(new Transaction(
+                TransactionType.GAMBLING_BET, itemValue,
+                game.getName() + " error - refunded as money"));
+            return new GamblingResult(false, 0.0, "Game error - bet refunded as money ($" + String.format("%.2f", itemValue) + ")");
+        }
+        
         boolean won = payout > itemValue;
         double profit = payout - itemValue;
         
