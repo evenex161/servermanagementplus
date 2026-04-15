@@ -37,7 +37,6 @@ public class ConsoleCommandPacket implements IPacket {
                 if (server != null) {
                     // Create a command source that captures output
                     CommandSourceStack source = server.createCommandSourceStack()
-                        .withSuppressedOutput()
                         .withSource(new com.servermanagement.network.ConsoleCommandListener(player));
                     
                     server.getCommands().performPrefixedCommand(source, command);

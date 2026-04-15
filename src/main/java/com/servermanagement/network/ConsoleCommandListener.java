@@ -6,7 +6,8 @@ import net.minecraft.server.level.ServerPlayer;
 import com.servermanagement.network.packet.ConsoleResponsePacket;
 
 /**
- * Captures command output and relays it to the player's console screen
+ * Captures command output and relays it to the player's console screen.
+ * Used as the CommandSource for commands executed via the in-game console GUI.
  */
 public class ConsoleCommandListener implements CommandSource {
     private final ServerPlayer player;
@@ -18,7 +19,9 @@ public class ConsoleCommandListener implements CommandSource {
     @Override
     public void sendSystemMessage(Component component) {
         String text = component.getString();
-        ModNetworking.sendToPlayer(new ConsoleResponsePacket("[INFO] " + text), player);
+        if (text != null && !text.isEmpty()) {
+            ModNetworking.sendToPlayer(new ConsoleResponsePacket("[CMD] " + text), player);
+        }
     }
 
     @Override

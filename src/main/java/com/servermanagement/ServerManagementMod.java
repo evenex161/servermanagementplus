@@ -1,5 +1,9 @@
 package com.servermanagement;
 
+import java.io.File;
+
+import org.slf4j.Logger;
+
 import com.mojang.logging.LogUtils;
 import com.servermanagement.commands.MineBayCommand;
 import com.servermanagement.commands.MineStacksCommand;
@@ -8,6 +12,7 @@ import com.servermanagement.config.ModConfig;
 import com.servermanagement.features.FeatureRegistry;
 import com.servermanagement.gui.ModMenuTypes;
 import com.servermanagement.network.ModNetworking;
+
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -19,9 +24,6 @@ import net.minecraftforge.fml.config.ModConfig.Type;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.slf4j.Logger;
-
-import java.io.File;
 
 @Mod(ServerManagementMod.MOD_ID)
 public class ServerManagementMod {

@@ -1,22 +1,21 @@
 package com.servermanagement.gui.minebay;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 import com.servermanagement.features.minebay.MineBayListing;
-import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.PriceItemEntry;
 import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
-import com.servermanagement.network.packet.OpenGuiPacket;
+
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * Main MineBay screen - Browse and create listings
@@ -117,6 +116,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         int[] dim = ScreenScaler.scale(600, 400, this.width, this.height);
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
+        this.inventoryLabelY = this.imageHeight - 94;
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -771,9 +771,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Offer slots are real container slots (handled by the menu system)
         // Player places items from inventory into these slots
         
-        // Submit offer button
+        // Submit offer button (above inventory slots which start at menu-relative Y=230)
         int btnWidth = (this.imageWidth - 50) / 2;
-        int btnY = centerY + this.inventoryLabelY - 30;
+        int btnY = centerY + 200;
         this.addRenderableWidget(new ModernButton(
             formX, btnY, btnWidth, 25,
             Component.literal("Submit Offer"),
