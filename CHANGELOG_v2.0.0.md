@@ -1,4 +1,4 @@
-# Changelog — v2.0 (Release)
+# Changelog — v2.0.0 (Release)
 
 ## New Features
 
@@ -46,9 +46,21 @@
 ### Critical Fixes
 - **ConcurrentModificationException prevention**: Transaction iteration in `SyncEconomyStatsPacket` now uses snapshot copies
 - **Null safety**: Added null checks for `server` and `data` in stats sync to prevent crashes during shutdown
-- **Synchronized singletons**: `EconomyManager.getInstance()` and `OverflowInventoryManager.getInstance()` are now thread-safe
-- **Gambling payout validation**: Payouts are validated against `NaN`, `Infinity`, and negative values with automatic refund on invalid results
+- **Synchronized singletons**: `EconomyManager.getInstance()`, `OverflowInventoryManager.getInstance()`, `MineBayManager.getInstance()`, and `TransactionManager.getInstance()` are now thread-safe
+- **Gambling payout validation**: Payouts are validated against `NaN`, `Infinity`, and negative values with automatic refund on invalid results — now applied to both money bets and item bets
 - **Stale player reference fix**: `PlaceGamblingBetWithItemPacket` re-looks up player by UUID in delayed gambling result callback instead of using captured reference
+
+### Item Duplication Prevention
+- **CreateListingPacket server-authoritative items**: Listing creation now reads the item from the server-side menu container instead of trusting client packet data, preventing item spoofing
+- **CreateListingPacket race-condition fix**: The offering slot is cleared **before** listing creation (not after), preventing item duplication if the menu closes between listing creation and slot clearing
+- **PurchaseListingPacket listing status check**: Listings are validated as `ACTIVE` before purchase and immediately marked as `COMPLETED` before payment processing, preventing double-purchase exploits
+- **AcceptOfferPacket early completion**: Listing status is set to `COMPLETED` at the start of accept processing to prevent concurrent accept operations
+- **HoldItemPacket item safety**: Previously held items are returned to the player before holding a new one, preventing item loss when rapidly placing different items
+
+### Escrow & Transaction Integrity
+- **CreateOfferPacket atomic escrow**: Money escrow now uses `tryWithdraw()` (atomic check-and-deduct) and the entire escrow+offer creation is wrapped in try-catch with automatic rollback on failure — money is returned if anything fails
+- **BankAccount synchronized operations**: All balance-modifying methods (`deposit`, `withdraw`, `setBalance`, `tryWithdraw`) are now `synchronized` to prevent concurrent modification race conditions
+- **BankAccount atomic tryWithdraw**: New `tryWithdraw()` method combines balance check and withdrawal in one synchronized operation, eliminating TOCTOU race conditions
 
 ### High Priority Fixes
 - **Margin clamp**: Seller price margins clamped to -50% to +200% (was incorrectly allowing up to 500%)
@@ -56,7 +68,8 @@
 - **Offer packet bounds**: `SyncListingOffersPacket` caps offer count (50) and items per offer (27) to prevent memory exhaustion
 - **Negative money guard**: `CreateOfferPacket` clamps negative money offers to zero on deserialization
 - **Counteroffers snapshot**: `RequestListingOffersPacket` uses snapshot copy when iterating counteroffers to prevent CME from scheduled tasks
-- **NBT size limit**: `OverflowInventoryManager.load()` uses 10MB NbtAccounter limit instead of unlimited heap
+- **NBT size limits**: `OverflowInventoryManager.load()`, `MineBayManager.load()`, `TransactionManager.load()`, and `EconomyManager.loadBankInventories()` all use 10MB NbtAccounter limits instead of unlimited heap to prevent memory exhaustion from corrupted data files
+- **HoldItemPacket slot validation**: Added bounds check on slot index before accessing player inventory
 
 ### Performance Fixes
 - **Overflow I/O debounce**: `OverflowInventoryManager` uses `markDirty()` with 3-second debounce instead of saving to disk on every add/claim operation
@@ -67,7 +80,7 @@
 - Stats auto-sync when admin opens Economy Management screen
 
 ## Version Info
-- Mod version: 2.0
+- Mod version: 2.0.0
 - Release type: release
 - Minecraft: 1.21.1
 - Forge: 52.1.0+

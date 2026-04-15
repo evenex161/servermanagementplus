@@ -109,10 +109,15 @@ public class CreateOfferPacket implements IPacket {
             }
             
             // Escrow money from buyer's account
+            boolean moneyEscrowed = false;
             if (moneyOffer > 0) {
                 com.servermanagement.features.economy.BankAccount buyerAccount = 
                     economyManager.getOrCreateAccount(buyer.getUUID());
-                buyerAccount.withdraw(moneyOffer);
+                if (!buyerAccount.tryWithdraw(moneyOffer)) {
+                    buyer.sendSystemMessage(Component.literal("§cFailed to escrow money!"));
+                    return;
+                }
+                moneyEscrowed = true;
                 buyerAccount.addTransaction(new Transaction(
                     TransactionType.MINEBAY_ESCROW, moneyOffer,
                     "Offer on " + listing.getItemForSale().getHoverName().getString(),
@@ -121,22 +126,38 @@ public class CreateOfferPacket implements IPacket {
             
             // Clear offer items from the menu container (escrow them)
             // Items are already out of inventory — just clear the container slots
-            if (buyer.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu mineBayMenu2) {
-                mineBayMenu2.clearOfferItems();
+            // Wrapped in try-catch to rollback money escrow on failure
+            try {
+                if (buyer.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu mineBayMenu2) {
+                    mineBayMenu2.clearOfferItems();
+                }
+                
+                // Create the offer using server-validated items
+                MineBayOffer offer = new MineBayOffer(
+                    listingId,
+                    buyer.getUUID(),
+                    buyer.getName().getString(),
+                    moneyOffer,
+                    serverOfferItems
+                );
+                
+                // Add offer to listing
+                listing.addCounteroffer(offer);
+                mineBayManager.saveListing(listing);
+            } catch (Exception e) {
+                // Rollback money escrow on failure
+                if (moneyEscrowed) {
+                    com.servermanagement.features.economy.BankAccount buyerAccount = 
+                        economyManager.getOrCreateAccount(buyer.getUUID());
+                    buyerAccount.deposit(moneyOffer);
+                    buyerAccount.addTransaction(new Transaction(
+                        TransactionType.MINEBAY_ESCROW_RETURN, moneyOffer,
+                        "Offer failed — money returned"));
+                }
+                buyer.sendSystemMessage(Component.literal("§cFailed to create offer. Your money/items have been returned."));
+                com.servermanagement.ServerManagementMod.LOGGER.error("Failed to create offer for listing {}", listingId, e);
+                return;
             }
-            
-            // Create the offer using server-validated items
-            MineBayOffer offer = new MineBayOffer(
-                listingId,
-                buyer.getUUID(),
-                buyer.getName().getString(),
-                moneyOffer,
-                serverOfferItems
-            );
-            
-            // Add offer to listing
-            listing.addCounteroffer(offer);
-            mineBayManager.saveListing(listing);
             
             // Notify buyer (action bar)
             String offerSummary = "";

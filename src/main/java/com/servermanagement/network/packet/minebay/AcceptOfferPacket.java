@@ -81,6 +81,10 @@ public class AcceptOfferPacket implements IPacket {
             }
             
             // Execute the transaction — items and money are already escrowed
+            
+            // SECURITY: Mark listing as COMPLETED immediately to prevent concurrent accept operations
+            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
+            
             BankAccount sellerAccount = economyManager.getOrCreateAccount(seller.getUUID());
             
             // 1. Pay seller the escrowed money
@@ -141,8 +145,7 @@ public class AcceptOfferPacket implements IPacket {
             // 5. Mark offer as accepted
             acceptedOffer.setStatus(MineBayOffer.OfferStatus.ACCEPTED);
             
-            // 6. Complete the listing
-            listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
+            // 6. Complete the listing (status already set to COMPLETED above)
             mineBayManager.saveListing(listing);
             mineBayManager.removeListing(listingId);
             

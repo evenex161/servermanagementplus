@@ -15,7 +15,7 @@ Detailed changelogs are available per branch on GitHub:
 | Branch | Changelog |
 |---|---|
 | MC 1.20.1 — Forge (`mc/1.20.1-forge`) | [CHANGELOG_v1.0.3.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.20.1-forge/CHANGELOG_v1.0.3.md) |
-| MC 1.21.1 — Forge (`mc/1.21.1-forge`) | [CHANGELOG_v1.0.3.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v1.0.3.md) |
+| MC 1.21.1 — Forge (`mc/1.21.1-forge`) | [CHANGELOG_v2.0.0.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v2.0.0.md) |
 | MC 1.21.1 — NeoForge (`mc/1.21.1-neoforge`) | [CHANGELOG_v1.0.3-neoforge.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-neoforge/CHANGELOG_v1.0.3-neoforge.md) |
 
 ---
@@ -49,10 +49,12 @@ A fully-featured player marketplace where you can buy and sell items with other 
 
 - **Create listings** — Sell any item or stack from your inventory
 - **Flexible pricing** — Accept money, up to 3 different item types, or both
+- **Dynamic market pricing** — Supply/demand tracking with configurable inflation
 - **Counteroffers** — Buyers can propose alternative prices; sellers review and accept/deny
 - **Bank inventory** — If your inventory is full when you buy something, items go to your bank for later pickup
-- **Item safety** — Atomic transactions with automatic rollback on failure. Items are never lost
+- **Item safety** — Server-authoritative item handling with escrow rollback. Items are never lost or duplicated
 - **Draft system** — Step-by-step listing creation with item picker and quantity controls
+- **Margin controls** — Sellers can adjust prices from -50% to +200% of market value
 
 ---
 
@@ -150,7 +152,7 @@ Automatic over-the-air mod updates for connected clients.
 - Smart version comparison: semantic versioning first, then build number for same-version patches
 - **Multi-version aware** — OTA updates are blocked across different Minecraft versions (e.g., a 1.20.1 client won't receive a 1.21.1 update)
 - **Multi-loader aware** — OTA updates are blocked across different mod loaders (e.g., a NeoForge client won't receive updates from a Forge server)
-- **Build number tracking** — Each release uses `v1.0.3-bXX-mcX.XX.X-<loader>` format to differentiate incremental builds within the same version
+- **Build number tracking** — Each release uses `v2.0.0-bXX-mcX.XX.X-<loader>` format to differentiate incremental builds within the same version
 
 ---
 
@@ -161,11 +163,13 @@ All sensitive data is encrypted at rest and authenticated in transit.
 - **Unique server key** auto-generated on first run, stored with restricted permissions
 - **HMAC-SHA256** packet authentication prevents replay and tampering
 - **Session management** with per-player tokens and 30-minute timeout
-- **Atomic transactions** with automatic rollback — no partial operations, no data loss
+- **Atomic transactions** with automatic escrow rollback — no partial operations, no data loss
+- **Item duplication prevention** — Server-authoritative item validation in marketplace listings and offers; race-condition-safe slot clearing; synchronized balance operations
 - **Network buffer hardening** — 45 packet string fields across 25 packet classes enforce strict length limits (`readUtf(N)`) to prevent memory exhaustion from oversized payloads
+- **NBT size limits** — All NBT data loading uses 10MB NbtAccounter limits to prevent memory exhaustion from corrupted files
 - **Input validation** — Player names validated against `[a-zA-Z0-9_]{1,16}` regex at the network layer before any server-side processing
 - **Log injection prevention** — User-controlled strings are sanitized before logging to prevent log forging
-- **Thread-safe marketplace** — MineBay listing creation uses synchronized operations to prevent race-condition exploits that could bypass per-player listing limits
+- **Thread-safe marketplace** — MineBay operations use synchronized singletons and atomic escrow with try-catch rollback
 
 ---
 
@@ -265,8 +269,8 @@ All economy data, task templates, and player progress persist across server rest
 ### Setup
 1. Download the JAR for your Minecraft version and mod loader:
    - MC 1.20.1 Forge: `servermanagementplus-v1.0.3-b05-mc1.20.1-forge-release.jar`
-   - MC 1.21.1 Forge: `servermanagementplus-v1.0.3-b05-mc1.21.1-forge-release.jar`
-   - MC 1.21.1 NeoForge: `servermanagementplus-v1.0.3-b05-mc1.21.1-neoforge-release.jar`
+   - MC 1.21.1 Forge: `servermanagementplus-v2.0.0-b01-mc1.21.1-forge-release.jar`
+   - MC 1.21.1 NeoForge: `servermanagementplus-v2.0.0-b01-mc1.21.1-neoforge-release.jar`
 2. Place it in your server's `mods/` folder
 3. Start the server — config and data folders generate automatically
 4. Optionally install on clients for full GUI support (server-side only works too)
@@ -319,4 +323,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*Server Management Plus v1.0.3-b05 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.222+*
+*Server Management Plus v2.0.0-b01 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.222+*

@@ -29,7 +29,7 @@ public class TransactionManager {
     
     private TransactionManager() {}
     
-    public static TransactionManager getInstance() {
+    public static synchronized TransactionManager getInstance() {
         if (instance == null) {
             instance = new TransactionManager();
         }
@@ -337,7 +337,7 @@ public class TransactionManager {
                 return;
             }
             
-            CompoundTag rootTag = NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+            CompoundTag rootTag = NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024));
             
             ListTag completedTag = rootTag.getList("Completed", Tag.TAG_COMPOUND);
             for (int i = 0; i < completedTag.size(); i++) {
