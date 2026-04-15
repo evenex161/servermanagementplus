@@ -920,11 +920,15 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         boolean hasMoneyPrice = listingToBuy.getMoneyPrice() > 0;
         
-        // Dialog sizing: taller when in ITEMS mode to fit inventory grid
+        // Calculate dynamic dialog height based on content
         int dialogWidth = 400;
-        int dialogHeight = (buyPaymentMode == PaymentMode.ITEMS) ? 310 : 220;
+        int dialogHeight = calculateBuyDialogHeight();
         int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
         int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
+        
+        // Calculate contentY offset for required items to position buttons after them
+        int requiredItemsHeight = getRequiredItemsHeight();
+        int btnBaseY = dialogY + (hasMoneyPrice ? 80 : 65) + requiredItemsHeight;
         
         if (buyPaymentMode == PaymentMode.NONE && hasMoneyPrice) {
             // Payment method selection buttons
@@ -932,7 +936,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             boolean canPayWithBalance = balance >= listingToBuy.getMoneyPrice();
             
             int btnWidth = 170;
-            int btnY = dialogY + 110;
+            int btnY = btnBaseY + 30;
             
             // Pay with Balance button
             ModernButton balanceBtn = new ModernButton(
@@ -994,6 +998,40 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 button -> cancelBuy(),
                 ModernButton.ButtonStyle.SECONDARY
             ));
+        }
+    }
+    
+    /**
+     * Calculate the height needed for required items in the buy dialog
+     */
+    private int getRequiredItemsHeight() {
+        if (listingToBuy == null) return 0;
+        List<PriceItemEntry> reqItems = listingToBuy.getPriceItems();
+        if (reqItems == null || reqItems.isEmpty()) return 0;
+        int height = 12; // "Required items:" label
+        for (PriceItemEntry entry : reqItems) {
+            if (entry != null && !entry.isEmpty()) height += 12;
+        }
+        return height + 5; // Extra padding
+    }
+    
+    /**
+     * Calculate dynamic dialog height based on required items and payment mode
+     */
+    private int calculateBuyDialogHeight() {
+        boolean hasMoneyPrice = listingToBuy != null && listingToBuy.getMoneyPrice() > 0;
+        int baseHeight = hasMoneyPrice ? 80 : 65; // Top section (title + item + price)
+        int reqHeight = getRequiredItemsHeight();
+        
+        if (buyPaymentMode == PaymentMode.ITEMS) {
+            // Need space for item grid (4 rows * 18px + header + buttons)
+            return baseHeight + reqHeight + 30 + 96 + 60;
+        } else if (buyPaymentMode == PaymentMode.NONE && hasMoneyPrice) {
+            // Payment selection: choose label + buttons + balance + cancel
+            return baseHeight + reqHeight + 30 + 25 + 30 + 40;
+        } else {
+            // Balance confirm or no money: confirm/cancel buttons
+            return baseHeight + reqHeight + 30 + 50;
         }
     }
     
@@ -1996,9 +2034,31 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         guiGraphics.fill(centerX + (this.imageWidth - dtw) / 2, centerY + 61, 
             centerX + (this.imageWidth + dtw) / 2, centerY + 62, 0x60FFD700);
         
+        // Pre-calculate content height to size the card dynamically
+        int contentBottom = 125; // Base: item + seller + type
+        contentBottom += 20; // Price header
+        if (listing.getMoneyPrice() > 0) {
+            contentBottom += 15; // Total price
+            if (listing.getBaseMarketPrice() > 0) {
+                contentBottom += 27; // Market Base + Margin
+            }
+        }
+        List<PriceItemEntry> cardPriceItems = listing.getPriceItems();
+        if (cardPriceItems != null && !cardPriceItems.isEmpty()) {
+            contentBottom += 14; // "Required Items:" label
+            for (PriceItemEntry pi : cardPriceItems) {
+                if (pi != null && !pi.isEmpty()) contentBottom += 20;
+            }
+        }
+        if (listing.getMoneyPrice() <= 0 && (cardPriceItems == null || cardPriceItems.isEmpty())) {
+            contentBottom += 15; // "No price set"
+        }
+        // Card extends from Y=68 to at most just above the buttons (Y=190)
+        int cardBottom = Math.min(centerY + 68 + contentBottom + 10, centerY + 188);
+        
         // Details card background
-        guiGraphics.fill(centerX + 30, centerY + 68, centerX + this.imageWidth - 30, centerY + 210, 0xFF333333);
-        guiGraphics.fill(centerX + 31, centerY + 69, centerX + this.imageWidth - 31, centerY + 209, 0xFF1E1E1E);
+        guiGraphics.fill(centerX + 30, centerY + 68, centerX + this.imageWidth - 30, cardBottom, 0xFF333333);
+        guiGraphics.fill(centerX + 31, centerY + 69, centerX + this.imageWidth - 31, cardBottom - 1, 0xFF1E1E1E);
         
         // Item display
         ItemStack itemForSale = listing.getItemForSale();
@@ -2184,7 +2244,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         boolean hasMoneyPrice = listingToBuy.getMoneyPrice() > 0;
         int dialogWidth = 400;
-        int dialogHeight = (buyPaymentMode == PaymentMode.ITEMS) ? 310 : 220;
+        int dialogHeight = calculateBuyDialogHeight();
         int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
         int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
         
@@ -2253,28 +2313,30 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         }
         
         if (buyPaymentMode == PaymentMode.NONE && hasMoneyPrice) {
-            // Show payment method selection prompt
+            // Show payment method selection prompt - position after required items
+            contentY += 10;
             Component chooseText = Component.literal("Choose payment method:");
             int chooseW = this.font.width(chooseText);
             guiGraphics.drawString(this.font, chooseText, 
-                dialogX + (dialogWidth - chooseW) / 2, dialogY + 95, 0xFFD700, true);
+                dialogX + (dialogWidth - chooseW) / 2, contentY, 0xFFD700, true);
             
-            // Show balance info below button
+            // Show balance info below buttons
             double balance = com.servermanagement.client.ClientBankData.getBalance();
             Component balInfo = Component.literal("Balance: $" + String.format(Locale.US, "%.2f", balance));
             int balW = this.font.width(balInfo);
             guiGraphics.drawString(this.font, balInfo, 
-                dialogX + (dialogWidth - balW) / 2, dialogY + 140, 0xAAAAAA, true);
+                dialogX + (dialogWidth - balW) / 2, contentY + 45, 0xAAAAAA, true);
         } else if (buyPaymentMode == PaymentMode.BALANCE) {
-            // Balance payment confirmation
+            // Balance payment confirmation - position after required items
+            contentY += 10;
             double balance = com.servermanagement.client.ClientBankData.getBalance();
             Component payText = Component.literal("Paying $" + String.format(Locale.US, "%.2f", listingToBuy.getMoneyPrice()) + " from bank balance");
             int payW = this.font.width(payText);
-            guiGraphics.drawString(this.font, payText, dialogX + (dialogWidth - payW) / 2, dialogY + 95, 0x55FFFF, true);
+            guiGraphics.drawString(this.font, payText, dialogX + (dialogWidth - payW) / 2, contentY, 0x55FFFF, true);
             
             Component balText = Component.literal("Remaining balance: $" + String.format(Locale.US, "%.2f", balance - listingToBuy.getMoneyPrice()));
             int balW = this.font.width(balText);
-            guiGraphics.drawString(this.font, balText, dialogX + (dialogWidth - balW) / 2, dialogY + 110, 0xAAAAAA, true);
+            guiGraphics.drawString(this.font, balText, dialogX + (dialogWidth - balW) / 2, contentY + 15, 0xAAAAAA, true);
         } else if (buyPaymentMode == PaymentMode.ITEMS) {
             // Item payment - render inventory grid for selection
             renderItemPaymentGrid(guiGraphics, dialogX, dialogY, dialogWidth, dialogHeight);
@@ -2378,7 +2440,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Handle item payment grid clicks in BUY_CONFIRM with ITEMS mode
         if (currentState == ScreenState.BUY_CONFIRM && buyPaymentMode == PaymentMode.ITEMS && listingToBuy != null) {
             int dialogWidth = 400;
-            int dialogHeight = 310;
+            int dialogHeight = calculateBuyDialogHeight();
             int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
             int dialogY = centerY + (this.imageHeight - dialogHeight) / 2;
             

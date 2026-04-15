@@ -1,5 +1,8 @@
 package com.servermanagement.network.packet.minebay;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.economy.Transaction;
 import com.servermanagement.features.economy.TransactionType;
@@ -7,15 +10,12 @@ import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.MineBayOffer;
 import com.servermanagement.network.packet.IPacket;
+
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.network.CustomPayloadEvent;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Packet sent from client to server when a player makes an offer on a NEGOTIABLE listing
@@ -95,23 +95,17 @@ public class CreateOfferPacket implements IPacket {
                 }
             }
             
-            // Check if buyer has the items they're offering
-            for (ItemStack offeredStack : itemOffers) {
-                if (offeredStack.isEmpty()) continue;
-                
-                int found = 0;
-                for (ItemStack invStack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameComponents(invStack, offeredStack)) {
-                        found += invStack.getCount();
-                    }
-                }
-                
-                if (found < offeredStack.getCount()) {
-                    buyer.sendSystemMessage(Component.literal("§cYou don't have enough " + 
-                        offeredStack.getDisplayName().getString() + "! Need " + 
-                        offeredStack.getCount() + " but only have " + found));
-                    return;
-                }
+            // Get offer items from the server-side menu container (NOT from the packet)
+            // Items placed in the offer slots are already removed from player inventory by the menu system
+            List<ItemStack> serverOfferItems = new ArrayList<>();
+            if (buyer.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu mineBayMenu) {
+                serverOfferItems = mineBayMenu.getOfferItems();
+            }
+            
+            // Validate that an offer was actually made
+            if (moneyOffer <= 0 && serverOfferItems.isEmpty()) {
+                buyer.sendSystemMessage(Component.literal("§cYou must offer money or items!"));
+                return;
             }
             
             // Escrow money from buyer's account
@@ -125,28 +119,19 @@ public class CreateOfferPacket implements IPacket {
                     listing.getSellerId()));
             }
             
-            // Remove offered items from buyer's inventory (escrow)
-            for (ItemStack offeredStack : itemOffers) {
-                if (offeredStack.isEmpty()) continue;
-                
-                int remaining = offeredStack.getCount();
-                for (int i = 0; i < buyer.getInventory().items.size() && remaining > 0; i++) {
-                    ItemStack invStack = buyer.getInventory().items.get(i);
-                    if (ItemStack.isSameItemSameComponents(invStack, offeredStack)) {
-                        int toRemove = Math.min(remaining, invStack.getCount());
-                        invStack.shrink(toRemove);
-                        remaining -= toRemove;
-                    }
-                }
+            // Clear offer items from the menu container (escrow them)
+            // Items are already out of inventory — just clear the container slots
+            if (buyer.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu mineBayMenu2) {
+                mineBayMenu2.clearOfferItems();
             }
             
-            // Create the offer
+            // Create the offer using server-validated items
             MineBayOffer offer = new MineBayOffer(
                 listingId,
                 buyer.getUUID(),
                 buyer.getName().getString(),
                 moneyOffer,
-                itemOffers
+                serverOfferItems
             );
             
             // Add offer to listing
@@ -158,8 +143,8 @@ public class CreateOfferPacket implements IPacket {
             if (moneyOffer > 0) {
                 offerSummary += "§6$" + String.format("%.2f", moneyOffer);
             }
-            if (!itemOffers.isEmpty()) {
-                offerSummary += (offerSummary.isEmpty() ? "" : " + ") + "§f" + itemOffers.size() + " item(s)";
+            if (!serverOfferItems.isEmpty()) {
+                offerSummary += (offerSummary.isEmpty() ? "" : " + ") + "§f" + serverOfferItems.size() + " item(s)";
             }
             buyer.displayClientMessage(Component.literal(
                 "§a§l✓ §r§aOffer submitted: " + offerSummary + " §a(escrowed)"), true);
