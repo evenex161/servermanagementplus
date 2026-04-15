@@ -794,6 +794,29 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         ));
     }
     
+    /**
+     * Calculate the dynamic card bottom Y for the view details card.
+     * Used by both initViewDetails (button placement) and renderViewDetails (card rendering).
+     */
+    private int calculateDetailsCardBottom(MineBayListing listing) {
+        int contentH = 55; // item + padding from top of card (card starts at 68, item at 80)
+        contentH += 30; // seller
+        contentH += 15; // type
+        contentH += 20; // price header
+        contentH += 15; // total price line (or "no price")
+        if (listing.getMoneyPrice() > 0 && listing.getBaseMarketPrice() > 0) {
+            contentH += 27; // market base + margin
+        }
+        List<PriceItemEntry> pi = listing.getPriceItems();
+        if (pi != null && !pi.isEmpty()) {
+            contentH += 14; // "Required Items:" label
+            for (PriceItemEntry e : pi) {
+                if (e != null && !e.isEmpty()) contentH += 20;
+            }
+        }
+        return 68 + contentH + 8; // 8px bottom padding inside card
+    }
+
     private void initViewDetails(int centerX, int centerY) {
         if (selectedListingForDetails == null) {
             switchState(ScreenState.BROWSE);
@@ -815,7 +838,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         boolean isOwnListing = minecraft != null && minecraft.player != null && 
             listing.getSellerId().equals(minecraft.player.getUUID());
         
-        int buttonY = centerY + 218 - 25 - 3; // Above inventory separator
+        // Place buttons just below the dynamic card
+        int cardBottomRel = calculateDetailsCardBottom(listing);
+        int buttonY = centerY + cardBottomRel + 5;
         
         if (!isOwnListing) {
             if (listing.getOfferType() == MineBayListing.OfferType.FIXED) {
@@ -1397,8 +1422,10 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Inventory area background (only when inventory is visible)
         if (menu.isInventoryVisible() && this.imageWidth > 420) {
             int invMargin = Math.max(10, (this.imageWidth - 180) / 2);
+            // Tight fit: inventory slots at Y=230 (3 rows * 18 = 54) + 4px gap + hotbar (18) = Y=306 + 4px padding
+            int invBottom = centerY + 230 + 54 + 4 + 18 + 4;
             guiGraphics.fill(centerX + invMargin, centerY + 220, centerX + this.imageWidth - invMargin, 
-                centerY + this.imageHeight - 5, 0xE0202020);
+                invBottom, 0xE0202020);
             
             // Inventory border
             guiGraphics.fill(centerX + invMargin - 2, centerY + 218, centerX + this.imageWidth - invMargin + 2, centerY + 220, 0xFF555555);
@@ -1407,13 +1434,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Only draw the inventory label when inventory is visible
+        // Only draw inventory value when inventory is visible (no vanilla "Inventory" label)
         if (menu.isInventoryVisible()) {
-            // Draw inventory title on the left side of the inventory area
-            int invAreaLeft = Math.max(10, (this.imageWidth - 180) / 2);
-            guiGraphics.drawString(this.font, this.playerInventoryTitle, invAreaLeft, this.inventoryLabelY, 0xAAAAAA, true);
-            
-            // Total inventory value display - inline on the same line, right-aligned
             if (minecraft != null && minecraft.player != null) {
                 double totalValue = 0.0;
                 for (ItemStack invStack : minecraft.player.getInventory().items) {
@@ -1424,8 +1446,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 
                 String valueStr = String.format("Inventory Value: $%.2f", totalValue);
                 int valueW = this.font.width(valueStr);
-                int invAreaRight = this.imageWidth - invAreaLeft;
-                int valueX = invAreaRight - valueW;
+                int valueX = (this.imageWidth - valueW) / 2;
                 
                 guiGraphics.drawString(this.font, Component.literal(valueStr),
                     valueX, this.inventoryLabelY, 0x55FFFF, true);
@@ -1687,8 +1708,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
             
             // Page indicator (always visible, below cards)
-            int currentPage = (scrollOffset / LISTINGS_PER_PAGE) + 1;
-            int totalPages = Math.max(1, (int) Math.ceil((double) listings.size() / LISTINGS_PER_PAGE));
+            int currentPage = scrollOffset + 1;
+            int totalPages = Math.max(1, listings.size() - LISTINGS_PER_PAGE + 1);
             String pageStr = "Page " + currentPage + " / " + totalPages;
             int pageW = this.font.width(pageStr);
             guiGraphics.drawString(this.font, 
@@ -2034,27 +2055,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         guiGraphics.fill(centerX + (this.imageWidth - dtw) / 2, centerY + 61, 
             centerX + (this.imageWidth + dtw) / 2, centerY + 62, 0x60FFD700);
         
-        // Pre-calculate content height to size the card dynamically
-        int contentBottom = 125; // Base: item + seller + type
-        contentBottom += 20; // Price header
-        if (listing.getMoneyPrice() > 0) {
-            contentBottom += 15; // Total price
-            if (listing.getBaseMarketPrice() > 0) {
-                contentBottom += 27; // Market Base + Margin
-            }
-        }
-        List<PriceItemEntry> cardPriceItems = listing.getPriceItems();
-        if (cardPriceItems != null && !cardPriceItems.isEmpty()) {
-            contentBottom += 14; // "Required Items:" label
-            for (PriceItemEntry pi : cardPriceItems) {
-                if (pi != null && !pi.isEmpty()) contentBottom += 20;
-            }
-        }
-        if (listing.getMoneyPrice() <= 0 && (cardPriceItems == null || cardPriceItems.isEmpty())) {
-            contentBottom += 15; // "No price set"
-        }
-        // Card extends from Y=68 to at most just above the buttons (Y=190)
-        int cardBottom = Math.min(centerY + 68 + contentBottom + 10, centerY + 188);
+        // Dynamic card height
+        int cardBottomRel = calculateDetailsCardBottom(listing);
+        int cardBottom = centerY + cardBottomRel;
         
         // Details card background
         guiGraphics.fill(centerX + 30, centerY + 68, centerX + this.imageWidth - 30, cardBottom, 0xFF333333);
