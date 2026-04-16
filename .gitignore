@@ -1,0 +1,30 @@
+# Gradle build artifacts
+.gradle/
+build/
+out/
+classes/
+
+# Java/IDE outputs
+bin/
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code local settings
+.vscode/
+
+# Runtime/server folders
+run/
+run-data/
+logs/
+forge-server/
+forge-server 1.20.1/
+forge-server 1.21.1/
+neoforge-server 1.21.1/
+
+# OS artifacts
+.DS_Store
