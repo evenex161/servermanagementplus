@@ -305,6 +305,77 @@ v2.1.0 is a comprehensive **GUI polish and rework** update, plus critical **bug 
 
 ---
 
+## Console Output Polish
+
+Reduced mod log spam from **~40 lines** during startup to **7 clean lines**, and from **9 lines** during shutdown to **2 lines**. All demoted messages are still available at `DEBUG` log level for troubleshooting.
+
+### Startup Output (after polish)
+```
+Registered 72 network packets
+Registered GUI commands: /minebay, /minestacks, /casino, /overflow
+ServerManagement v2.1.0 starting (Data Version: 2)
+Encryption system initialized
+Initialized 5 features (5 enabled, 0 disabled)
+Subsystems initialized: TransactionManager, MineBay, Overflow, MineStacks, OTA, MOTD
+ServerManagement v2.1.0 fully initialized and ready!
+```
+
+### Shutdown Output (after polish)
+```
+ServerManagement shutting down...
+ServerManagement shutdown complete
+```
+
+### Changes
+- **Consolidated subsystem init**: 8 individual "X initialized" lines → single `Subsystems initialized: ...` summary
+- **Consolidated feature registration**: Per-feature `Registered feature: X` and `Initialized feature: X` lines → single `Initialized N features (M enabled, K disabled)` summary
+- **Consolidated shutdown**: 4 individual shutdown lines → `shutting down...` / `shutdown complete` pair
+- **Removed redundant network log**: Kept only `Registered 72 network packets` (removed preceding `Registering network packets`)
+- **Removed migration banners**: `=== CONFIG MIGRATION REQUIRED ===` / `=== MIGRATION SUCCESSFUL ===` replaced with single-line summary
+- **Demoted to DEBUG**: Config validation details, config migration steps, per-subsystem data loading (`Loaded X for Y players`), command registration, event handler registration, encryption key loading, OTA version loading, recipe pricing init, performance system init, console streaming init, feature enable/disable per-feature, all data file migration messages
+- **Suppressed empty flush**: `AsyncSaveScheduler.flushAll()` now skips logging when `pendingSaves` is empty (was producing 3× "Flushing 0 pending save operations" during shutdown)
+
+### Bug Fixes (discovered during polish)
+- **Config validation NPE on startup**: `validateAndRepair()` was called during mod construction before `ForgeConfigSpec` was bound. Every config getter threw NPE → triggered `repairConfig()` which deleted the config → Forge recreated it with ~40 `Incorrect key` WARN lines. Fixed with `SPEC.isLoaded()` guard
+- **Config migration NPE**: `needsMigration()` and `checkAndMigrate()` called `CONFIG_VERSION.get()/set()` before spec was loaded. Fixed with `SPEC.isLoaded()` guards in both methods and in the migration 0→1 apply() function
+- **Feature count wrong**: `FeatureManager` summary showed "10 enabled" because it counted all `featureStates` config map entries instead of only registered features. Fixed to count `features.keySet()` filtered by `featureStates`
+
+### Files Modified (Console Polish)
+- `ServerManagementMod.java` — consolidated startup/shutdown messages
+- `ConfigValidator.java` — isLoaded() guard, demoted validation logs
+- `ConfigMigration.java` — isLoaded() guards, removed banners, demoted details
+- `ModNetworking.java` — removed redundant "Registering" line, demoted client handler log
+- `FeatureRegistry.java` — removed verbose registration logs
+- `FeatureManager.java` — summary line, fixed count bug, demoted per-feature logs
+- `AsyncSaveScheduler.java` — skip empty flush logging
+- `PacketTimestampTracker.java` — demoted clearAll() log
+- `ModCommands.java` — demoted command registration logs
+- `WorldManagerEvents.java` — demoted event registration log
+- `PlayerManagerEvents.java` — demoted event registration log
+- `SlimeHeadManager.java` — demoted init/disabled logs
+- `ServerPerformanceManager.java` — demoted init log
+- `ServerConsoleManager.java` — demoted init log
+- `EncryptionManager.java` — demoted key loading logs
+- `OTAVersion.java` — demoted version loading log
+- `EconomyManager.java` — demoted init/load/shutdown logs
+- `EconomyData.java` — demoted migration and load logs
+- `DailyTaskTemplateManager.java` — demoted migration and load logs
+- `DailyTasksManager.java` — demoted load log
+- `MoneyRequestManager.java` — demoted migration and load logs
+- `AchievementRewardTracker.java` — demoted migration and load logs
+- `ItemSupplyDemandTracker.java` — demoted load logs
+- `MarginHistoryTracker.java` — demoted load logs
+- `TransactionManager.java` — demoted load log
+- `GamblingManager.java` — demoted load log
+- `MineBayManager.java` — demoted load log
+- `OverflowInventoryManager.java` — demoted load log
+- `RecipeBasedPricing.java` — demoted init log
+- `WorldManagerData.java` — demoted migration, load, backup, corruption logs
+- `PlayerPreferences.java` — demoted migration logs
+- `SecureDataStorage.java` — demoted encryption migration logs
+
+---
+
 ## Files Modified (Audit)
 
 - `network/packet/ConsoleCommandPacket.java` — privilege escalation fix
