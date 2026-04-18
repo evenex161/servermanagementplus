@@ -88,6 +88,8 @@ bin/
 # Dev scripts
 test.bat
 GUI_TEST_CHECKLIST.md
+runs/
+tools/
 
 # Minecraft
 run/
