@@ -66,11 +66,11 @@ public class DailyTaskTemplateManager {
         
         // Check data version and migrate if needed
         if (manager.dataVersion == 0) {
-            ServerManagementMod.LOGGER.info("Migrating legacy DailyTaskTemplateManager data to version {}", 
+            ServerManagementMod.LOGGER.debug("Migrating legacy DailyTaskTemplateManager data to version {}", 
                 DataVersion.CURRENT_VERSION);
             manager.migrateData(0, DataVersion.CURRENT_VERSION);
         } else if (manager.dataVersion < DataVersion.CURRENT_VERSION) {
-            ServerManagementMod.LOGGER.info("Migrating DailyTaskTemplateManager data from version {} to {}", 
+            ServerManagementMod.LOGGER.debug("Migrating DailyTaskTemplateManager data from version {} to {}", 
                 manager.dataVersion, DataVersion.CURRENT_VERSION);
             manager.migrateData(manager.dataVersion, DataVersion.CURRENT_VERSION);
         } else if (manager.dataVersion > DataVersion.CURRENT_VERSION) {
@@ -83,7 +83,7 @@ public class DailyTaskTemplateManager {
         // Ensure we have default templates
         manager.initializeDefaultTemplates();
         
-        ServerManagementMod.LOGGER.info("Loaded {} daily task templates (v{})", 
+        ServerManagementMod.LOGGER.debug("Loaded {} daily task templates (v{})", 
             manager.templates.size(), manager.dataVersion);
         return manager;
     }

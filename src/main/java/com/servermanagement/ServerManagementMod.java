@@ -55,11 +55,8 @@ public class ServerManagementMod {
         context.registerConfig(Type.COMMON, ModConfig.SPEC);
         
         // Validate and repair config if necessary
-        LOGGER.info("Validating configuration...");
         boolean configValid = com.servermanagement.config.ConfigValidator.validateAndRepair();
-        if (configValid) {
-            LOGGER.info("Configuration is valid");
-        } else {
+        if (!configValid) {
             LOGGER.error("Configuration validation failed! Mod may not function correctly.");
         }
         
@@ -68,7 +65,7 @@ public class ServerManagementMod {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        LOGGER.info("ServerManagement mod common setup");
+        LOGGER.debug("ServerManagement mod common setup");
         
         event.enqueueWork(() -> {
             // Initialize networking
@@ -83,7 +80,7 @@ public class ServerManagementMod {
     }
 
     private void clientSetup(final FMLClientSetupEvent event) {
-        LOGGER.info("ServerManagement mod client setup");
+        LOGGER.debug("ServerManagement mod client setup");
         
         event.enqueueWork(() -> {
             // Register client-side networking
@@ -114,41 +111,28 @@ public class ServerManagementMod {
         // Load or create version tracking file (after encryption is ready)
         com.servermanagement.util.VersionTracker.VersionInfo versionInfo = 
             com.servermanagement.util.VersionTracker.loadOrCreate(event.getServer());
-        LOGGER.info("Installation info - First: {}, Last Updated: {}", 
+        LOGGER.debug("Installation info - First: {}, Last Updated: {}", 
             versionInfo.firstInstalled, versionInfo.lastUpdated);
         
         // Initialize features on server start
         FeatureRegistry.initializeFeatures(event.getServer());
         
-        // Initialize TransactionManager
+        // Initialize subsystems
         com.servermanagement.features.economy.TransactionManager.getInstance().initialize(event.getServer());
-        LOGGER.info("Transaction manager initialized");
-        
-        // Initialize MineBay manager
         com.servermanagement.features.minebay.MineBayManager.getInstance().initialize(event.getServer());
-        LOGGER.info("MineBay marketplace initialized");
-        
-        // Initialize overflow inventory manager
         com.servermanagement.features.economy.OverflowInventoryManager.getInstance().initialize(event.getServer());
-        LOGGER.info("Overflow inventory manager initialized");
-        
-        // Initialize gambling system
         com.servermanagement.features.gambling.GamblingManager.getInstance().initialize(event.getServer());
-        LOGGER.info("MineStacks gambling system initialized");
-        
-        // Initialize OTA update system
         com.servermanagement.server.ModFileTransferManager.initialize();
-        LOGGER.info("OTA update system initialized");
         
-        // Initialize MOTD Manager
         if (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor")) {
             com.servermanagement.features.motd.MotdManager.getInstance().initialize(event.getServer());
-            LOGGER.info("MOTD Manager initialized");
         }
+        
+        LOGGER.info("Subsystems initialized: TransactionManager, MineBay, Overflow, MineStacks, OTA" 
+            + (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor") ? ", MOTD" : ""));
         
         // Initialize Server Console log streaming
         com.servermanagement.server.ServerConsoleManager.getInstance().initialize(event.getServer());
-        LOGGER.info("Server console log streaming initialized");
         
         LOGGER.info("ServerManagement v{} fully initialized and ready!", getModVersion());
     }
@@ -169,17 +153,14 @@ public class ServerManagementMod {
     
     @SubscribeEvent
     public void onServerStopping(net.minecraftforge.event.server.ServerStoppingEvent event) {
+        LOGGER.info("ServerManagement shutting down...");
+        
         com.servermanagement.server.ServerConsoleManager.getInstance().shutdown();
-        LOGGER.info("Server console log streaming shut down");
-        
         com.servermanagement.features.motd.MotdManager.getInstance().saveAndShutdown();
-        LOGGER.info("MOTD Manager saved and shut down");
-        
         com.servermanagement.features.gambling.GamblingManager.getInstance().shutdown();
-        LOGGER.info("Gambling stats saved and scheduler shut down");
-        
         com.servermanagement.features.economy.OverflowInventoryManager.getInstance().save();
-        LOGGER.info("Overflow inventory saved");
+        
+        LOGGER.info("ServerManagement shutdown complete");
     }
 
     @SubscribeEvent

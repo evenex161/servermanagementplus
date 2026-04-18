@@ -354,7 +354,7 @@ public class TransactionManager {
                 completedTransactions.put(transaction.transactionId, transaction);
             }
             
-            ServerManagementMod.LOGGER.info("Loaded {} completed transactions", completedTransactions.size());
+            ServerManagementMod.LOGGER.debug("Loaded {} completed transactions", completedTransactions.size());
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to load transactions", e);
         }

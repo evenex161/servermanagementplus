@@ -94,7 +94,7 @@ public class ServerConsoleManager {
             ctx.getConfiguration().getRootLogger().addAppender(appender, org.apache.logging.log4j.Level.INFO, null);
             ctx.updateLoggers();
 
-            LOGGER.info("Server console log streaming initialized");
+            LOGGER.debug("Server console log streaming initialized");
         } catch (Exception e) {
             LOGGER.error("Failed to initialize console log streaming", e);
         }

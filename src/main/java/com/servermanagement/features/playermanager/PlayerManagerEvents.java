@@ -13,7 +13,7 @@ public class PlayerManagerEvents {
         if (instance == null) {
             instance = new PlayerManagerEvents();
             MinecraftForge.EVENT_BUS.register(instance);
-            ServerManagementMod.LOGGER.info("Registered PlayerManager events");
+            ServerManagementMod.LOGGER.debug("Registered PlayerManager events");
         }
     }
 

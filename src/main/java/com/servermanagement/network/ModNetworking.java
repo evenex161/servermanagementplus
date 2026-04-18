@@ -84,8 +84,6 @@ public class ModNetworking {
             .clientAcceptedVersions((status, version) -> true)
             .serverAcceptedVersions((status, version) -> true)
             .simpleChannel();
-
-        ServerManagementMod.LOGGER.info("Registering network packets");
         
         // Config packets (bidirectional)
         INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
@@ -537,7 +535,7 @@ public class ModNetworking {
     }
 
     public static void registerClientPackets() {
-        ServerManagementMod.LOGGER.info("Client-side packet handlers ready");
+        ServerManagementMod.LOGGER.debug("Client-side packet handlers ready");
     }
     
     public static void sendToServer(IPacket packet) {

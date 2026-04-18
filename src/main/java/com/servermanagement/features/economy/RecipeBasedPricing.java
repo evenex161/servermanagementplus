@@ -98,7 +98,7 @@ public class RecipeBasedPricing {
             initialized = true;
 
             long elapsed = System.currentTimeMillis() - startTime;
-            ServerManagementMod.LOGGER.info(
+            ServerManagementMod.LOGGER.debug(
                     "Recipe-based pricing initialized: {} anchor prices, {} recipe-derived prices, {} recipes processed in {} ms",
                     anchorPrices.size(), recipePrices.size(), allRecipes.size(), elapsed);
         } catch (Exception e) {

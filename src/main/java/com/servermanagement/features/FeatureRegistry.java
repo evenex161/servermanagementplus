@@ -7,8 +7,6 @@ import net.minecraft.server.MinecraftServer;
 public class FeatureRegistry {
     
     public static void registerFeatures() {
-        ServerManagementMod.LOGGER.info("Registering features");
-        
         // Register WorldManager feature
         FeatureManager.registerFeature(new com.servermanagement.features.WorldManagerFeature());
         
@@ -26,8 +24,6 @@ public class FeatureRegistry {
     }
     
     public static void initializeFeatures(MinecraftServer server) {
-        ServerManagementMod.LOGGER.info("Initializing features for server");
-        
         // Initialize player preferences
         PlayerPreferences.initialize(server);
         

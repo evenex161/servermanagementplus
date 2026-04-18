@@ -175,7 +175,7 @@ public class MarginHistoryTracker {
                 .resolve("servermanagement").resolve("margin_history.dat");
             
             if (!Files.exists(file)) {
-                ServerManagementMod.LOGGER.info("No margin history found, starting fresh");
+                ServerManagementMod.LOGGER.debug("No margin history found, starting fresh");
                 return;
             }
             
@@ -204,7 +204,7 @@ public class MarginHistoryTracker {
                 recalculateAverage(itemId);
             }
             
-            ServerManagementMod.LOGGER.info("Loaded margin history: {} items, global avg margin: {}%", 
+            ServerManagementMod.LOGGER.debug("Loaded margin history: {} items, global avg margin: {}%", 
                 marginHistory.size(), String.format("%.1f", getGlobalAverageMargin()));
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to load margin history", e);

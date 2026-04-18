@@ -62,6 +62,6 @@ public class PacketTimestampTracker {
      */
     public static void clearAll() {
         playerActionTimestamps.clear();
-        LOGGER.info("Cleared all packet timestamps");
+        LOGGER.debug("Cleared all packet timestamps");
     }
 }

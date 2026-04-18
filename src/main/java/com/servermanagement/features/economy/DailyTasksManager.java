@@ -71,7 +71,7 @@ public class DailyTasksManager {
             manager.random = new Random();
         }
         
-        ServerManagementMod.LOGGER.info("Loaded daily tasks for {} players (v{})", 
+        ServerManagementMod.LOGGER.debug("Loaded daily tasks for {} players (v{})", 
             manager.playerTasks.size(), manager.dataVersion);
         return manager;
     }

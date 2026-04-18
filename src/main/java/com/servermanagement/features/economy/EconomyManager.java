@@ -89,7 +89,7 @@ public class EconomyManager {
         // Load margin history data
         MarginHistoryTracker.getInstance().load(server);
         
-        ServerManagementMod.LOGGER.info("Economy system initialized with performance optimizations");
+        ServerManagementMod.LOGGER.debug("Economy system initialized with performance optimizations");
     }
 
     /**
@@ -193,7 +193,7 @@ public class EconomyManager {
      * Shutdown economy system gracefully
      */
     public void shutdown() {
-        ServerManagementMod.LOGGER.info("Shutting down economy system");
+        ServerManagementMod.LOGGER.debug("Shutting down economy system");
         
         if (saveScheduler != null) {
             try {
@@ -458,7 +458,7 @@ public class EconomyManager {
                     }
                 }
             }
-            ServerManagementMod.LOGGER.info("Loaded {} bank inventories", bankInventories.size());
+            ServerManagementMod.LOGGER.debug("Loaded {} bank inventories", bankInventories.size());
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to load bank inventories", e);
         }

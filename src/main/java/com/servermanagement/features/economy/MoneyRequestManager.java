@@ -36,11 +36,11 @@ public class MoneyRequestManager {
         
         // Check data version and migrate if needed
         if (manager.dataVersion == 0) {
-            ServerManagementMod.LOGGER.info("Migrating legacy MoneyRequestManager data to version {}", 
+            ServerManagementMod.LOGGER.debug("Migrating legacy MoneyRequestManager data to version {}", 
                 DataVersion.CURRENT_VERSION);
             manager.migrateData(0, DataVersion.CURRENT_VERSION);
         } else if (manager.dataVersion < DataVersion.CURRENT_VERSION) {
-            ServerManagementMod.LOGGER.info("Migrating MoneyRequestManager data from version {} to {}", 
+            ServerManagementMod.LOGGER.debug("Migrating MoneyRequestManager data from version {} to {}", 
                 manager.dataVersion, DataVersion.CURRENT_VERSION);
             manager.migrateData(manager.dataVersion, DataVersion.CURRENT_VERSION);
         } else if (manager.dataVersion > DataVersion.CURRENT_VERSION) {
@@ -53,7 +53,7 @@ public class MoneyRequestManager {
         // Clean up expired requests
         manager.cleanupExpiredRequests();
         
-        ServerManagementMod.LOGGER.info("Loaded {} money requests (v{})", manager.requests.size(), manager.dataVersion);
+        ServerManagementMod.LOGGER.debug("Loaded {} money requests (v{})", manager.requests.size(), manager.dataVersion);
         return manager;
     }
     

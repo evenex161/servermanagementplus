@@ -47,10 +47,10 @@ public class PlayerPreferences {
                     
                     // Check data version
                     if (data.dataVersion == 0) {
-                        ServerManagementMod.LOGGER.info("Migrating legacy PlayerPreferences data to version {}", 
+                        ServerManagementMod.LOGGER.debug("Migrating legacy PlayerPreferences data to version {}", 
                             DataVersion.CURRENT_VERSION);
                     } else if (data.dataVersion < DataVersion.CURRENT_VERSION) {
-                        ServerManagementMod.LOGGER.info("Migrating PlayerPreferences data from version {} to {}", 
+                        ServerManagementMod.LOGGER.debug("Migrating PlayerPreferences data from version {} to {}", 
                             data.dataVersion, DataVersion.CURRENT_VERSION);
                     } else if (data.dataVersion > DataVersion.CURRENT_VERSION) {
                         ServerManagementMod.LOGGER.error("PlayerPreferences data version {} is newer than supported version {}!", 

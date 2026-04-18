@@ -59,7 +59,7 @@ public class SlimeHeadManager implements Feature {
     
     @Override
     public void initialize(MinecraftServer server) {
-        ServerManagementMod.LOGGER.info("SlimeHead feature initialized");
+        ServerManagementMod.LOGGER.debug("SlimeHead feature initialized");
     }
     
     @Override
@@ -69,7 +69,7 @@ public class SlimeHeadManager implements Feature {
     
     @Override
     public void onDisable() {
-        ServerManagementMod.LOGGER.info("SlimeHead feature disabled");
+        ServerManagementMod.LOGGER.debug("SlimeHead feature disabled");
     }
     
     /**

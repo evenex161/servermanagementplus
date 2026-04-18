@@ -312,7 +312,7 @@ public class MineBayManager {
                 heldItems.put(playerId, item);
             }
             
-            ServerManagementMod.LOGGER.info("Loaded {} MineBay listings and {} held items", activeListings.size(), heldItems.size());
+            ServerManagementMod.LOGGER.debug("Loaded {} MineBay listings and {} held items", activeListings.size(), heldItems.size());
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to load MineBay data", e);
         }

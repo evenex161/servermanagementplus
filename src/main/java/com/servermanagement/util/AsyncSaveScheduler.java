@@ -59,6 +59,10 @@ public class AsyncSaveScheduler {
      * Used during server shutdown.
      */
     public void flushAll() {
+        if (pendingSaves.isEmpty()) {
+            return;
+        }
+        
         ServerManagementMod.LOGGER.info("Flushing {} pending save operations", pendingSaves.size());
         
         // Cancel all scheduled futures

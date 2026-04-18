@@ -14,7 +14,7 @@ public class WorldManagerEvents {
         if (instance == null) {
             instance = new WorldManagerEvents();
             MinecraftForge.EVENT_BUS.register(instance);
-            ServerManagementMod.LOGGER.info("Registered WorldManager events");
+            ServerManagementMod.LOGGER.debug("Registered WorldManager events");
         }
     }
 

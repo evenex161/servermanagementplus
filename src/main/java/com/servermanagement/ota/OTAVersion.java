@@ -57,7 +57,7 @@ public class OTAVersion {
             
             CURRENT_VERSION = new OTAVersion(version, build, mcVersion, loader, releaseType, releaseNotes);
             
-            ServerManagementMod.LOGGER.info("Loaded OTA version: {} (build {}, MC {}, loader {})", version, build, mcVersion, loader);
+            ServerManagementMod.LOGGER.debug("Loaded OTA version: {} (build {}, MC {}, loader {})", version, build, mcVersion, loader);
             return CURRENT_VERSION;
             
         } catch (IOException | NumberFormatException e) {

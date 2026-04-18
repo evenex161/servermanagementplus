@@ -225,7 +225,7 @@ public class ItemSupplyDemandTracker {
                 .resolve("servermanagement").resolve("supply_demand.dat");
             
             if (!Files.exists(file)) {
-                ServerManagementMod.LOGGER.info("No supply/demand data found, starting fresh");
+                ServerManagementMod.LOGGER.debug("No supply/demand data found, starting fresh");
                 return;
             }
             
@@ -242,7 +242,7 @@ public class ItemSupplyDemandTracker {
                 }
             }
             
-            ServerManagementMod.LOGGER.info("Loaded supply/demand data: {} items tracked", supplyMap.size());
+            ServerManagementMod.LOGGER.debug("Loaded supply/demand data: {} items tracked", supplyMap.size());
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to load supply/demand data", e);
         }

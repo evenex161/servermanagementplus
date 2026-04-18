@@ -136,11 +136,11 @@ public class SecureDataStorage {
                     File backup = new File(file.getParent(), file.getName() + ".backup");
                     Files.copy(file.toPath(), backup.toPath(), 
                         java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    ServerManagementMod.LOGGER.info("Created backup: {}", backup.getName());
+                    ServerManagementMod.LOGGER.debug("Created backup: {}", backup.getName());
                     
                     // Save as encrypted
                     save(data, file, clazz);
-                    ServerManagementMod.LOGGER.info("Migrated {} to encrypted format", file.getName());
+                    ServerManagementMod.LOGGER.debug("Migrated {} to encrypted format", file.getName());
                     
                     return data;
                 } else {
@@ -154,7 +154,7 @@ public class SecureDataStorage {
             // Try to restore from backup
             File backup = new File(file.getParent(), file.getName() + ".backup");
             if (backup.exists()) {
-                ServerManagementMod.LOGGER.info("Attempting to restore from backup...");
+                ServerManagementMod.LOGGER.debug("Attempting to restore from backup...");
                 try {
                     Files.copy(backup.toPath(), file.toPath(), 
                         java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -220,7 +220,7 @@ public class SecureDataStorage {
                         Files.writeString(file.toPath(), output, StandardCharsets.UTF_8);
                         
                         migrated++;
-                        ServerManagementMod.LOGGER.info("Migrated: {}", file.getName());
+                        ServerManagementMod.LOGGER.debug("Migrated: {}", file.getName());
                     }
                 } catch (Exception e) {
                     ServerManagementMod.LOGGER.error("Failed to migrate {}", file.getName(), e);
@@ -229,7 +229,7 @@ public class SecureDataStorage {
         }
 
         if (migrated > 0) {
-            ServerManagementMod.LOGGER.info("Migration complete: {} files encrypted", migrated);
+            ServerManagementMod.LOGGER.debug("Migration complete: {} files encrypted", migrated);
         }
     }
 }

@@ -23,7 +23,7 @@ public class ModCommands {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
         
-        ServerManagementMod.LOGGER.info("Registering mod commands");
+        ServerManagementMod.LOGGER.debug("Registering mod commands");
         
         // Main Dashboard GUI commands
         dispatcher.register(Commands.literal("servermanagement")
@@ -1009,7 +1009,7 @@ public class ModCommands {
         // Register /help integration with SM command descriptions
         HelpCommandIntegration.register(dispatcher);
         
-        ServerManagementMod.LOGGER.info("Registered all mod commands");
+        ServerManagementMod.LOGGER.debug("Registered all mod commands");
     }
     
     private static int executePerformanceStatus(net.minecraft.commands.CommandSourceStack source) {

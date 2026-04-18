@@ -33,11 +33,11 @@ public class AchievementRewardTracker {
         
         // Check data version and migrate if needed
         if (tracker.dataVersion == 0) {
-            ServerManagementMod.LOGGER.info("Migrating legacy AchievementRewardTracker data to version {}", 
+            ServerManagementMod.LOGGER.debug("Migrating legacy AchievementRewardTracker data to version {}", 
                 DataVersion.CURRENT_VERSION);
             tracker.migrateData(0, DataVersion.CURRENT_VERSION);
         } else if (tracker.dataVersion < DataVersion.CURRENT_VERSION) {
-            ServerManagementMod.LOGGER.info("Migrating AchievementRewardTracker data from version {} to {}", 
+            ServerManagementMod.LOGGER.debug("Migrating AchievementRewardTracker data from version {} to {}", 
                 tracker.dataVersion, DataVersion.CURRENT_VERSION);
             tracker.migrateData(tracker.dataVersion, DataVersion.CURRENT_VERSION);
         } else if (tracker.dataVersion > DataVersion.CURRENT_VERSION) {
@@ -47,7 +47,7 @@ public class AchievementRewardTracker {
         
         tracker.dataVersion = DataVersion.CURRENT_VERSION;
         
-        ServerManagementMod.LOGGER.info("Loaded achievement reward tracker for {} players (v{})", 
+        ServerManagementMod.LOGGER.debug("Loaded achievement reward tracker for {} players (v{})", 
             tracker.playerAchievements.size(), tracker.dataVersion);
         return tracker;
     }

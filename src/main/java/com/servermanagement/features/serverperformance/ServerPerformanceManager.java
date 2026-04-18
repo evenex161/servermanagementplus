@@ -39,7 +39,7 @@ public class ServerPerformanceManager {
     public void initialize(MinecraftServer server) {
         this.server = server;
         this.initialized.set(true);
-        ServerManagementMod.LOGGER.info("Server Performance system initialized");
+        ServerManagementMod.LOGGER.debug("Server Performance system initialized");
     }
 
     public void shutdown() {

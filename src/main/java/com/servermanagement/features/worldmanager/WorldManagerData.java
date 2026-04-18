@@ -55,10 +55,10 @@ public class WorldManagerData {
                 
                 // Check version and migrate if needed
                 if (data.dataVersion == 0) {
-                    com.servermanagement.ServerManagementMod.LOGGER.info("Migrating legacy WorldManager data to version {}", DataVersion.CURRENT_VERSION);
+                    com.servermanagement.ServerManagementMod.LOGGER.debug("Migrating legacy WorldManager data to version {}", DataVersion.CURRENT_VERSION);
                     data.dataVersion = DataVersion.CURRENT_VERSION;
                 } else if (data.dataVersion < DataVersion.CURRENT_VERSION) {
-                    com.servermanagement.ServerManagementMod.LOGGER.info("Migrating WorldManager data from version {} to {}", 
+                    com.servermanagement.ServerManagementMod.LOGGER.debug("Migrating WorldManager data from version {} to {}", 
                         data.dataVersion, DataVersion.CURRENT_VERSION);
                     data.dataVersion = DataVersion.CURRENT_VERSION;
                 } else if (data.dataVersion > DataVersion.CURRENT_VERSION) {
@@ -95,13 +95,13 @@ public class WorldManagerData {
                 
                 // Migration: convert legacy portalsEnabled to granular nether/end maps
                 if (!data.portalsEnabled.isEmpty() && data.netherPortalsEnabled.isEmpty() && data.endPortalsEnabled.isEmpty()) {
-                    com.servermanagement.ServerManagementMod.LOGGER.info("Migrating legacy portalsEnabled to granular nether/end portal maps");
+                    com.servermanagement.ServerManagementMod.LOGGER.debug("Migrating legacy portalsEnabled to granular nether/end portal maps");
                     data.netherPortalsEnabled.putAll(data.portalsEnabled);
                     data.endPortalsEnabled.putAll(data.portalsEnabled);
                     data.portalsEnabled.clear();
                 }
                 
-                com.servermanagement.ServerManagementMod.LOGGER.info("Successfully loaded WorldManagerData from: {}", file.getAbsolutePath());
+                com.servermanagement.ServerManagementMod.LOGGER.debug("Successfully loaded WorldManagerData from: {}", file.getAbsolutePath());
                 return data;
                 
             } catch (com.google.gson.JsonSyntaxException e) {
@@ -114,7 +114,7 @@ public class WorldManagerData {
                 return new WorldManagerData();
             }
         }
-        com.servermanagement.ServerManagementMod.LOGGER.info("WorldManagerData file does not exist, creating with defaults");
+        com.servermanagement.ServerManagementMod.LOGGER.debug("WorldManagerData file does not exist, creating with defaults");
         return new WorldManagerData();
     }
     
@@ -130,11 +130,11 @@ public class WorldManagerData {
             java.nio.file.Files.copy(file.toPath(), backupFile.toPath(), 
                 java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             
-            com.servermanagement.ServerManagementMod.LOGGER.info("Created backup of corrupted file: {}", backupFile.getName());
+            com.servermanagement.ServerManagementMod.LOGGER.debug("Created backup of corrupted file: {}", backupFile.getName());
             
             // Delete the corrupted file so a fresh one will be created
             if (file.delete()) {
-                com.servermanagement.ServerManagementMod.LOGGER.info("Deleted corrupted data file");
+                com.servermanagement.ServerManagementMod.LOGGER.debug("Deleted corrupted data file");
             }
         } catch (Exception e) {
             com.servermanagement.ServerManagementMod.LOGGER.error("Failed to backup corrupted file", e);

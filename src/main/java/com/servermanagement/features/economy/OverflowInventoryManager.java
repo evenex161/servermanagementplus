@@ -250,7 +250,7 @@ public class OverflowInventoryManager {
                 }
             }
 
-            ServerManagementMod.LOGGER.info("Loaded overflow inventory data for {} players", overflowItems.size());
+            ServerManagementMod.LOGGER.debug("Loaded overflow inventory data for {} players", overflowItems.size());
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to load overflow inventory data", e);
         }
