@@ -39,6 +39,13 @@ public class ModFileRequestPacket implements IPacket {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
+                // Rate limit: one transfer per player per session (prevent DoS/bandwidth abuse)
+                if (ModFileTransferManager.hasActiveOrCompletedTransfer(player)) {
+                    ServerManagementMod.LOGGER.warn("Player {} already has an active or completed transfer, rejecting request",
+                        player.getName().getString());
+                    return;
+                }
+                
                 ServerManagementMod.LOGGER.info("Player {} requested mod update from {} to {} (MC {})", 
                     player.getName().getString(), clientVersion, requestedVersion, clientMinecraftVersion);
                 

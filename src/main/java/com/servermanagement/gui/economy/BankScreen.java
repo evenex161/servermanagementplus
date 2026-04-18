@@ -125,13 +125,13 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
         this.addRenderableWidget(new ModernButton(
             x0 + 5, tabY, tabW, 20,
             Component.literal("Account"),
-            b -> { currentTab = Tab.ACCOUNT; txnPage = 0; this.rebuildWidgets(); },
+            b -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("BankScreen", currentTab.name(), "ACCOUNT"); currentTab = Tab.ACCOUNT; txnPage = 0; this.rebuildWidgets(); },
             currentTab == Tab.ACCOUNT ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
         this.addRenderableWidget(new ModernButton(
             x0 + 5 + tabW + 5, tabY, tabW, 20,
             Component.literal("Transfer"),
-            b -> { currentTab = Tab.TRANSFER; this.rebuildWidgets(); },
+            b -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("BankScreen", currentTab.name(), "TRANSFER"); currentTab = Tab.TRANSFER; this.rebuildWidgets(); },
             currentTab == Tab.TRANSFER ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
 
@@ -147,7 +147,7 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
         this.addRenderableWidget(new ModernButton(
             x0 + 5 + (tabW + 5) * 2, tabY, tabW, 20,
             Component.literal(reqLabel),
-            b -> { currentTab = Tab.REQUESTS; reqPage = 0; this.rebuildWidgets(); },
+            b -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("BankScreen", currentTab.name(), "REQUESTS"); currentTab = Tab.REQUESTS; reqPage = 0; this.rebuildWidgets(); },
             reqStyle
         ));
 
@@ -274,16 +274,8 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
             !showingIncoming ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
 
-        // New Request button (top right of requests tab)
-        // Only show when viewing outgoing
-        if (!showingIncoming) {
-            this.addRenderableWidget(new ModernButton(
-                x0 + this.imageWidth - 125, contentY, 110, 18,
-                Component.literal("+ New Request"),
-                b -> { /* handled via request form below */ },
-                ModernButton.ButtonStyle.SUCCESS
-            ));
-        }
+        // Request form is always visible in Outgoing sub-tab below,
+        // so no separate "+ New Request" button is needed.
 
         // Request action buttons
         List<ClientMoneyRequestData.RequestEntry> requests = showingIncoming ?

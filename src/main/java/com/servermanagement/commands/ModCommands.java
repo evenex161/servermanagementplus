@@ -414,7 +414,7 @@ public class ModCommands {
                     com.servermanagement.network.ModNetworking.sendToPlayer(
                         new com.servermanagement.network.packet.SyncBankAccountPacket(
                             account.getBalance(),
-                            account.getRecentTransactions(10)
+                            account.getTransactions()
                         ),
                         player
                     );
@@ -439,7 +439,7 @@ public class ModCommands {
                         com.servermanagement.network.ModNetworking.sendToPlayer(
                             new com.servermanagement.network.packet.SyncBankAccountPacket(
                                 account.getBalance(),
-                                account.getRecentTransactions(10)
+                                account.getTransactions()
                             ),
                             player
                         );

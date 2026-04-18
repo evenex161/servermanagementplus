@@ -37,8 +37,8 @@ public class CreateListingPacket implements IPacket {
         this.marginPercent = buf.readDouble();
         this.offerType = buf.readEnum(MineBayListing.OfferType.class);
         
-        // Read price items
-        int priceItemCount = buf.readInt();
+        // Read price items (capped to prevent OOM from malicious packets)
+        int priceItemCount = Math.min(buf.readInt(), 54);
         this.priceItems = new ArrayList<>();
         for (int i = 0; i < priceItemCount; i++) {
             ItemStack itemStack = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);

@@ -49,10 +49,10 @@ public class SaveFreeRewardSettingsPacket implements IPacket {
             DailyTaskTemplateManager templateManager = economyManager.getTemplateManager();
 
             if (rewardAmount > 0) {
-                templateManager.setFreeRewardAmount(rewardAmount);
+                templateManager.setFreeRewardAmount(Math.min(rewardAmount, 100000));
             }
             if (cooldownHours > 0) {
-                templateManager.setFreeRewardCooldownHours(cooldownHours);
+                templateManager.setFreeRewardCooldownHours(Math.min(cooldownHours, 720));
             }
             templateManager.setFreeRewardItem(rewardItem);
             

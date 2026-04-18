@@ -205,14 +205,40 @@ public class WorldManagerData {
         return chatConnections;
     }
     
+    /**
+     * Get all dimensions that this dimension can communicate with.
+     * When a dimension has connected=true, it joins the "global chat" group
+     * and can communicate with ALL other dimensions that also have connected=true.
+     */
     public java.util.List<String> getChatConnections(String dimensionId) {
         java.util.List<String> connections = new java.util.ArrayList<>();
+        // Check if this dimension is connected to global chat
+        ChatConnection selfConnection = chatConnections.get(dimensionId);
+        if (selfConnection == null || !selfConnection.connected) {
+            return connections; // Not connected, no cross-dimension chat
+        }
+        // Return all OTHER dimensions that are also connected
         for (Map.Entry<String, ChatConnection> entry : chatConnections.entrySet()) {
-            if (entry.getKey().equals(dimensionId) && entry.getValue().connected) {
+            if (!entry.getKey().equals(dimensionId) && entry.getValue().connected) {
                 connections.add(entry.getKey());
             }
         }
         return connections;
+    }
+
+    /**
+     * Check if a specific dimension has global chat enabled.
+     */
+    public boolean isDimensionChatConnected(String dimensionId) {
+        ChatConnection conn = chatConnections.get(dimensionId);
+        return conn != null && conn.connected;
+    }
+
+    /**
+     * Set per-dimension chat connection state.
+     */
+    public void setDimensionChatConnected(String dimensionId, boolean connected) {
+        chatConnections.put(dimensionId, new ChatConnection(connected));
     }
     
     // Timer methods

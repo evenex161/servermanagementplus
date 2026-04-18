@@ -1015,6 +1015,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
             line2Box.setValue(line2Formatted);
             advancedMode = true;
         }
+        com.servermanagement.gui.debug.DebugLogger.logStateChange("MotdEditorScreen", "advancedMode", !advancedMode, advancedMode);
         suppressResponder = false;
         modeToggleButton.setMessage(Component.literal(advancedMode ? "Advanced" : "Simple"));
         updateMenuMotd();

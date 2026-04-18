@@ -25,7 +25,7 @@ public class WMTeleportToDimensionPacket implements IPacket {
     public void handle(CustomPayloadEvent.Context ctx) {
         ctx.enqueueWork(() -> {
             var player = ctx.getSender();
-            if (player != null) {
+            if (player != null && player.hasPermissions(2)) {
                 com.servermanagement.features.worldmanager.WorldManager.teleportToDimension(player, dimensionId);
             }
         });

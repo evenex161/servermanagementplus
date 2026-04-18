@@ -21,7 +21,7 @@ public class RedstoneThrottleHandler {
 
     // Track redstone updates per world per tick
     private static final Map<String, AtomicInteger> updatesPerWorld = new ConcurrentHashMap<>();
-    private static long lastTickCount = -1;
+    private static volatile long lastTickCount = -1;
 
     @SubscribeEvent
     public static void onNeighborNotify(BlockEvent.NeighborNotifyEvent event) {

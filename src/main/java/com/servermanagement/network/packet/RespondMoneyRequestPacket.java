@@ -148,7 +148,7 @@ public class RespondMoneyRequestPacket implements IPacket {
         // Sync bank balance
         BankAccount account = econ.getOrCreateAccount(player.getUUID());
         com.servermanagement.network.ModNetworking.sendToPlayer(
-            new SyncBankAccountPacket(account.getBalance(), account.getRecentTransactions(10)),
+            new SyncBankAccountPacket(account.getBalance(), account.getTransactions()),
             player);
         // Sync requests
         SendMoneyRequestPacket.syncRequestsToPlayer(player, econ);

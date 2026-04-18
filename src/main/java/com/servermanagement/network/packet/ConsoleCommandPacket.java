@@ -31,8 +31,11 @@ public class ConsoleCommandPacket implements IPacket {
             if (player != null && player.hasPermissions(2)) {
                 var server = player.getServer();
                 if (server != null) {
-                    // Create a command source that captures output
-                    CommandSourceStack source = server.createCommandSourceStack()
+                    // Use the PLAYER's command source stack — not the server's.
+                    // server.createCommandSourceStack() has permission level 4 (console),
+                    // which would let OP2 players run /stop, /op, etc. The player's
+                    // source stack respects their actual permission level.
+                    CommandSourceStack source = player.createCommandSourceStack()
                         .withSource(new com.servermanagement.network.ConsoleCommandListener(player));
                     
                     server.getCommands().performPrefixedCommand(source, command);

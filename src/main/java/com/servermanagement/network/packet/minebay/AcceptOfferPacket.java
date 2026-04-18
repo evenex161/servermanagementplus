@@ -154,12 +154,12 @@ public class AcceptOfferPacket implements IPacket {
             
             // 8. Sync bank accounts
             com.servermanagement.network.ModNetworking.sendToPlayer(
-                new SyncBankAccountPacket(sellerAccount.getBalance(), sellerAccount.getRecentTransactions(10)),
+                new SyncBankAccountPacket(sellerAccount.getBalance(), sellerAccount.getTransactions()),
                 seller
             );
             if (buyer != null) {
                 com.servermanagement.network.ModNetworking.sendToPlayer(
-                    new SyncBankAccountPacket(buyerAccount.getBalance(), buyerAccount.getRecentTransactions(10)),
+                    new SyncBankAccountPacket(buyerAccount.getBalance(), buyerAccount.getTransactions()),
                     buyer
                 );
             }

@@ -97,13 +97,13 @@ public class BankTransferPacket implements IPacket {
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new SyncBankAccountPacket(
                         senderAccount.getBalance(), 
-                        senderAccount.getRecentTransactions(10)
+                        senderAccount.getTransactions()
                     ), sender);
                     
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new SyncBankAccountPacket(
                         targetAccount.getBalance(), 
-                        targetAccount.getRecentTransactions(10)
+                        targetAccount.getTransactions()
                     ), target);
             } else {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(

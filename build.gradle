@@ -25,7 +25,18 @@ minecraft {
             systemProperty 'forge.enabledGameTestNamespaces', "${mod_id}"
         }
 
-        register('client')
+        register('client') {
+            // Support configurable username and game dir for multi-client testing
+            // Usage: gradlew runClient -PmcUsername=Player2 -PmcGameDir=run-client2
+            def username = project.findProperty('mcUsername')
+            if (username) {
+                args '--username', username
+            }
+            def gameDir = project.findProperty('mcGameDir')
+            if (gameDir) {
+                workingDir = layout.projectDirectory.dir(gameDir)
+            }
+        }
 
         register('server') {
             args '--nogui'

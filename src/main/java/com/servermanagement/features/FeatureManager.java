@@ -56,6 +56,7 @@ public class FeatureManager {
     }
 
     public static void toggleFeature(String featureId, boolean enabled) {
+        com.servermanagement.gui.debug.DebugLogger.logFeatureToggle(featureId, enabled);
         featureStates.put(featureId, enabled);
         
         if (features.containsKey(featureId)) {

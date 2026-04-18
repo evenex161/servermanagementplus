@@ -33,15 +33,16 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
         int centerY = (this.height - this.imageHeight) / 2;
         
         int cardWidth = (this.imageWidth - 40) / 3;
-        int cardHeight = (this.imageHeight - 100) / 3;
         int spacing = 10;
+        // Reserve space for Close button inside the panel (30px header + cards + close)
+        int availCardHeight = this.imageHeight - 40 - 15 - 30; // header, padding, close button area
+        int cardHeight = (availCardHeight - spacing * 2) / 3;
         
         int row1Y = centerY + 40;
         int row2Y = row1Y + cardHeight + spacing;
         int row3Y = row2Y + cardHeight + spacing;
         
         // Row 1: Main features
-        // World Manager
         this.addRenderableWidget(new DashboardCard(
             centerX + 10, row1Y, cardWidth, cardHeight,
             Component.literal("World Manager"),
@@ -50,7 +51,6 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_LIST, ""))
         ));
         
-        // Player Manager
         this.addRenderableWidget(new DashboardCard(
             centerX + cardWidth + 20, row1Y, cardWidth, cardHeight,
             Component.literal("Player Manager"),
@@ -59,7 +59,6 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.PLAYER_MANAGER, ""))
         ));
         
-        // Console
         this.addRenderableWidget(new DashboardCard(
             centerX + cardWidth * 2 + 30, row1Y, cardWidth, cardHeight,
             Component.literal("Console"),
@@ -68,8 +67,7 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.CONSOLE, ""))
         ));
         
-        // Row 2: Settings and utilities
-        // Global Settings
+        // Row 2
         this.addRenderableWidget(new DashboardCard(
             centerX + 10, row2Y, cardWidth, cardHeight,
             Component.literal("Global Settings"),
@@ -78,7 +76,6 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.GLOBAL_SETTINGS, ""))
         ));
         
-        // Economy Management
         this.addRenderableWidget(new DashboardCard(
             centerX + cardWidth + 20, row2Y, cardWidth, cardHeight,
             Component.literal("Economy"),
@@ -87,7 +84,6 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.ECONOMY_MANAGEMENT, ""))
         ));
         
-        // Performance Settings
         this.addRenderableWidget(new DashboardCard(
             centerX + cardWidth * 2 + 30, row2Y, cardWidth, cardHeight,
             Component.literal("Performance"),
@@ -96,30 +92,33 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.PERFORMANCE_SETTINGS, ""))
         ));
         
-        // Row 3: Mod Settings & Server Customization
-        // MOTD Editor
+        // Row 3: 2 cards centered + close button to the right
+        int halfGap = spacing / 2;
+        int twoCardWidth = cardWidth * 2 + spacing;
+        int row3StartX = centerX + (this.imageWidth - twoCardWidth - cardWidth - spacing) / 2;
+        
         this.addRenderableWidget(new DashboardCard(
-            centerX + 10, row3Y, cardWidth, cardHeight,
+            row3StartX, row3Y, cardWidth, cardHeight,
             Component.literal("MOTD Editor"),
             "=", "Server Message",
             DashboardCard.CardStyle.BLUE,
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.MOTD_EDITOR, ""))
         ));
         
-        // Mod Settings
         this.addRenderableWidget(new DashboardCard(
-            centerX + cardWidth + 20, row3Y, cardWidth, cardHeight,
+            row3StartX + cardWidth + spacing, row3Y, cardWidth, cardHeight,
             Component.literal("Mod Settings"),
             "+", "Features Config",
             DashboardCard.CardStyle.GRAY,
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.CONFIG, ""))
         ));
         
-        // Close button
+        // Close button - inside panel, at bottom center
+        int closeY = row3Y + cardHeight + 8;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Close"),
             button -> this.onClose())
-            .bounds(centerX + (this.imageWidth - 100) / 2, row3Y + cardHeight + 15, 100, 24)
+            .bounds(centerX + (this.imageWidth - 120) / 2, closeY, 120, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
     }

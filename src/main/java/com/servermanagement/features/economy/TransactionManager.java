@@ -314,14 +314,23 @@ public class TransactionManager {
             CompoundTag rootTag = new CompoundTag();
             
             // Save completed transactions (keep last 1000)
-            ListTag completedTag = new ListTag();
-            completedTransactions.values().stream()
+            List<Transaction> sorted = completedTransactions.values().stream()
                 .sorted(Comparator.comparingLong(t -> -t.completedTimestamp))
                 .limit(1000)
-                .forEach(t -> completedTag.add(t.toNBT()));
+                .toList();
+            ListTag completedTag = new ListTag();
+            sorted.forEach(t -> completedTag.add(t.toNBT()));
             rootTag.put("Completed", completedTag);
             
             NbtIo.writeCompressed(rootTag, file.toPath());
+            
+            // Trim in-memory map to match saved limit — prevents unbounded growth
+            if (completedTransactions.size() > 1000) {
+                Set<String> keepIds = sorted.stream()
+                    .map(t -> t.transactionId)
+                    .collect(java.util.stream.Collectors.toSet());
+                completedTransactions.keySet().retainAll(keepIds);
+            }
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to save transactions", e);
         }

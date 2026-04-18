@@ -101,6 +101,7 @@ public class DashboardCard extends AbstractWidget {
     
     @Override
     public void onClick(double mouseX, double mouseY) {
+        com.servermanagement.gui.debug.DebugLogger.logWidgetClick("DashboardCard", this.getMessage().getString(), this.getX(), this.getY());
         this.onPress.onPress();
     }
     

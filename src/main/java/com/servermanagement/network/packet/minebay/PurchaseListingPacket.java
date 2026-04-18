@@ -308,7 +308,7 @@ public class PurchaseListingPacket implements IPacket {
             com.servermanagement.network.ModNetworking.sendToPlayer(
                 new com.servermanagement.network.packet.SyncBankAccountPacket(
                     buyerAccount.getBalance(), 
-                    buyerAccount.getRecentTransactions(10)
+                    buyerAccount.getTransactions()
                 ),
                 buyer
             );
@@ -317,7 +317,7 @@ public class PurchaseListingPacket implements IPacket {
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new com.servermanagement.network.packet.SyncBankAccountPacket(
                         sellerAccount.getBalance(), 
-                        sellerAccount.getRecentTransactions(10)
+                        sellerAccount.getTransactions()
                     ),
                     seller
                 );

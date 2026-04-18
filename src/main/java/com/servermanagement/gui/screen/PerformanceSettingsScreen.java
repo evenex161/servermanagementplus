@@ -18,7 +18,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
     private static final int SCROLL_STEP = 16;
 
     // Layout constants
-    private static final int HEADER_HEIGHT = 72;
+    private static final int HEADER_HEIGHT = 78;
     private static final int FOOTER_HEIGHT = 35;
     private static final int ROW_SPACING = 30;
     private static final int TOGGLE_HEIGHT = 20;
@@ -28,8 +28,8 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
     public PerformanceSettingsScreen(PerformanceSettingsMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 380;
-        this.imageHeight = 340;
+        this.imageWidth = 430;
+        this.imageHeight = 420;
     }
 
     private int getContentTop() {
@@ -48,6 +48,11 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int rows;
         if (currentPage == 0) rows = 8;
         else if (currentPage == 1) rows = 10;
+        else if (currentPage == 2) {
+            // Stats page: ~9 lines at 22px + padding
+            int statsHeight = 9 * 22 + 10;
+            return Math.max(0, statsHeight - getContentHeight());
+        }
         else return 0;
         return Math.max(0, rows * ROW_SPACING - getContentHeight());
     }
@@ -58,7 +63,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(380, 340, this.width, this.height);
+        int[] dim = ScreenScaler.scale(430, 420, this.width, this.height);
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
@@ -73,25 +78,27 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int cY = this.topPos;
 
         // --- Tab buttons (fixed position, never scrolled) ---
-        int tabWidth = (this.imageWidth - 40) / 3;
+        int tabGap = 5;
+        int tabTotalWidth = this.imageWidth - 20; // 10px margin each side
+        int tabWidth = (tabTotalWidth - tabGap * 2) / 3;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Toggles"),
-            btn -> { currentPage = 0; scrollOffset = 0; rebuildWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "0/Toggles"); currentPage = 0; scrollOffset = 0; rebuildWidgets(); })
             .bounds(cX + 10, cY + 42, tabWidth, 20)
             .style(currentPage == 0 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Settings"),
-            btn -> { currentPage = 1; scrollOffset = 0; rebuildWidgets(); })
-            .bounds(cX + 15 + tabWidth, cY + 42, tabWidth, 20)
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "1/Settings"); currentPage = 1; scrollOffset = 0; rebuildWidgets(); })
+            .bounds(cX + 10 + tabWidth + tabGap, cY + 42, tabWidth, 20)
             .style(currentPage == 1 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Stats"),
-            btn -> { currentPage = 2; scrollOffset = 0; rebuildWidgets(); })
-            .bounds(cX + 20 + tabWidth * 2, cY + 42, tabWidth, 20)
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "2/Stats"); currentPage = 2; scrollOffset = 0; rebuildWidgets(); })
+            .bounds(cX + 10 + (tabWidth + tabGap) * 2, cY + 42, tabWidth, 20)
             .style(currentPage == 2 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
@@ -105,18 +112,19 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
             buildSettingsPage(cX, contentY);
         }
 
-        // --- Bottom buttons (fixed position) ---
+        // --- Bottom buttons (fixed position, symmetrical) ---
+        int bottomBtnW = (this.imageWidth - 30) / 2;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("\u2190 Dashboard"),
             btn -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
-            .bounds(cX + 10, cY + this.imageHeight - 30, 110, 22)
+            .bounds(cX + 10, cY + this.imageHeight - 30, bottomBtnW, 22)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Close"),
             btn -> this.onClose())
-            .bounds(cX + this.imageWidth - 80, cY + this.imageHeight - 30, 70, 22)
+            .bounds(cX + this.imageWidth - bottomBtnW - 10, cY + this.imageHeight - 30, bottomBtnW, 22)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
     }
@@ -303,7 +311,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         } else if (currentPage == 1) {
             renderSettingsLabels(g, cX, contentY);
         } else if (currentPage == 2) {
-            renderStatsPage(g, cX, contentTop);
+            renderStatsPage(g, cX, contentTop - scrollOffset);
         }
 
         g.disableScissor();

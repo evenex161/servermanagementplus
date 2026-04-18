@@ -64,12 +64,16 @@ public class SaveTemplatePacket implements IPacket {
             if (taskTypeOrdinal < 0 || taskTypeOrdinal >= types.length) return;
             TaskType taskType = types[taskTypeOrdinal];
 
+            // Validate bounds on integer fields
+            int safeGoal = Math.max(1, Math.min(goal, 10000));
+            int safeRewardAmount = Math.max(0, Math.min(rewardAmount, 100000));
+
             var economyManager = EconomyManager.getInstance(server);
             DailyTaskTemplateManager templateManager = economyManager.getTemplateManager();
 
             if (templateId.isEmpty()) {
                 // Create new
-                DailyTaskTemplate template = new DailyTaskTemplate(taskType, goal, rewardAmount, rewardItem, description);
+                DailyTaskTemplate template = new DailyTaskTemplate(taskType, safeGoal, safeRewardAmount, rewardItem, description);
                 templateManager.addTemplate(template);
             } else {
                 // Update existing
@@ -77,8 +81,8 @@ public class SaveTemplatePacket implements IPacket {
                 if (existing != null) {
                     existing.setType(taskType);
                     existing.setCustomDescription(description);
-                    existing.setTargetAmount(goal);
-                    existing.setRewardAmount(rewardAmount);
+                    existing.setTargetAmount(safeGoal);
+                    existing.setRewardAmount(safeRewardAmount);
                     existing.setRewardItem(rewardItem);
                 }
             }

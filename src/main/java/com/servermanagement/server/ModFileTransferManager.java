@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ModFileTransferManager {
     
     private static final Map<String, TransferSession> activeSessions = new ConcurrentHashMap<>();
+    private static final java.util.Set<String> completedTransfers = ConcurrentHashMap.newKeySet();
     private static File modJarFile = null;
     private static String modJarHash = null;
     
@@ -89,6 +90,15 @@ public class ModFileTransferManager {
     }
     
     /**
+     * Check if a player already has an active or completed transfer this session.
+     * Prevents DoS via repeated file transfer requests.
+     */
+    public static boolean hasActiveOrCompletedTransfer(ServerPlayer player) {
+        String playerId = player.getStringUUID();
+        return activeSessions.containsKey(playerId) || completedTransfers.contains(playerId);
+    }
+    
+    /**
      * Start transferring the mod file to a client
      */
     public static void startTransfer(ServerPlayer player, String requestedVersion) {
@@ -145,6 +155,7 @@ public class ModFileTransferManager {
                 ), player);
             } finally {
                 activeSessions.remove(playerId);
+                completedTransfers.add(playerId);
             }
         });
     }
@@ -176,6 +187,13 @@ public class ModFileTransferManager {
                     chunkData,
                     session.fileHash
                 );
+                
+                // Abort early if player disconnected (avoid wasting I/O and bandwidth)
+                if (session.player.hasDisconnected()) {
+                    ServerManagementMod.LOGGER.info("Aborting transfer — player {} disconnected",
+                        session.player.getName().getString());
+                    return;
+                }
                 
                 ModNetworking.sendToPlayer(packet, session.player);
                 

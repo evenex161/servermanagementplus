@@ -30,7 +30,7 @@ public class ModFileChunkPacket implements IPacket {
         this.chunkIndex = buf.readInt();
         this.totalChunks = buf.readInt();
         this.fileHash = buf.readUtf(128);
-        int dataLength = buf.readInt();
+        int dataLength = Math.min(buf.readInt(), CHUNK_SIZE + 1024); // Cap to prevent OOM
         this.chunkData = new byte[dataLength];
         buf.readBytes(chunkData);
     }

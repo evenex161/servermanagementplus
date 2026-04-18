@@ -174,7 +174,7 @@ public class CreateOfferPacket implements IPacket {
             com.servermanagement.features.economy.BankAccount buyerAccountSync = economyManager.getOrCreateAccount(buyer.getUUID());
             com.servermanagement.network.ModNetworking.sendToPlayer(
                 new com.servermanagement.network.packet.SyncBankAccountPacket(
-                    buyerAccountSync.getBalance(), buyerAccountSync.getRecentTransactions(10)),
+                    buyerAccountSync.getBalance(), buyerAccountSync.getTransactions()),
                 buyer
             );
             

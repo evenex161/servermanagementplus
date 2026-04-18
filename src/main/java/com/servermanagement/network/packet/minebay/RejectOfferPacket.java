@@ -115,7 +115,7 @@ public class RejectOfferPacket implements IPacket {
                     .getOrCreateAccount(rejectedOffer.getBuyerId());
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new com.servermanagement.network.packet.SyncBankAccountPacket(
-                        buyerAccount.getBalance(), buyerAccount.getRecentTransactions(10)),
+                        buyerAccount.getBalance(), buyerAccount.getTransactions()),
                     buyer
                 );
                 buyer.displayClientMessage(Component.literal(

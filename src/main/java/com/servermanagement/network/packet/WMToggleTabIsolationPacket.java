@@ -34,6 +34,11 @@ public class WMToggleTabIsolationPacket implements IPacket {
                 String actionKey = "tab_isolation";
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
                     com.servermanagement.features.worldmanager.WorldManager.setTabIsolationEnabled(enabled);
+                    // Immediately apply or restore tab isolation
+                    var server = player.getServer();
+                    if (server != null) {
+                        com.servermanagement.features.worldmanager.TabListIsolationHandler.onIsolationToggled(server);
+                    }
                 }
             }
         });

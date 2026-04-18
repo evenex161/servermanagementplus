@@ -144,7 +144,7 @@ public class OpenGuiPacket implements IPacket {
         boolean endPortalsEnabled = data.areEndPortalsEnabled(dimensionId);
         boolean hasTimer = data.hasActiveTimer(dimensionId);
         int timerSeconds = (int) data.getRemainingTime(dimensionId);
-        boolean chatConnected = !data.isChatIsolationEnabled();
+        boolean chatConnected = data.isDimensionChatConnected(dimensionId);
         String timerPortalType = data.getTimerPortalType(dimensionId);
         
         com.servermanagement.network.ModNetworking.sendToPlayer(
@@ -190,7 +190,7 @@ public class OpenGuiPacket implements IPacket {
         com.servermanagement.network.ModNetworking.sendToPlayer(
             new com.servermanagement.network.packet.SyncBankAccountPacket(
                 account.getBalance(),
-                account.getRecentTransactions(10)
+                account.getTransactions()
             ),
             player
         );

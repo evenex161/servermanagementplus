@@ -38,6 +38,9 @@ public class WMSetTimerPacket implements IPacket {
         ctx.enqueueWork(() -> {
             var player = ctx.getSender();
             if (player != null && player.hasPermissions(2)) {
+                // Validate seconds to prevent abuse (max 30 days = 2,592,000 seconds)
+                if (seconds < 0 || seconds > 2_592_000) return;
+                
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "timer_" + dimensionId;
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {

@@ -24,8 +24,8 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
     
     public ConsoleScreen(ConsoleMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageHeight = 300;
-        this.imageWidth = 500;
+        this.imageHeight = 330;
+        this.imageWidth = 550;
     }
     
     /**
@@ -39,7 +39,7 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(500, 300, this.width, this.height);
+        int[] dim = ScreenScaler.scale(550, 330, this.width, this.height);
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
@@ -47,27 +47,30 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        // Console output area
+        // Console output area - more vertical space
         this.consoleOutput = new ConsoleOutput(
             centerX + 10, centerY + 40,
-            this.imageWidth - 20, this.imageHeight - 100
+            this.imageWidth - 20, this.imageHeight - 95
         );
         this.addRenderableWidget(this.consoleOutput);
         
         // Subscribe to server log streaming
         ModNetworking.sendToServer(new ConsoleSubscribePacket(true));
         
-        // Back to Dashboard button (in header area)
+        // Back to Dashboard button (in header area, proper size)
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("\u2190"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
-            .bounds(centerX + 5, centerY + 5, 20, 18)
+            .bounds(centerX + 5, centerY + 5, 22, 20)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
         
         // Command input row at bottom
-        int inputY = centerY + this.imageHeight - 50;
-        this.commandInput = new EditBox(this.font, centerX + 10, inputY, this.imageWidth - 130, 20,
+        int inputY = centerY + this.imageHeight - 45;
+        int sendBtnW = 65;
+        int clearBtnW = 55;
+        int inputW = this.imageWidth - 20 - sendBtnW - clearBtnW - 10;
+        this.commandInput = new EditBox(this.font, centerX + 10, inputY, inputW, 22,
             Component.literal("Command"));
         this.commandInput.setMaxLength(256);
         this.commandInput.setHint(Component.literal("Enter command..."));
@@ -79,14 +82,12 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
             button -> {
                 String command = this.commandInput.getValue().trim();
                 if (!command.isEmpty()) {
-                    // Send command to server
                     ModNetworking.sendToServer(new ConsoleCommandPacket(command));
-                    // Echo in console
                     this.consoleOutput.addLine("> " + command);
                     this.commandInput.setValue("");
                 }
             })
-            .bounds(centerX + this.imageWidth - 115, inputY, 60, 20)
+            .bounds(centerX + 10 + inputW + 5, inputY, sendBtnW, 22)
             .style(ModernButton.ButtonStyle.SUCCESS)
             .build());
         
@@ -94,7 +95,7 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Clear"),
             button -> this.consoleOutput.clear())
-            .bounds(centerX + this.imageWidth - 50, inputY, 50, 20)
+            .bounds(centerX + this.imageWidth - clearBtnW - 10, inputY, clearBtnW, 22)
             .style(ModernButton.ButtonStyle.DANGER)
             .build());
         
@@ -129,11 +130,11 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
         
         // Title
         guiGraphics.drawString(this.font, "Server Console", 
-            this.leftPos + 15, this.topPos + 8, 0xFFD700, true);
+            this.leftPos + 32, this.topPos + 8, 0xFFD700, true);
         
         // Info text
         guiGraphics.drawString(this.font, "Execute commands and view server logs", 
-            this.leftPos + 15, this.topPos + 20, 0xAAAAAA, true);
+            this.leftPos + 32, this.topPos + 20, 0xAAAAAA, true);
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);

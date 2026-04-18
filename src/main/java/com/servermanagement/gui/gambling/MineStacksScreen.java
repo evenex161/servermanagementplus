@@ -116,8 +116,8 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     
     public MineStacksScreen(MineStacksMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
-        this.imageWidth = 400;
-        this.imageHeight = 220;
+        this.imageWidth = 420;
+        this.imageHeight = 230;
         this.inventoryLabelY = 1000; // Hide
         this.titleLabelY = 1000; // Hide
         this.currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
@@ -125,7 +125,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(400, 220, this.width, this.height);
+        int[] dim = ScreenScaler.scale(420, 230, this.width, this.height);
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
@@ -638,6 +638,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     private void switchMode(GameMode mode) {
+        com.servermanagement.gui.debug.DebugLogger.logStateChange("MineStacksScreen", "gameMode", currentMode, mode);
         currentMode = mode;
         lastResult = "";
         this.rebuildWidgets();

@@ -38,7 +38,7 @@ public class GamblingManager {
     
     private GamblingManager() {}
     
-    public static GamblingManager getInstance() {
+    public static synchronized GamblingManager getInstance() {
         if (instance == null) {
             instance = new GamblingManager();
         }
@@ -237,6 +237,17 @@ public class GamblingManager {
      */
     public void forceSave() {
         doSaveStats();
+    }
+    
+    /**
+     * Shut down the save scheduler to prevent executor thread leak on server restart.
+     * Should be called during server stopping.
+     */
+    public void shutdown() {
+        if (saveScheduler != null) {
+            saveScheduler.shutdown();
+        }
+        doSaveStats(); // Final save
     }
     
     /**

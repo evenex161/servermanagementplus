@@ -134,28 +134,40 @@ public class PlaceGamblingBetPacket implements IPacket {
                 com.servermanagement.features.gambling.GamblingStats stats = 
                     gamblingManager.getStats(player.getUUID());
                 
+                // Capture player UUID for safe re-lookup after delay
+                java.util.UUID playerUUID = player.getUUID();
+                
                 // Schedule delayed result reveal (3 seconds) without blocking server thread
                 MinecraftServer server = gamblingManager.getServer();
                 if (server != null) {
                     DELAYED_EXECUTOR.schedule(() -> {
                         // Execute on the main server thread for thread safety
                         server.execute(() -> {
+                            // Re-lookup player by UUID — original reference may be stale
+                            // (player could have disconnected/reconnected during the 3s delay)
+                            ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUUID);
+                            if (currentPlayer == null) return; // Player disconnected
+                            
+                            // Re-fetch account with fresh data
+                            com.servermanagement.features.economy.BankAccount freshAccount = 
+                                economyManager.getOrCreateAccount(playerUUID);
+                            
                             // Send result back to client after delay
                             com.servermanagement.network.ModNetworking.sendToPlayer(
                                 new GamblingResultPacket(result.isWon(), result.getPayout(), result.getMessage()),
-                                player
+                                currentPlayer
                             );
                             
                             // Sync updated balance to client
                             com.servermanagement.network.ModNetworking.sendToPlayer(
-                                new SyncBankAccountPacket(account.getBalance(), account.getRecentTransactions(10)),
-                                player
+                                new SyncBankAccountPacket(freshAccount.getBalance(), freshAccount.getTransactions()),
+                                currentPlayer
                             );
                             
                             // Update MineStacks menu balance if the player has it open
-                            if (player.containerMenu instanceof com.servermanagement.gui.gambling.MineStacksMenu) {
-                                ((com.servermanagement.gui.gambling.MineStacksMenu) player.containerMenu)
-                                    .updateBalance(account.getBalance());
+                            if (currentPlayer.containerMenu instanceof com.servermanagement.gui.gambling.MineStacksMenu) {
+                                ((com.servermanagement.gui.gambling.MineStacksMenu) currentPlayer.containerMenu)
+                                    .updateBalance(freshAccount.getBalance());
                             }
                             
                             // Sync gambling stats to client
@@ -170,7 +182,7 @@ public class PlaceGamblingBetPacket implements IPacket {
                                     stats.getBiggestWin(),
                                     stats.getBiggestLoss()
                                 ),
-                                player
+                                currentPlayer
                             );
                         });
                     }, 3, TimeUnit.SECONDS);

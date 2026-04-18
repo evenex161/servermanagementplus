@@ -175,8 +175,8 @@ public class ServerManagementMod {
         com.servermanagement.features.motd.MotdManager.getInstance().saveAndShutdown();
         LOGGER.info("MOTD Manager saved and shut down");
         
-        com.servermanagement.features.gambling.GamblingManager.getInstance().forceSave();
-        LOGGER.info("Gambling stats saved");
+        com.servermanagement.features.gambling.GamblingManager.getInstance().shutdown();
+        LOGGER.info("Gambling stats saved and scheduler shut down");
         
         com.servermanagement.features.economy.OverflowInventoryManager.getInstance().save();
         LOGGER.info("Overflow inventory saved");

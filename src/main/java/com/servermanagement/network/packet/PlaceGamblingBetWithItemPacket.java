@@ -146,7 +146,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                                 
                                 // Sync updated balance to client
                                 com.servermanagement.network.ModNetworking.sendToPlayer(
-                                    new SyncBankAccountPacket(account.getBalance(), account.getRecentTransactions(10)),
+                                    new SyncBankAccountPacket(account.getBalance(), account.getTransactions()),
                                     onlinePlayer
                                 );
                                 

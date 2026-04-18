@@ -153,13 +153,13 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         // Achievements list
         renderAchievements(guiGraphics, centerX, centerY);
         
-        // Page indicator
+        // Page indicator (centered between prev/next buttons)
         if (maxPages > 1) {
             String pageText = "Page " + (currentPage + 1) + " / " + maxPages;
             int pageWidth = this.font.width(pageText);
             guiGraphics.drawString(this.font, Component.literal(pageText),
                 centerX + (this.imageWidth - pageWidth) / 2, 
-                centerY + this.imageHeight - 35, 
+                centerY + this.imageHeight - 24, 
                 0x808080, false);
         }
     }

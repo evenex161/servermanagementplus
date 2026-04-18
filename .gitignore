@@ -85,9 +85,15 @@ bin/
 # Internal instruction files (local dev only)
 .github/
 
+# Dev scripts
+test.bat
+GUI_TEST_CHECKLIST.md
+
 # Minecraft
 run/
 run-data/
+run-client2/
+.gradle-c2/
 logs/
 forge-server/
 forge-server 1.20.1/

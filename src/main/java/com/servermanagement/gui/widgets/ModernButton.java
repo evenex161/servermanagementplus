@@ -16,6 +16,7 @@ public class ModernButton extends Button {
         PRIMARY(0x4A90E2, 0x5DA8F2, 0xFFFFFF, 0xFF6AB8FF),      // Blue
         SUCCESS(0x27AE60, 0x33CC73, 0xFFFFFF, 0xFF50E88A),      // Green
         DANGER(0xE74C3C, 0xF06050, 0xFFFFFF, 0xFFFF7B6E),       // Red
+        WARNING(0xE67E22, 0xF0932B, 0xFFFFFF, 0xFFFFAA44),      // Orange
         SECONDARY(0x505050, 0x6A6A6A, 0xE0E0E0, 0xFFA0A0A0),    // Gray
         DARK(0x2C2C2C, 0x404040, 0xE0E0E0, 0xFF808080);         // Dark Gray
         

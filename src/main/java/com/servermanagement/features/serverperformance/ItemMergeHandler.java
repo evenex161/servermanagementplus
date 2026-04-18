@@ -52,7 +52,10 @@ public class ItemMergeHandler {
         );
         List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, worldBounds);
 
-        for (int i = 0; i < items.size(); i++) {
+        // Cap the list to avoid O(n²) blowup with massive item accumulations
+        int maxItems = Math.min(items.size(), 500);
+
+        for (int i = 0; i < maxItems; i++) {
             ItemEntity primary = items.get(i);
             if (!primary.isAlive()) continue;
 
@@ -64,7 +67,7 @@ public class ItemMergeHandler {
 
             AABB searchBox = primary.getBoundingBox().inflate(radius);
 
-            for (int j = i + 1; j < items.size(); j++) {
+            for (int j = i + 1; j < maxItems; j++) {
                 ItemEntity secondary = items.get(j);
                 if (!secondary.isAlive()) continue;
                 if (!searchBox.contains(secondary.position())) continue;

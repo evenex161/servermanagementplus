@@ -18,6 +18,13 @@ import com.servermanagement.network.packet.ModFileRequestPacket;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.PMSpectatePlayerPacket;
 import com.servermanagement.network.packet.PMViewInventoryPacket;
+import com.servermanagement.network.packet.PMKickPlayerPacket;
+import com.servermanagement.network.packet.PMBanPlayerPacket;
+import com.servermanagement.network.packet.PMUnbanPlayerPacket;
+import com.servermanagement.network.packet.PMWhitelistPacket;
+import com.servermanagement.network.packet.PMWhitelistTogglePacket;
+import com.servermanagement.network.packet.PMRequestPlayerListsPacket;
+import com.servermanagement.network.packet.PMSyncPlayerListsPacket;
 import com.servermanagement.network.packet.PlaceGamblingBetPacket;
 import com.servermanagement.network.packet.PlaceGamblingBetWithItemPacket;
 import com.servermanagement.network.packet.RequestAutoShowPacket;
@@ -159,6 +166,48 @@ public class ModNetworking {
             .encoder(PMViewInventoryPacket::encode)
             .decoder(PMViewInventoryPacket::new)
             .consumer(PMViewInventoryPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(PMKickPlayerPacket.class, id())
+            .encoder(PMKickPlayerPacket::encode)
+            .decoder(PMKickPlayerPacket::new)
+            .consumer(PMKickPlayerPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(PMBanPlayerPacket.class, id())
+            .encoder(PMBanPlayerPacket::encode)
+            .decoder(PMBanPlayerPacket::new)
+            .consumer(PMBanPlayerPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(PMUnbanPlayerPacket.class, id())
+            .encoder(PMUnbanPlayerPacket::encode)
+            .decoder(PMUnbanPlayerPacket::new)
+            .consumer(PMUnbanPlayerPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(PMWhitelistPacket.class, id())
+            .encoder(PMWhitelistPacket::encode)
+            .decoder(PMWhitelistPacket::new)
+            .consumer(PMWhitelistPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(PMRequestPlayerListsPacket.class, id())
+            .encoder(PMRequestPlayerListsPacket::encode)
+            .decoder(PMRequestPlayerListsPacket::new)
+            .consumer(PMRequestPlayerListsPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(PMSyncPlayerListsPacket.class, id())
+            .encoder(PMSyncPlayerListsPacket::encode)
+            .decoder(PMSyncPlayerListsPacket::new)
+            .consumer(PMSyncPlayerListsPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(PMWhitelistTogglePacket.class, id())
+            .encoder(PMWhitelistTogglePacket::encode)
+            .decoder(PMWhitelistTogglePacket::new)
+            .consumer(PMWhitelistTogglePacket::handle)
             .add();
             
         // Add more packets for GUI data sync
@@ -492,10 +541,12 @@ public class ModNetworking {
     }
     
     public static void sendToServer(IPacket packet) {
+        com.servermanagement.gui.debug.DebugLogger.logPacketSent(packet);
         INSTANCE.send(packet, PacketDistributor.SERVER.noArg());
     }
     
     public static void sendToPlayer(IPacket packet, ServerPlayer player) {
+        com.servermanagement.gui.debug.DebugLogger.logPacketSent(packet);
         INSTANCE.send(packet, PacketDistributor.PLAYER.with(player));
     }
     

@@ -23,7 +23,7 @@ public class SaveMotdPacket implements IPacket {
     }
 
     public SaveMotdPacket(FriendlyByteBuf buf) {
-        this.motdText = buf.readUtf(32767);
+        this.motdText = buf.readUtf(MAX_MOTD_LENGTH);
     }
 
     @Override

@@ -26,8 +26,8 @@ import java.util.List;
  */
 public class EconomyManagementScreen extends AbstractContainerScreen<EconomyManagementMenu> {
     
-    private static final int TEMPLATE_HEIGHT = 90;
-    private static final int TEMPLATE_PADDING = 8;
+    private static final int TEMPLATE_HEIGHT = 70;
+    private static final int TEMPLATE_PADDING = 5;
     
     private enum Tab {
         TASK_TEMPLATES,
@@ -156,17 +156,17 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             // Template list buttons (Edit/Delete for each template)
             for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                 int templateIndex = i + scrollOffset;
-                int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                int yPos = centerY + 112 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                 
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 150, yPos + 28, 60, 20,
+                    centerX + this.imageWidth - 145, yPos + 22, 55, 20,
                     Component.literal("Edit"),
                     button -> editTemplate(templateIndex),
                     ModernButton.ButtonStyle.PRIMARY
                 ));
                 
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 80, yPos + 28, 70, 20,
+                    centerX + this.imageWidth - 85, yPos + 22, 60, 20,
                     Component.literal("Delete"),
                     button -> deleteTemplate(templateIndex),
                     ModernButton.ButtonStyle.DANGER
@@ -175,7 +175,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
                 // Enable/Disable toggle
                 SyncEconomyTemplatesPacket.TemplateData template = templates.get(templateIndex);
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 150, yPos + 52, 140, 20,
+                    centerX + this.imageWidth - 145, yPos + 46, 120, 20,
                     Component.literal(template.enabled() ? "Enabled" : "Disabled"),
                     button -> toggleTemplate(templateIndex),
                     template.enabled() ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
@@ -310,6 +310,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     }
     
     private void switchTab(Tab tab) {
+        com.servermanagement.gui.debug.DebugLogger.logTabChange("EconomyManagementScreen", currentTab.name(), tab.name());
         this.currentTab = tab;
         this.scrollOffset = 0;
         this.editMode = false;
@@ -428,7 +429,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             // Render template boxes
             for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                 int templateIndex = i + scrollOffset;
-                int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                int yPos = centerY + 112 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                 
                 // Template background
                 guiGraphics.fill(centerX + 20, yPos, centerX + this.imageWidth - 20, 
@@ -475,37 +476,37 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
                 for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                     int templateIndex = i + scrollOffset;
                     SyncEconomyTemplatesPacket.TemplateData template = templates.get(templateIndex);
-                    int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                    int yPos = centerY + 112 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                     
                     // Template number
                     guiGraphics.drawString(this.font, Component.literal("#" + (templateIndex + 1)),
-                        centerX + 30, yPos + 8, 0xFFAA00, true);
+                        centerX + 30, yPos + 5, 0xFFAA00, true);
                     
                     // Task type and description
                     guiGraphics.drawString(this.font, Component.literal(template.getTaskType().getDisplayName() + ": " + template.description()),
-                        centerX + 60, yPos + 8, 0xFFFFFF, true);
+                        centerX + 60, yPos + 5, 0xFFFFFF, true);
                     
                     // Goal and reward
                     guiGraphics.drawString(this.font, Component.literal("Goal: " + template.goal()),
-                        centerX + 30, yPos + 24, 0xCCCCCC, true);
+                        centerX + 30, yPos + 18, 0xCCCCCC, true);
                     
                     guiGraphics.drawString(this.font, Component.literal("Reward: $" + template.rewardAmount()),
-                        centerX + 30, yPos + 38, 0x55FF55, true);
+                        centerX + 30, yPos + 31, 0x55FF55, true);
                     
                     // Show reward item if set
                     if (template.rewardItem() != null && !template.rewardItem().isEmpty()) {
                         int itemX = centerX + 160;
-                        guiGraphics.renderItem(template.rewardItem(), itemX, yPos + 34);
+                        guiGraphics.renderItem(template.rewardItem(), itemX, yPos + 27);
                         guiGraphics.drawString(this.font, 
                             Component.literal("+ " + template.rewardItem().getHoverName().getString()),
-                            itemX + 20, yPos + 38, 0x55FFAA, true);
+                            itemX + 20, yPos + 31, 0x55FFAA, true);
                     }
                     
                     // Status
                     String status = template.enabled() ? "Active" : "Disabled";
                     int statusColor = template.enabled() ? 0x55FF55 : 0x888888;
                     guiGraphics.drawString(this.font, Component.literal(status),
-                        centerX + 30, yPos + 66, statusColor, true);
+                        centerX + 30, yPos + 52, statusColor, true);
                 }
             }
         } else {
