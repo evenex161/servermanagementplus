@@ -170,9 +170,9 @@ public class WorldManager {
         getInstance().save();
     }
 
-    public static void setLobbySpawn(BlockPos pos, String dimensionId) {
+    public static void setLobbySpawn(double x, double y, double z, String dimensionId, float yaw, float pitch) {
         getInstance().data.setLobbySpawn(new WorldManagerData.LobbySpawn(
-            pos.getX(), pos.getY(), pos.getZ(), dimensionId, 0, 0
+            x, y, z, dimensionId, yaw, pitch
         ));
         getInstance().save();
     }

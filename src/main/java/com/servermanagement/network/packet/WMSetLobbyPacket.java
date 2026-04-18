@@ -38,7 +38,9 @@ public class WMSetLobbyPacket implements IPacket {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "lobby_" + dimensionId;
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
-                    com.servermanagement.features.worldmanager.WorldManager.setLobbySpawn(pos, dimensionId);
+                    com.servermanagement.features.worldmanager.WorldManager.setLobbySpawn(
+                        pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, dimensionId,
+                        player.getYRot(), player.getXRot());
                 }
             }
         });

@@ -10,8 +10,13 @@ import com.servermanagement.features.worldmanager.WorldManager;
 import com.servermanagement.features.playermanager.PlayerManagerSingleton;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -82,8 +87,8 @@ public class ModCommands {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     // Sync feature states before opening
                     syncFeatureStates(player);
-                    // Open settings GUI
-                    player.openMenu(new com.servermanagement.gui.provider.ServerManagementMenuProvider());
+                    // Open config GUI (full 6-toggle ConfigScreen)
+                    player.openMenu(new com.servermanagement.gui.ConfigMenuProvider());
                 }
                 return 1;
             })
@@ -234,7 +239,28 @@ public class ModCommands {
             })
         );
         
-        // Spectate command
+        // Spectate command — remove vanilla's /spectate first to prevent collision
+        // Vanilla's /spectate requires the player to already be in spectator mode,
+        // which conflicts with our mod's spectate that switches mode automatically
+        var rootNode = dispatcher.getRoot();
+        if (rootNode.getChild("spectate") != null) {
+            try {
+                // Brigadier doesn't expose a removeChild method, so we access the internal maps
+                var childrenField = com.mojang.brigadier.tree.CommandNode.class.getDeclaredField("children");
+                childrenField.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                var children = (java.util.Map<String, ?>) childrenField.get(rootNode);
+                children.remove("spectate");
+                
+                var literalsField = com.mojang.brigadier.tree.CommandNode.class.getDeclaredField("literals");
+                literalsField.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                var literals = (java.util.Map<String, ?>) literalsField.get(rootNode);
+                literals.remove("spectate");
+            } catch (Exception e) {
+                ServerManagementMod.LOGGER.warn("Failed to remove vanilla /spectate command: {}", e.getMessage());
+            }
+        }
         dispatcher.register(Commands.literal("spectate")
             .requires(source -> source.hasPermission(2))
             .then(Commands.argument("player", StringArgumentType.string())
@@ -339,7 +365,8 @@ public class ModCommands {
             .requires(source -> source.hasPermission(2))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                    WorldManager.setLobbySpawn(player.blockPosition(), player.level().dimension().location().toString());
+                    WorldManager.setLobbySpawn(player.getX(), player.getY(), player.getZ(),
+                        player.level().dimension().location().toString(), player.getYRot(), player.getXRot());
                     context.getSource().sendSuccess(() -> Component.literal("Lobby spawn set to current location"), true);
                 }
                 return 1;
@@ -363,8 +390,20 @@ public class ModCommands {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     var lobby = WorldManager.getInstance().getData().getLobbySpawn();
                     if (lobby != null) {
-                        WorldManager.teleportToDimension(player, lobby.dimension);
-                        context.getSource().sendSuccess(() -> Component.literal("Teleported to lobby"), false);
+                        // Teleport to the lobby's stored coordinates, not the dimension's world spawn
+                        ResourceLocation dimLoc = ResourceLocation.tryParse(lobby.dimension);
+                        if (dimLoc != null) {
+                            ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION, dimLoc);
+                            ServerLevel targetLevel = player.getServer().getLevel(dimKey);
+                            if (targetLevel != null) {
+                                player.teleportTo(targetLevel, lobby.x, lobby.y, lobby.z, lobby.yaw, lobby.pitch);
+                                context.getSource().sendSuccess(() -> Component.literal("Teleported to lobby"), false);
+                            } else {
+                                context.getSource().sendFailure(Component.literal("Lobby dimension not found"));
+                            }
+                        } else {
+                            context.getSource().sendFailure(Component.literal("Invalid lobby dimension"));
+                        }
                     } else {
                         context.getSource().sendFailure(Component.literal("No lobby spawn set"));
                     }
