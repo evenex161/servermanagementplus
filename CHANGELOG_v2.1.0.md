@@ -86,6 +86,21 @@ v2.1.0 is a comprehensive **GUI polish and rework** update, plus critical **bug 
 
 ## Bug Fixes
 
+### /spectate Command — Vanilla Collision
+- **Bug**: `/spectate Player2` returned "Player2 is not in spectator mode" instead of activating the mod's spectate feature
+- **Root Cause**: Vanilla Minecraft has its own `/spectate` command that requires the executing player to already be in `GameType.SPECTATOR`. Brigadier merged both command registrations, and vanilla's handler was matched first
+- **Fix**: Remove vanilla's `spectate` node from the command dispatcher via reflection on Brigadier's internal `children` and `literals` maps before registering our version
+
+### /teleportlobby — Teleports to Wrong Location
+- **Bug**: `/teleportlobby` teleported to the dimension's world spawn instead of the lobby coordinates set by `/setlobby`
+- **Root Cause**: The command called `WorldManager.teleportToDimension(player, lobby.dimension)` which uses `getSharedSpawnPos()` (the dimension's spawn), completely ignoring the lobby's stored x/y/z coordinates
+- **Fix**: Replaced with direct `player.teleportTo(targetLevel, lobby.x, lobby.y, lobby.z, lobby.yaw, lobby.pitch)`. Also updated `/setlobby` to store exact player position (doubles) and rotation instead of `BlockPos` (integers) with hardcoded yaw/pitch of 0
+
+### /smconfig — Opens Outdated Screen
+- **Bug**: `/smconfig` opened an old, minimal screen with only 3 toggles (World Manager, Player Manager, SlimeHead) instead of the full 6-toggle config screen
+- **Root Cause**: The command opened `ServerManagementMenuProvider` → `ServerManagementScreen` (the old screen) instead of `ConfigMenuProvider` → `ConfigScreen` (the current screen with Economy, Server Performance, MOTD toggles, descriptions, and alternating row backgrounds)
+- **Fix**: Changed to open `ConfigMenuProvider`
+
 ### Chat Isolation — CRITICAL FIX
 - **Bug**: Chat Isolation toggle in the GUI did nothing — chat was always global regardless of setting
 - **Root Cause**: The event handler checked `ModConfig.CHAT_ISOLATION_ENABLED` (static Forge config, always `true`) but never checked `WorldManagerData.isChatIsolationEnabled()` (the runtime toggle controlled by the admin GUI). Additionally, when no `chatConnections` were configured, it returned early and allowed global chat — defeating the feature entirely
