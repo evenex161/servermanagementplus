@@ -128,10 +128,11 @@ public class ServerManagementModFabric implements ModInitializer {
 
         // Command registration
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            com.servermanagement.commands.ModCommands.onRegisterCommands(dispatcher);
             MineBayCommand.register(dispatcher);
             MineStacksCommand.register(dispatcher);
             OverflowCommand.register(dispatcher);
-            LOGGER.info("Registered GUI commands: /minebay, /minestacks, /casino, /overflow");
+            LOGGER.info("Registered all commands");
         });
     }
 

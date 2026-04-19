@@ -52,6 +52,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playC2S().register(UpdatePerformanceSettingPacket.TYPE, UpdatePerformanceSettingPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(SaveMotdPacket.TYPE, SaveMotdPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(SyncMarketPricesPacket.TYPE, SyncMarketPricesPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(SyncBettingSlotStatePacket.TYPE, SyncBettingSlotStatePacket.STREAM_CODEC);
 
         // MineBay server-bound
         PayloadTypeRegistry.playC2S().register(CreateListingPacket.TYPE, CreateListingPacket.STREAM_CODEC);
@@ -82,7 +83,6 @@ public class ModNetworking {
         PayloadTypeRegistry.playS2C().register(GamblingResultPacket.TYPE, GamblingResultPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(GamblingTensionPacket.TYPE, GamblingTensionPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncGamblingStatsPacket.TYPE, SyncGamblingStatsPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playS2C().register(SyncBettingSlotStatePacket.TYPE, SyncBettingSlotStatePacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(VersionCheckPacket.TYPE, VersionCheckPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(ModFileChunkPacket.TYPE, ModFileChunkPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(ModFileCompletePacket.TYPE, ModFileCompletePacket.STREAM_CODEC);
@@ -130,6 +130,7 @@ public class ModNetworking {
         ServerPlayNetworking.registerGlobalReceiver(UpdatePerformanceSettingPacket.TYPE, (payload, context) -> payload.handle(context.player()));
         ServerPlayNetworking.registerGlobalReceiver(SaveMotdPacket.TYPE, (payload, context) -> payload.handle(context.player()));
         ServerPlayNetworking.registerGlobalReceiver(SyncMarketPricesPacket.TYPE, (payload, context) -> payload.handle(context.player()));
+        ServerPlayNetworking.registerGlobalReceiver(SyncBettingSlotStatePacket.TYPE, (payload, context) -> payload.handle(context.player()));
 
         // MineBay server-bound handlers
         ServerPlayNetworking.registerGlobalReceiver(CreateListingPacket.TYPE, (payload, context) -> payload.handle(context.player()));
@@ -162,7 +163,6 @@ public class ModNetworking {
         ClientPlayNetworking.registerGlobalReceiver(GamblingResultPacket.TYPE, (payload, context) -> payload.handle(null));
         ClientPlayNetworking.registerGlobalReceiver(GamblingTensionPacket.TYPE, (payload, context) -> payload.handle(null));
         ClientPlayNetworking.registerGlobalReceiver(SyncGamblingStatsPacket.TYPE, (payload, context) -> payload.handle(null));
-        ClientPlayNetworking.registerGlobalReceiver(SyncBettingSlotStatePacket.TYPE, (payload, context) -> payload.handle(null));
         ClientPlayNetworking.registerGlobalReceiver(VersionCheckPacket.TYPE, (payload, context) -> payload.handle(null));
         ClientPlayNetworking.registerGlobalReceiver(ModFileChunkPacket.TYPE, (payload, context) -> payload.handle(null));
         ClientPlayNetworking.registerGlobalReceiver(ModFileCompletePacket.TYPE, (payload, context) -> payload.handle(null));

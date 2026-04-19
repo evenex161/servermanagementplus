@@ -2,7 +2,7 @@
 
 **The all-in-one server management solution for Minecraft**
 
-**Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+) | Minecraft 1.21.1 (NeoForge 21.1.222+)
+**Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+, NeoForge 21.1.80+, Fabric 0.116.1+)
 
 Server Management Plus gives you a complete suite of tools to run your server — a full economy with bank accounts, a player marketplace, a casino, daily tasks, world management, and a sleek admin dashboard — all in one mod.
 
@@ -15,8 +15,9 @@ Detailed changelogs are available per branch on GitHub:
 | Branch | Changelog |
 |---|---|
 | MC 1.20.1 — Forge (`mc/1.20.1-forge`) | [CHANGELOG_v1.0.3.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.20.1-forge/CHANGELOG_v1.0.3.md) |
-| MC 1.21.1 — Forge (`mc/1.21.1-forge`) | [CHANGELOG_v2.0.0.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v2.0.0.md) |
-| MC 1.21.1 — NeoForge (`mc/1.21.1-neoforge`) | [CHANGELOG_v1.0.3-neoforge.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-neoforge/CHANGELOG_v1.0.3-neoforge.md) |
+| MC 1.21.1 — Forge (`mc/1.21.1-forge`) | [CHANGELOG_v2.1.0.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v2.1.0.md) |
+| MC 1.21.1 — NeoForge (`mc/1.21.1-forge`) | [CHANGELOG_v2.1.0.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v2.1.0.md) |
+| MC 1.21.1 — Fabric (`mc/1.21.1-forge`) | [CHANGELOG_v2.1.0.md](https://github.com/evenex161/servermanagementplus/blob/mc/1.21.1-forge/CHANGELOG_v2.1.0.md) |
 
 ---
 
@@ -263,14 +264,15 @@ All economy data, task templates, and player progress persist across server rest
 
 ### Requirements
 - **Minecraft** 1.20.1 or 1.21.1
-- **Forge** 47.4.0+ (MC 1.20.1) or 52.1.0+ (MC 1.21.1), **or NeoForge** 21.1.222+ (MC 1.21.1)
+- **Forge** 47.4.0+ (MC 1.20.1) or 52.1.0+ (MC 1.21.1), **or NeoForge** 21.1.80+ (MC 1.21.1), **or Fabric** API 0.116.1+ with Loader 0.18.1+ (MC 1.21.1)
 - **Java** 17+ (MC 1.20.1) or 21+ (MC 1.21.1)
 
 ### Setup
 1. Download the JAR for your Minecraft version and mod loader:
    - MC 1.20.1 Forge: `servermanagementplus-v1.0.3-b05-mc1.20.1-forge-release.jar`
-   - MC 1.21.1 Forge: `servermanagementplus-v2.0.0-b01-mc1.21.1-forge-release.jar`
-   - MC 1.21.1 NeoForge: `servermanagementplus-v2.0.0-b01-mc1.21.1-neoforge-release.jar`
+   - MC 1.21.1 Forge: `servermanagementplus-v2.1.0-mc1.21.1-forge.jar`
+   - MC 1.21.1 NeoForge: `servermanagementplus-v2.1.0-mc1.21.1-neoforge.jar`
+   - MC 1.21.1 Fabric: `servermanagementplus-v2.1.0-mc1.21.1-fabric.jar`
 2. Place it in your server's `mods/` folder
 3. Start the server — config and data folders generate automatically
 4. Optionally install on clients for full GUI support (server-side only works too)
@@ -323,4 +325,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*Server Management Plus v2.0.0-b01 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.222+*
+*Server Management Plus v2.1.0 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.80+ — Fabric API 0.116.1+*

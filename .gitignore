@@ -2,6 +2,7 @@
 .gradle/
 .gradle-c2/
 build/
+build-c2/
 out/
 classes/
 

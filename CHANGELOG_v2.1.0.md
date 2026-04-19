@@ -48,7 +48,7 @@ Migrated the entire project from a single-module Forge setup to the **jaredlll08
 - Usage: `test.bat [client|server|both|debug] [forge|neoforge|fabric]`
 - Run directories: `<loader>/runs/client/` and `<loader>/runs/server/`
 
-**Note:** NeoForge and Fabric ports compile successfully but are not yet runtime-tested. Forge remains the primary development target.
+**Note:** NeoForge port compiles successfully but is not yet runtime-tested. Fabric port has been runtime-tested with critical fixes applied (see Bug Fixes). Forge remains the primary development target.
 
 ---
 
@@ -281,6 +281,21 @@ Migrated the entire project from a single-module Forge setup to the **jaredlll08
 - All paths (server dir, client dir, logs) resolve under `<loader>/runs/`
 - Debug mode client2 directory created under the selected loader
 - `-PmcUsername` and `-PmcGameDir` properties wired in ForgeGradle (`args`), ModDevGradle (`programArguments`), and fabric-loom (`programArg`) run configs
+
+### Debug Test Launcher — buildSrc File Lock in Debug Mode
+- **Bug**: In `test.bat debug` mode, Client 2 always failed with `Could not copy file ... precompiled_MultiloaderCommon$_run_closure7.class` during `:buildSrc:compileGroovyPlugins`
+- **Root Cause**: Client 1's Gradle JVM holds Windows file locks on `buildSrc/build/` class files for the entire session. Client 2 (even with `--project-cache-dir=.gradle-c2`) still uses the same `buildSrc/build/` directory and fails when attempting to copy locked files
+- **Fix**: Added `BUILDSRC_ALT_BUILD_DIR` environment variable support in `buildSrc/build.gradle` — when set, redirects `layout.buildDirectory` to a separate directory. `test.bat` sets this to `build-c2` for Client 2's Gradle invocation
+
+### Fabric — SyncBettingSlotStatePacket Crash on /minestacks
+- **Bug**: Executing `/minestacks` on the Fabric port caused an immediate disconnect with `ClassCastException: SyncBettingSlotStatePacket cannot be cast to DiscardedPayload`
+- **Root Cause**: `SyncBettingSlotStatePacket` is a C2S (client→server) packet — its `handle()` method calls `context.player()` to get the `ServerPlayer`. However, in the Fabric `ModNetworking.java`, it was registered as S2C (`PayloadTypeRegistry.playS2C()`) with a `ClientPlayNetworking.registerGlobalReceiver` handler. When the client tried to send it, the server didn't recognize it as a valid C2S payload type and cast it to `DiscardedPayload`
+- **Fix**: Moved registration from `playS2C()` to `playC2S()`, replaced `ClientPlayNetworking.registerGlobalReceiver` with `ServerPlayNetworking.registerGlobalReceiver`
+
+### Fabric — Missing Commands (/sm, /bank, /servermanagement, etc.)
+- **Bug**: On the Fabric port, only `/minebay`, `/minestacks`, `/casino`, and `/overflow` commands were available. All other commands (`/sm`, `/servermanagement`, `/bank`, `/smconfig`, `/worldmanager`, `/playermanager`, etc.) were missing
+- **Root Cause**: The `CommandRegistrationCallback` in `ServerManagementModFabric.onInitialize()` only registered 3 commands (MineBay, MineStacks, Overflow). The main `ModCommands.onRegisterCommands(dispatcher)` — which registers all 20+ admin and player commands — was never called
+- **Fix**: Added `ModCommands.onRegisterCommands(dispatcher)` to the `CommandRegistrationCallback`
 
 ---
 

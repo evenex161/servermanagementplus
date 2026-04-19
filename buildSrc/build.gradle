@@ -1,3 +1,10 @@
 plugins {
     id 'groovy-gradle-plugin'
 }
+
+// Allow redirecting buildSrc output to avoid Windows file lock conflicts
+// when multiple Gradle processes run concurrently (e.g. test.bat debug mode)
+def altBuildDir = System.getenv('BUILDSRC_ALT_BUILD_DIR')
+if (altBuildDir) {
+    layout.buildDirectory = file(altBuildDir)
+}
