@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 /**
  * Packet to sync achievements from server to client
  */
-public class SyncAchievementsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRewards) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncAchievementsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_achievements_packet"));
@@ -20,24 +20,17 @@ public class SyncAchievementsPacket implements net.minecraft.network.protocol.co
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final Set<String> earnedAchievements;
-    private final int totalRewards;
-
-    public SyncAchievementsPacket(Set<String> earnedAchievements, int totalRewards) {
-        this.earnedAchievements = earnedAchievements;
-        this.totalRewards = totalRewards;
+    public SyncAchievementsPacket(FriendlyByteBuf buf) {
+        this(decodeAchievements(buf), buf.readInt());
     }
 
-    public SyncAchievementsPacket(FriendlyByteBuf buf) {
+    private static Set<String> decodeAchievements(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        this.earnedAchievements = new HashSet<>();
-        
+        Set<String> set = new HashSet<>();
         for (int i = 0; i < count; i++) {
-            this.earnedAchievements.add(buf.readUtf(128));
+            set.add(buf.readUtf(128));
         }
-        
-        this.totalRewards = buf.readInt();
+        return set;
     }
 
         public void encode(FriendlyByteBuf buf) {

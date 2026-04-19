@@ -15,9 +15,7 @@ import java.util.UUID;
  * Packet sent from server to client with the list of pending offers for a specific listing.
  * Only sent to the listing owner.
  */
-public class SyncListingOffersPacket implements IPacket {
-    private final String listingId;
-    private final List<MineBayOffer> offers;
+public record SyncListingOffersPacket(String listingId, List<MineBayOffer> offers) implements IPacket {
 
     public SyncListingOffersPacket(String listingId, List<MineBayOffer> offers) {
         this.listingId = listingId;
@@ -25,10 +23,22 @@ public class SyncListingOffersPacket implements IPacket {
     }
 
     public SyncListingOffersPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
+        this(stashAndReturn(buf.readUtf(36)), readOffers(buf));
+    }
+
+    private static final ThreadLocal<String> LISTING_ID_STASH = new ThreadLocal<>();
+
+    private static String stashAndReturn(String value) {
+        LISTING_ID_STASH.set(value);
+        return value;
+    }
+
+    private static List<MineBayOffer> readOffers(FriendlyByteBuf buf) {
+        String listingId = LISTING_ID_STASH.get();
+        LISTING_ID_STASH.remove();
         int count = buf.readInt();
-        if (count < 0 || count > 50) count = 0; // Cap to prevent memory exhaustion
-        this.offers = new ArrayList<>();
+        if (count < 0 || count > 50) count = 0;
+        List<MineBayOffer> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String offerId = buf.readUtf(36);
             UUID buyerId = buf.readUUID();
@@ -37,7 +47,7 @@ public class SyncListingOffersPacket implements IPacket {
             long timestamp = buf.readLong();
 
             int itemCount = buf.readInt();
-            if (itemCount < 0 || itemCount > 27) itemCount = 0; // Cap items per offer
+            if (itemCount < 0 || itemCount > 27) itemCount = 0;
             List<ItemStack> items = new ArrayList<>();
             for (int j = 0; j < itemCount; j++) {
                 items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode(
@@ -47,8 +57,9 @@ public class SyncListingOffersPacket implements IPacket {
             MineBayOffer offer = new MineBayOffer(listingId, buyerId, buyerName, moneyOffer, items);
             offer.setOfferId(offerId);
             offer.setCreatedTimestamp(timestamp);
-            this.offers.add(offer);
+            list.add(offer);
         }
+        return list;
     }
 
     @Override

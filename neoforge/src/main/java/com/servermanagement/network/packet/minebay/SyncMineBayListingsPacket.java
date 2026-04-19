@@ -18,56 +18,20 @@ import java.util.UUID;
 /**
  * Packet sent from server to client to sync active MineBay listings
  */
-public class SyncMineBayListingsPacket implements CustomPacketPayload {
+public record SyncMineBayListingsPacket(List<MineBayListing> listings) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncMineBayListingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_mine_bay_listings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncMineBayListingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncMineBayListingsPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final List<MineBayListing> listings;
     
-    public SyncMineBayListingsPacket(List<MineBayListing> listings) {
-        this.listings = new ArrayList<>(listings);
+    public SyncMineBayListingsPacket {
+        listings = new ArrayList<>(listings);
     }
     
     public SyncMineBayListingsPacket(FriendlyByteBuf buf) {
-        int count = buf.readInt();
-        this.listings = new ArrayList<>();
-        
-        for (int i = 0; i < count; i++) {
-            // Read listing data
-            String listingId = buf.readUtf(36);
-            UUID sellerId = buf.readUUID();
-            String sellerName = buf.readUtf(16);
-            ItemStack itemOffered = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
-            double moneyPrice = buf.readDouble();
-            long createdTime = buf.readLong();
-            MineBayListing.OfferType offerType = buf.readEnum(MineBayListing.OfferType.class);
-            
-            // Read price items
-            int priceItemCount = buf.readInt();
-            List<PriceItemEntry> priceItems = new ArrayList<>();
-            for (int j = 0; j < priceItemCount; j++) {
-                ItemStack priceItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
-                int amount = buf.readInt();
-                boolean useStacks = buf.readBoolean();
-                priceItems.add(new PriceItemEntry(priceItem, amount, useStacks));
-            }
-            
-            // Read market pricing data
-            double baseMarketPrice = buf.readDouble();
-            double marginPercent = buf.readDouble();
-            int pendingOfferCount = buf.readInt();
-            
-            // Create listing
-            MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, baseMarketPrice, marginPercent, priceItems, offerType);
-            listing.setListingId(listingId);
-            listing.setCreatedTime(createdTime);
-            listing.setPendingOfferCount(pendingOfferCount);
-            
-            this.listings.add(listing);
-        }
+        this(decodeListings(buf));
     }
     
         public void encode(FriendlyByteBuf buf) {
@@ -109,5 +73,36 @@ public class SyncMineBayListingsPacket implements CustomPacketPayload {
             }
         });
         // packet handled
+    }
+
+    private static List<MineBayListing> decodeListings(FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<MineBayListing> listings = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            String listingId = buf.readUtf(36);
+            UUID sellerId = buf.readUUID();
+            String sellerName = buf.readUtf(16);
+            ItemStack itemOffered = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
+            double moneyPrice = buf.readDouble();
+            long createdTime = buf.readLong();
+            MineBayListing.OfferType offerType = buf.readEnum(MineBayListing.OfferType.class);
+            int priceItemCount = buf.readInt();
+            List<PriceItemEntry> priceItems = new ArrayList<>();
+            for (int j = 0; j < priceItemCount; j++) {
+                ItemStack priceItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
+                int amount = buf.readInt();
+                boolean useStacks = buf.readBoolean();
+                priceItems.add(new PriceItemEntry(priceItem, amount, useStacks));
+            }
+            double baseMarketPrice = buf.readDouble();
+            double marginPercent = buf.readDouble();
+            int pendingOfferCount = buf.readInt();
+            MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, baseMarketPrice, marginPercent, priceItems, offerType);
+            listing.setListingId(listingId);
+            listing.setCreatedTime(createdTime);
+            listing.setPendingOfferCount(pendingOfferCount);
+            listings.add(listing);
+        }
+        return listings;
     }
 }

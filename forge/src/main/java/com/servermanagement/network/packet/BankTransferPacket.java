@@ -12,19 +12,11 @@ import java.util.regex.Pattern;
 /**
  * Packet for transferring money between players
  */
-public class BankTransferPacket implements IPacket {
+public record BankTransferPacket(String targetPlayerName, double amount) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String targetPlayerName;
-    private final double amount;
-    
-    public BankTransferPacket(String targetPlayerName, double amount) {
-        this.targetPlayerName = targetPlayerName;
-        this.amount = amount;
-    }
     
     public BankTransferPacket(FriendlyByteBuf buf) {
-        this.targetPlayerName = buf.readUtf(16);
-        this.amount = buf.readDouble();
+        this(buf.readUtf(16), buf.readDouble());
     }
     
     public void encode(FriendlyByteBuf buf) {

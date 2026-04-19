@@ -8,21 +8,16 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class WMTeleportToDimensionPacket implements CustomPacketPayload {
+public record WMTeleportToDimensionPacket(String dimensionId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<WMTeleportToDimensionPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_teleport_to_dimension"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMTeleportToDimensionPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMTeleportToDimensionPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String dimensionId;
-
-    public WMTeleportToDimensionPacket(String dimensionId) {
-        this.dimensionId = dimensionId;
-    }
 
     public WMTeleportToDimensionPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
+        this(buf.readUtf(256));
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -19,18 +19,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
  * Packet sent from client to server when a seller accepts an offer.
  * Items and money are already escrowed at offer creation time via CreateOfferPacket.
  */
-public class AcceptOfferPacket implements IPacket {
-    private final String listingId;
-    private final String offerId;
-    
-    public AcceptOfferPacket(String listingId, String offerId) {
-        this.listingId = listingId;
-        this.offerId = offerId;
-    }
+public record AcceptOfferPacket(String listingId, String offerId) implements IPacket {
     
     public AcceptOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.offerId = buf.readUtf(36);
+        this(buf.readUtf(36), buf.readUtf(36));
     }
     
     @Override

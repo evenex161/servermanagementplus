@@ -9,25 +9,18 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.regex.Pattern;
 
-public class PMWhitelistPacket implements CustomPacketPayload {
+public record PMWhitelistPacket(String playerName, boolean add) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PMWhitelistPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_whitelist"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PMWhitelistPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PMWhitelistPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-    private final boolean add; // true = add to whitelist, false = remove
+    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");// true = add to whitelist, false = remove
 
-    public PMWhitelistPacket(String playerName, boolean add) {
-        this.playerName = playerName;
-        this.add = add;
-    }
 
     public PMWhitelistPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
-        this.add = buf.readBoolean();
+        this(buf.readUtf(16), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

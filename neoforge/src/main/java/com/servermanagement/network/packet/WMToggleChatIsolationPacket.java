@@ -8,27 +8,16 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class WMToggleChatIsolationPacket implements CustomPacketPayload {
+public record WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<WMToggleChatIsolationPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_chat_isolation"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMToggleChatIsolationPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMToggleChatIsolationPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String dimensionId;
-    private final boolean enabled;
-    private final long clientTick;
-
-    public WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
 
     public WMToggleChatIsolationPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readBoolean(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

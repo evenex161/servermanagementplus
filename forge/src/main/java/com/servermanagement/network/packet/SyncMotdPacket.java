@@ -7,15 +7,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 /**
  * Server → Client: Syncs the current MOTD text before opening the editor.
  */
-public class SyncMotdPacket implements IPacket {
-    private final String motdText;
-
-    public SyncMotdPacket(String motdText) {
-        this.motdText = motdText;
-    }
+public record SyncMotdPacket(String motdText) implements IPacket {
 
     public SyncMotdPacket(FriendlyByteBuf buf) {
-        this.motdText = buf.readUtf(32767);
+        this(buf.readUtf(32767));
     }
 
     @Override
@@ -29,9 +24,5 @@ public class SyncMotdPacket implements IPacket {
             ClientPacketHandler.handleMotdSync(motdText);
         });
         ctx.setPacketHandled(true);
-    }
-
-    public String getMotdText() {
-        return motdText;
     }
 }

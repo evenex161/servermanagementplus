@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * Packet for executing console commands from the in-game GUI
  */
-public class ConsoleCommandPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ConsoleCommandPacket(String command) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ConsoleCommandPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "console_command_packet"));
@@ -18,15 +18,8 @@ public class ConsoleCommandPacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String command;
-    
-    public ConsoleCommandPacket(String command) {
-        this.command = command;
-    }
-    
     public ConsoleCommandPacket(FriendlyByteBuf buf) {
-        this.command = buf.readUtf(256);
+        this(buf.readUtf(256));
     }
     
         public void encode(FriendlyByteBuf buf) {

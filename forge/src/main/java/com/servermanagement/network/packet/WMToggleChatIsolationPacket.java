@@ -5,21 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class WMToggleChatIsolationPacket implements IPacket {
-    private final String dimensionId;
-    private final boolean enabled;
-    private final long clientTick;
-
-    public WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
+public record WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) implements IPacket {
 
     public WMToggleChatIsolationPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readBoolean(), buf.readLong());
     }
 
     @Override

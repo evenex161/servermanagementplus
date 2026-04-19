@@ -13,35 +13,16 @@ import java.util.List;
 /**
  * Server-to-client packet that syncs the list of banned/whitelisted players.
  */
-public class PMSyncPlayerListsPacket implements CustomPacketPayload {
+public record PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> whitelistedPlayers, boolean whitelistEnabled) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PMSyncPlayerListsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_sync_player_lists"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PMSyncPlayerListsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PMSyncPlayerListsPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final List<String> bannedPlayers;
-    private final List<String> whitelistedPlayers;
-    private final boolean whitelistEnabled;
-
-    public PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> whitelistedPlayers, boolean whitelistEnabled) {
-        this.bannedPlayers = bannedPlayers;
-        this.whitelistedPlayers = whitelistedPlayers;
-        this.whitelistEnabled = whitelistEnabled;
-    }
 
     public PMSyncPlayerListsPacket(FriendlyByteBuf buf) {
-        int banCount = buf.readVarInt();
-        this.bannedPlayers = new ArrayList<>(banCount);
-        for (int i = 0; i < banCount; i++) {
-            this.bannedPlayers.add(buf.readUtf(16));
-        }
-        int whiteCount = buf.readVarInt();
-        this.whitelistedPlayers = new ArrayList<>(whiteCount);
-        for (int i = 0; i < whiteCount; i++) {
-            this.whitelistedPlayers.add(buf.readUtf(16));
-        }
-        this.whitelistEnabled = buf.readBoolean();
+        this(decodeStringList(buf), decodeStringList(buf), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -75,4 +56,13 @@ public class PMSyncPlayerListsPacket implements CustomPacketPayload {
     public List<String> getBannedPlayers() { return bannedPlayers; }
     public List<String> getWhitelistedPlayers() { return whitelistedPlayers; }
     public boolean isWhitelistEnabled() { return whitelistEnabled; }
+
+    private static List<String> decodeStringList(FriendlyByteBuf buf) {
+        int count = buf.readVarInt();
+        List<String> list = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            list.add(buf.readUtf(16));
+        }
+        return list;
+    }
 }

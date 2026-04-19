@@ -16,19 +16,20 @@ import java.util.function.Supplier;
 /**
  * Packet sent from server to client to sync active MineBay listings
  */
-public class SyncMineBayListingsPacket implements IPacket {
-    private final List<MineBayListing> listings;
-    
+public record SyncMineBayListingsPacket(List<MineBayListing> listings) implements IPacket {
+
     public SyncMineBayListingsPacket(List<MineBayListing> listings) {
         this.listings = new ArrayList<>(listings);
     }
-    
+
     public SyncMineBayListingsPacket(FriendlyByteBuf buf) {
+        this(readListings(buf));
+    }
+
+    private static List<MineBayListing> readListings(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        this.listings = new ArrayList<>();
-        
+        List<MineBayListing> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            // Read listing data
             String listingId = buf.readUtf(36);
             UUID sellerId = buf.readUUID();
             String sellerName = buf.readUtf(16);
@@ -36,8 +37,7 @@ public class SyncMineBayListingsPacket implements IPacket {
             double moneyPrice = buf.readDouble();
             long createdTime = buf.readLong();
             MineBayListing.OfferType offerType = buf.readEnum(MineBayListing.OfferType.class);
-            
-            // Read price items
+
             int priceItemCount = buf.readInt();
             List<PriceItemEntry> priceItems = new ArrayList<>();
             for (int j = 0; j < priceItemCount; j++) {
@@ -46,20 +46,18 @@ public class SyncMineBayListingsPacket implements IPacket {
                 boolean useStacks = buf.readBoolean();
                 priceItems.add(new PriceItemEntry(priceItem, amount, useStacks));
             }
-            
-            // Read market pricing data
+
             double baseMarketPrice = buf.readDouble();
             double marginPercent = buf.readDouble();
             int pendingOfferCount = buf.readInt();
-            
-            // Create listing
+
             MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, baseMarketPrice, marginPercent, priceItems, offerType);
             listing.setListingId(listingId);
             listing.setCreatedTime(createdTime);
             listing.setPendingOfferCount(pendingOfferCount);
-            
-            this.listings.add(listing);
+            list.add(listing);
         }
+        return list;
     }
     
     @Override

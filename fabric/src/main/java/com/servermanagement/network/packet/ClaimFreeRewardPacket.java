@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to claim the free daily reward
  */
-public class ClaimFreeRewardPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ClaimFreeRewardPacket() implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ClaimFreeRewardPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_free_reward_packet"));
@@ -28,13 +28,8 @@ public class ClaimFreeRewardPacket implements net.minecraft.network.protocol.com
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-
-    public ClaimFreeRewardPacket() {
-    }
-
     public ClaimFreeRewardPacket(FriendlyByteBuf buf) {
-        // No data to read
+        this();
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -10,31 +10,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SyncWorldListPacket implements CustomPacketPayload {
+public record SyncWorldListPacket(List<WorldInfo> worlds) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncWorldListPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_world_list"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncWorldListPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncWorldListPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final List<WorldInfo> worlds;
-
-    public SyncWorldListPacket(List<WorldInfo> worlds) {
-        this.worlds = worlds;
-    }
 
     public SyncWorldListPacket(FriendlyByteBuf buf) {
-        int size = buf.readInt();
-        this.worlds = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            worlds.add(new WorldInfo(
-                buf.readUtf(256),
-                buf.readUtf(128),
-                buf.readBoolean(),
-                buf.readBoolean(),
-                buf.readInt()
-            ));
-        }
+        this(decodeWorlds(buf));
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -78,5 +63,20 @@ public class SyncWorldListPacket implements CustomPacketPayload {
         public boolean areAllPortalsEnabled() {
             return netherPortalsEnabled && endPortalsEnabled;
         }
+    }
+
+    private static List<WorldInfo> decodeWorlds(FriendlyByteBuf buf) {
+        int size = buf.readInt();
+        List<WorldInfo> worlds = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            worlds.add(new WorldInfo(
+                buf.readUtf(256),
+                buf.readUtf(128),
+                buf.readBoolean(),
+                buf.readBoolean(),
+                buf.readInt()
+            ));
+        }
+        return worlds;
     }
 }

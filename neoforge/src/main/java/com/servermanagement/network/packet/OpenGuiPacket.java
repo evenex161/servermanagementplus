@@ -9,31 +9,21 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class OpenGuiPacket implements CustomPacketPayload {
+public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<OpenGuiPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "open_gui"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, OpenGuiPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), OpenGuiPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
-
-    private final GuiType guiType;
-    private final String data; // Can hold dimension ID or other data
+// Can hold dimension ID or other data
 
     public OpenGuiPacket(GuiType guiType) {
-        this.guiType = guiType;
-        this.data = "";
-    }
-    
-    public OpenGuiPacket(GuiType guiType, String data) {
-        this.guiType = guiType;
-        this.data = data;
+        this(guiType, "");
     }
 
+
     public OpenGuiPacket(FriendlyByteBuf buf) {
-        int ordinal = buf.readInt();
-        GuiType[] values = GuiType.values();
-        this.guiType = (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
-        this.data = buf.readUtf(256);
+        this(decodeGuiType(buf), buf.readUtf(256));
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -316,5 +306,11 @@ public class OpenGuiPacket implements CustomPacketPayload {
                 default -> true;
             };
         }
+    }
+
+    private static GuiType decodeGuiType(FriendlyByteBuf buf) {
+        int ordinal = buf.readInt();
+        GuiType[] values = GuiType.values();
+        return (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
     }
 }

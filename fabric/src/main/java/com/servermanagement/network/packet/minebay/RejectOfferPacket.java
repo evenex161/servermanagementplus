@@ -15,7 +15,7 @@ import net.minecraft.world.item.ItemStack;
  * Packet sent from client to server when a seller rejects an offer.
  * Returns escrowed items and money to the buyer.
  */
-public class RejectOfferPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record RejectOfferPacket(String listingId, String offerId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RejectOfferPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "reject_offer_packet"));
@@ -27,18 +27,8 @@ public class RejectOfferPacket implements net.minecraft.network.protocol.common.
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String listingId;
-    private final String offerId;
-    
-    public RejectOfferPacket(String listingId, String offerId) {
-        this.listingId = listingId;
-        this.offerId = offerId;
-    }
-    
     public RejectOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.offerId = buf.readUtf(36);
+        this(buf.readUtf(36), buf.readUtf(36));
     }
     
         public void encode(FriendlyByteBuf buf) {

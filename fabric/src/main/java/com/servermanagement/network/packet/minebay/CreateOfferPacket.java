@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Packet sent from client to server when a player makes an offer on a NEGOTIABLE listing
  */
-public class CreateOfferPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<CreateOfferPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "create_offer_packet"));
@@ -28,26 +28,18 @@ public class CreateOfferPacket implements net.minecraft.network.protocol.common.
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String listingId;
-    private final double moneyOffer;
-    private final List<ItemStack> itemOffers;
-    
-    public CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) {
-        this.listingId = listingId;
-        this.moneyOffer = moneyOffer;
-        this.itemOffers = itemOffers;
-    }
-    
     public CreateOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.moneyOffer = Math.max(0.0, buf.readDouble()); // Clamp negative values
+        this(buf.readUtf(36), Math.max(0.0, buf.readDouble()), decodeItemOffers(buf));
+    }
+
+    private static List<ItemStack> decodeItemOffers(FriendlyByteBuf buf) {
         int itemCount = buf.readInt();
-        if (itemCount < 0 || itemCount > 27) itemCount = 0; // Cap to prevent memory exhaustion
-        this.itemOffers = new ArrayList<>();
+        if (itemCount < 0 || itemCount > 27) itemCount = 0;
+        List<ItemStack> items = new ArrayList<>();
         for (int i = 0; i < itemCount; i++) {
-            this.itemOffers.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+            items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
         }
+        return items;
     }
     
         public void encode(FriendlyByteBuf buf) {

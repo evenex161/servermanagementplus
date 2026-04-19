@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /**
  * Client-to-server packet for toggling a daily task template's enabled state
  */
-public class ToggleTemplatePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ToggleTemplatePacket(String templateId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ToggleTemplatePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "toggle_template_packet"));
@@ -22,15 +22,8 @@ public class ToggleTemplatePacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String templateId;
-
-    public ToggleTemplatePacket(String templateId) {
-        this.templateId = templateId;
-    }
-
     public ToggleTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
+        this(buf.readUtf(64));
     }
 
         public void encode(FriendlyByteBuf buf) {

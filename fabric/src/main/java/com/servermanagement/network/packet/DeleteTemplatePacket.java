@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 /**
  * Client-to-server packet for deleting a daily task template
  */
-public class DeleteTemplatePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record DeleteTemplatePacket(String templateId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<DeleteTemplatePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "delete_template_packet"));
@@ -21,15 +21,8 @@ public class DeleteTemplatePacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String templateId;
-
-    public DeleteTemplatePacket(String templateId) {
-        this.templateId = templateId;
-    }
-
     public DeleteTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
+        this(buf.readUtf(64));
     }
 
         public void encode(FriendlyByteBuf buf) {

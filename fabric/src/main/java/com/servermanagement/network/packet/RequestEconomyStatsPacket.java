@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
  * Client-to-server packet requesting fresh economy statistics.
  * Server responds with SyncEconomyStatsPacket.
  */
-public class RequestEconomyStatsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record RequestEconomyStatsPacket() implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RequestEconomyStatsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "request_economy_stats_packet"));
@@ -18,11 +18,9 @@ public class RequestEconomyStatsPacket implements net.minecraft.network.protocol
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-
-    public RequestEconomyStatsPacket() {}
-
-    public RequestEconomyStatsPacket(FriendlyByteBuf buf) {}
+    public RequestEconomyStatsPacket(FriendlyByteBuf buf) {
+        this();
+    }
 
         public void encode(FriendlyByteBuf buf) {}
 

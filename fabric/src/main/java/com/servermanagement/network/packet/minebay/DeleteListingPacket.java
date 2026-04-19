@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to delete an existing listing
  */
-public class DeleteListingPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record DeleteListingPacket(String listingId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<DeleteListingPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "delete_listing_packet"));
@@ -23,15 +23,8 @@ public class DeleteListingPacket implements net.minecraft.network.protocol.commo
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String listingId;
-    
-    public DeleteListingPacket(String listingId) {
-        this.listingId = listingId;
-    }
-    
     public DeleteListingPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
+        this(buf.readUtf(36));
     }
     
         public void encode(FriendlyByteBuf buf) {

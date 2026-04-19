@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * Packet sent from server to client containing a chunk of the mod JAR file.
  * Uses chunked transfer to avoid packet size limits.
  */
-public class ModFileChunkPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ModFileChunkPacket(int chunkIndex, int totalChunks, byte[] chunkData, String fileHash) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ModFileChunkPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "mod_file_chunk_packet"));
@@ -20,29 +20,23 @@ public class ModFileChunkPacket implements net.minecraft.network.protocol.common
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
-    }
-
-    private final int chunkIndex;
-    private final int totalChunks;
-    private final byte[] chunkData;
-    private final String fileHash; // Full file hash for verification
+    }// Full file hash for verification
     
     public static final int CHUNK_SIZE = 32768; // 32 KB chunks
-    
-    public ModFileChunkPacket(int chunkIndex, int totalChunks, byte[] chunkData, String fileHash) {
-        this.chunkIndex = chunkIndex;
-        this.totalChunks = totalChunks;
-        this.chunkData = chunkData;
-        this.fileHash = fileHash;
-    }
-    
     public ModFileChunkPacket(FriendlyByteBuf buf) {
-        this.chunkIndex = buf.readInt();
-        this.totalChunks = buf.readInt();
-        this.fileHash = buf.readUtf(128);
-        int dataLength = Math.min(buf.readInt(), CHUNK_SIZE + 1024); // Cap to prevent OOM
-        this.chunkData = new byte[dataLength];
+        this(buf.readInt(), buf.readInt(), decodeChunkPayload(buf));
+    }
+
+    private ModFileChunkPacket(int chunkIndex, int totalChunks, Object[] payload) {
+        this(chunkIndex, totalChunks, (byte[]) payload[0], (String) payload[1]);
+    }
+
+    private static Object[] decodeChunkPayload(FriendlyByteBuf buf) {
+        String fileHash = buf.readUtf(128);
+        int dataLength = Math.min(buf.readInt(), CHUNK_SIZE + 1024);
+        byte[] chunkData = new byte[dataLength];
         buf.readBytes(chunkData);
+        return new Object[]{chunkData, fileHash};
     }
     
     public void encode(FriendlyByteBuf buf) {

@@ -9,7 +9,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.regex.Pattern;
 
-public class PMViewInventoryPacket implements CustomPacketPayload {
+public record PMViewInventoryPacket(String playerName) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PMViewInventoryPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_view_inventory"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PMViewInventoryPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PMViewInventoryPacket::new);
 
@@ -17,14 +17,10 @@ public class PMViewInventoryPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
 
-    public PMViewInventoryPacket(String playerName) {
-        this.playerName = playerName;
-    }
 
     public PMViewInventoryPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
+        this(buf.readUtf(16));
     }
 
         public void encode(FriendlyByteBuf buf) {

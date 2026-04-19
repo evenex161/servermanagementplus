@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * Client-to-server packet requesting the banned/whitelisted player lists.
  */
-public class PMRequestPlayerListsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record PMRequestPlayerListsPacket() implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PMRequestPlayerListsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_request_player_lists_packet"));
@@ -16,12 +16,8 @@ public class PMRequestPlayerListsPacket implements net.minecraft.network.protoco
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-
-    public PMRequestPlayerListsPacket() {}
-
     public PMRequestPlayerListsPacket(FriendlyByteBuf buf) {
-        // No data needed
+        this();
     }
 
         public void encode(FriendlyByteBuf buf) {

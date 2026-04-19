@@ -13,30 +13,16 @@ import java.util.Set;
 /**
  * Packet to sync achievements from server to client
  */
-public class SyncAchievementsPacket implements CustomPacketPayload {
+public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRewards) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncAchievementsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_achievements"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncAchievementsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncAchievementsPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final Set<String> earnedAchievements;
-    private final int totalRewards;
-
-    public SyncAchievementsPacket(Set<String> earnedAchievements, int totalRewards) {
-        this.earnedAchievements = earnedAchievements;
-        this.totalRewards = totalRewards;
-    }
 
     public SyncAchievementsPacket(FriendlyByteBuf buf) {
-        int count = buf.readInt();
-        this.earnedAchievements = new HashSet<>();
-        
-        for (int i = 0; i < count; i++) {
-            this.earnedAchievements.add(buf.readUtf(128));
-        }
-        
-        this.totalRewards = buf.readInt();
+        this(decodeEarnedAchievements(buf), buf.readInt());
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -56,5 +42,14 @@ public class SyncAchievementsPacket implements CustomPacketPayload {
             com.servermanagement.client.ClientAchievementsData.setTotalRewardsEarned(totalRewards);
         });
         // packet handled
+    }
+
+    private static Set<String> decodeEarnedAchievements(FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        Set<String> set = new HashSet<>();
+        for (int i = 0; i < count; i++) {
+            set.add(buf.readUtf(128));
+        }
+        return set;
     }
 }

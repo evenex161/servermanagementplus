@@ -8,7 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class RequestAutoShowPacket implements CustomPacketPayload {
+public record RequestAutoShowPacket() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<RequestAutoShowPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "request_auto_show"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RequestAutoShowPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RequestAutoShowPacket::new);
 
@@ -16,10 +16,8 @@ public class RequestAutoShowPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
 
-    public RequestAutoShowPacket() {
-    }
-
     public RequestAutoShowPacket(FriendlyByteBuf buf) {
+        this();
     }
 
         public void encode(FriendlyByteBuf buf) {

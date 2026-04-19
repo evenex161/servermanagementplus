@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class WMToggleChatIsolationPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMToggleChatIsolationPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_chat_isolation_packet"));
@@ -15,21 +15,8 @@ public class WMToggleChatIsolationPacket implements net.minecraft.network.protoc
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String dimensionId;
-    private final boolean enabled;
-    private final long clientTick;
-
-    public WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
-
     public WMToggleChatIsolationPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readBoolean(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

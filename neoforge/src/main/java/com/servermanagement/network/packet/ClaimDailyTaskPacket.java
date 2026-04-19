@@ -19,21 +19,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from client to server to claim a daily task reward
  */
-public class ClaimDailyTaskPacket implements CustomPacketPayload {
+public record ClaimDailyTaskPacket(int taskIndex) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ClaimDailyTaskPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_daily_task"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ClaimDailyTaskPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ClaimDailyTaskPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final int taskIndex;
-
-    public ClaimDailyTaskPacket(int taskIndex) {
-        this.taskIndex = taskIndex;
-    }
 
     public ClaimDailyTaskPacket(FriendlyByteBuf buf) {
-        this.taskIndex = buf.readInt();
+        this(buf.readInt());
     }
 
         public void encode(FriendlyByteBuf buf) {

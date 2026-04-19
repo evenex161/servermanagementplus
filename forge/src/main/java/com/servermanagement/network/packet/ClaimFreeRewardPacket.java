@@ -18,13 +18,10 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to claim the free daily reward
  */
-public class ClaimFreeRewardPacket implements IPacket {
-
-    public ClaimFreeRewardPacket() {
-    }
+public record ClaimFreeRewardPacket() implements IPacket {
 
     public ClaimFreeRewardPacket(FriendlyByteBuf buf) {
-        // No data to read
+        this();
     }
 
     @Override

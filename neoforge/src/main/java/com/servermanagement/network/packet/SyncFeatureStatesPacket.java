@@ -10,25 +10,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SyncFeatureStatesPacket implements CustomPacketPayload {
+public record SyncFeatureStatesPacket(Map<String, Boolean> featureStates) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncFeatureStatesPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_feature_states"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncFeatureStatesPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncFeatureStatesPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final Map<String, Boolean> featureStates;
-
-    public SyncFeatureStatesPacket(Map<String, Boolean> featureStates) {
-        this.featureStates = featureStates;
-    }
 
     public SyncFeatureStatesPacket(FriendlyByteBuf buf) {
-        int size = buf.readInt();
-        this.featureStates = new HashMap<>();
-        for (int i = 0; i < size; i++) {
-            featureStates.put(buf.readUtf(64), buf.readBoolean());
-        }
+        this(decodeFeatureStates(buf));
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -49,5 +40,14 @@ public class SyncFeatureStatesPacket implements CustomPacketPayload {
 
     public Map<String, Boolean> getFeatureStates() {
         return featureStates;
+    }
+
+    private static Map<String, Boolean> decodeFeatureStates(FriendlyByteBuf buf) {
+        int size = buf.readInt();
+        Map<String, Boolean> map = new HashMap<>();
+        for (int i = 0; i < size; i++) {
+            map.put(buf.readUtf(64), buf.readBoolean());
+        }
+        return map;
     }
 }

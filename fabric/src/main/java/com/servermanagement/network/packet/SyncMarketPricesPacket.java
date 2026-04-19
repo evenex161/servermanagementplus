@@ -9,7 +9,7 @@ import java.util.Map;
  * Updates ClientMarketData cache so MineBay can display base prices and margins.
  * Includes supply/demand data so client prices match server prices.
  */
-public class SyncMarketPricesPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncMarketPricesPacket(double inflationMultiplier, double averageBalance, int totalPlayerCount, double starterMoney, Map<String, Long> supplyData, Map<String, Double> recipePrices) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncMarketPricesPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_market_prices_packet"));
@@ -21,42 +21,31 @@ public class SyncMarketPricesPacket implements net.minecraft.network.protocol.co
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final double inflationMultiplier;
-    private final double averageBalance;
-    private final int totalPlayerCount;
-    private final double starterMoney;
-    private final Map<String, Long> supplyData;
-    private final Map<String, Double> recipePrices;
-
-    public SyncMarketPricesPacket(double inflationMultiplier, double averageBalance, int totalPlayerCount, double starterMoney, Map<String, Long> supplyData, Map<String, Double> recipePrices) {
-        this.inflationMultiplier = inflationMultiplier;
-        this.averageBalance = averageBalance;
-        this.totalPlayerCount = totalPlayerCount;
-        this.starterMoney = starterMoney;
-        this.supplyData = supplyData != null ? supplyData : new HashMap<>();
-        this.recipePrices = recipePrices != null ? recipePrices : new HashMap<>();
+    public SyncMarketPricesPacket {
+        if (supplyData == null) supplyData = new HashMap<>();
+        if (recipePrices == null) recipePrices = new HashMap<>();
+    }
+    public SyncMarketPricesPacket(FriendlyByteBuf buf) {
+        this(buf.readDouble(), buf.readDouble(), buf.readInt(), buf.readDouble(),
+             decodeSupplyData(buf), decodeRecipePrices(buf));
     }
 
-    public SyncMarketPricesPacket(FriendlyByteBuf buf) {
-        this.inflationMultiplier = buf.readDouble();
-        this.averageBalance = buf.readDouble();
-        this.totalPlayerCount = buf.readInt();
-        this.starterMoney = buf.readDouble();
-        int supplySize = buf.readVarInt();
-        this.supplyData = new HashMap<>(supplySize);
-        for (int i = 0; i < supplySize; i++) {
-            String itemId = buf.readUtf(256);
-            long count = buf.readLong();
-            this.supplyData.put(itemId, count);
+    private static Map<String, Long> decodeSupplyData(FriendlyByteBuf buf) {
+        int size = buf.readVarInt();
+        Map<String, Long> map = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            map.put(buf.readUtf(256), buf.readLong());
         }
-        int recipeSize = buf.readVarInt();
-        this.recipePrices = new HashMap<>(recipeSize);
-        for (int i = 0; i < recipeSize; i++) {
-            String itemId = buf.readUtf(256);
-            double price = buf.readDouble();
-            this.recipePrices.put(itemId, price);
+        return map;
+    }
+
+    private static Map<String, Double> decodeRecipePrices(FriendlyByteBuf buf) {
+        int size = buf.readVarInt();
+        Map<String, Double> map = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            map.put(buf.readUtf(256), buf.readDouble());
         }
+        return map;
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -10,7 +10,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Client-to-server packet requesting the banned/whitelisted player lists.
  */
-public class PMRequestPlayerListsPacket implements CustomPacketPayload {
+public record PMRequestPlayerListsPacket() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PMRequestPlayerListsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_request_player_lists"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PMRequestPlayerListsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PMRequestPlayerListsPacket::new);
 
@@ -18,10 +18,8 @@ public class PMRequestPlayerListsPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
 
-    public PMRequestPlayerListsPacket() {}
-
     public PMRequestPlayerListsPacket(FriendlyByteBuf buf) {
-        // No data needed
+        this();
     }
 
         public void encode(FriendlyByteBuf buf) {

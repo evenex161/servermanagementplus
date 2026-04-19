@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class WMTogglePortalsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String portalType, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMTogglePortalsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_portals_packet"));
@@ -14,25 +14,9 @@ public class WMTogglePortalsPacket implements net.minecraft.network.protocol.com
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
-    }
-
-    private final String dimensionId;
-    private final boolean enabled;
-    private final String portalType; // "nether", "end", or "both"
-    private final long clientTick;
-
-    public WMTogglePortalsPacket(String dimensionId, boolean enabled, String portalType, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.enabled = enabled;
-        this.portalType = portalType;
-        this.clientTick = clientTick;
-    }
-
+    }// "nether", "end", or "both"
     public WMTogglePortalsPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.enabled = buf.readBoolean();
-        this.portalType = buf.readUtf(32);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readBoolean(), buf.readUtf(32), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

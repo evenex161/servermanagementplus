@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
  * Client → Server: updates a single performance setting identified by key.
  * Supports both boolean toggles and numeric values (sent as String).
  */
-public class UpdatePerformanceSettingPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<UpdatePerformanceSettingPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "update_performance_setting_packet"));
@@ -21,22 +21,8 @@ public class UpdatePerformanceSettingPacket implements net.minecraft.network.pro
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-
-    private final String settingKey;
-    private final String value;
-    private final long clientTick;
-
-    public UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) {
-        this.settingKey = settingKey;
-        this.value = value;
-        this.clientTick = clientTick;
-    }
-
     public UpdatePerformanceSettingPacket(FriendlyByteBuf buf) {
-        this.settingKey = buf.readUtf(128);
-        this.value = buf.readUtf(128);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(128), buf.readUtf(128), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

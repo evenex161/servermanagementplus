@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-public class PMSpectatePlayerPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record PMSpectatePlayerPacket(String playerName) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PMSpectatePlayerPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_spectate_player_packet"));
@@ -18,14 +18,8 @@ public class PMSpectatePlayerPacket implements net.minecraft.network.protocol.co
     }
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-
-    public PMSpectatePlayerPacket(String playerName) {
-        this.playerName = playerName;
-    }
-
     public PMSpectatePlayerPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
+        this(buf.readUtf(16));
     }
 
         public void encode(FriendlyByteBuf buf) {

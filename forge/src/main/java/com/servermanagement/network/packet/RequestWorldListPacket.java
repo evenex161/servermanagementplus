@@ -5,12 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class RequestWorldListPacket implements IPacket {
-
-    public RequestWorldListPacket() {
-    }
+public record RequestWorldListPacket() implements IPacket {
 
     public RequestWorldListPacket(FriendlyByteBuf buf) {
+        this();
     }
 
     @Override

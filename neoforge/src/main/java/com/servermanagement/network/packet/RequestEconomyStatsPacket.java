@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Client-to-server packet requesting fresh economy statistics.
  * Server responds with SyncEconomyStatsPacket.
  */
-public class RequestEconomyStatsPacket implements CustomPacketPayload {
+public record RequestEconomyStatsPacket() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<RequestEconomyStatsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "request_economy_stats"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RequestEconomyStatsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RequestEconomyStatsPacket::new);
 
@@ -20,9 +20,9 @@ public class RequestEconomyStatsPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
 
-    public RequestEconomyStatsPacket() {}
-
-    public RequestEconomyStatsPacket(FriendlyByteBuf buf) {}
+    public RequestEconomyStatsPacket(FriendlyByteBuf buf) {
+        this();
+    }
 
         public void encode(FriendlyByteBuf buf) {}
 

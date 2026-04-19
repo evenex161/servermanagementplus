@@ -3,26 +3,31 @@ package com.servermanagement.util;
 import com.servermanagement.ServerManagementMod;
 
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Manages asynchronous save operations with batching and debouncing.
  * Prevents excessive disk I/O by batching multiple save requests.
+ * Uses virtual threads (Java 21) for save execution to reduce platform thread overhead,
+ * with a small scheduled executor for debounce timing.
  */
 public class AsyncSaveScheduler {
-    private final ScheduledExecutorService scheduler;
+    // Small scheduler for debounce delays only — not for actual I/O work
+    private final ScheduledExecutorService delayScheduler;
+    // Virtual-thread executor for actual save I/O
+    private final ExecutorService saveExecutor;
     private final ConcurrentHashMap<String, SaveTask> pendingSaves;
     private final long debounceMs;
     
     public AsyncSaveScheduler(int threadPoolSize, long debounceMs) {
-        this.scheduler = Executors.newScheduledThreadPool(
-            threadPoolSize,
+        this.delayScheduler = Executors.newScheduledThreadPool(
+            1,
             r -> {
-                Thread thread = new Thread(r, "ServerManagement-SaveWorker");
+                Thread thread = new Thread(r, "ServerManagement-SaveScheduler");
                 thread.setDaemon(true);
                 return thread;
             }
         );
+        this.saveExecutor = Executors.newVirtualThreadPerTaskExecutor();
         this.pendingSaves = new ConcurrentHashMap<>();
         this.debounceMs = debounceMs;
     }
@@ -40,15 +45,17 @@ public class AsyncSaveScheduler {
             PerformanceMetrics.getInstance().recordDebouncedSave();
         }
         
-        // Schedule new save
-        ScheduledFuture<?> future = scheduler.schedule(() -> {
-            try {
-                saveOperation.run();
-                PerformanceMetrics.getInstance().recordSave();
-                pendingSaves.remove(key);
-            } catch (Exception e) {
-                ServerManagementMod.LOGGER.error("Error during async save for key: {}", key, e);
-            }
+        // Schedule debounce delay, then dispatch to virtual thread for I/O
+        ScheduledFuture<?> future = delayScheduler.schedule(() -> {
+            saveExecutor.execute(() -> {
+                try {
+                    saveOperation.run();
+                    PerformanceMetrics.getInstance().recordSave();
+                    pendingSaves.remove(key);
+                } catch (Exception e) {
+                    ServerManagementMod.LOGGER.error("Error during async save for key: {}", key, e);
+                }
+            });
         }, debounceMs, TimeUnit.MILLISECONDS);
         
         pendingSaves.put(key, new SaveTask(future, saveOperation));
@@ -70,9 +77,9 @@ public class AsyncSaveScheduler {
             task.future.cancel(false);
         }
         
-        // Execute all save operations immediately
+        // Execute all save operations immediately on virtual threads
         CompletableFuture<?>[] futures = pendingSaves.values().stream()
-            .map(task -> CompletableFuture.runAsync(task.operation, scheduler))
+            .map(task -> CompletableFuture.runAsync(task.operation, saveExecutor))
             .toArray(CompletableFuture[]::new);
         
         // Wait for all to complete
@@ -90,13 +97,14 @@ public class AsyncSaveScheduler {
      */
     public void shutdown() {
         flushAll();
-        scheduler.shutdown();
+        delayScheduler.shutdown();
+        saveExecutor.close();
         try {
-            if (!scheduler.awaitTermination(15, TimeUnit.SECONDS)) {
-                scheduler.shutdownNow();
+            if (!delayScheduler.awaitTermination(15, TimeUnit.SECONDS)) {
+                delayScheduler.shutdownNow();
             }
         } catch (InterruptedException e) {
-            scheduler.shutdownNow();
+            delayScheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
     }

@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.regex.Pattern;
 
-public class PMWhitelistPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record PMWhitelistPacket(String playerName, boolean add) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PMWhitelistPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_whitelist_packet"));
@@ -16,18 +16,9 @@ public class PMWhitelistPacket implements net.minecraft.network.protocol.common.
         return TYPE;
     }
 
-    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-    private final boolean add; // true = add to whitelist, false = remove
-
-    public PMWhitelistPacket(String playerName, boolean add) {
-        this.playerName = playerName;
-        this.add = add;
-    }
-
+    private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");// true = add to whitelist, false = remove
     public PMWhitelistPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
-        this.add = buf.readBoolean();
+        this(buf.readUtf(16), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

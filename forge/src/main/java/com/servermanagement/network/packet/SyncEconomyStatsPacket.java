@@ -20,79 +20,22 @@ import java.util.UUID;
  * Packet to sync aggregate economy statistics from server to client.
  * Used by the Economy Management screen's Statistics tab.
  */
-public class SyncEconomyStatsPacket implements IPacket {
-    private final int totalAccounts;
-    private final double totalMoneyInCirculation;
-    private final double averageBalance;
-    private final double richestBalance;
-    private final String richestPlayerName;
-    private final double inflationMultiplier;
-    private final int activeListings;
-    private final int totalTemplates;
-    private final int enabledTemplates;
-    // Transaction volume counts
-    private final int totalTransactions;
-    private final int purchaseCount;
-    private final int saleCount;
-    private final int gamblingBetCount;
-    private final int gamblingWinCount;
-    private final int freeRewardCount;
-    private final int transferCount;
-    private final double totalPurchaseVolume;
-    private final double totalSaleVolume;
-    private final double totalGamblingWagered;
-    private final double totalGamblingWon;
-
-    public SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCirculation, double averageBalance,
-                                   double richestBalance, String richestPlayerName, double inflationMultiplier,
-                                   int activeListings, int totalTemplates, int enabledTemplates,
-                                   int totalTransactions, int purchaseCount, int saleCount,
-                                   int gamblingBetCount, int gamblingWinCount, int freeRewardCount,
-                                   int transferCount, double totalPurchaseVolume, double totalSaleVolume,
-                                   double totalGamblingWagered, double totalGamblingWon) {
-        this.totalAccounts = totalAccounts;
-        this.totalMoneyInCirculation = totalMoneyInCirculation;
-        this.averageBalance = averageBalance;
-        this.richestBalance = richestBalance;
-        this.richestPlayerName = richestPlayerName;
-        this.inflationMultiplier = inflationMultiplier;
-        this.activeListings = activeListings;
-        this.totalTemplates = totalTemplates;
-        this.enabledTemplates = enabledTemplates;
-        this.totalTransactions = totalTransactions;
-        this.purchaseCount = purchaseCount;
-        this.saleCount = saleCount;
-        this.gamblingBetCount = gamblingBetCount;
-        this.gamblingWinCount = gamblingWinCount;
-        this.freeRewardCount = freeRewardCount;
-        this.transferCount = transferCount;
-        this.totalPurchaseVolume = totalPurchaseVolume;
-        this.totalSaleVolume = totalSaleVolume;
-        this.totalGamblingWagered = totalGamblingWagered;
-        this.totalGamblingWon = totalGamblingWon;
-    }
+public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCirculation, double averageBalance,
+                                      double richestBalance, String richestPlayerName, double inflationMultiplier,
+                                      int activeListings, int totalTemplates, int enabledTemplates,
+                                      int totalTransactions, int purchaseCount, int saleCount,
+                                      int gamblingBetCount, int gamblingWinCount, int freeRewardCount,
+                                      int transferCount, double totalPurchaseVolume, double totalSaleVolume,
+                                      double totalGamblingWagered, double totalGamblingWon) implements IPacket {
 
     public SyncEconomyStatsPacket(FriendlyByteBuf buf) {
-        this.totalAccounts = buf.readInt();
-        this.totalMoneyInCirculation = buf.readDouble();
-        this.averageBalance = buf.readDouble();
-        this.richestBalance = buf.readDouble();
-        this.richestPlayerName = buf.readUtf(64);
-        this.inflationMultiplier = buf.readDouble();
-        this.activeListings = buf.readInt();
-        this.totalTemplates = buf.readInt();
-        this.enabledTemplates = buf.readInt();
-        this.totalTransactions = buf.readInt();
-        this.purchaseCount = buf.readInt();
-        this.saleCount = buf.readInt();
-        this.gamblingBetCount = buf.readInt();
-        this.gamblingWinCount = buf.readInt();
-        this.freeRewardCount = buf.readInt();
-        this.transferCount = buf.readInt();
-        this.totalPurchaseVolume = buf.readDouble();
-        this.totalSaleVolume = buf.readDouble();
-        this.totalGamblingWagered = buf.readDouble();
-        this.totalGamblingWon = buf.readDouble();
+        this(buf.readInt(), buf.readDouble(), buf.readDouble(),
+             buf.readDouble(), buf.readUtf(64), buf.readDouble(),
+             buf.readInt(), buf.readInt(), buf.readInt(),
+             buf.readInt(), buf.readInt(), buf.readInt(),
+             buf.readInt(), buf.readInt(), buf.readInt(),
+             buf.readInt(), buf.readDouble(), buf.readDouble(),
+             buf.readDouble(), buf.readDouble());
     }
 
     @Override

@@ -12,15 +12,10 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to claim an item from bank inventory
  */
-public class ClaimBankItemPacket implements IPacket {
-    private final int itemIndex;
-    
-    public ClaimBankItemPacket(int itemIndex) {
-        this.itemIndex = itemIndex;
-    }
+public record ClaimBankItemPacket(int itemIndex) implements IPacket {
     
     public ClaimBankItemPacket(FriendlyByteBuf buf) {
-        this.itemIndex = buf.readInt();
+        this(buf.readInt());
     }
     
     @Override

@@ -6,25 +6,20 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class OpenGuiPacket implements IPacket {
-    private final GuiType guiType;
-    private final String data; // Can hold dimension ID or other data
+public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
 
     public OpenGuiPacket(GuiType guiType) {
-        this.guiType = guiType;
-        this.data = "";
-    }
-    
-    public OpenGuiPacket(GuiType guiType, String data) {
-        this.guiType = guiType;
-        this.data = data;
+        this(guiType, "");
     }
 
     public OpenGuiPacket(FriendlyByteBuf buf) {
+        this(readGuiType(buf), buf.readUtf(256));
+    }
+
+    private static GuiType readGuiType(FriendlyByteBuf buf) {
         int ordinal = buf.readInt();
         GuiType[] values = GuiType.values();
-        this.guiType = (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
-        this.data = buf.readUtf(256);
+        return (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
     }
 
     @Override

@@ -13,21 +13,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet to sync MineStacks betting slot state from client to server
  */
-public class SyncBettingSlotStatePacket implements CustomPacketPayload {
+public record SyncBettingSlotStatePacket(boolean bettingSlotActive) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncBettingSlotStatePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_betting_slot_state"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncBettingSlotStatePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncBettingSlotStatePacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final boolean bettingSlotActive;
-    
-    public SyncBettingSlotStatePacket(boolean bettingSlotActive) {
-        this.bettingSlotActive = bettingSlotActive;
-    }
     
     public SyncBettingSlotStatePacket(FriendlyByteBuf buf) {
-        this.bettingSlotActive = buf.readBoolean();
+        this(buf.readBoolean());
     }
     
         public void encode(FriendlyByteBuf buf) {

@@ -8,15 +8,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 /**
  * Packet for executing console commands from the in-game GUI
  */
-public class ConsoleCommandPacket implements IPacket {
-    private final String command;
-    
-    public ConsoleCommandPacket(String command) {
-        this.command = command;
-    }
+public record ConsoleCommandPacket(String command) implements IPacket {
     
     public ConsoleCommandPacket(FriendlyByteBuf buf) {
-        this.command = buf.readUtf(256);
+        this(buf.readUtf(256));
     }
     
     @Override

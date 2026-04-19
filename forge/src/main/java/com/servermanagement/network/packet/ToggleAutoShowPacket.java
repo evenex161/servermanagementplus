@@ -5,15 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class ToggleAutoShowPacket implements IPacket {
-    private final boolean autoShow;
-
-    public ToggleAutoShowPacket(boolean autoShow) {
-        this.autoShow = autoShow;
-    }
+public record ToggleAutoShowPacket(boolean autoShow) implements IPacket {
 
     public ToggleAutoShowPacket(FriendlyByteBuf buf) {
-        this.autoShow = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
     @Override
@@ -31,9 +26,5 @@ public class ToggleAutoShowPacket implements IPacket {
             }
         });
         ctx.setPacketHandled(true);
-    }
-
-    public boolean isAutoShow() {
-        return autoShow;
     }
 }

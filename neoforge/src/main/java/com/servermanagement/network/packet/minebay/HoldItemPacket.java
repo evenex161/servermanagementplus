@@ -15,21 +15,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server to hold an item for listing creation
  * Removes item from player inventory and stores it server-side
  */
-public class HoldItemPacket implements CustomPacketPayload {
+public record HoldItemPacket(int slotIndex) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<HoldItemPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "hold_item"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, HoldItemPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), HoldItemPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final int slotIndex;
-    
-    public HoldItemPacket(int slotIndex) {
-        this.slotIndex = slotIndex;
-    }
     
     public HoldItemPacket(FriendlyByteBuf buf) {
-        this.slotIndex = buf.readInt();
+        this(buf.readInt());
     }
     
         public void encode(FriendlyByteBuf buf) {

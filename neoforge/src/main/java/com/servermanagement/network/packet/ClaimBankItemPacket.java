@@ -15,21 +15,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from client to server to claim an item from bank inventory
  */
-public class ClaimBankItemPacket implements CustomPacketPayload {
+public record ClaimBankItemPacket(int itemIndex) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ClaimBankItemPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_bank_item"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ClaimBankItemPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ClaimBankItemPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final int itemIndex;
-    
-    public ClaimBankItemPacket(int itemIndex) {
-        this.itemIndex = itemIndex;
-    }
     
     public ClaimBankItemPacket(FriendlyByteBuf buf) {
-        this.itemIndex = buf.readInt();
+        this(buf.readInt());
     }
     
         public void encode(FriendlyByteBuf buf) {

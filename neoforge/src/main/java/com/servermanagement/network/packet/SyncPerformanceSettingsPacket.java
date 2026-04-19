@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Server → Client: syncs all performance settings so the GUI can display current values.
  */
-public class SyncPerformanceSettingsPacket implements CustomPacketPayload {
+public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean itemMergingEnabled, boolean mobSpawnLimiterEnabled, boolean entityActivationRangeEnabled, boolean villagerThrottleEnabled, boolean redstoneThrottleEnabled, boolean tpsMonitorEnabled, boolean tpsAutoOptimize, double itemMergeRadius, int itemMergeInterval, int mobCapMultiplier, int monsterActivationRange, int animalActivationRange, int miscActivationRange, int villagerTickInterval, int redstoneUpdatesPerTick, double tpsWarningThreshold, double tpsCriticalThreshold, double currentTps, double averageMspt, boolean autoOptimizeActive, long totalItemsMerged, long totalSpawnsCancelled, long totalEntitiesThrottled, long totalRedstoneThrottled) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncPerformanceSettingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_performance_settings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncPerformanceSettingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncPerformanceSettingsPacket::new);
 
@@ -20,101 +20,14 @@ public class SyncPerformanceSettingsPacket implements CustomPacketPayload {
 
 
     // Subsystem toggles
-    private final boolean featureEnabled;
-    private final boolean itemMergingEnabled;
-    private final boolean mobSpawnLimiterEnabled;
-    private final boolean entityActivationRangeEnabled;
-    private final boolean villagerThrottleEnabled;
-    private final boolean redstoneThrottleEnabled;
-    private final boolean tpsMonitorEnabled;
-    private final boolean tpsAutoOptimize;
 
     // Tunables
-    private final double itemMergeRadius;
-    private final int itemMergeInterval;
-    private final int mobCapMultiplier;
-    private final int monsterActivationRange;
-    private final int animalActivationRange;
-    private final int miscActivationRange;
-    private final int villagerTickInterval;
-    private final int redstoneUpdatesPerTick;
-    private final double tpsWarningThreshold;
-    private final double tpsCriticalThreshold;
 
     // Live stats
-    private final double currentTps;
-    private final double averageMspt;
-    private final boolean autoOptimizeActive;
-    private final long totalItemsMerged;
-    private final long totalSpawnsCancelled;
-    private final long totalEntitiesThrottled;
-    private final long totalRedstoneThrottled;
 
-    public SyncPerformanceSettingsPacket(
-            boolean featureEnabled,
-            boolean itemMergingEnabled, boolean mobSpawnLimiterEnabled,
-            boolean entityActivationRangeEnabled, boolean villagerThrottleEnabled,
-            boolean redstoneThrottleEnabled, boolean tpsMonitorEnabled, boolean tpsAutoOptimize,
-            double itemMergeRadius, int itemMergeInterval, int mobCapMultiplier,
-            int monsterActivationRange, int animalActivationRange, int miscActivationRange,
-            int villagerTickInterval, int redstoneUpdatesPerTick,
-            double tpsWarningThreshold, double tpsCriticalThreshold,
-            double currentTps, double averageMspt, boolean autoOptimizeActive,
-            long totalItemsMerged, long totalSpawnsCancelled,
-            long totalEntitiesThrottled, long totalRedstoneThrottled) {
-        this.featureEnabled = featureEnabled;
-        this.itemMergingEnabled = itemMergingEnabled;
-        this.mobSpawnLimiterEnabled = mobSpawnLimiterEnabled;
-        this.entityActivationRangeEnabled = entityActivationRangeEnabled;
-        this.villagerThrottleEnabled = villagerThrottleEnabled;
-        this.redstoneThrottleEnabled = redstoneThrottleEnabled;
-        this.tpsMonitorEnabled = tpsMonitorEnabled;
-        this.tpsAutoOptimize = tpsAutoOptimize;
-        this.itemMergeRadius = itemMergeRadius;
-        this.itemMergeInterval = itemMergeInterval;
-        this.mobCapMultiplier = mobCapMultiplier;
-        this.monsterActivationRange = monsterActivationRange;
-        this.animalActivationRange = animalActivationRange;
-        this.miscActivationRange = miscActivationRange;
-        this.villagerTickInterval = villagerTickInterval;
-        this.redstoneUpdatesPerTick = redstoneUpdatesPerTick;
-        this.tpsWarningThreshold = tpsWarningThreshold;
-        this.tpsCriticalThreshold = tpsCriticalThreshold;
-        this.currentTps = currentTps;
-        this.averageMspt = averageMspt;
-        this.autoOptimizeActive = autoOptimizeActive;
-        this.totalItemsMerged = totalItemsMerged;
-        this.totalSpawnsCancelled = totalSpawnsCancelled;
-        this.totalEntitiesThrottled = totalEntitiesThrottled;
-        this.totalRedstoneThrottled = totalRedstoneThrottled;
-    }
 
     public SyncPerformanceSettingsPacket(FriendlyByteBuf buf) {
-        this.featureEnabled = buf.readBoolean();
-        this.itemMergingEnabled = buf.readBoolean();
-        this.mobSpawnLimiterEnabled = buf.readBoolean();
-        this.entityActivationRangeEnabled = buf.readBoolean();
-        this.villagerThrottleEnabled = buf.readBoolean();
-        this.redstoneThrottleEnabled = buf.readBoolean();
-        this.tpsMonitorEnabled = buf.readBoolean();
-        this.tpsAutoOptimize = buf.readBoolean();
-        this.itemMergeRadius = buf.readDouble();
-        this.itemMergeInterval = buf.readInt();
-        this.mobCapMultiplier = buf.readInt();
-        this.monsterActivationRange = buf.readInt();
-        this.animalActivationRange = buf.readInt();
-        this.miscActivationRange = buf.readInt();
-        this.villagerTickInterval = buf.readInt();
-        this.redstoneUpdatesPerTick = buf.readInt();
-        this.tpsWarningThreshold = buf.readDouble();
-        this.tpsCriticalThreshold = buf.readDouble();
-        this.currentTps = buf.readDouble();
-        this.averageMspt = buf.readDouble();
-        this.autoOptimizeActive = buf.readBoolean();
-        this.totalItemsMerged = buf.readLong();
-        this.totalSpawnsCancelled = buf.readLong();
-        this.totalEntitiesThrottled = buf.readLong();
-        this.totalRedstoneThrottled = buf.readLong();
+        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readDouble(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readBoolean(), buf.readLong(), buf.readLong(), buf.readLong(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

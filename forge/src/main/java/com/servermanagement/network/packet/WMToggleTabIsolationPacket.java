@@ -5,18 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class WMToggleTabIsolationPacket implements IPacket {
-    private final boolean enabled;
-    private final long clientTick;
-
-    public WMToggleTabIsolationPacket(boolean enabled, long clientTick) {
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
+public record WMToggleTabIsolationPacket(boolean enabled, long clientTick) implements IPacket {
 
     public WMToggleTabIsolationPacket(FriendlyByteBuf buf) {
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readBoolean(), buf.readLong());
     }
 
     @Override

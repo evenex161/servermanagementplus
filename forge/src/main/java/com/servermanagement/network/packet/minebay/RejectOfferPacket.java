@@ -18,18 +18,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
  * Packet sent from client to server when a seller rejects an offer.
  * Returns escrowed items and money to the buyer.
  */
-public class RejectOfferPacket implements IPacket {
-    private final String listingId;
-    private final String offerId;
-    
-    public RejectOfferPacket(String listingId, String offerId) {
-        this.listingId = listingId;
-        this.offerId = offerId;
-    }
+public record RejectOfferPacket(String listingId, String offerId) implements IPacket {
     
     public RejectOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.offerId = buf.readUtf(36);
+        this(buf.readUtf(36), buf.readUtf(36));
     }
     
     @Override

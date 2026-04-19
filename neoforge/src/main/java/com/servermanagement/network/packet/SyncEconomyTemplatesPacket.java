@@ -22,27 +22,20 @@ import java.util.List;
 /**
  * Server-to-client packet that syncs economy templates and free reward settings
  */
-public class SyncEconomyTemplatesPacket implements CustomPacketPayload {
+public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncEconomyTemplatesPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_economy_templates"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncEconomyTemplatesPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncEconomyTemplatesPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-
-    private final List<TemplateData> templates;
-    private final int freeRewardAmount;
-    private final int freeRewardCooldownHours;
-
-    public SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours) {
-        this.templates = templates;
-        this.freeRewardAmount = freeRewardAmount;
-        this.freeRewardCooldownHours = freeRewardCooldownHours;
+    public SyncEconomyTemplatesPacket(FriendlyByteBuf buf) {
+        this(decodeTemplates(buf), buf.readInt(), buf.readInt());
     }
 
-    public SyncEconomyTemplatesPacket(FriendlyByteBuf buf) {
+    private static List<TemplateData> decodeTemplates(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        templates = new ArrayList<>(count);
+        List<TemplateData> templates = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             templates.add(new TemplateData(
                 buf.readUtf(64),
@@ -54,8 +47,7 @@ public class SyncEconomyTemplatesPacket implements CustomPacketPayload {
                 ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf)
             ));
         }
-        this.freeRewardAmount = buf.readInt();
-        this.freeRewardCooldownHours = buf.readInt();
+        return templates;
     }
 
         public void encode(FriendlyByteBuf buf) {

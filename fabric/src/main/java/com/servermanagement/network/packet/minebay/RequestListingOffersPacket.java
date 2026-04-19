@@ -12,7 +12,7 @@ import java.util.List;
  * Packet sent from client to server to request offers for a specific listing.
  * Only the listing owner can request this.
  */
-public class RequestListingOffersPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record RequestListingOffersPacket(String listingId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RequestListingOffersPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "request_listing_offers_packet"));
@@ -24,15 +24,8 @@ public class RequestListingOffersPacket implements net.minecraft.network.protoco
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String listingId;
-
-    public RequestListingOffersPacket(String listingId) {
-        this.listingId = listingId;
-    }
-
     public RequestListingOffersPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
+        this(buf.readUtf(36));
     }
 
         public void encode(FriendlyByteBuf buf) {

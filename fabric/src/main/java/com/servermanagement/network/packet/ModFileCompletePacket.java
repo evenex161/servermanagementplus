@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * Packet sent from server to client when mod file transfer is complete.
  * Signals client to verify and install the update.
  */
-public class ModFileCompletePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ModFileCompletePacket(String fileHash, long fileSize, String version, boolean success, String message) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ModFileCompletePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "mod_file_complete_packet"));
@@ -21,27 +21,8 @@ public class ModFileCompletePacket implements net.minecraft.network.protocol.com
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String fileHash;
-    private final long fileSize;
-    private final String version;
-    private final boolean success;
-    private final String message;
-    
-    public ModFileCompletePacket(String fileHash, long fileSize, String version, boolean success, String message) {
-        this.fileHash = fileHash;
-        this.fileSize = fileSize;
-        this.version = version;
-        this.success = success;
-        this.message = message;
-    }
-    
     public ModFileCompletePacket(FriendlyByteBuf buf) {
-        this.fileHash = buf.readUtf(128);
-        this.fileSize = buf.readLong();
-        this.version = buf.readUtf(64);
-        this.success = buf.readBoolean();
-        this.message = buf.readUtf(256);
+        this(buf.readUtf(128), buf.readLong(), buf.readUtf(64), buf.readBoolean(), buf.readUtf(256));
     }
     
     public void encode(FriendlyByteBuf buf) {

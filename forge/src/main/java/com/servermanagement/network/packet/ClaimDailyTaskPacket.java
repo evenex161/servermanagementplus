@@ -16,15 +16,10 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to claim a daily task reward
  */
-public class ClaimDailyTaskPacket implements IPacket {
-    private final int taskIndex;
-
-    public ClaimDailyTaskPacket(int taskIndex) {
-        this.taskIndex = taskIndex;
-    }
+public record ClaimDailyTaskPacket(int taskIndex) implements IPacket {
 
     public ClaimDailyTaskPacket(FriendlyByteBuf buf) {
-        this.taskIndex = buf.readInt();
+        this(buf.readInt());
     }
 
     @Override

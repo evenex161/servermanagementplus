@@ -16,34 +16,22 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from server to client containing a chunk of the mod JAR file.
  * Uses chunked transfer to avoid packet size limits.
  */
-public class ModFileChunkPacket implements CustomPacketPayload {
+public record ModFileChunkPacket(int chunkIndex, int totalChunks, String fileHash, byte[] chunkData) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ModFileChunkPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "mod_file_chunk"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ModFileChunkPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ModFileChunkPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
-
-    private final int chunkIndex;
-    private final int totalChunks;
-    private final byte[] chunkData;
-    private final String fileHash; // Full file hash for verification
+// Full file hash for verification
     
     public static final int CHUNK_SIZE = 32768; // 32 KB chunks
     
     public ModFileChunkPacket(int chunkIndex, int totalChunks, byte[] chunkData, String fileHash) {
-        this.chunkIndex = chunkIndex;
-        this.totalChunks = totalChunks;
-        this.chunkData = chunkData;
-        this.fileHash = fileHash;
+        this(chunkIndex, totalChunks, fileHash, chunkData);
     }
     
     public ModFileChunkPacket(FriendlyByteBuf buf) {
-        this.chunkIndex = buf.readInt();
-        this.totalChunks = buf.readInt();
-        this.fileHash = buf.readUtf(128);
-        int dataLength = Math.min(buf.readInt(), CHUNK_SIZE + 1024); // Cap to prevent OOM
-        this.chunkData = new byte[dataLength];
-        buf.readBytes(chunkData);
+        this(buf.readInt(), buf.readInt(), buf.readUtf(128), decodeChunkData(buf));
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -85,5 +73,12 @@ context.enqueueWork(() -> {
     
     public String getFileHash() {
         return fileHash;
+    }
+
+    private static byte[] decodeChunkData(FriendlyByteBuf buf) {
+        int dataLength = Math.min(buf.readInt(), CHUNK_SIZE + 1024);
+        byte[] data = new byte[dataLength];
+        buf.readBytes(data);
+        return data;
     }
 }

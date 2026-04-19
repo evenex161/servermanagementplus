@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 /**
  * Server-to-client packet that relays console command output
  */
-public class ConsoleResponsePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ConsoleResponsePacket(String message) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ConsoleResponsePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "console_response_packet"));
@@ -19,15 +19,8 @@ public class ConsoleResponsePacket implements net.minecraft.network.protocol.com
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String message;
-
-    public ConsoleResponsePacket(String message) {
-        this.message = message;
-    }
-
     public ConsoleResponsePacket(FriendlyByteBuf buf) {
-        this.message = buf.readUtf(4096);
+        this(buf.readUtf(4096));
     }
 
         public void encode(FriendlyByteBuf buf) {

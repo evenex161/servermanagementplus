@@ -12,42 +12,36 @@ import java.util.Map;
  * Updates ClientMarketData cache so MineBay can display base prices and margins.
  * Includes supply/demand data so client prices match server prices.
  */
-public class SyncMarketPricesPacket implements IPacket {
-    private final double inflationMultiplier;
-    private final double averageBalance;
-    private final int totalPlayerCount;
-    private final double starterMoney;
-    private final Map<String, Long> supplyData;
-    private final Map<String, Double> recipePrices;
+public record SyncMarketPricesPacket(double inflationMultiplier, double averageBalance, int totalPlayerCount,
+                                      double starterMoney, Map<String, Long> supplyData,
+                                      Map<String, Double> recipePrices) implements IPacket {
 
-    public SyncMarketPricesPacket(double inflationMultiplier, double averageBalance, int totalPlayerCount, double starterMoney, Map<String, Long> supplyData, Map<String, Double> recipePrices) {
-        this.inflationMultiplier = inflationMultiplier;
-        this.averageBalance = averageBalance;
-        this.totalPlayerCount = totalPlayerCount;
-        this.starterMoney = starterMoney;
-        this.supplyData = supplyData != null ? supplyData : new HashMap<>();
-        this.recipePrices = recipePrices != null ? recipePrices : new HashMap<>();
+    public SyncMarketPricesPacket {
+        supplyData = supplyData != null ? supplyData : new HashMap<>();
+        recipePrices = recipePrices != null ? recipePrices : new HashMap<>();
     }
 
     public SyncMarketPricesPacket(FriendlyByteBuf buf) {
-        this.inflationMultiplier = buf.readDouble();
-        this.averageBalance = buf.readDouble();
-        this.totalPlayerCount = buf.readInt();
-        this.starterMoney = buf.readDouble();
-        int supplySize = buf.readVarInt();
-        this.supplyData = new HashMap<>(supplySize);
-        for (int i = 0; i < supplySize; i++) {
-            String itemId = buf.readUtf(256);
-            long count = buf.readLong();
-            this.supplyData.put(itemId, count);
+        this(buf.readDouble(), buf.readDouble(), buf.readInt(), buf.readDouble(),
+             readSupplyData(buf), readRecipePrices(buf));
+    }
+
+    private static Map<String, Long> readSupplyData(FriendlyByteBuf buf) {
+        int size = buf.readVarInt();
+        Map<String, Long> map = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            map.put(buf.readUtf(256), buf.readLong());
         }
-        int recipeSize = buf.readVarInt();
-        this.recipePrices = new HashMap<>(recipeSize);
-        for (int i = 0; i < recipeSize; i++) {
-            String itemId = buf.readUtf(256);
-            double price = buf.readDouble();
-            this.recipePrices.put(itemId, price);
+        return map;
+    }
+
+    private static Map<String, Double> readRecipePrices(FriendlyByteBuf buf) {
+        int size = buf.readVarInt();
+        Map<String, Double> map = new HashMap<>(size);
+        for (int i = 0; i < size; i++) {
+            map.put(buf.readUtf(256), buf.readDouble());
         }
+        return map;
     }
 
     @Override

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class SyncWorldListPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncWorldListPacket(List<WorldInfo> worlds) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncWorldListPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_world_list_packet"));
@@ -17,25 +17,19 @@ public class SyncWorldListPacket implements net.minecraft.network.protocol.commo
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final List<WorldInfo> worlds;
-
-    public SyncWorldListPacket(List<WorldInfo> worlds) {
-        this.worlds = worlds;
+    public SyncWorldListPacket(FriendlyByteBuf buf) {
+        this(decodeWorlds(buf));
     }
 
-    public SyncWorldListPacket(FriendlyByteBuf buf) {
+    private static List<WorldInfo> decodeWorlds(FriendlyByteBuf buf) {
         int size = buf.readInt();
-        this.worlds = new ArrayList<>();
+        List<WorldInfo> worlds = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             worlds.add(new WorldInfo(
-                buf.readUtf(256),
-                buf.readUtf(128),
-                buf.readBoolean(),
-                buf.readBoolean(),
-                buf.readInt()
-            ));
+                buf.readUtf(256), buf.readUtf(128),
+                buf.readBoolean(), buf.readBoolean(), buf.readInt()));
         }
+        return worlds;
     }
 
         public void encode(FriendlyByteBuf buf) {

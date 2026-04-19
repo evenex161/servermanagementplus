@@ -8,24 +8,16 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class WMToggleTabIsolationPacket implements CustomPacketPayload {
+public record WMToggleTabIsolationPacket(boolean enabled, long clientTick) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<WMToggleTabIsolationPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_tab_isolation"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMToggleTabIsolationPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMToggleTabIsolationPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final boolean enabled;
-    private final long clientTick;
-
-    public WMToggleTabIsolationPacket(boolean enabled, long clientTick) {
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
 
     public WMToggleTabIsolationPacket(FriendlyByteBuf buf) {
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readBoolean(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

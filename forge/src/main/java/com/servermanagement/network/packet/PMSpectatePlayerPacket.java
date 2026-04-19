@@ -6,16 +6,11 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-public class PMSpectatePlayerPacket implements IPacket {
+public record PMSpectatePlayerPacket(String playerName) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-
-    public PMSpectatePlayerPacket(String playerName) {
-        this.playerName = playerName;
-    }
 
     public PMSpectatePlayerPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
+        this(buf.readUtf(16));
     }
 
     @Override

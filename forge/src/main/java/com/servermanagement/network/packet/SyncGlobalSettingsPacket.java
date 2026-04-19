@@ -9,18 +9,10 @@ import java.util.function.Supplier;
 /**
  * Server-to-client packet that syncs global settings (chat/tab isolation)
  */
-public class SyncGlobalSettingsPacket implements IPacket {
-    private final boolean chatIsolationEnabled;
-    private final boolean tabIsolationEnabled;
-
-    public SyncGlobalSettingsPacket(boolean chatIsolationEnabled, boolean tabIsolationEnabled) {
-        this.chatIsolationEnabled = chatIsolationEnabled;
-        this.tabIsolationEnabled = tabIsolationEnabled;
-    }
+public record SyncGlobalSettingsPacket(boolean chatIsolationEnabled, boolean tabIsolationEnabled) implements IPacket {
 
     public SyncGlobalSettingsPacket(FriendlyByteBuf buf) {
-        this.chatIsolationEnabled = buf.readBoolean();
-        this.tabIsolationEnabled = buf.readBoolean();
+        this(buf.readBoolean(), buf.readBoolean());
     }
 
     @Override

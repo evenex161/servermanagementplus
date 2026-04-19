@@ -9,27 +9,16 @@ import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class WMSetLobbyPacket implements CustomPacketPayload {
+public record WMSetLobbyPacket(BlockPos pos, String dimensionId, long clientTick) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<WMSetLobbyPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_set_lobby"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMSetLobbyPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMSetLobbyPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final BlockPos pos;
-    private final String dimensionId;
-    private final long clientTick;
-
-    public WMSetLobbyPacket(BlockPos pos, String dimensionId, long clientTick) {
-        this.pos = pos;
-        this.dimensionId = dimensionId;
-        this.clientTick = clientTick;
-    }
 
     public WMSetLobbyPacket(FriendlyByteBuf buf) {
-        this.pos = buf.readBlockPos();
-        this.dimensionId = buf.readUtf(256);
-        this.clientTick = buf.readLong();
+        this(buf.readBlockPos(), buf.readUtf(256), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

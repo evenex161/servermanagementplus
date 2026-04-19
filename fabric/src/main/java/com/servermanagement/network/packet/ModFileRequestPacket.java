@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to request the mod JAR file for OTA update.
  */
-public class ModFileRequestPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ModFileRequestPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "mod_file_request_packet"));
@@ -21,21 +21,8 @@ public class ModFileRequestPacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String requestedVersion;
-    private final String clientVersion;
-    private final String clientMinecraftVersion;
-    
-    public ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) {
-        this.requestedVersion = requestedVersion;
-        this.clientVersion = clientVersion;
-        this.clientMinecraftVersion = clientMinecraftVersion;
-    }
-    
     public ModFileRequestPacket(FriendlyByteBuf buf) {
-        this.requestedVersion = buf.readUtf(64);
-        this.clientVersion = buf.readUtf(64);
-        this.clientMinecraftVersion = buf.readUtf(32);
+        this(buf.readUtf(64), buf.readUtf(64), buf.readUtf(32));
     }
     
     public void encode(FriendlyByteBuf buf) {

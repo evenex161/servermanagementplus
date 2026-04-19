@@ -12,7 +12,7 @@ import java.util.UUID;
  * Packet sent from server to client with the list of pending offers for a specific listing.
  * Only sent to the listing owner.
  */
-public class SyncListingOffersPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncListingOffersPacket(String listingId, List<MineBayOffer> offers) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncListingOffersPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_listing_offers_packet"));
@@ -24,40 +24,36 @@ public class SyncListingOffersPacket implements net.minecraft.network.protocol.c
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String listingId;
-    private final List<MineBayOffer> offers;
-
-    public SyncListingOffersPacket(String listingId, List<MineBayOffer> offers) {
-        this.listingId = listingId;
-        this.offers = new ArrayList<>(offers);
+    public SyncListingOffersPacket {
+        offers = new ArrayList<>(offers);
+    }
+    public SyncListingOffersPacket(FriendlyByteBuf buf) {
+        this(buf.readUtf(36), decodeOffers(buf));
     }
 
-    public SyncListingOffersPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
+    private static List<MineBayOffer> decodeOffers(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        if (count < 0 || count > 50) count = 0; // Cap to prevent memory exhaustion
-        this.offers = new ArrayList<>();
+        if (count < 0 || count > 50) count = 0;
+        List<MineBayOffer> offers = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String offerId = buf.readUtf(36);
             UUID buyerId = buf.readUUID();
             String buyerName = buf.readUtf(16);
             double moneyOffer = buf.readDouble();
             long timestamp = buf.readLong();
-
             int itemCount = buf.readInt();
-            if (itemCount < 0 || itemCount > 27) itemCount = 0; // Cap items per offer
+            if (itemCount < 0 || itemCount > 27) itemCount = 0;
             List<ItemStack> items = new ArrayList<>();
             for (int j = 0; j < itemCount; j++) {
                 items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode(
                     (net.minecraft.network.RegistryFriendlyByteBuf) buf));
             }
-
-            MineBayOffer offer = new MineBayOffer(listingId, buyerId, buyerName, moneyOffer, items);
+            MineBayOffer offer = new MineBayOffer("", buyerId, buyerName, moneyOffer, items);
             offer.setOfferId(offerId);
             offer.setCreatedTimestamp(timestamp);
-            this.offers.add(offer);
+            offers.add(offer);
         }
+        return offers;
     }
 
         public void encode(FriendlyByteBuf buf) {

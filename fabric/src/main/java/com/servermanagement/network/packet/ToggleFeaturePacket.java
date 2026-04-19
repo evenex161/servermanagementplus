@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class ToggleFeaturePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ToggleFeaturePacket(String featureId, boolean enabled, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ToggleFeaturePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "toggle_feature_packet"));
@@ -15,21 +15,8 @@ public class ToggleFeaturePacket implements net.minecraft.network.protocol.commo
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String featureId;
-    private final boolean enabled;
-    private final long clientTick;
-
-    public ToggleFeaturePacket(String featureId, boolean enabled, long clientTick) {
-        this.featureId = featureId;
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
-
     public ToggleFeaturePacket(FriendlyByteBuf buf) {
-        this.featureId = buf.readUtf(64);
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(64), buf.readBoolean(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -15,7 +15,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Client → Server: updates a single performance setting identified by key.
  * Supports both boolean toggles and numeric values (sent as String).
  */
-public class UpdatePerformanceSettingPacket implements CustomPacketPayload {
+public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<UpdatePerformanceSettingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "update_performance_setting"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, UpdatePerformanceSettingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), UpdatePerformanceSettingPacket::new);
 
@@ -23,20 +23,8 @@ public class UpdatePerformanceSettingPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
 
-    private final String settingKey;
-    private final String value;
-    private final long clientTick;
-
-    public UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) {
-        this.settingKey = settingKey;
-        this.value = value;
-        this.clientTick = clientTick;
-    }
-
     public UpdatePerformanceSettingPacket(FriendlyByteBuf buf) {
-        this.settingKey = buf.readUtf(128);
-        this.value = buf.readUtf(128);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(128), buf.readUtf(128), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

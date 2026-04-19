@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class WMToggleTabIsolationPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record WMToggleTabIsolationPacket(boolean enabled, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMToggleTabIsolationPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_tab_isolation_packet"));
@@ -15,18 +15,8 @@ public class WMToggleTabIsolationPacket implements net.minecraft.network.protoco
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final boolean enabled;
-    private final long clientTick;
-
-    public WMToggleTabIsolationPacket(boolean enabled, long clientTick) {
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
-
     public WMToggleTabIsolationPacket(FriendlyByteBuf buf) {
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readBoolean(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -12,15 +12,10 @@ import java.util.function.Supplier;
 /**
  * Client-to-server packet for toggling a daily task template's enabled state
  */
-public class ToggleTemplatePacket implements IPacket {
-    private final String templateId;
-
-    public ToggleTemplatePacket(String templateId) {
-        this.templateId = templateId;
-    }
+public record ToggleTemplatePacket(String templateId) implements IPacket {
 
     public ToggleTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
+        this(buf.readUtf(64));
     }
 
     @Override

@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from server to client to sync bank inventory contents
  */
-public class SyncBankInventoryPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncBankInventoryPacket(CompoundTag inventoryData) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncBankInventoryPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_bank_inventory_packet"));
@@ -20,15 +20,11 @@ public class SyncBankInventoryPacket implements net.minecraft.network.protocol.c
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final CompoundTag inventoryData;
-    
     public SyncBankInventoryPacket(BankInventory inventory) {
-        this.inventoryData = inventory.toNBT();
+        this(inventory.toNBT());
     }
-    
     public SyncBankInventoryPacket(FriendlyByteBuf buf) {
-        this.inventoryData = buf.readNbt();
+        this(buf.readNbt());
     }
     
         public void encode(FriendlyByteBuf buf) {

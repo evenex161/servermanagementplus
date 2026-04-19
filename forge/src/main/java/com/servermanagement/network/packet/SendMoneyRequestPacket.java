@@ -18,22 +18,11 @@ import java.util.regex.Pattern;
 /**
  * Client → Server: Create a new money request
  */
-public class SendMoneyRequestPacket implements IPacket {
+public record SendMoneyRequestPacket(String targetPlayerName, double amount, String message) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String targetPlayerName;
-    private final double amount;
-    private final String message;
-
-    public SendMoneyRequestPacket(String targetPlayerName, double amount, String message) {
-        this.targetPlayerName = targetPlayerName;
-        this.amount = amount;
-        this.message = message;
-    }
 
     public SendMoneyRequestPacket(FriendlyByteBuf buf) {
-        this.targetPlayerName = buf.readUtf(16);
-        this.amount = buf.readDouble();
-        this.message = buf.readUtf(256);
+        this(buf.readUtf(16), buf.readDouble(), buf.readUtf(256));
     }
 
     @Override

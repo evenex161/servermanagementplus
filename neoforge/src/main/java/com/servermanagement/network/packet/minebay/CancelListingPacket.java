@@ -14,7 +14,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from client to server to cancel listing creation and return held item
  */
-public class CancelListingPacket implements CustomPacketPayload {
+public record CancelListingPacket() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<CancelListingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "cancel_listing"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CancelListingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), CancelListingPacket::new);
 
@@ -22,9 +22,9 @@ public class CancelListingPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     
-    public CancelListingPacket() {}
-    
-    public CancelListingPacket(FriendlyByteBuf buf) {}
+    public CancelListingPacket(FriendlyByteBuf buf) {
+        this();
+    }
     
         public void encode(FriendlyByteBuf buf) {
         // No data needed

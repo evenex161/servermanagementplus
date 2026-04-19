@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class SyncFeatureStatesPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncFeatureStatesPacket(Map<String, Boolean> featureStates) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncFeatureStatesPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_feature_states_packet"));
@@ -17,19 +17,17 @@ public class SyncFeatureStatesPacket implements net.minecraft.network.protocol.c
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final Map<String, Boolean> featureStates;
-
-    public SyncFeatureStatesPacket(Map<String, Boolean> featureStates) {
-        this.featureStates = featureStates;
+    public SyncFeatureStatesPacket(FriendlyByteBuf buf) {
+        this(decodeFeatureStates(buf));
     }
 
-    public SyncFeatureStatesPacket(FriendlyByteBuf buf) {
+    private static Map<String, Boolean> decodeFeatureStates(FriendlyByteBuf buf) {
         int size = buf.readInt();
-        this.featureStates = new HashMap<>();
+        Map<String, Boolean> map = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            featureStates.put(buf.readUtf(64), buf.readBoolean());
+            map.put(buf.readUtf(64), buf.readBoolean());
         }
+        return map;
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -20,6 +20,10 @@ public class TabListIsolationHandler {
     private static int tickCounter = 0;
     private static final int UPDATE_INTERVAL = 20; // Update every second
     
+    // Heartbeat: every 100 ticks (5 seconds), force a full resync to catch drift
+    private static int heartbeatCounter = 0;
+    private static final int HEARTBEAT_INTERVAL = 100;
+    
     // Track which players each player currently sees in their tab list
     private static final Map<UUID, Set<UUID>> previousVisiblePlayers = new HashMap<>();
     
@@ -84,6 +88,15 @@ public class TabListIsolationHandler {
         
         if (!isolationActive) {
             return;
+        }
+        
+        // Heartbeat: periodically clear cached state to force full resync,
+        // catching any drift from missed packets or edge cases
+        heartbeatCounter++;
+        if (heartbeatCounter >= HEARTBEAT_INTERVAL) {
+            heartbeatCounter = 0;
+            previousVisiblePlayers.clear();
+            ServerManagementMod.LOGGER.debug("Tab isolation heartbeat: forcing full resync");
         }
         
         applyIsolation(server, allPlayers);

@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class RequestWorldListPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record RequestWorldListPacket() implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RequestWorldListPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "request_world_list_packet"));
@@ -15,12 +15,8 @@ public class RequestWorldListPacket implements net.minecraft.network.protocol.co
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-
-    public RequestWorldListPacket() {
-    }
-
     public RequestWorldListPacket(FriendlyByteBuf buf) {
+        this();
     }
 
         public void encode(FriendlyByteBuf buf) {

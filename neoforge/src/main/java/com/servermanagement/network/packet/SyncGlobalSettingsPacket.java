@@ -12,24 +12,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Server-to-client packet that syncs global settings (chat/tab isolation)
  */
-public class SyncGlobalSettingsPacket implements CustomPacketPayload {
+public record SyncGlobalSettingsPacket(boolean chatIsolationEnabled, boolean tabIsolationEnabled) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncGlobalSettingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_global_settings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncGlobalSettingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncGlobalSettingsPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final boolean chatIsolationEnabled;
-    private final boolean tabIsolationEnabled;
-
-    public SyncGlobalSettingsPacket(boolean chatIsolationEnabled, boolean tabIsolationEnabled) {
-        this.chatIsolationEnabled = chatIsolationEnabled;
-        this.tabIsolationEnabled = tabIsolationEnabled;
-    }
 
     public SyncGlobalSettingsPacket(FriendlyByteBuf buf) {
-        this.chatIsolationEnabled = buf.readBoolean();
-        this.tabIsolationEnabled = buf.readBoolean();
+        this(buf.readBoolean(), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

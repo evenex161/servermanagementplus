@@ -71,7 +71,7 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
     // Forge's hack fix
-    implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
+    implementation(libs.jopt.simple) { version { strictly libs.versions.jopt.simple.get() } }
 }
 
 publishing {

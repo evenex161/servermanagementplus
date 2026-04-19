@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /**
  * Packet to sync daily tasks from server to client
  */
-public class SyncDailyTasksPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, int freeRewardAmount, long timeUntilFreeReward) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncDailyTasksPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_daily_tasks_packet"));
@@ -22,47 +22,26 @@ public class SyncDailyTasksPacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final List<DailyTask> tasks;
-    private final long resetTime;
-    private final boolean freeRewardAvailable;
-    private final int freeRewardAmount;
-    private final long timeUntilFreeReward;
-
-    public SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, 
-                                int freeRewardAmount, long timeUntilFreeReward) {
-        this.tasks = tasks;
-        this.resetTime = resetTime;
-        this.freeRewardAvailable = freeRewardAvailable;
-        this.freeRewardAmount = freeRewardAmount;
-        this.timeUntilFreeReward = timeUntilFreeReward;
+    public SyncDailyTasksPacket(FriendlyByteBuf buf) {
+        this(decodeTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong());
     }
 
-    public SyncDailyTasksPacket(FriendlyByteBuf buf) {
+    private static List<DailyTask> decodeTasks(FriendlyByteBuf buf) {
         int taskCount = buf.readInt();
-        this.tasks = new ArrayList<>();
-        
+        List<DailyTask> tasks = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            // Read task type
             TaskType type = TaskType.values()[buf.readInt()];
             int goal = buf.readInt();
             int progress = buf.readInt();
             boolean claimed = buf.readBoolean();
             int reward = buf.readInt();
             String description = buf.readUtf(256);
-            
-            // Create task
             DailyTask task = new DailyTask(type, goal, reward, description);
             task.setProgress(progress);
             task.setClaimed(claimed);
-            
-            this.tasks.add(task);
+            tasks.add(task);
         }
-        
-        this.resetTime = buf.readLong();
-        this.freeRewardAvailable = buf.readBoolean();
-        this.freeRewardAmount = buf.readInt();
-        this.timeUntilFreeReward = buf.readLong();
+        return tasks;
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -10,7 +10,7 @@ import java.util.UUID;
 /**
  * Packet to sync bank account data from server to client
  */
-public class SyncBankAccountPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncBankAccountPacket(double balance, List<Transaction> recentTransactions) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncBankAccountPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_bank_account_packet"));
@@ -22,20 +22,13 @@ public class SyncBankAccountPacket implements net.minecraft.network.protocol.com
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final double balance;
-    private final List<Transaction> recentTransactions;
-
-    public SyncBankAccountPacket(double balance, List<Transaction> recentTransactions) {
-        this.balance = balance;
-        this.recentTransactions = recentTransactions;
+    public SyncBankAccountPacket(FriendlyByteBuf buf) {
+        this(buf.readDouble(), decodeTransactions(buf));
     }
 
-    public SyncBankAccountPacket(FriendlyByteBuf buf) {
-        this.balance = buf.readDouble();
-        
+    private static List<Transaction> decodeTransactions(FriendlyByteBuf buf) {
         int transactionCount = buf.readInt();
-        this.recentTransactions = new ArrayList<>();
+        List<Transaction> list = new ArrayList<>();
         for (int i = 0; i < transactionCount; i++) {
             String typeName = buf.readUtf(64);
             double amount = buf.readDouble();
@@ -43,15 +36,15 @@ public class SyncBankAccountPacket implements net.minecraft.network.protocol.com
             String description = buf.readUtf(256);
             boolean hasOtherParty = buf.readBoolean();
             UUID otherParty = hasOtherParty ? buf.readUUID() : null;
-            
             TransactionType type;
             try {
                 type = TransactionType.valueOf(typeName);
             } catch (IllegalArgumentException e) {
-                type = TransactionType.ADMIN_GIVE; // fallback
+                type = TransactionType.ADMIN_GIVE;
             }
-            recentTransactions.add(new Transaction(type, amount, timestamp, description, otherParty));
+            list.add(new Transaction(type, amount, timestamp, description, otherParty));
         }
+        return list;
     }
 
         public void encode(FriendlyByteBuf buf) {

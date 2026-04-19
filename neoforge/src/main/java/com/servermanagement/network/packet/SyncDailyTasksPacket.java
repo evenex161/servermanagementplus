@@ -15,53 +15,16 @@ import java.util.List;
 /**
  * Packet to sync daily tasks from server to client
  */
-public class SyncDailyTasksPacket implements CustomPacketPayload {
+public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, int freeRewardAmount, long timeUntilFreeReward) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncDailyTasksPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_daily_tasks"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncDailyTasksPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncDailyTasksPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final List<DailyTask> tasks;
-    private final long resetTime;
-    private final boolean freeRewardAvailable;
-    private final int freeRewardAmount;
-    private final long timeUntilFreeReward;
-
-    public SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, 
-                                int freeRewardAmount, long timeUntilFreeReward) {
-        this.tasks = tasks;
-        this.resetTime = resetTime;
-        this.freeRewardAvailable = freeRewardAvailable;
-        this.freeRewardAmount = freeRewardAmount;
-        this.timeUntilFreeReward = timeUntilFreeReward;
-    }
 
     public SyncDailyTasksPacket(FriendlyByteBuf buf) {
-        int taskCount = buf.readInt();
-        this.tasks = new ArrayList<>();
-        
-        for (int i = 0; i < taskCount; i++) {
-            // Read task type
-            TaskType type = TaskType.values()[buf.readInt()];
-            int goal = buf.readInt();
-            int progress = buf.readInt();
-            boolean claimed = buf.readBoolean();
-            int reward = buf.readInt();
-            String description = buf.readUtf(256);
-            
-            // Create task
-            DailyTask task = new DailyTask(type, goal, reward, description);
-            task.setProgress(progress);
-            task.setClaimed(claimed);
-            
-            this.tasks.add(task);
-        }
-        
-        this.resetTime = buf.readLong();
-        this.freeRewardAvailable = buf.readBoolean();
-        this.freeRewardAmount = buf.readInt();
-        this.timeUntilFreeReward = buf.readLong();
+        this(decodeTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -92,5 +55,23 @@ public class SyncDailyTasksPacket implements CustomPacketPayload {
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
         });
         // packet handled
+    }
+
+    private static List<DailyTask> decodeTasks(FriendlyByteBuf buf) {
+        int taskCount = buf.readInt();
+        List<DailyTask> tasks = new ArrayList<>();
+        for (int i = 0; i < taskCount; i++) {
+            TaskType type = TaskType.values()[buf.readInt()];
+            int goal = buf.readInt();
+            int progress = buf.readInt();
+            boolean claimed = buf.readBoolean();
+            int reward = buf.readInt();
+            String description = buf.readUtf(256);
+            DailyTask task = new DailyTask(type, goal, reward, description);
+            task.setProgress(progress);
+            task.setClaimed(claimed);
+            tasks.add(task);
+        }
+        return tasks;
     }
 }

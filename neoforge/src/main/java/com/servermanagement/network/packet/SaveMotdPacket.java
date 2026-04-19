@@ -16,7 +16,7 @@ import org.slf4j.Logger;
  * Client → Server: Saves the edited MOTD text.
  * Requires admin permissions (OP level 2).
  */
-public class SaveMotdPacket implements CustomPacketPayload {
+public record SaveMotdPacket(String motdText) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SaveMotdPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_motd"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveMotdPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveMotdPacket::new);
 
@@ -26,14 +26,9 @@ public class SaveMotdPacket implements CustomPacketPayload {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final int MAX_MOTD_LENGTH = 512;
 
-    private final String motdText;
-
-    public SaveMotdPacket(String motdText) {
-        this.motdText = motdText;
-    }
 
     public SaveMotdPacket(FriendlyByteBuf buf) {
-        this.motdText = buf.readUtf(MAX_MOTD_LENGTH);
+        this(buf.readUtf(MAX_MOTD_LENGTH));
     }
 
         public void encode(FriendlyByteBuf buf) {

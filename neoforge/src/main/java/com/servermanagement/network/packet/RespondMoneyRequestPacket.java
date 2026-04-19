@@ -17,7 +17,7 @@ import java.util.UUID;
 /**
  * Client → Server: Respond to a money request (accept, deny, or cancel)
  */
-public class RespondMoneyRequestPacket implements CustomPacketPayload {
+public record RespondMoneyRequestPacket(UUID requestId, Action action) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<RespondMoneyRequestPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "respond_money_request"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RespondMoneyRequestPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RespondMoneyRequestPacket::new);
 
@@ -29,17 +29,9 @@ public class RespondMoneyRequestPacket implements CustomPacketPayload {
         ACCEPT, DENY, CANCEL
     }
 
-    private final UUID requestId;
-    private final Action action;
-
-    public RespondMoneyRequestPacket(UUID requestId, Action action) {
-        this.requestId = requestId;
-        this.action = action;
-    }
 
     public RespondMoneyRequestPacket(FriendlyByteBuf buf) {
-        this.requestId = buf.readUUID();
-        this.action = buf.readEnum(Action.class);
+        this(buf.readUUID(), buf.readEnum(Action.class));
     }
 
         public void encode(FriendlyByteBuf buf) {

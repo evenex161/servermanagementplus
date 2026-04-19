@@ -12,21 +12,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet for executing console commands from the in-game GUI
  */
-public class ConsoleCommandPacket implements CustomPacketPayload {
+public record ConsoleCommandPacket(String command) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ConsoleCommandPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "console_command"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ConsoleCommandPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ConsoleCommandPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String command;
-    
-    public ConsoleCommandPacket(String command) {
-        this.command = command;
-    }
     
     public ConsoleCommandPacket(FriendlyByteBuf buf) {
-        this.command = buf.readUtf(256);
+        this(buf.readUtf(256));
     }
     
         public void encode(FriendlyByteBuf buf) {

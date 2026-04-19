@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to place a gambling bet with an item
  */
-public class PlaceGamblingBetWithItemPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gameType, String gameOption) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PlaceGamblingBetWithItemPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "place_gambling_bet_with_item_packet"));
@@ -24,18 +24,8 @@ public class PlaceGamblingBetWithItemPacket implements net.minecraft.network.pro
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final PlaceGamblingBetPacket.GameType gameType;
-    private final String gameOption;
-    
-    public PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gameType, String gameOption) {
-        this.gameType = gameType;
-        this.gameOption = gameOption;
-    }
-    
     public PlaceGamblingBetWithItemPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(PlaceGamblingBetPacket.GameType.class);
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(PlaceGamblingBetPacket.GameType.class), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {

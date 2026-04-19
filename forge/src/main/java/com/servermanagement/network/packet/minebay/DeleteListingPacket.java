@@ -14,15 +14,10 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to delete an existing listing
  */
-public class DeleteListingPacket implements IPacket {
-    private final String listingId;
-    
-    public DeleteListingPacket(String listingId) {
-        this.listingId = listingId;
-    }
+public record DeleteListingPacket(String listingId) implements IPacket {
     
     public DeleteListingPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
+        this(buf.readUtf(36));
     }
     
     @Override

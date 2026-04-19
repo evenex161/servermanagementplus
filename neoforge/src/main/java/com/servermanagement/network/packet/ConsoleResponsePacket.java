@@ -12,21 +12,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Server-to-client packet that relays console command output
  */
-public class ConsoleResponsePacket implements CustomPacketPayload {
+public record ConsoleResponsePacket(String message) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ConsoleResponsePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "console_response"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ConsoleResponsePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ConsoleResponsePacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String message;
-
-    public ConsoleResponsePacket(String message) {
-        this.message = message;
-    }
 
     public ConsoleResponsePacket(FriendlyByteBuf buf) {
-        this.message = buf.readUtf(4096);
+        this(buf.readUtf(4096));
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.regex.Pattern;
 
-public class PMBanPlayerPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record PMBanPlayerPacket(String playerName, String reason, boolean banIP) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PMBanPlayerPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_ban_player_packet"));
@@ -17,20 +17,8 @@ public class PMBanPlayerPacket implements net.minecraft.network.protocol.common.
     }
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-    private final String reason;
-    private final boolean banIP;
-
-    public PMBanPlayerPacket(String playerName, String reason, boolean banIP) {
-        this.playerName = playerName;
-        this.reason = reason;
-        this.banIP = banIP;
-    }
-
     public PMBanPlayerPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
-        this.reason = buf.readUtf(256);
-        this.banIP = buf.readBoolean();
+        this(buf.readUtf(16), buf.readUtf(256), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

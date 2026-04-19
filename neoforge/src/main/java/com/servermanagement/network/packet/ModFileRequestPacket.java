@@ -14,27 +14,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from client to server to request the mod JAR file for OTA update.
  */
-public class ModFileRequestPacket implements CustomPacketPayload {
+public record ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ModFileRequestPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "mod_file_request"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ModFileRequestPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ModFileRequestPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String requestedVersion;
-    private final String clientVersion;
-    private final String clientMinecraftVersion;
-    
-    public ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) {
-        this.requestedVersion = requestedVersion;
-        this.clientVersion = clientVersion;
-        this.clientMinecraftVersion = clientMinecraftVersion;
-    }
     
     public ModFileRequestPacket(FriendlyByteBuf buf) {
-        this.requestedVersion = buf.readUtf(64);
-        this.clientVersion = buf.readUtf(64);
-        this.clientMinecraftVersion = buf.readUtf(32);
+        this(buf.readUtf(64), buf.readUtf(64), buf.readUtf(32));
     }
     
     public void encode(FriendlyByteBuf buf) {

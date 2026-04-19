@@ -5,24 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class WMSetTimerPacket implements IPacket {
-    private final String dimensionId;
-    private final int seconds;
-    private final String portalType; // "nether", "end", or "both"
-    private final long clientTick;
-
-    public WMSetTimerPacket(String dimensionId, int seconds, String portalType, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.seconds = seconds;
-        this.portalType = portalType;
-        this.clientTick = clientTick;
-    }
+public record WMSetTimerPacket(String dimensionId, int seconds, String portalType, long clientTick) implements IPacket {
 
     public WMSetTimerPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.seconds = buf.readInt();
-        this.portalType = buf.readUtf(32);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readInt(), buf.readUtf(32), buf.readLong());
     }
 
     @Override

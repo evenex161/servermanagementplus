@@ -9,29 +9,19 @@ import java.util.List;
 /**
  * Server-to-client packet that syncs the list of banned/whitelisted players.
  */
-public class PMSyncPlayerListsPacket implements IPacket {
-    private final List<String> bannedPlayers;
-    private final List<String> whitelistedPlayers;
-    private final boolean whitelistEnabled;
-
-    public PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> whitelistedPlayers, boolean whitelistEnabled) {
-        this.bannedPlayers = bannedPlayers;
-        this.whitelistedPlayers = whitelistedPlayers;
-        this.whitelistEnabled = whitelistEnabled;
-    }
+public record PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> whitelistedPlayers, boolean whitelistEnabled) implements IPacket {
 
     public PMSyncPlayerListsPacket(FriendlyByteBuf buf) {
-        int banCount = buf.readVarInt();
-        this.bannedPlayers = new ArrayList<>(banCount);
-        for (int i = 0; i < banCount; i++) {
-            this.bannedPlayers.add(buf.readUtf(16));
+        this(readStringList(buf, 16), readStringList(buf, 16), buf.readBoolean());
+    }
+
+    private static List<String> readStringList(FriendlyByteBuf buf, int maxLen) {
+        int count = buf.readVarInt();
+        List<String> list = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            list.add(buf.readUtf(maxLen));
         }
-        int whiteCount = buf.readVarInt();
-        this.whitelistedPlayers = new ArrayList<>(whiteCount);
-        for (int i = 0; i < whiteCount; i++) {
-            this.whitelistedPlayers.add(buf.readUtf(16));
-        }
-        this.whitelistEnabled = buf.readBoolean();
+        return list;
     }
 
     @Override
@@ -70,8 +60,4 @@ public class PMSyncPlayerListsPacket implements IPacket {
         });
         ctx.setPacketHandled(true);
     }
-
-    public List<String> getBannedPlayers() { return bannedPlayers; }
-    public List<String> getWhitelistedPlayers() { return whitelistedPlayers; }
-    public boolean isWhitelistEnabled() { return whitelistEnabled; }
 }

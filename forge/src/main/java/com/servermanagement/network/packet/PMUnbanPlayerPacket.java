@@ -5,16 +5,11 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.regex.Pattern;
 
-public class PMUnbanPlayerPacket implements IPacket {
+public record PMUnbanPlayerPacket(String playerName) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-
-    public PMUnbanPlayerPacket(String playerName) {
-        this.playerName = playerName;
-    }
 
     public PMUnbanPlayerPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
+        this(buf.readUtf(16));
     }
 
     @Override

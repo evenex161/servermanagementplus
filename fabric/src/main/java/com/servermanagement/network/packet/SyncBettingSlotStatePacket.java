@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 /**
  * Packet to sync MineStacks betting slot state from client to server
  */
-public class SyncBettingSlotStatePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncBettingSlotStatePacket(boolean bettingSlotActive) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncBettingSlotStatePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_betting_slot_state_packet"));
@@ -20,15 +20,8 @@ public class SyncBettingSlotStatePacket implements net.minecraft.network.protoco
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final boolean bettingSlotActive;
-    
-    public SyncBettingSlotStatePacket(boolean bettingSlotActive) {
-        this.bettingSlotActive = bettingSlotActive;
-    }
-    
     public SyncBettingSlotStatePacket(FriendlyByteBuf buf) {
-        this.bettingSlotActive = buf.readBoolean();
+        this(buf.readBoolean());
     }
     
         public void encode(FriendlyByteBuf buf) {

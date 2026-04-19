@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 /**
  * Server-to-client packet that syncs global settings (chat/tab isolation)
  */
-public class SyncGlobalSettingsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncGlobalSettingsPacket(boolean chatIsolationEnabled, boolean tabIsolationEnabled) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncGlobalSettingsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_global_settings_packet"));
@@ -19,18 +19,8 @@ public class SyncGlobalSettingsPacket implements net.minecraft.network.protocol.
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final boolean chatIsolationEnabled;
-    private final boolean tabIsolationEnabled;
-
-    public SyncGlobalSettingsPacket(boolean chatIsolationEnabled, boolean tabIsolationEnabled) {
-        this.chatIsolationEnabled = chatIsolationEnabled;
-        this.tabIsolationEnabled = tabIsolationEnabled;
-    }
-
     public SyncGlobalSettingsPacket(FriendlyByteBuf buf) {
-        this.chatIsolationEnabled = buf.readBoolean();
-        this.tabIsolationEnabled = buf.readBoolean();
+        this(buf.readBoolean(), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

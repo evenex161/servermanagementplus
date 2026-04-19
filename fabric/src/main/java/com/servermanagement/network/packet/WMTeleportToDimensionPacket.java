@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class WMTeleportToDimensionPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record WMTeleportToDimensionPacket(String dimensionId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMTeleportToDimensionPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_teleport_to_dimension_packet"));
@@ -15,15 +15,8 @@ public class WMTeleportToDimensionPacket implements net.minecraft.network.protoc
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String dimensionId;
-
-    public WMTeleportToDimensionPacket(String dimensionId) {
-        this.dimensionId = dimensionId;
-    }
-
     public WMTeleportToDimensionPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
+        this(buf.readUtf(256));
     }
 
         public void encode(FriendlyByteBuf buf) {

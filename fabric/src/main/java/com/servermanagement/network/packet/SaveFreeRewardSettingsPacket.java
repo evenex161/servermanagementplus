@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /**
  * Client-to-server packet for saving free reward settings
  */
-public class SaveFreeRewardSettingsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SaveFreeRewardSettingsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "save_free_reward_settings_packet"));
@@ -22,21 +22,11 @@ public class SaveFreeRewardSettingsPacket implements net.minecraft.network.proto
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final int rewardAmount;
-    private final int cooldownHours;
-    private final ItemStack rewardItem;
-
-    public SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) {
-        this.rewardAmount = rewardAmount;
-        this.cooldownHours = cooldownHours;
-        this.rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
+    public SaveFreeRewardSettingsPacket {
+        if (rewardItem == null) rewardItem = ItemStack.EMPTY;
     }
-
     public SaveFreeRewardSettingsPacket(FriendlyByteBuf buf) {
-        this.rewardAmount = buf.readInt();
-        this.cooldownHours = buf.readInt();
-        this.rewardItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
+        this(buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
     }
 
         public void encode(FriendlyByteBuf buf) {

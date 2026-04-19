@@ -14,21 +14,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Client-to-server packet for deleting a daily task template
  */
-public class DeleteTemplatePacket implements CustomPacketPayload {
+public record DeleteTemplatePacket(String templateId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<DeleteTemplatePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "delete_template"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, DeleteTemplatePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), DeleteTemplatePacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String templateId;
-
-    public DeleteTemplatePacket(String templateId) {
-        this.templateId = templateId;
-    }
 
     public DeleteTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
+        this(buf.readUtf(64));
     }
 
         public void encode(FriendlyByteBuf buf) {

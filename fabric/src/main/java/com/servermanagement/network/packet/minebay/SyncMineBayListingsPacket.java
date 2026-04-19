@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from server to client to sync active MineBay listings
  */
-public class SyncMineBayListingsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncMineBayListingsPacket(List<MineBayListing> listings) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncMineBayListingsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_mine_bay_listings_packet"));
@@ -25,19 +25,17 @@ public class SyncMineBayListingsPacket implements net.minecraft.network.protocol
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final List<MineBayListing> listings;
-    
-    public SyncMineBayListingsPacket(List<MineBayListing> listings) {
-        this.listings = new ArrayList<>(listings);
+    public SyncMineBayListingsPacket {
+        listings = new ArrayList<>(listings);
     }
-    
     public SyncMineBayListingsPacket(FriendlyByteBuf buf) {
+        this(decodeListings(buf));
+    }
+
+    private static List<MineBayListing> decodeListings(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        this.listings = new ArrayList<>();
-        
+        List<MineBayListing> listings = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            // Read listing data
             String listingId = buf.readUtf(36);
             UUID sellerId = buf.readUUID();
             String sellerName = buf.readUtf(16);
@@ -45,8 +43,6 @@ public class SyncMineBayListingsPacket implements net.minecraft.network.protocol
             double moneyPrice = buf.readDouble();
             long createdTime = buf.readLong();
             MineBayListing.OfferType offerType = buf.readEnum(MineBayListing.OfferType.class);
-            
-            // Read price items
             int priceItemCount = buf.readInt();
             List<PriceItemEntry> priceItems = new ArrayList<>();
             for (int j = 0; j < priceItemCount; j++) {
@@ -55,20 +51,16 @@ public class SyncMineBayListingsPacket implements net.minecraft.network.protocol
                 boolean useStacks = buf.readBoolean();
                 priceItems.add(new PriceItemEntry(priceItem, amount, useStacks));
             }
-            
-            // Read market pricing data
             double baseMarketPrice = buf.readDouble();
             double marginPercent = buf.readDouble();
             int pendingOfferCount = buf.readInt();
-            
-            // Create listing
             MineBayListing listing = new MineBayListing(sellerId, sellerName, itemOffered, moneyPrice, baseMarketPrice, marginPercent, priceItems, offerType);
             listing.setListingId(listingId);
             listing.setCreatedTime(createdTime);
             listing.setPendingOfferCount(pendingOfferCount);
-            
-            this.listings.add(listing);
+            listings.add(listing);
         }
+        return listings;
     }
     
         public void encode(FriendlyByteBuf buf) {

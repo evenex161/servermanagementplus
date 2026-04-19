@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * Server → Client: Syncs the current MOTD text before opening the editor.
  */
-public class SyncMotdPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncMotdPacket(String motdText) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncMotdPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_motd_packet"));
@@ -17,15 +17,8 @@ public class SyncMotdPacket implements net.minecraft.network.protocol.common.cus
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final String motdText;
-
-    public SyncMotdPacket(String motdText) {
-        this.motdText = motdText;
-    }
-
     public SyncMotdPacket(FriendlyByteBuf buf) {
-        this.motdText = buf.readUtf(32767);
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {

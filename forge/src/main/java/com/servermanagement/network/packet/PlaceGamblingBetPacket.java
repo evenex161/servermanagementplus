@@ -17,34 +17,22 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to place a gambling bet
  */
-public class PlaceGamblingBetPacket implements IPacket {
+public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String gameOption) implements IPacket {
     private static final ScheduledExecutorService DELAYED_EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "ServerManagement-GamblingDelay");
         t.setDaemon(true);
         return t;
     });
 
-    private final GameType gameType;
-    private final double betAmount;
-    private final String gameOption; // e.g., "heads", "HIGH", "RED", etc.
-    
     public enum GameType {
         COIN_FLIP,
         DICE_ROLL,
         SLOT_MACHINE,
         ROULETTE
     }
-    
-    public PlaceGamblingBetPacket(GameType gameType, double betAmount, String gameOption) {
-        this.gameType = gameType;
-        this.betAmount = betAmount;
-        this.gameOption = gameOption;
-    }
-    
+
     public PlaceGamblingBetPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(GameType.class);
-        this.betAmount = buf.readDouble();
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(GameType.class), buf.readDouble(), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {

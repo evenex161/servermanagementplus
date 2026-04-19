@@ -8,21 +8,16 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class SyncAutoShowPacket implements CustomPacketPayload {
+public record SyncAutoShowPacket(boolean autoShow) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncAutoShowPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_auto_show"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncAutoShowPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncAutoShowPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final boolean autoShow;
-
-    public SyncAutoShowPacket(boolean autoShow) {
-        this.autoShow = autoShow;
-    }
 
     public SyncAutoShowPacket(FriendlyByteBuf buf) {
-        this.autoShow = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -9,7 +9,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.regex.Pattern;
 
-public class PMUnbanPlayerPacket implements CustomPacketPayload {
+public record PMUnbanPlayerPacket(String playerName) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PMUnbanPlayerPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_unban_player"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PMUnbanPlayerPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PMUnbanPlayerPacket::new);
 
@@ -17,14 +17,10 @@ public class PMUnbanPlayerPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
 
-    public PMUnbanPlayerPacket(String playerName) {
-        this.playerName = playerName;
-    }
 
     public PMUnbanPlayerPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
+        this(buf.readUtf(16));
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class SyncAutoShowPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncAutoShowPacket(boolean autoShow) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncAutoShowPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_auto_show_packet"));
@@ -15,15 +15,8 @@ public class SyncAutoShowPacket implements net.minecraft.network.protocol.common
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final boolean autoShow;
-
-    public SyncAutoShowPacket(boolean autoShow) {
-        this.autoShow = autoShow;
-    }
-
     public SyncAutoShowPacket(FriendlyByteBuf buf) {
-        this.autoShow = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

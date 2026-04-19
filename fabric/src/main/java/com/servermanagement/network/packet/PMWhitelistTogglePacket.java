@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * Client-to-server packet to toggle whitelist enforcement on/off.
  */
-public class PMWhitelistTogglePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record PMWhitelistTogglePacket(boolean enabled) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PMWhitelistTogglePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_whitelist_toggle_packet"));
@@ -16,15 +16,8 @@ public class PMWhitelistTogglePacket implements net.minecraft.network.protocol.c
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final boolean enabled;
-
-    public PMWhitelistTogglePacket(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public PMWhitelistTogglePacket(FriendlyByteBuf buf) {
-        this.enabled = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

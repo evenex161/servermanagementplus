@@ -15,27 +15,20 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Client-to-server packet for saving free reward settings
  */
-public class SaveFreeRewardSettingsPacket implements CustomPacketPayload {
+public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SaveFreeRewardSettingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_free_reward_settings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveFreeRewardSettingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveFreeRewardSettingsPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final int rewardAmount;
-    private final int cooldownHours;
-    private final ItemStack rewardItem;
 
-    public SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) {
-        this.rewardAmount = rewardAmount;
-        this.cooldownHours = cooldownHours;
-        this.rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
+    public SaveFreeRewardSettingsPacket {
+        rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
     }
 
     public SaveFreeRewardSettingsPacket(FriendlyByteBuf buf) {
-        this.rewardAmount = buf.readInt();
-        this.cooldownHours = buf.readInt();
-        this.rewardItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
+        this(buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
     }
 
         public void encode(FriendlyByteBuf buf) {

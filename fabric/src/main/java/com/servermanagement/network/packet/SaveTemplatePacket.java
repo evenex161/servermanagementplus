@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 /**
  * Client-to-server packet for creating or updating a daily task template
  */
-public class SaveTemplatePacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description, int goal, int rewardAmount, ItemStack rewardItem) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SaveTemplatePacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "save_template_packet"));
@@ -24,31 +24,12 @@ public class SaveTemplatePacket implements net.minecraft.network.protocol.common
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
-    }
-
-    private final String templateId; // empty for new template
-    private final int taskTypeOrdinal;
-    private final String description;
-    private final int goal;
-    private final int rewardAmount;
-    private final ItemStack rewardItem;
-
+    }// empty for new template
     public SaveTemplatePacket(String templateId, TaskType taskType, String description, int goal, int rewardAmount, ItemStack rewardItem) {
-        this.templateId = templateId != null ? templateId : "";
-        this.taskTypeOrdinal = taskType.ordinal();
-        this.description = description;
-        this.goal = goal;
-        this.rewardAmount = rewardAmount;
-        this.rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
+        this(templateId != null ? templateId : "", taskType.ordinal(), description, goal, rewardAmount, rewardItem != null ? rewardItem : ItemStack.EMPTY);
     }
-
     public SaveTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
-        this.taskTypeOrdinal = buf.readInt();
-        this.description = buf.readUtf(100);
-        this.goal = buf.readInt();
-        this.rewardAmount = buf.readInt();
-        this.rewardItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
+        this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
     }
 
         public void encode(FriendlyByteBuf buf) {

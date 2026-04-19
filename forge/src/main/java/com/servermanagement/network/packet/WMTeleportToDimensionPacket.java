@@ -5,15 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class WMTeleportToDimensionPacket implements IPacket {
-    private final String dimensionId;
-
-    public WMTeleportToDimensionPacket(String dimensionId) {
-        this.dimensionId = dimensionId;
-    }
+public record WMTeleportToDimensionPacket(String dimensionId) implements IPacket {
 
     public WMTeleportToDimensionPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
+        this(buf.readUtf(256));
     }
 
     @Override

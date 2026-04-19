@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class WMSetTimerPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record WMSetTimerPacket(String dimensionId, int seconds, String portalType, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMSetTimerPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_set_timer_packet"));
@@ -14,25 +14,9 @@ public class WMSetTimerPacket implements net.minecraft.network.protocol.common.c
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
-    }
-
-    private final String dimensionId;
-    private final int seconds;
-    private final String portalType; // "nether", "end", or "both"
-    private final long clientTick;
-
-    public WMSetTimerPacket(String dimensionId, int seconds, String portalType, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.seconds = seconds;
-        this.portalType = portalType;
-        this.clientTick = clientTick;
-    }
-
+    }// "nether", "end", or "both"
     public WMSetTimerPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.seconds = buf.readInt();
-        this.portalType = buf.readUtf(32);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readInt(), buf.readUtf(32), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

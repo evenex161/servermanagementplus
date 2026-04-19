@@ -17,24 +17,16 @@ import java.util.concurrent.TimeUnit;
 /**
  * Packet sent from client to server to place a gambling bet with an item
  */
-public class PlaceGamblingBetWithItemPacket implements CustomPacketPayload {
+public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gameType, String gameOption) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PlaceGamblingBetWithItemPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "place_gambling_bet_with_item"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PlaceGamblingBetWithItemPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PlaceGamblingBetWithItemPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final PlaceGamblingBetPacket.GameType gameType;
-    private final String gameOption;
-    
-    public PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gameType, String gameOption) {
-        this.gameType = gameType;
-        this.gameOption = gameOption;
-    }
     
     public PlaceGamblingBetWithItemPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(PlaceGamblingBetPacket.GameType.class);
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(PlaceGamblingBetPacket.GameType.class), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {

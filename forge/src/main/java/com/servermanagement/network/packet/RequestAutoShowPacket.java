@@ -5,12 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class RequestAutoShowPacket implements IPacket {
-
-    public RequestAutoShowPacket() {
-    }
+public record RequestAutoShowPacket() implements IPacket {
 
     public RequestAutoShowPacket(FriendlyByteBuf buf) {
+        this();
     }
 
     @Override

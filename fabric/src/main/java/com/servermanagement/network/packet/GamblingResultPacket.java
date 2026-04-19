@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from server to client with gambling result
  */
-public class GamblingResultPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record GamblingResultPacket(boolean won, double payout, String message) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<GamblingResultPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "gambling_result_packet"));
@@ -18,21 +18,8 @@ public class GamblingResultPacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final boolean won;
-    private final double payout;
-    private final String message;
-    
-    public GamblingResultPacket(boolean won, double payout, String message) {
-        this.won = won;
-        this.payout = payout;
-        this.message = message;
-    }
-    
     public GamblingResultPacket(FriendlyByteBuf buf) {
-        this.won = buf.readBoolean();
-        this.payout = buf.readDouble();
-        this.message = buf.readUtf(256);
+        this(buf.readBoolean(), buf.readDouble(), buf.readUtf(256));
     }
     
     public void encode(FriendlyByteBuf buf) {

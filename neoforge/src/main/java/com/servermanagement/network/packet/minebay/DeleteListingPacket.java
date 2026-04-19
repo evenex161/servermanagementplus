@@ -16,21 +16,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from client to server to delete an existing listing
  */
-public class DeleteListingPacket implements CustomPacketPayload {
+public record DeleteListingPacket(String listingId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<DeleteListingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "delete_listing"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, DeleteListingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), DeleteListingPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String listingId;
-    
-    public DeleteListingPacket(String listingId) {
-        this.listingId = listingId;
-    }
     
     public DeleteListingPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
+        this(buf.readUtf(36));
     }
     
         public void encode(FriendlyByteBuf buf) {

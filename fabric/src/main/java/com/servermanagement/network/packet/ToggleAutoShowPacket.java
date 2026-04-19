@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
-public class ToggleAutoShowPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ToggleAutoShowPacket(boolean autoShow) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ToggleAutoShowPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "toggle_auto_show_packet"));
@@ -15,15 +15,8 @@ public class ToggleAutoShowPacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final boolean autoShow;
-
-    public ToggleAutoShowPacket(boolean autoShow) {
-        this.autoShow = autoShow;
-    }
-
     public ToggleAutoShowPacket(FriendlyByteBuf buf) {
-        this.autoShow = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

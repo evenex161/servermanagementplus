@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 /**
  * Client → Server: Respond to a money request (accept, deny, or cancel)
  */
-public class RespondMoneyRequestPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record RespondMoneyRequestPacket(UUID requestId, Action action) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RespondMoneyRequestPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "respond_money_request_packet"));
@@ -29,18 +29,8 @@ public class RespondMoneyRequestPacket implements net.minecraft.network.protocol
     public enum Action {
         ACCEPT, DENY, CANCEL
     }
-
-    private final UUID requestId;
-    private final Action action;
-
-    public RespondMoneyRequestPacket(UUID requestId, Action action) {
-        this.requestId = requestId;
-        this.action = action;
-    }
-
     public RespondMoneyRequestPacket(FriendlyByteBuf buf) {
-        this.requestId = buf.readUUID();
-        this.action = buf.readEnum(Action.class);
+        this(buf.readUUID(), buf.readEnum(Action.class));
     }
 
         public void encode(FriendlyByteBuf buf) {

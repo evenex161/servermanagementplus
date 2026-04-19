@@ -23,32 +23,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from client to server when a player makes an offer on a NEGOTIABLE listing
  */
-public class CreateOfferPacket implements CustomPacketPayload {
+public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<CreateOfferPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "create_offer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateOfferPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateOfferPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String listingId;
-    private final double moneyOffer;
-    private final List<ItemStack> itemOffers;
-    
-    public CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) {
-        this.listingId = listingId;
-        this.moneyOffer = moneyOffer;
-        this.itemOffers = itemOffers;
-    }
     
     public CreateOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.moneyOffer = Math.max(0.0, buf.readDouble()); // Clamp negative values
-        int itemCount = buf.readInt();
-        if (itemCount < 0 || itemCount > 27) itemCount = 0; // Cap to prevent memory exhaustion
-        this.itemOffers = new ArrayList<>();
-        for (int i = 0; i < itemCount; i++) {
-            this.itemOffers.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
-        }
+        this(buf.readUtf(36), Math.max(0.0, buf.readDouble()), decodeItemOffers(buf));
     }
     
         public void encode(FriendlyByteBuf buf) {
@@ -194,5 +178,15 @@ public class CreateOfferPacket implements CustomPacketPayload {
             }
         });
         // packet handled
+    }
+
+    private static List<ItemStack> decodeItemOffers(FriendlyByteBuf buf) {
+        int itemCount = buf.readInt();
+        if (itemCount < 0 || itemCount > 27) itemCount = 0;
+        List<ItemStack> items = new ArrayList<>();
+        for (int i = 0; i < itemCount; i++) {
+            items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        }
+        return items;
     }
 }

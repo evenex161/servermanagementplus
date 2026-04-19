@@ -6,15 +6,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 /**
  * Client-to-server packet to toggle whitelist enforcement on/off.
  */
-public class PMWhitelistTogglePacket implements IPacket {
-    private final boolean enabled;
-
-    public PMWhitelistTogglePacket(boolean enabled) {
-        this.enabled = enabled;
-    }
+public record PMWhitelistTogglePacket(boolean enabled) implements IPacket {
 
     public PMWhitelistTogglePacket(FriendlyByteBuf buf) {
-        this.enabled = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
     @Override

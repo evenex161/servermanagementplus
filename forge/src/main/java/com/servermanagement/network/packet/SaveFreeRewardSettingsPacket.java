@@ -12,10 +12,7 @@ import java.util.function.Supplier;
 /**
  * Client-to-server packet for saving free reward settings
  */
-public class SaveFreeRewardSettingsPacket implements IPacket {
-    private final int rewardAmount;
-    private final int cooldownHours;
-    private final ItemStack rewardItem;
+public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) implements IPacket {
 
     public SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) {
         this.rewardAmount = rewardAmount;
@@ -24,9 +21,7 @@ public class SaveFreeRewardSettingsPacket implements IPacket {
     }
 
     public SaveFreeRewardSettingsPacket(FriendlyByteBuf buf) {
-        this.rewardAmount = buf.readInt();
-        this.cooldownHours = buf.readInt();
-        this.rewardItem = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
+        this(buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
     }
 
     @Override

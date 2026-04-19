@@ -22,24 +22,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server when a seller accepts an offer.
  * Items and money are already escrowed at offer creation time via CreateOfferPacket.
  */
-public class AcceptOfferPacket implements CustomPacketPayload {
+public record AcceptOfferPacket(String listingId, String offerId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<AcceptOfferPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "accept_offer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, AcceptOfferPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), AcceptOfferPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String listingId;
-    private final String offerId;
-    
-    public AcceptOfferPacket(String listingId, String offerId) {
-        this.listingId = listingId;
-        this.offerId = offerId;
-    }
     
     public AcceptOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.offerId = buf.readUtf(36);
+        this(buf.readUtf(36), buf.readUtf(36));
     }
     
         public void encode(FriendlyByteBuf buf) {

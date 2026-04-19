@@ -5,22 +5,11 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.regex.Pattern;
 
-public class PMBanPlayerPacket implements IPacket {
+public record PMBanPlayerPacket(String playerName, String reason, boolean banIP) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-    private final String reason;
-    private final boolean banIP;
-
-    public PMBanPlayerPacket(String playerName, String reason, boolean banIP) {
-        this.playerName = playerName;
-        this.reason = reason;
-        this.banIP = banIP;
-    }
 
     public PMBanPlayerPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
-        this.reason = buf.readUtf(256);
-        this.banIP = buf.readBoolean();
+        this(buf.readUtf(16), buf.readUtf(256), buf.readBoolean());
     }
 
     @Override

@@ -11,27 +11,10 @@ import java.util.function.Supplier;
  * Packet sent from server to client when mod file transfer is complete.
  * Signals client to verify and install the update.
  */
-public class ModFileCompletePacket implements IPacket {
-    private final String fileHash;
-    private final long fileSize;
-    private final String version;
-    private final boolean success;
-    private final String message;
-    
-    public ModFileCompletePacket(String fileHash, long fileSize, String version, boolean success, String message) {
-        this.fileHash = fileHash;
-        this.fileSize = fileSize;
-        this.version = version;
-        this.success = success;
-        this.message = message;
-    }
-    
+public record ModFileCompletePacket(String fileHash, long fileSize, String version, boolean success, String message) implements IPacket {
+
     public ModFileCompletePacket(FriendlyByteBuf buf) {
-        this.fileHash = buf.readUtf(128);
-        this.fileSize = buf.readLong();
-        this.version = buf.readUtf(64);
-        this.success = buf.readBoolean();
-        this.message = buf.readUtf(256);
+        this(buf.readUtf(128), buf.readLong(), buf.readUtf(64), buf.readBoolean(), buf.readUtf(256));
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -61,25 +44,5 @@ public class ModFileCompletePacket implements IPacket {
             }
         });
         context.setPacketHandled(true);
-    }
-    
-    public String getFileHash() {
-        return fileHash;
-    }
-    
-    public long getFileSize() {
-        return fileSize;
-    }
-    
-    public String getVersion() {
-        return version;
-    }
-    
-    public boolean isSuccess() {
-        return success;
-    }
-    
-    public String getMessage() {
-        return message;
     }
 }

@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Server-to-client packet that syncs the list of banned/whitelisted players.
  */
-public class PMSyncPlayerListsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> whitelistedPlayers, boolean whitelistEnabled) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PMSyncPlayerListsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_sync_player_lists_packet"));
@@ -19,29 +19,17 @@ public class PMSyncPlayerListsPacket implements net.minecraft.network.protocol.c
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final List<String> bannedPlayers;
-    private final List<String> whitelistedPlayers;
-    private final boolean whitelistEnabled;
-
-    public PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> whitelistedPlayers, boolean whitelistEnabled) {
-        this.bannedPlayers = bannedPlayers;
-        this.whitelistedPlayers = whitelistedPlayers;
-        this.whitelistEnabled = whitelistEnabled;
+    public PMSyncPlayerListsPacket(FriendlyByteBuf buf) {
+        this(decodeStringList(buf), decodeStringList(buf), buf.readBoolean());
     }
 
-    public PMSyncPlayerListsPacket(FriendlyByteBuf buf) {
-        int banCount = buf.readVarInt();
-        this.bannedPlayers = new ArrayList<>(banCount);
-        for (int i = 0; i < banCount; i++) {
-            this.bannedPlayers.add(buf.readUtf(16));
+    private static List<String> decodeStringList(FriendlyByteBuf buf) {
+        int count = buf.readVarInt();
+        List<String> list = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            list.add(buf.readUtf(16));
         }
-        int whiteCount = buf.readVarInt();
-        this.whitelistedPlayers = new ArrayList<>(whiteCount);
-        for (int i = 0; i < whiteCount; i++) {
-            this.whitelistedPlayers.add(buf.readUtf(16));
-        }
-        this.whitelistEnabled = buf.readBoolean();
+        return list;
     }
 
         public void encode(FriendlyByteBuf buf) {

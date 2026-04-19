@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to claim a daily task reward
  */
-public class ClaimDailyTaskPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record ClaimDailyTaskPacket(int taskIndex) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ClaimDailyTaskPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_daily_task_packet"));
@@ -26,15 +26,8 @@ public class ClaimDailyTaskPacket implements net.minecraft.network.protocol.comm
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final int taskIndex;
-
-    public ClaimDailyTaskPacket(int taskIndex) {
-        this.taskIndex = taskIndex;
-    }
-
     public ClaimDailyTaskPacket(FriendlyByteBuf buf) {
-        this.taskIndex = buf.readInt();
+        this(buf.readInt());
     }
 
         public void encode(FriendlyByteBuf buf) {

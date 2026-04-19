@@ -1,7 +1,7 @@
 # Changelog — ServerManagement+ v2.1.0
 
 **Release Date:** April 19, 2026  
-**Minecraft:** 1.21.1 | **Forge:** 52.1.0 | **NeoForge:** 21.1.80 | **Fabric API:** 0.109.0+1.21.1 | **Branch:** `mc/1.21.1-forge`
+**Minecraft:** 1.21.1 | **Forge:** 52.1.0 | **NeoForge:** 21.1.80 | **Fabric API:** 0.116.1+1.21.1 | **Branch:** `mc/1.21.1-forge`
 
 ---
 
@@ -20,11 +20,12 @@ Migrated the entire project from a single-module Forge setup to the **jaredlll08
 - **`common/`** — Platform-agnostic code (`Constants`, `Services`, `IPlatformHelper` interface)
 - **`forge/`** — Full Forge implementation (254 Java files) — Forge 52.1.0, ForgeGradle [6.0.24,6.2)
 - **`neoforge/`** — Complete NeoForge port (254 files) — NeoForge 21.1.80, ModDevGradle 2.0.49-beta
-- **`fabric/`** — Complete Fabric port (254 files) — Fabric API 0.109.0+1.21.1, Loader 0.16.9, fabric-loom 1.8-SNAPSHOT
+- **`fabric/`** — Complete Fabric port (254 files) — Fabric API 0.116.1+1.21.1, Loader 0.18.1, fabric-loom 1.9.2
 - Old `src/main/` deleted (256 files relocated to `forge/` subproject)
 
 ### Build System
-- Gradle 8.10 with ForgeGradle, ModDevGradle, and fabric-loom plugins managed via `buildSrc` convention plugins
+- Gradle 8.11 with ForgeGradle, ModDevGradle, and fabric-loom plugins managed via `buildSrc` convention plugins
+- **Version catalog** (`gradle/libs.versions.toml`) for centralized dependency management
 - Platform abstraction via Java `ServiceLoader` (`IPlatformHelper` interface)
 - Common module uses NeoForm 1.21.1-20240808.144430 with Parchment 2024.11.10 mappings
 - All three loaders build independently, producing separate JARs
@@ -48,6 +49,37 @@ Migrated the entire project from a single-module Forge setup to the **jaredlll08
 - Run directories: `<loader>/runs/client/` and `<loader>/runs/server/`
 
 **Note:** NeoForge and Fabric ports compile successfully but are not yet runtime-tested. Forge remains the primary development target.
+
+---
+
+## Technical Improvements
+
+### Versioning Standards
+- Upgraded Gradle wrapper from 8.10 to **8.11**
+- Bumped Fabric Loader from 0.16.9 to **0.18.1**
+- Bumped Fabric API from 0.109.0+1.21.1 to **0.116.1+1.21.1**
+- Upgraded fabric-loom from 1.8-SNAPSHOT to **1.9.2** (stable)
+- Created **Gradle version catalog** (`gradle/libs.versions.toml`) centralizing all dependency versions, plugins, and library aliases across all subprojects
+
+### Record-Based Networking
+- Converted all **216 packet classes** (72 per module × 3 modules) from regular Java classes to **Java records**
+- Eliminates boilerplate: explicit field declarations, canonical constructors, and getter methods replaced by record component declarations
+- `FriendlyByteBuf` decode constructors now delegate to canonical constructors with `this(buf.readX(), ...)`
+- Static constants (`TYPE`, `STREAM_CODEC`, `Pattern`, etc.) preserved in record bodies
+- Complex decode logic extracted to static helper methods where needed
+- Packet behavior (encode/handle) and inner types (enums, nested records) remain unchanged
+
+### Virtual Threading (AsyncSaveScheduler)
+- Refactored `AsyncSaveScheduler` across all 3 modules to use Java 21 **virtual threads** for save I/O operations
+- Architecture: single-thread `ScheduledExecutorService` handles debounce timing only; actual disk I/O dispatched to `Executors.newVirtualThreadPerTaskExecutor()`
+- Reduces platform thread overhead for concurrent save operations — virtual threads are ideal for I/O-bound tasks
+- Removed unused `AtomicBoolean` import from all copies
+
+### Tab Isolation Heartbeat
+- Added **100-tick heartbeat** (5-second cycle) to `TabListIsolationHandler` across all 3 modules
+- Every 100 ticks, clears cached `previousVisiblePlayers` state and forces a full resync of listed/unlisted status
+- Catches edge-case drift where client tab list state diverges from server intent (e.g., missed packets, race conditions during rapid dimension changes)
+- Heartbeat counter resets after each full resync to avoid redundant resync in the same tick cycle
 
 ---
 

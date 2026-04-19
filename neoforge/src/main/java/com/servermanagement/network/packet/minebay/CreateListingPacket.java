@@ -18,44 +18,21 @@ import java.util.List;
 /**
  * Packet sent from client to server to create a new MineBay listing
  */
-public class CreateListingPacket implements CustomPacketPayload {
+public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent, MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<CreateListingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "create_listing"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateListingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateListingPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
-
-    private final ItemStack itemToSell;
-    private final double moneyPrice;
-    private final double marginPercent; // Seller's desired margin %
-    private final MineBayListing.OfferType offerType;
-    private final List<PriceItemEntry> priceItems;
+// Seller's desired margin %
     
-    public CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent, MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) {
-        this.itemToSell = itemToSell.copy();
-        this.moneyPrice = moneyPrice;
-        this.marginPercent = marginPercent;
-        this.offerType = offerType;
-        this.priceItems = new ArrayList<>(priceItems);
+    public CreateListingPacket {
+        itemToSell = itemToSell.copy();
+        priceItems = new ArrayList<>(priceItems);
     }
     
     public CreateListingPacket(FriendlyByteBuf buf) {
-        this.itemToSell = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
-        this.moneyPrice = buf.readDouble();
-        this.marginPercent = buf.readDouble();
-        this.offerType = buf.readEnum(MineBayListing.OfferType.class);
-        
-        // Read price items (capped to prevent OOM from malicious packets)
-        int priceItemCount = Math.min(buf.readInt(), 54);
-        this.priceItems = new ArrayList<>();
-        for (int i = 0; i < priceItemCount; i++) {
-            ItemStack itemStack = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
-            int amount = buf.readInt();
-            boolean useStacks = buf.readBoolean();
-            if (!itemStack.isEmpty()) {
-                this.priceItems.add(new PriceItemEntry(itemStack, amount, useStacks));
-            }
-        }
+        this(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf), buf.readDouble(), buf.readDouble(), buf.readEnum(MineBayListing.OfferType.class), decodePriceItems(buf));
     }
     
         public void encode(FriendlyByteBuf buf) {
@@ -162,5 +139,19 @@ public class CreateListingPacket implements CustomPacketPayload {
             }
         });
         // packet handled
+    }
+
+    private static List<PriceItemEntry> decodePriceItems(FriendlyByteBuf buf) {
+        int priceItemCount = Math.min(buf.readInt(), 54);
+        List<PriceItemEntry> priceItems = new ArrayList<>();
+        for (int i = 0; i < priceItemCount; i++) {
+            ItemStack itemStack = ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf);
+            int amount = buf.readInt();
+            boolean useStacks = buf.readBoolean();
+            if (!itemStack.isEmpty()) {
+                priceItems.add(new PriceItemEntry(itemStack, amount, useStacks));
+            }
+        }
+        return priceItems;
     }
 }

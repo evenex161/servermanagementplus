@@ -10,24 +10,19 @@ import java.util.function.Supplier;
 /**
  * Packet to sync achievements from server to client
  */
-public class SyncAchievementsPacket implements IPacket {
-    private final Set<String> earnedAchievements;
-    private final int totalRewards;
-
-    public SyncAchievementsPacket(Set<String> earnedAchievements, int totalRewards) {
-        this.earnedAchievements = earnedAchievements;
-        this.totalRewards = totalRewards;
-    }
+public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRewards) implements IPacket {
 
     public SyncAchievementsPacket(FriendlyByteBuf buf) {
+        this(readAchievements(buf), buf.readInt());
+    }
+
+    private static Set<String> readAchievements(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        this.earnedAchievements = new HashSet<>();
-        
+        Set<String> set = new HashSet<>();
         for (int i = 0; i < count; i++) {
-            this.earnedAchievements.add(buf.readUtf(128));
+            set.add(buf.readUtf(128));
         }
-        
-        this.totalRewards = buf.readInt();
+        return set;
     }
 
     @Override

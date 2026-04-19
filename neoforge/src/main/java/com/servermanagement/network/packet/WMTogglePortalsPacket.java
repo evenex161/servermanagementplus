@@ -8,30 +8,17 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class WMTogglePortalsPacket implements CustomPacketPayload {
+public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String portalType, long clientTick) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<WMTogglePortalsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_portals"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMTogglePortalsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMTogglePortalsPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
+// "nether", "end", or "both"
 
-    private final String dimensionId;
-    private final boolean enabled;
-    private final String portalType; // "nether", "end", or "both"
-    private final long clientTick;
-
-    public WMTogglePortalsPacket(String dimensionId, boolean enabled, String portalType, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.enabled = enabled;
-        this.portalType = portalType;
-        this.clientTick = clientTick;
-    }
 
     public WMTogglePortalsPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.enabled = buf.readBoolean();
-        this.portalType = buf.readUtf(32);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readBoolean(), buf.readUtf(32), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {

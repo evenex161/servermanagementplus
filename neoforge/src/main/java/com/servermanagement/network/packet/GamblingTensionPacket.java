@@ -12,15 +12,13 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from server to client to trigger gambling tension animation
  * Sent immediately when bet is placed, before the actual result
  */
-public class GamblingTensionPacket implements CustomPacketPayload {
+public record GamblingTensionPacket(GameType gameType, String gameOption) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<GamblingTensionPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "gambling_tension"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, GamblingTensionPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), GamblingTensionPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
-
-    private final GameType gameType;
-    private final String gameOption; // For specific animations (e.g., which roulette bet)
+// For specific animations (e.g., which roulette bet)
     
     public enum GameType {
         COIN_FLIP,
@@ -28,15 +26,10 @@ public class GamblingTensionPacket implements CustomPacketPayload {
         SLOT_MACHINE,
         ROULETTE
     }
-    
-    public GamblingTensionPacket(GameType gameType, String gameOption) {
-        this.gameType = gameType;
-        this.gameOption = gameOption;
-    }
+
     
     public GamblingTensionPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(GameType.class);
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(GameType.class), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {

@@ -11,21 +11,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Client-to-server packet to subscribe/unsubscribe from server log streaming.
  */
-public class ConsoleSubscribePacket implements CustomPacketPayload {
+public record ConsoleSubscribePacket(boolean subscribe) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ConsoleSubscribePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "console_subscribe"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ConsoleSubscribePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ConsoleSubscribePacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final boolean subscribe;
-
-    public ConsoleSubscribePacket(boolean subscribe) {
-        this.subscribe = subscribe;
-    }
 
     public ConsoleSubscribePacket(FriendlyByteBuf buf) {
-        this.subscribe = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

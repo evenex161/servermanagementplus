@@ -23,30 +23,22 @@ import java.util.Map;
  * Supports two payment modes: BALANCE (0) deducts from bank,
  * ITEMS (1) removes selected inventory items as payment.
  */
-public class PurchaseListingPacket implements IPacket {
-    private final String listingId;
-    private final int paymentMode; // 0=BALANCE, 1=ITEMS
-    private final int[] selectedSlots; // inventory slot indices for ITEMS mode
-    
-    public PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) {
-        this.listingId = listingId;
-        this.paymentMode = paymentMode;
-        this.selectedSlots = selectedSlots;
-    }
-    
+public record PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) implements IPacket {
+
     public PurchaseListingPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.paymentMode = buf.readByte();
+        this(buf.readUtf(36), buf.readByte(), readSlots(buf));
+    }
+
+    private static int[] readSlots(FriendlyByteBuf buf) {
         int slotCount = buf.readVarInt();
-        // Reject invalid slot counts to prevent buffer misalignment
         if (slotCount < 0 || slotCount > 36) {
-            this.selectedSlots = new int[0];
-            return;
+            return new int[0];
         }
-        this.selectedSlots = new int[slotCount];
+        int[] slots = new int[slotCount];
         for (int i = 0; i < slotCount; i++) {
-            this.selectedSlots[i] = buf.readVarInt();
+            slots[i] = buf.readVarInt();
         }
+        return slots;
     }
     
     @Override

@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to cancel listing creation and return held item
  */
-public class CancelListingPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record CancelListingPacket() implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<CancelListingPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "cancel_listing_packet"));
@@ -21,11 +21,9 @@ public class CancelListingPacket implements net.minecraft.network.protocol.commo
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    
-    public CancelListingPacket() {}
-    
-    public CancelListingPacket(FriendlyByteBuf buf) {}
+    public CancelListingPacket(FriendlyByteBuf buf) {
+        this();
+    }
     
         public void encode(FriendlyByteBuf buf) {
         // No data needed

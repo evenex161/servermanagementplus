@@ -5,24 +5,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
 
-public class WMTogglePortalsPacket implements IPacket {
-    private final String dimensionId;
-    private final boolean enabled;
-    private final String portalType; // "nether", "end", or "both"
-    private final long clientTick;
-
-    public WMTogglePortalsPacket(String dimensionId, boolean enabled, String portalType, long clientTick) {
-        this.dimensionId = dimensionId;
-        this.enabled = enabled;
-        this.portalType = portalType;
-        this.clientTick = clientTick;
-    }
+public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String portalType, long clientTick) implements IPacket {
 
     public WMTogglePortalsPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
-        this.enabled = buf.readBoolean();
-        this.portalType = buf.readUtf(32);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(256), buf.readBoolean(), buf.readUtf(32), buf.readLong());
     }
 
     @Override

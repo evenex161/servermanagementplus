@@ -14,23 +14,14 @@ import java.util.function.Supplier;
 /**
  * Client → Server: Respond to a money request (accept, deny, or cancel)
  */
-public class RespondMoneyRequestPacket implements IPacket {
+public record RespondMoneyRequestPacket(UUID requestId, Action action) implements IPacket {
     
     public enum Action {
         ACCEPT, DENY, CANCEL
     }
 
-    private final UUID requestId;
-    private final Action action;
-
-    public RespondMoneyRequestPacket(UUID requestId, Action action) {
-        this.requestId = requestId;
-        this.action = action;
-    }
-
     public RespondMoneyRequestPacket(FriendlyByteBuf buf) {
-        this.requestId = buf.readUUID();
-        this.action = buf.readEnum(Action.class);
+        this(buf.readUUID(), buf.readEnum(Action.class));
     }
 
     @Override

@@ -184,8 +184,8 @@ public class ModFileTransferManager {
                 ModFileChunkPacket packet = new ModFileChunkPacket(
                     chunkIndex,
                     totalChunks,
-                    chunkData,
-                    session.fileHash
+                    session.fileHash,
+                    chunkData
                 );
                 
                 // Abort early if player disconnected (avoid wasting I/O and bandwidth)

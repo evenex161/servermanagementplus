@@ -6,12 +6,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 /**
  * Client-to-server packet requesting the banned/whitelisted player lists.
  */
-public class PMRequestPlayerListsPacket implements IPacket {
-
-    public PMRequestPlayerListsPacket() {}
+public record PMRequestPlayerListsPacket() implements IPacket {
 
     public PMRequestPlayerListsPacket(FriendlyByteBuf buf) {
-        // No data needed
+        this();
     }
 
     @Override

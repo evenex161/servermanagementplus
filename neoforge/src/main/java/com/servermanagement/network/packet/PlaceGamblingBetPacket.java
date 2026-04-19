@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Packet sent from client to server to place a gambling bet
  */
-public class PlaceGamblingBetPacket implements CustomPacketPayload {
+public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String gameOption) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PlaceGamblingBetPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "place_gambling_bet"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PlaceGamblingBetPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PlaceGamblingBetPacket::new);
 
@@ -32,10 +32,7 @@ public class PlaceGamblingBetPacket implements CustomPacketPayload {
         t.setDaemon(true);
         return t;
     });
-
-    private final GameType gameType;
-    private final double betAmount;
-    private final String gameOption; // e.g., "heads", "HIGH", "RED", etc.
+// e.g., "heads", "HIGH", "RED", etc.
     
     public enum GameType {
         COIN_FLIP,
@@ -43,17 +40,10 @@ public class PlaceGamblingBetPacket implements CustomPacketPayload {
         SLOT_MACHINE,
         ROULETTE
     }
-    
-    public PlaceGamblingBetPacket(GameType gameType, double betAmount, String gameOption) {
-        this.gameType = gameType;
-        this.betAmount = betAmount;
-        this.gameOption = gameOption;
-    }
+
     
     public PlaceGamblingBetPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(GameType.class);
-        this.betAmount = buf.readDouble();
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(GameType.class), buf.readDouble(), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {

@@ -21,7 +21,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from client to server to claim the free daily reward
  */
-public class ClaimFreeRewardPacket implements CustomPacketPayload {
+public record ClaimFreeRewardPacket() implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ClaimFreeRewardPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_free_reward"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ClaimFreeRewardPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ClaimFreeRewardPacket::new);
 
@@ -29,11 +29,8 @@ public class ClaimFreeRewardPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
 
-    public ClaimFreeRewardPacket() {
-    }
-
     public ClaimFreeRewardPacket(FriendlyByteBuf buf) {
-        // No data to read
+        this();
     }
 
         public void encode(FriendlyByteBuf buf) {

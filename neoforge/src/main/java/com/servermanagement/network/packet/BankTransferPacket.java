@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Packet for transferring money between players
  */
-public class BankTransferPacket implements CustomPacketPayload {
+public record BankTransferPacket(String targetPlayerName, double amount) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<BankTransferPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "bank_transfer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, BankTransferPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), BankTransferPacket::new);
 
@@ -23,17 +23,10 @@ public class BankTransferPacket implements CustomPacketPayload {
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String targetPlayerName;
-    private final double amount;
-    
-    public BankTransferPacket(String targetPlayerName, double amount) {
-        this.targetPlayerName = targetPlayerName;
-        this.amount = amount;
-    }
+
     
     public BankTransferPacket(FriendlyByteBuf buf) {
-        this.targetPlayerName = buf.readUtf(16);
-        this.amount = buf.readDouble();
+        this(buf.readUtf(16), buf.readDouble());
     }
     
     public void encode(FriendlyByteBuf buf) {

@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 /**
  * Server → Client: Sync money requests for display in the Bank GUI
  */
-public class SyncMoneyRequestsPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> incoming, List<ClientMoneyRequestData.RequestEntry> outgoing) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncMoneyRequestsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_money_requests_packet"));
@@ -22,27 +22,19 @@ public class SyncMoneyRequestsPacket implements net.minecraft.network.protocol.c
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final List<ClientMoneyRequestData.RequestEntry> incoming;
-    private final List<ClientMoneyRequestData.RequestEntry> outgoing;
-
-    public SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> incoming,
-                                    List<ClientMoneyRequestData.RequestEntry> outgoing) {
-        this.incoming = incoming;
-        this.outgoing = outgoing;
+    public SyncMoneyRequestsPacket(FriendlyByteBuf buf) {
+        this(decodeEntries(buf), decodeEntries(buf));
     }
 
-    public SyncMoneyRequestsPacket(FriendlyByteBuf buf) {
-        int inCount = buf.readInt();
-        this.incoming = new ArrayList<>();
-        for (int i = 0; i < inCount; i++) {
-            incoming.add(readEntry(buf));
+    private static List<ClientMoneyRequestData.RequestEntry> decodeEntries(FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<ClientMoneyRequestData.RequestEntry> list = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            list.add(new ClientMoneyRequestData.RequestEntry(
+                buf.readUUID(), buf.readUtf(16), buf.readDouble(),
+                buf.readUtf(256), buf.readUtf(64), buf.readUtf(32)));
         }
-        int outCount = buf.readInt();
-        this.outgoing = new ArrayList<>();
-        for (int i = 0; i < outCount; i++) {
-            outgoing.add(readEntry(buf));
-        }
+        return list;
     }
 
         public void encode(FriendlyByteBuf buf) {

@@ -10,15 +10,10 @@ import java.util.function.Supplier;
 /**
  * Packet to sync MineStacks betting slot state from client to server
  */
-public class SyncBettingSlotStatePacket implements IPacket {
-    private final boolean bettingSlotActive;
-    
-    public SyncBettingSlotStatePacket(boolean bettingSlotActive) {
-        this.bettingSlotActive = bettingSlotActive;
-    }
+public record SyncBettingSlotStatePacket(boolean bettingSlotActive) implements IPacket {
     
     public SyncBettingSlotStatePacket(FriendlyByteBuf buf) {
-        this.bettingSlotActive = buf.readBoolean();
+        this(buf.readBoolean());
     }
     
     @Override

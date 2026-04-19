@@ -26,36 +26,17 @@ import java.util.Map;
  * Supports two payment modes: BALANCE (0) deducts from bank,
  * ITEMS (1) removes selected inventory items as payment.
  */
-public class PurchaseListingPacket implements CustomPacketPayload {
+public record PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<PurchaseListingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "purchase_listing"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PurchaseListingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PurchaseListingPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
+// 0=BALANCE, 1=ITEMS// inventory slot indices for ITEMS mode
 
-    private final String listingId;
-    private final int paymentMode; // 0=BALANCE, 1=ITEMS
-    private final int[] selectedSlots; // inventory slot indices for ITEMS mode
-    
-    public PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) {
-        this.listingId = listingId;
-        this.paymentMode = paymentMode;
-        this.selectedSlots = selectedSlots;
-    }
     
     public PurchaseListingPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.paymentMode = buf.readByte();
-        int slotCount = buf.readVarInt();
-        // Reject invalid slot counts to prevent buffer misalignment
-        if (slotCount < 0 || slotCount > 36) {
-            this.selectedSlots = new int[0];
-            return;
-        }
-        this.selectedSlots = new int[slotCount];
-        for (int i = 0; i < slotCount; i++) {
-            this.selectedSlots[i] = buf.readVarInt();
-        }
+        this(buf.readUtf(36), buf.readByte(), decodeSelectedSlots(buf));
     }
     
         public void encode(FriendlyByteBuf buf) {
@@ -331,5 +312,17 @@ public class PurchaseListingPacket implements CustomPacketPayload {
             }
         });
         // packet handled
+    }
+
+    private static int[] decodeSelectedSlots(FriendlyByteBuf buf) {
+        int slotCount = buf.readVarInt();
+        if (slotCount < 0 || slotCount > 36) {
+            return new int[0];
+        }
+        int[] slots = new int[slotCount];
+        for (int i = 0; i < slotCount; i++) {
+            slots[i] = buf.readVarInt();
+        }
+        return slots;
     }
 }

@@ -13,21 +13,20 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Packet sent from server to client to sync bank inventory contents
  */
-public class SyncBankInventoryPacket implements CustomPacketPayload {
+public record SyncBankInventoryPacket(CompoundTag inventoryData) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncBankInventoryPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_bank_inventory"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncBankInventoryPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncBankInventoryPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final CompoundTag inventoryData;
     
     public SyncBankInventoryPacket(BankInventory inventory) {
-        this.inventoryData = inventory.toNBT();
+        this(inventory.toNBT());
     }
     
     public SyncBankInventoryPacket(FriendlyByteBuf buf) {
-        this.inventoryData = buf.readNbt();
+        this(buf.readNbt());
     }
     
         public void encode(FriendlyByteBuf buf) {

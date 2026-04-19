@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  * Packet sent from server to client to check mod version compatibility.
  * Triggers OTA update if versions don't match.
  */
-public class VersionCheckPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record VersionCheckPacket(String serverModVersion, int serverDataVersion, String serverModJarName, String serverModJarHash, long serverModJarSize, String serverMinecraftVersion, String serverModLoader) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<VersionCheckPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "version_check_packet"));
@@ -21,36 +21,9 @@ public class VersionCheckPacket implements net.minecraft.network.protocol.common
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
-    }
-
-    private final String serverModVersion;
-    private final int serverDataVersion;
-    private final String serverModJarName;
-    private final String serverModJarHash; // SHA-256 hash
-    private final long serverModJarSize;
-    private final String serverMinecraftVersion;
-    private final String serverModLoader;
-    
-    public VersionCheckPacket(String serverModVersion, int serverDataVersion, 
-                             String serverModJarName, String serverModJarHash, long serverModJarSize,
-                             String serverMinecraftVersion, String serverModLoader) {
-        this.serverModVersion = serverModVersion;
-        this.serverDataVersion = serverDataVersion;
-        this.serverModJarName = serverModJarName;
-        this.serverModJarHash = serverModJarHash;
-        this.serverModJarSize = serverModJarSize;
-        this.serverMinecraftVersion = serverMinecraftVersion;
-        this.serverModLoader = serverModLoader;
-    }
-    
+    }// SHA-256 hash
     public VersionCheckPacket(FriendlyByteBuf buf) {
-        this.serverModVersion = buf.readUtf(64);
-        this.serverDataVersion = buf.readInt();
-        this.serverModJarName = buf.readUtf(256);
-        this.serverModJarHash = buf.readUtf(128);
-        this.serverModJarSize = buf.readLong();
-        this.serverMinecraftVersion = buf.readUtf(32);
-        this.serverModLoader = buf.readUtf(32);
+        this(buf.readUtf(64), buf.readInt(), buf.readUtf(256), buf.readUtf(128), buf.readLong(), buf.readUtf(32), buf.readUtf(32));
     }
     
     public void encode(FriendlyByteBuf buf) {

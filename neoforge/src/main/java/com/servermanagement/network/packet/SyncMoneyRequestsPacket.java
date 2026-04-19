@@ -15,33 +15,16 @@ import java.util.UUID;
 /**
  * Server → Client: Sync money requests for display in the Bank GUI
  */
-public class SyncMoneyRequestsPacket implements CustomPacketPayload {
+public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> incoming, List<ClientMoneyRequestData.RequestEntry> outgoing) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncMoneyRequestsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_money_requests"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncMoneyRequestsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncMoneyRequestsPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final List<ClientMoneyRequestData.RequestEntry> incoming;
-    private final List<ClientMoneyRequestData.RequestEntry> outgoing;
-
-    public SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> incoming,
-                                    List<ClientMoneyRequestData.RequestEntry> outgoing) {
-        this.incoming = incoming;
-        this.outgoing = outgoing;
-    }
 
     public SyncMoneyRequestsPacket(FriendlyByteBuf buf) {
-        int inCount = buf.readInt();
-        this.incoming = new ArrayList<>();
-        for (int i = 0; i < inCount; i++) {
-            incoming.add(readEntry(buf));
-        }
-        int outCount = buf.readInt();
-        this.outgoing = new ArrayList<>();
-        for (int i = 0; i < outCount; i++) {
-            outgoing.add(readEntry(buf));
-        }
+        this(decodeEntries(buf), decodeEntries(buf));
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -55,7 +38,7 @@ public class SyncMoneyRequestsPacket implements CustomPacketPayload {
         }
     }
 
-    private void writeEntry(FriendlyByteBuf buf, ClientMoneyRequestData.RequestEntry entry) {
+    private static void writeEntry(FriendlyByteBuf buf, ClientMoneyRequestData.RequestEntry entry) {
         buf.writeUUID(entry.getRequestId());
         buf.writeUtf(entry.getPlayerName(), 16);
         buf.writeDouble(entry.getAmount());
@@ -64,7 +47,7 @@ public class SyncMoneyRequestsPacket implements CustomPacketPayload {
         buf.writeUtf(entry.getStatus(), 32);
     }
 
-    private ClientMoneyRequestData.RequestEntry readEntry(FriendlyByteBuf buf) {
+    private static ClientMoneyRequestData.RequestEntry readEntry(FriendlyByteBuf buf) {
         return new ClientMoneyRequestData.RequestEntry(
             buf.readUUID(),
             buf.readUtf(16),
@@ -81,5 +64,14 @@ public class SyncMoneyRequestsPacket implements CustomPacketPayload {
             ClientMoneyRequestData.setOutgoingRequests(outgoing);
         });
         // packet handled
+    }
+
+    private static List<ClientMoneyRequestData.RequestEntry> decodeEntries(FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<ClientMoneyRequestData.RequestEntry> list = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            list.add(readEntry(buf));
+        }
+        return list;
     }
 }

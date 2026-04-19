@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  * Packet sent from client to server to hold an item for listing creation
  * Removes item from player inventory and stores it server-side
  */
-public class HoldItemPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record HoldItemPacket(int slotIndex) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<HoldItemPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "hold_item_packet"));
@@ -22,15 +22,8 @@ public class HoldItemPacket implements net.minecraft.network.protocol.common.cus
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
     }
-
-    private final int slotIndex;
-    
-    public HoldItemPacket(int slotIndex) {
-        this.slotIndex = slotIndex;
-    }
-    
     public HoldItemPacket(FriendlyByteBuf buf) {
-        this.slotIndex = buf.readInt();
+        this(buf.readInt());
     }
     
         public void encode(FriendlyByteBuf buf) {

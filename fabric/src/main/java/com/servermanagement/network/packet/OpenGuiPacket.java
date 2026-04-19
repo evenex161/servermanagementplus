@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.function.Supplier;
 
-public class OpenGuiPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record OpenGuiPacket(GuiType guiType, String data) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<OpenGuiPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "open_gui_packet"));
@@ -15,26 +15,17 @@ public class OpenGuiPacket implements net.minecraft.network.protocol.common.cust
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
         return TYPE;
-    }
-
-    private final GuiType guiType;
-    private final String data; // Can hold dimension ID or other data
-
+    }// Can hold dimension ID or other data
     public OpenGuiPacket(GuiType guiType) {
-        this.guiType = guiType;
-        this.data = "";
+        this(guiType, "");
     }
-    
-    public OpenGuiPacket(GuiType guiType, String data) {
-        this.guiType = guiType;
-        this.data = data;
+    public OpenGuiPacket(FriendlyByteBuf buf) {
+        this(decodeGuiType(buf.readInt()), buf.readUtf(256));
     }
 
-    public OpenGuiPacket(FriendlyByteBuf buf) {
-        int ordinal = buf.readInt();
+    private static GuiType decodeGuiType(int ordinal) {
         GuiType[] values = GuiType.values();
-        this.guiType = (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
-        this.data = buf.readUtf(256);
+        return (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
     }
 
         public void encode(FriendlyByteBuf buf) {

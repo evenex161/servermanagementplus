@@ -7,15 +7,10 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 /**
  * Client-to-server packet to subscribe/unsubscribe from server log streaming.
  */
-public class ConsoleSubscribePacket implements IPacket {
-    private final boolean subscribe;
-
-    public ConsoleSubscribePacket(boolean subscribe) {
-        this.subscribe = subscribe;
-    }
+public record ConsoleSubscribePacket(boolean subscribe) implements IPacket {
 
     public ConsoleSubscribePacket(FriendlyByteBuf buf) {
-        this.subscribe = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
     @Override

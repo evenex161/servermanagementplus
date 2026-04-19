@@ -8,21 +8,16 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
-public class ToggleAutoShowPacket implements CustomPacketPayload {
+public record ToggleAutoShowPacket(boolean autoShow) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ToggleAutoShowPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "toggle_auto_show"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ToggleAutoShowPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ToggleAutoShowPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final boolean autoShow;
-
-    public ToggleAutoShowPacket(boolean autoShow) {
-        this.autoShow = autoShow;
-    }
 
     public ToggleAutoShowPacket(FriendlyByteBuf buf) {
-        this.autoShow = buf.readBoolean();
+        this(buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {

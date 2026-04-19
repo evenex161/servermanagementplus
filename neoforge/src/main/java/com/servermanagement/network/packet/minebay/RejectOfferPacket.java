@@ -21,24 +21,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server when a seller rejects an offer.
  * Returns escrowed items and money to the buyer.
  */
-public class RejectOfferPacket implements CustomPacketPayload {
+public record RejectOfferPacket(String listingId, String offerId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<RejectOfferPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "reject_offer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RejectOfferPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RejectOfferPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String listingId;
-    private final String offerId;
-    
-    public RejectOfferPacket(String listingId, String offerId) {
-        this.listingId = listingId;
-        this.offerId = offerId;
-    }
     
     public RejectOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.offerId = buf.readUtf(36);
+        this(buf.readUtf(36), buf.readUtf(36));
     }
     
         public void encode(FriendlyByteBuf buf) {

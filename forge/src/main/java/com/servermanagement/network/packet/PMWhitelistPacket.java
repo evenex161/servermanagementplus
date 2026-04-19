@@ -5,19 +5,11 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.regex.Pattern;
 
-public class PMWhitelistPacket implements IPacket {
+public record PMWhitelistPacket(String playerName, boolean add) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-    private final boolean add; // true = add to whitelist, false = remove
-
-    public PMWhitelistPacket(String playerName, boolean add) {
-        this.playerName = playerName;
-        this.add = add;
-    }
 
     public PMWhitelistPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
-        this.add = buf.readBoolean();
+        this(buf.readUtf(16), buf.readBoolean());
     }
 
     @Override

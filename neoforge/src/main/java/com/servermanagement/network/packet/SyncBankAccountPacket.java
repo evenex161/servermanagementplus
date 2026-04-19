@@ -16,42 +16,16 @@ import java.util.UUID;
 /**
  * Packet to sync bank account data from server to client
  */
-public class SyncBankAccountPacket implements CustomPacketPayload {
+public record SyncBankAccountPacket(double balance, List<Transaction> recentTransactions) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncBankAccountPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_bank_account"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncBankAccountPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncBankAccountPacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final double balance;
-    private final List<Transaction> recentTransactions;
-
-    public SyncBankAccountPacket(double balance, List<Transaction> recentTransactions) {
-        this.balance = balance;
-        this.recentTransactions = recentTransactions;
-    }
 
     public SyncBankAccountPacket(FriendlyByteBuf buf) {
-        this.balance = buf.readDouble();
-        
-        int transactionCount = buf.readInt();
-        this.recentTransactions = new ArrayList<>();
-        for (int i = 0; i < transactionCount; i++) {
-            String typeName = buf.readUtf(64);
-            double amount = buf.readDouble();
-            long timestamp = buf.readLong();
-            String description = buf.readUtf(256);
-            boolean hasOtherParty = buf.readBoolean();
-            UUID otherParty = hasOtherParty ? buf.readUUID() : null;
-            
-            TransactionType type;
-            try {
-                type = TransactionType.valueOf(typeName);
-            } catch (IllegalArgumentException e) {
-                type = TransactionType.ADMIN_GIVE; // fallback
-            }
-            recentTransactions.add(new Transaction(type, amount, timestamp, description, otherParty));
-        }
+        this(buf.readDouble(), decodeTransactions(buf));
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -75,5 +49,26 @@ public class SyncBankAccountPacket implements CustomPacketPayload {
             com.servermanagement.client.ClientBankData.setTransactions(recentTransactions);
         });
         // packet handled
+    }
+
+    private static List<Transaction> decodeTransactions(FriendlyByteBuf buf) {
+        int transactionCount = buf.readInt();
+        List<Transaction> transactions = new ArrayList<>();
+        for (int i = 0; i < transactionCount; i++) {
+            String typeName = buf.readUtf(64);
+            double amount = buf.readDouble();
+            long timestamp = buf.readLong();
+            String description = buf.readUtf(256);
+            boolean hasOtherParty = buf.readBoolean();
+            UUID otherParty = hasOtherParty ? buf.readUUID() : null;
+            TransactionType type;
+            try {
+                type = TransactionType.valueOf(typeName);
+            } catch (IllegalArgumentException e) {
+                type = TransactionType.ADMIN_GIVE;
+            }
+            transactions.add(new Transaction(type, amount, timestamp, description, otherParty));
+        }
+        return transactions;
     }
 }

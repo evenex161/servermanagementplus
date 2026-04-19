@@ -15,21 +15,16 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Client-to-server packet for toggling a daily task template's enabled state
  */
-public class ToggleTemplatePacket implements CustomPacketPayload {
+public record ToggleTemplatePacket(String templateId) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ToggleTemplatePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "toggle_template"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ToggleTemplatePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ToggleTemplatePacket::new);
 
     @Override
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
-    private final String templateId;
-
-    public ToggleTemplatePacket(String templateId) {
-        this.templateId = templateId;
-    }
 
     public ToggleTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
+        this(buf.readUtf(64));
     }
 
         public void encode(FriendlyByteBuf buf) {
