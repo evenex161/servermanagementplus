@@ -1,0 +1,58 @@
+package com.servermanagement.network.packet;
+
+import net.minecraft.network.FriendlyByteBuf;
+import java.util.function.Supplier;
+
+public class WMToggleChatIsolationPacket implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMToggleChatIsolationPacket> TYPE = 
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_chat_isolation_packet"));
+
+    public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, WMToggleChatIsolationPacket> STREAM_CODEC = 
+        net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMToggleChatIsolationPacket::new);
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    private final String dimensionId;
+    private final boolean enabled;
+    private final long clientTick;
+
+    public WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) {
+        this.dimensionId = dimensionId;
+        this.enabled = enabled;
+        this.clientTick = clientTick;
+    }
+
+    public WMToggleChatIsolationPacket(FriendlyByteBuf buf) {
+        this.dimensionId = buf.readUtf(256);
+        this.enabled = buf.readBoolean();
+        this.clientTick = buf.readLong();
+    }
+
+        public void encode(FriendlyByteBuf buf) {
+        buf.writeUtf(dimensionId, 256);
+        buf.writeBoolean(enabled);
+        buf.writeLong(clientTick);
+    }
+
+        public void handle(net.minecraft.server.level.ServerPlayer player) {
+            if (player != null && player.hasPermissions(2)) {
+                String actionKey = "chat_isolation_" + dimensionId;
+                if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
+                    var worldManager = com.servermanagement.features.worldmanager.WorldManager.getInstance();
+                    if (dimensionId.isEmpty()) {
+                        // Global master toggle (from Global Settings screen)
+                        worldManager.getData().setChatIsolationEnabled(enabled);
+                    } else {
+                        // Per-dimension chat connection toggle (from World Detail screen)
+                        worldManager.getData().setDimensionChatConnected(dimensionId, enabled);
+                    }
+                    worldManager.save();
+                }
+            }
+
+}
+}

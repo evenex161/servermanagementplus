@@ -1,67 +1,6 @@
 # Gradle
 .gradle/
-build/
-out/
-classes/
-
-# Eclipse
-.settings/
-.metadata
-.classpath
-.project
-bin/
-
-# IntelliJ
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# VS Code
-.vscode/
-
-# Minecraft
-run/
-run-data/
-logs/
-forge-server/
-forge-server 1.20.1/
-forge-server 1.21.1/
-neoforge-server 1.21.1/
-
-# Mac
-.DS_Store
-
-# Security - Never commit sensitive files!
-curseforge.properties
-*.key
-*.secret
-
-# Internal development docs (keep CHANGELOG_*)
-CURSEFORGE_PAGE.md
-CONFIG_MIGRATION_GUIDE.md
-CONFIG_SCREEN_FIXES.md
-CRASH_FIX_DOCUMENTATION.md
-CURSEFORGE_INTEGRATION.md
-CURSEFORGE_SECURITY.md
-DASHBOARD_NAVIGATION_FIX.md
-DASHBOARD_SYSTEM.md
-DOCUMENTATION.md
-ECONOMY_FEATURE_PLAN.md
-FORGE_PORT_GUIDE.md
-GUI_REDESIGN_COMPLETE.md
-NETWORK_PROTOCOL_FIX.md
-NOTIFICATION_SYSTEM.md
-OTA_VERSION_COMPATIBILITY.md
-OTA_VERSION_SOLUTION.md
-PHASE_18_BUGFIXES.md
-PORT_COMPLETION_SUMMARY.md
-RECENT_FIXES.md
-RELEASE_NOTES_v1.0.0-release.md
-SECURITY_IMPLEMENTATION.md
-SERIALIZATION_FIX.md
-# Gradle
-.gradle/
+.gradle-c2/
 build/
 out/
 classes/
@@ -85,21 +24,24 @@ bin/
 # Internal instruction files (local dev only)
 .github/
 
-# Dev scripts
+# Dev scripts & tools
 test.bat
 GUI_TEST_CHECKLIST.md
-runs/
 tools/
 
-# Minecraft
+# Minecraft runtime
 run/
 run-data/
 run-client2/
-.gradle-c2/
+runs/
 logs/
 forge-server/
 forge-server 1.20.1/
 forge-server 1.21.1/
+neoforge-server 1.21.1/
+
+# Old source backup (MultiLoader migration)
+src.bak/
 
 # Mac
 .DS_Store
@@ -132,5 +74,3 @@ RECENT_FIXES.md
 RELEASE_NOTES_v1.0.0-release.md
 SECURITY_IMPLEMENTATION.md
 SERIALIZATION_FIX.md
-
-neoforge-server 1.21.1/

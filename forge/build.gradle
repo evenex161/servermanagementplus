@@ -1,0 +1,89 @@
+plugins {
+    id 'multiloader-loader'
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+}
+
+base {
+    archivesName = "${mod_name}-forge-${minecraft_version}"
+}
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+
+    copyIdeResources = true
+
+    reobf = false // Forge 1.20.6+ uses official mappings at runtime
+
+    // Automatically enable forge AccessTransformers if the file exists
+    def at = file('src/main/resources/META-INF/accesstransformer.cfg')
+    if (at.exists()) {
+        accessTransformer = at
+    }
+
+    runs {
+        configureEach {
+            // Allow overriding username via -PmcUsername=...
+            if (project.hasProperty('mcUsername')) {
+                args '--username', project.property('mcUsername')
+            }
+        }
+
+        client {
+            workingDirectory project.hasProperty('mcGameDir') ? file(project.property('mcGameDir')) : file('runs/client')
+            ideaModule "${rootProject.name}.${project.name}.main"
+            taskName 'Client'
+            mods {
+                modClientRun {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        server {
+            workingDirectory file('runs/server')
+            ideaModule "${rootProject.name}.${project.name}.main"
+            taskName 'Server'
+            args '--nogui'
+            mods {
+                modServerRun {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory file('runs/data')
+            ideaModule "${rootProject.name}.${project.name}.main"
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            taskName 'Data'
+            mods {
+                modDataRun {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+sourceSets.main.resources.srcDir 'src/generated/resources'
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // Forge's hack fix
+    implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            fg.component(it)
+        }
+    }
+}
+
+sourceSets.each {
+    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
+    it.output.resourcesDir = dir
+    it.java.destinationDirectory = dir
+}
