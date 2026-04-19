@@ -1,13 +1,53 @@
 # Changelog — ServerManagement+ v2.1.0
 
-**Release Date:** April 17, 2026  
-**Minecraft:** 1.21.1 | **Forge:** 52.1.0 | **Branch:** `mc/1.21.1-forge`
+**Release Date:** April 19, 2026  
+**Minecraft:** 1.21.1 | **Forge:** 52.1.0 | **NeoForge:** 21.1.80 | **Fabric API:** 0.109.0+1.21.1 | **Branch:** `mc/1.21.1-forge`
 
 ---
 
 ## Overview
 
-v2.1.0 is a comprehensive **GUI polish and rework** update, plus critical **bug fixes** for dimension isolation features. Every screen in the mod was reviewed against real in-game screenshots at GUI Scale 3.0 (854×457), and layout issues were identified and fixed. This release focuses on eliminating wasted space, fixing overlapping elements, improving visual consistency, and making every panel feel polished and intentional.
+v2.1.0 is a major update featuring a **MultiLoader architecture migration** (Forge + NeoForge + Fabric), comprehensive **GUI polish and rework**, and critical **bug fixes** for dimension isolation features. The project structure was migrated to jaredlll08/MultiLoader-Template, with complete ports to NeoForge and Fabric. Every screen in the mod was reviewed against real in-game screenshots at GUI Scale 3.0 (854×457), and layout issues were identified and fixed. This release focuses on multi-platform support, eliminating wasted space, fixing overlapping elements, improving visual consistency, and making every panel feel polished and intentional.
+
+---
+
+## MultiLoader Architecture Migration
+
+Migrated the entire project from a single-module Forge setup to the **jaredlll08/MultiLoader-Template**, enabling simultaneous builds for Forge, NeoForge, and Fabric from a single codebase.
+
+### Project Structure
+- **`buildSrc/`** — Gradle convention plugins (`multiloader-common.gradle`, `multiloader-loader.gradle`)
+- **`common/`** — Platform-agnostic code (`Constants`, `Services`, `IPlatformHelper` interface)
+- **`forge/`** — Full Forge implementation (254 Java files) — Forge 52.1.0, ForgeGradle [6.0.24,6.2)
+- **`neoforge/`** — Complete NeoForge port (254 files) — NeoForge 21.1.80, ModDevGradle 2.0.49-beta
+- **`fabric/`** — Complete Fabric port (254 files) — Fabric API 0.109.0+1.21.1, Loader 0.16.9, fabric-loom 1.8-SNAPSHOT
+- Old `src/main/` deleted (256 files relocated to `forge/` subproject)
+
+### Build System
+- Gradle 8.10 with ForgeGradle, ModDevGradle, and fabric-loom plugins managed via `buildSrc` convention plugins
+- Platform abstraction via Java `ServiceLoader` (`IPlatformHelper` interface)
+- Common module uses NeoForm 1.21.1-20240808.144430 with Parchment 2024.11.10 mappings
+- All three loaders build independently, producing separate JARs
+
+### NeoForge Port
+- Adapted all event handlers to NeoForge event bus (`@SubscribeEvent`)
+- Converted networking from Forge `SimpleChannel` to NeoForge `CustomPacketPayload` system
+- Updated registry to NeoForge `DeferredRegister` API
+- Ported config to `NeoForgeConfigSpec`
+
+### Fabric Port
+- Converted all event handlers to Fabric API callbacks (`ServerPlayConnectionEvents`, `ServerTickEvents`, etc.)
+- Implemented networking via `PayloadTypeRegistry` / `ServerPlayNetworking`
+- Added access widener (`servermanagement.accesswidener`) for required Minecraft internals
+- Adapted commands, menus, and screens to Fabric conventions
+
+### Test Infrastructure
+- Rewrote `test.bat` for MultiLoader — added loader selection parameter (`forge|neoforge|fabric`)
+- Wired `-PmcUsername` and `-PmcGameDir` Gradle properties into all three `build.gradle` run configurations
+- Usage: `test.bat [client|server|both|debug] [forge|neoforge|fabric]`
+- Run directories: `<loader>/runs/client/` and `<loader>/runs/server/`
+
+**Note:** NeoForge and Fabric ports compile successfully but are not yet runtime-tested. Forge remains the primary development target.
 
 ---
 
@@ -201,6 +241,14 @@ v2.1.0 is a comprehensive **GUI polish and rework** update, plus critical **bug 
 - **Bug**: In `test.bat debug` mode, one of the two clients would intermittently crash with "mods that were not found"
 - **Root Cause**: Each `runClient`/`runServer` Gradle task re-ran `compileJava`, which briefly cleared and rewrote `build/sourceSets/main` while the other client's JVM was actively reading from it
 - **Fix**: Added `-x compileJava -x processResources -x classes` flags to all launch commands in debug mode, since `gradlew classes` already runs at the top of the block
+
+### Debug Test Launcher — MultiLoader Rewrite
+- **Change**: Complete rewrite of `test.bat` for the MultiLoader project structure
+- Accepts loader parameter: `test.bat [mode] [forge|neoforge|fabric]` (default: `forge`)
+- Gradle task prefix resolves to `:<loader>:runClient` / `:<loader>:runServer`
+- All paths (server dir, client dir, logs) resolve under `<loader>/runs/`
+- Debug mode client2 directory created under the selected loader
+- `-PmcUsername` and `-PmcGameDir` properties wired in ForgeGradle (`args`), ModDevGradle (`programArguments`), and fabric-loom (`programArg`) run configs
 
 ---
 
@@ -413,3 +461,26 @@ ServerManagement shutdown complete
 - `features/serverperformance/ItemMergeHandler.java` — O(n²) cap
 - `server/ModFileTransferManager.java` — transfer tracking, disconnect detection
 - `ServerManagementMod.java` — wired GamblingManager.shutdown()
+
+---
+
+## Files Modified (MultiLoader Migration)
+
+- `build.gradle` — stripped to root-level plugin declarations only (apply false)
+- `settings.gradle` — MultiLoader subproject includes (`common`, `forge`, `neoforge`, `fabric`, `buildSrc`)
+- `gradle.properties` — added NeoForge/Fabric versions, loader versions, Parchment mappings
+- `gradle/wrapper/gradle-wrapper.properties` — Gradle 8.10
+- `.gitignore` — updated for MultiLoader structure (per-loader `runs/`, `build/`, loom cache)
+- `buildSrc/build.gradle` — convention plugin project
+- `buildSrc/src/main/groovy/multiloader-common.gradle` — common subproject conventions
+- `buildSrc/src/main/groovy/multiloader-loader.gradle` — loader subproject conventions
+- `common/build.gradle` — NeoForm + Parchment mappings
+- `common/src/main/java/com/servermanagement/` — Constants, Services, IPlatformHelper
+- `forge/build.gradle` — ForgeGradle config, run configs with mcUsername/mcGameDir
+- `forge/src/main/java/com/servermanagement/` — 254 Java files (moved from `src/`)
+- `neoforge/build.gradle` — ModDevGradle config, run configs with mcUsername/mcGameDir
+- `neoforge/src/main/java/com/servermanagement/` — 254 Java files (complete port)
+- `fabric/build.gradle` — fabric-loom config, run configs with mcUsername/mcGameDir
+- `fabric/src/main/java/com/servermanagement/` — 254 Java files (complete port)
+- `fabric/src/main/resources/servermanagement.accesswidener` — access widener for Minecraft internals
+- `test.bat` — complete rewrite for MultiLoader loader selection
