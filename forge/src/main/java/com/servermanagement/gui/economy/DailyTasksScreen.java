@@ -78,6 +78,10 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
         this.taskCardHeight = Math.max(TASK_HEIGHT, this.taskSlotHeight - TASK_PADDING);
         
         super.init();
+        // Pull fresh task list + reset time from the cache on every init() so a
+        // late SyncDailyTasksPacket triggering refreshOpenScreen() reflects the
+        // new state instead of the snapshot latched in the menu constructor.
+        this.menu.reloadFromClientCache();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
         int centerX = (this.width - this.imageWidth) / 2;

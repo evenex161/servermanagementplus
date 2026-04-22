@@ -36,6 +36,9 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
+        // Refresh feature toggle states from FeatureManager so that init() re-runs
+        // triggered by SyncFeatureStatesPacket reflect the latest server state.
+        this.menu.refreshStates();
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;

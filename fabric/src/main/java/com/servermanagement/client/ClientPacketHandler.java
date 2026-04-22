@@ -15,6 +15,35 @@ public class ClientPacketHandler {
     private static int cachedTimerSeconds = 0;
     private static boolean cachedChatConnected = false;
     private static String cachedTimerPortalType = "both";
+
+    /**
+     * Bug 5: On Fabric, custom S2C sync packet receivers are wrapped in
+     * {@code context.client().execute(...)} so they may run AFTER the vanilla
+     * {@code ClientboundOpenScreen} handler that opens the menu. Screens that
+     * read the cache only in their constructor or {@code init()} therefore
+     * display stale defaults. After every cache update, re-run {@code init()}
+     * on our own currently-open screen so widgets pick up the fresh values.
+     */
+    public static void refreshOpenScreen() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc == null) {
+            return;
+        }
+        net.minecraft.client.gui.screens.Screen screen = mc.screen;
+        if (screen == null) {
+            return;
+        }
+        if (!screen.getClass().getName().startsWith("com.servermanagement")) {
+            return;
+        }
+        try {
+            screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+        } catch (Throwable t) {
+            // Don't take the client down if a screen rebuild misbehaves.
+            com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("ScreenRefresh",
+                    "failed for " + screen.getClass().getSimpleName() + ": " + t.getMessage());
+        }
+    }
     
     // MOTD cache
     private static String cachedMotdText = "";
@@ -22,6 +51,7 @@ public class ClientPacketHandler {
     public static void handleMotdSync(String motdText) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("MOTD", "text=\"" + (motdText.length() > 60 ? motdText.substring(0, 57) + "..." : motdText) + "\"");
         cachedMotdText = motdText;
+        refreshOpenScreen();
     }
 
     public static String getCachedMotdText() {
@@ -35,6 +65,7 @@ public class ClientPacketHandler {
     public static void handleWorldList(List<SyncWorldListPacket.WorldInfo> worlds) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("WorldList", worlds.size() + " worlds");
         cachedWorldList = new ArrayList<>(worlds);
+        refreshOpenScreen();
     }
 
     public static List<SyncWorldListPacket.WorldInfo> getCachedWorldList() {
@@ -53,6 +84,7 @@ public class ClientPacketHandler {
         cachedTimerSeconds = timerSeconds;
         cachedChatConnected = chatConnected;
         cachedTimerPortalType = timerPortalType;
+        refreshOpenScreen();
     }
 
     public static String getCachedDimensionId() {
@@ -88,6 +120,7 @@ public class ClientPacketHandler {
                 String.format("chatIsolation=%s tabIsolation=%s", chatIsolationEnabled, tabIsolationEnabled));
         cachedChatIsolationEnabled = chatIsolationEnabled;
         cachedTabIsolationEnabled = tabIsolationEnabled;
+        refreshOpenScreen();
     }
     
     public static boolean isChatIsolationEnabled() {
@@ -110,6 +143,7 @@ public class ClientPacketHandler {
         cachedTemplates = new ArrayList<>(templates);
         cachedFreeRewardAmount = freeRewardAmount;
         cachedFreeRewardCooldownHours = freeRewardCooldownHours;
+        refreshOpenScreen();
     }
     
     public static List<SyncEconomyTemplatesPacket.TemplateData> getCachedTemplates() {
@@ -177,6 +211,7 @@ public class ClientPacketHandler {
         statTotalSaleVolume = totalSaleVolume;
         statTotalGamblingWagered = totalGamblingWagered;
         statTotalGamblingWon = totalGamblingWon;
+        refreshOpenScreen();
     }
 
     public static int getStatTotalAccounts() { return statTotalAccounts; }
@@ -267,6 +302,7 @@ public class ClientPacketHandler {
         perfTotalSpawnsCancelled = totalSpawnsCancelled;
         perfTotalEntitiesThrottled = totalEntitiesThrottled;
         perfTotalRedstoneThrottled = totalRedstoneThrottled;
+        refreshOpenScreen();
     }
 
     public static boolean getPerfFeatureEnabled() { return perfFeatureEnabled; }

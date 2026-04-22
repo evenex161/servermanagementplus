@@ -61,7 +61,7 @@ public class ModMenuTypes {
         SERVER_MANAGEMENT_MENU = registerSimple("server_management_menu", ServerManagementMenu::new);
         DASHBOARD_MENU = registerSimple("dashboard_menu", DashboardMenu::new);
         CONSOLE_MENU = registerSimple("console_menu", ConsoleMenu::new);
-        BANK_MENU = registerExtended("bank_menu", com.servermanagement.gui.economy.BankMenu::new);
+        BANK_MENU = registerSimple("bank_menu", com.servermanagement.gui.economy.BankMenu::new);
         DAILY_TASKS_MENU = registerSimple("daily_tasks_menu", com.servermanagement.gui.economy.DailyTasksMenu::new);
         ACHIEVEMENTS_MENU = registerSimple("achievements_menu", com.servermanagement.gui.economy.AchievementsMenu::new);
         ECONOMY_MANAGEMENT_MENU = registerSimple("economy_management_menu", com.servermanagement.gui.economy.EconomyManagementMenu::new);

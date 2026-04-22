@@ -46,6 +46,16 @@ public class PerformanceSettingsMenu extends AbstractContainerMenu {
     }
 
     private void loadFromClientCache() {
+        reloadFromClientCache();
+    }
+
+    /**
+     * Re-read all settings from the client cache. Called from the screen's init()
+     * so a late SyncPerformanceSettingsPacket triggering refreshOpenScreen()
+     * picks up the freshly synced values instead of showing the stale snapshot
+     * latched in the menu constructor.
+     */
+    public void reloadFromClientCache() {
         this.featureEnabled = ClientPacketHandler.getPerfFeatureEnabled();
         this.itemMergingEnabled = ClientPacketHandler.getPerfItemMergingEnabled();
         this.mobSpawnLimiterEnabled = ClientPacketHandler.getPerfMobSpawnLimiterEnabled();

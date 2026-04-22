@@ -48,7 +48,12 @@ public class PlayerManagerSingleton {
                 String.format("§cPlayer not found: %s", targetName)));
             return;
         }
-        
+
+        if (spectator.getUUID().equals(target.getUUID())) {
+            spectator.sendSystemMessage(Component.literal("§cYou cannot spectate yourself!"));
+            return;
+        }
+
         boolean crossDimension = !spectator.level().dimension().equals(target.level().dimension());
         
         // Stealth mode: same-dimension, body stays at original position
@@ -161,7 +166,12 @@ public class PlayerManagerSingleton {
                 String.format("§cPlayer not found: %s", targetName)));
             return;
         }
-        
+
+        if (viewer.getUUID().equals(target.getUUID())) {
+            viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cYou cannot view your own inventory!"));
+            return;
+        }
+
         // Create a menu provider for viewing the target's inventory
         viewer.openMenu(new PlayerInventoryMenuProvider(target));
     }

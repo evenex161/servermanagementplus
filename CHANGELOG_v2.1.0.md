@@ -531,3 +531,67 @@ ServerManagement shutdown complete
 - `fabric/src/main/java/com/servermanagement/` — 254 Java files (complete port)
 - `fabric/src/main/resources/servermanagement.accesswidener` — access widener for Minecraft internals
 - `test.bat` — complete rewrite for MultiLoader loader selection
+
+
+---
+
+## Post-Release Patches (April 22, 2026)
+
+Follow-up bug-fix passes against the v2.1.0 baseline. All three loaders compile clean (`:forge:compileJava :neoforge:compileJava :fabric:compileJava` â†’ BUILD SUCCESSFUL).
+
+### Stale Client Cache on GUI Reconstruction
+
+- **Bug**: After v2.1.0, every `Sync*Packet.handle` triggers `ClientPacketHandler.refreshOpenScreen()` which re-invokes `screen.init()`. But several menus latched cache snapshots in their constructors and never re-read them, so `init()` re-ran with already-stale data and the GUI only showed fresh values after the user closed and reopened the screen
+- **Fix**: Added a public `reloadFromClientCache()` method to `BankMenu`, `DailyTasksMenu`, `AchievementsMenu`, and `MotdEditorMenu` (Ã— 3 loaders = 12 files). Each menu's constructor now delegates to the new method. The matching screens â€” `ConfigScreen`, `BankScreen`, `DailyTasksScreen`, `AchievementsScreen`, `MotdEditorScreen`, `PortalTimerScreen` (Ã— 3 loaders = 18 files) â€” now invoke the reload from `init()` so a late sync packet rebuilds the GUI with current data
+- **Special handling**:
+  - `AchievementsScreen` also rebuilds its private `achievementsList` field from the refreshed menu set (the screen's ctor copies it once)
+  - `MotdEditorScreen` is guarded by `if (originalMotdText == null)` to avoid clobbering pending unsaved edits
+  - `PortalTimerScreen` re-reads `ClientPacketHandler.getCachedDimensionId()` (mirror of an earlier `WorldDetailScreen` fix)
+- **Files**: `BankMenu`, `DailyTasksMenu`, `AchievementsMenu`, `MotdEditorMenu`, `BankScreen`, `DailyTasksScreen`, `AchievementsScreen`, `MotdEditorScreen`, `ConfigScreen`, `PortalTimerScreen` Ã— 3 loaders (30 files)
+
+### Fabric â€” Inventory Tooltip Prices Not Synced to Economy Engine
+
+- **Bug**: On Fabric only, inventory tooltip item and stack prices showed vanilla rarity-based fallback values instead of the Economy Engine's recipe-derived prices. MineBay tooltips eventually corrected via the periodic `EconomyServerHandler` sync, but inventory tooltips stayed stale
+- **Root Cause**: Forge/NeoForge fired `LoginNotificationHandler.onPlayerLogin(player)` automatically via `@SubscribeEvent` for `PlayerLoggedInEvent`, which calls `EconomyManager.syncMarketPrices(player)` and populates client `recipePrices`. Fabric's `ServerManagementModFabric.onInitialize()` JOIN handler had no equivalent dispatch â€” `recipePrices` stayed empty and `ClientMarketData.getBasePrice()` fell back to `ItemValuation.getItemValue(...)` (vanilla rarity)
+- **Fix**: Added explicit dispatch of `LoginNotificationHandler.onPlayerLogin(p)` (with try/catch) inside the Fabric `ServerPlayConnectionEvents.JOIN` handler
+
+### Portal Timer â€” Live Countdown Didn't Appear Until GUI Reopen
+
+- **Bug**: After starting a portal timer from the World Detail screen, the new live "Time left: M:SS (Type)" countdown line didn't appear until the player closed and reopened the screen
+- **Root Cause**: `WMSetTimerPacket` mutated server-side state but never pushed a fresh `SyncWorldDetailPacket` back to the originating player. The client only refreshed via the next periodic sync
+- **Fix**: `WMSetTimerPacket.handle` now constructs and sends `SyncWorldDetailPacket(dimensionId, areNetherPortalsEnabled, areEndPortalsEnabled, hasActiveTimer, (int) getRemainingTime, isDimensionChatConnected, getTimerPortalType)` to the originating player on success via `ModNetworking.sendToPlayer(packet, player)` (Ã— 3 loaders)
+
+### Portal Timer â€” Seconds EditBox Counted Down Mid-Edit
+
+- **Bug**: While a portal timer was running, the seconds EditBox in `WorldDetailScreen` kept counting down on every screen refresh â€” confusing because the field looked editable while actually being overwritten by sync packets
+- **Root Cause**: `init()` unconditionally called `setValue(hasTimer ? String.valueOf(timerSeconds) : "60")`, so each refresh stamped the remaining-seconds value into the EditBox
+- **Fix**: When `hasTimer == true`, the EditBox is now cleared (`setValue("")`), given hint text "running" (`setHint(Component.literal("running"))`), and locked (`setEditable(false)`). The "Set Timer" button is also no longer added while a timer is active. The "Clear" button stays available
+
+### Portal Timer â€” Broadcast/Chat Messages Didn't Mention the Dimension
+
+- **Bug**: Portal timer countdown broadcasts and the completion message read e.g. "Nether portals close in 1 minute" with no dimension context. Players in The Nether or modded dimensions had no way to tell whether their own portals were affected and could be misled into thinking their world's portals were about to flip
+- **Root Cause**: `WorldManager.getPortalDescription(dimensionId, portalType)` only returns a portal-type label like "Nether portals". The `TimerTickHandler` call sites assembled messages from that label alone, never interpolating the dimension name
+- **Fix**: `TimerTickHandler.sendTimerWarnings()` and `handleTimerComplete()` now also call `WorldManager.getDimensionName(dimensionId)` and include " in &lt;dimName&gt;" in the 60s chat heads-up, every subtitle line (60s / 30s / 10s / 5s / 4-1s / completion), and the completion chat message. Title-bar countdown subtitles now read e.g. "Nether portals in Overworld" instead of the prior generic "..." placeholder
+
+### Portal Timer â€” Chat Spam from Per-Interval Announcements
+
+- **Bug**: Each warning interval (60s, 30s, 10s, 5s) produced a chat line in addition to the title + sound. With multiple players online and the per-second 4-1s tail, this created excessive chat noise
+- **Fix**: Dropped chat lines at the 30s, 10s, and 5s announcements (kept their title + subtitle + sound). Only the 60s heads-up and the completion result still print to chat. Title broadcasts already reach every player regardless of dimension, so no information is lost. Net effect: 5 chat lines per timer reduced to 2
+
+### Portal Timer â€” Travel Cancelled During Countdown (Defeated the Warning)
+
+- **Bug**: While a portal timer was running, players couldn't travel through the portal at all â€” even during an enabledâ†’disabled countdown that was loudly announcing "you have N seconds". This defeated the entire purpose of the warning window
+- **Root Cause**: `PortalEventHandler.onEntityTravelToDimension` had a block that always cancelled travel when `hasActiveTimer && remainingTime > 0`, regardless of which direction the timer was transitioning. Analysis:
+  - **enabled â†’ disabled**: portal state hasn't flipped yet â†’ still enabled. The cancel was the *only* thing blocking travel and it contradicted the announced escape window
+  - **disabled â†’ enabled**: portal state hasn't flipped yet â†’ still disabled. The upstream `if (!portalAllowed)` check already cancels travel with a clean, dimension-aware message. The timer-active block was redundant
+- **Fix**: Removed the timer-active travel cancellation block from `PortalEventHandler.onEntityTravelToDimension` (Ã— 3 loaders). Travel during an enabledâ†’disabled countdown now works, giving players the actual escape window. Travel during a disabledâ†’enabled countdown is still correctly blocked by the existing `!portalAllowed` branch with a dimension-aware error message. Manual portal frame ignition / portal block placement during a timer is also unaffected â€” those checks only consult the current portal-enabled state
+
+### Files Modified (Post-Release)
+
+- `network/packet/WMSetTimerPacket.java` Ã— 3 â€” pushes fresh `SyncWorldDetailPacket` on success
+- `gui/screen/WorldDetailScreen.java` Ã— 3 â€” EditBox lock + Set Timer button hide while timer active
+- `features/worldmanager/TimerTickHandler.java` Ã— 3 â€” dimension in all messages; chat de-spam at 30s/10s/5s
+- `features/worldmanager/PortalEventHandler.java` Ã— 3 â€” removed timer-active travel cancellation
+- `ServerManagementModFabric.java` (fabric only) â€” JOIN dispatch for `LoginNotificationHandler.onPlayerLogin`
+- `gui/economy/BankMenu.java`, `DailyTasksMenu.java`, `AchievementsMenu.java`, `gui/MotdEditorMenu.java` Ã— 3 â€” `reloadFromClientCache()` method
+- `gui/economy/BankScreen.java`, `DailyTasksScreen.java`, `AchievementsScreen.java`, `gui/screen/ConfigScreen.java`, `MotdEditorScreen.java`, `PortalTimerScreen.java` Ã— 3 â€” invoke reload from `init()`

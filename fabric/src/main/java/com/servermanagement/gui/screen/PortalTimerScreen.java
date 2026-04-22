@@ -31,8 +31,12 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         super(menu, playerInventory, title);
         this.imageHeight = 240;
         this.imageWidth = 300;
-        
-        this.dimensionId = ClientPacketHandler.getCachedDimensionId();
+
+        // See WorldDetailScreen: SyncWorldDetailPacket may not be processed by
+        // the time the screen is constructed under Fabric. Default to empty
+        // and refresh lazily in render() to ensure correct portal toggles.
+        String cached = ClientPacketHandler.getCachedDimensionId();
+        this.dimensionId = cached == null ? "" : cached;
     }
     
     @Override
@@ -41,6 +45,13 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
+        // Refresh dimensionId from the cache on every init() in case the
+        // SyncWorldDetailPacket arrived after the screen ctor but before the
+        // first render — keeps portal-toggle visibility correct.
+        String cachedDim = ClientPacketHandler.getCachedDimensionId();
+        if (cachedDim != null && !cachedDim.isEmpty()) {
+            this.dimensionId = cachedDim;
+        }
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -189,6 +200,17 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Late-arrival sync recovery: if the dimension id wasn't available at
+        // construction time, pick it up now and rebuild widgets so the portal
+        // type selector reflects the actual dimension.
+        if (this.dimensionId == null || this.dimensionId.isEmpty()) {
+            String cached = ClientPacketHandler.getCachedDimensionId();
+            if (cached != null && !cached.isEmpty()) {
+                this.dimensionId = cached;
+                this.rebuildWidgets();
+            }
+        }
+
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         

@@ -33,6 +33,12 @@ public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettings
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
+
+        // Fabric: re-pull toggle state from the client cache on every init() so
+        // that a late SyncGlobalSettingsPacket triggering refreshOpenScreen()
+        // updates the toggles on the second init() pass instead of leaving
+        // them at the values latched in the menu constructor.
+        this.menu.reloadFromClientCache();
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;

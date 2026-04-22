@@ -48,6 +48,12 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         this.achievementsPerPage = Math.max(3, availableListHeight / ROW_HEIGHT);
         
         super.init();
+        // Pull fresh earned-achievements set from the cache on every init() so a
+        // late SyncAchievementsPacket triggering refreshOpenScreen() reflects the
+        // new state instead of the snapshot latched in the menu/screen constructors.
+        this.menu.reloadFromClientCache();
+        java.util.Set<String> earnedRefreshed = this.menu.getEarnedAchievements();
+        this.achievementsList = earnedRefreshed != null ? new java.util.ArrayList<>(earnedRefreshed) : new java.util.ArrayList<>();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
         int centerX = (this.width - this.imageWidth) / 2;

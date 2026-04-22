@@ -12,6 +12,14 @@ public class ClientSetup implements ClientModInitializer {
         // Register client-side packet handlers
         ModNetworking.registerClientPackets();
 
+        // Bug 4: Item-price tooltips never showed on Fabric because Forge wires
+        // them via @SubscribeEvent on ItemTooltipEvent which has no auto-bus
+        // equivalent on Fabric. Register the callback explicitly here.
+        net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback.EVENT.register(
+                (stack, tooltipContext, tooltipType, lines) ->
+                        com.servermanagement.client.ClientItemTooltipHandler.onItemTooltip(stack, tooltipType, lines)
+        );
+
         // Register menu screens
         MenuScreens.register(ModMenuTypes.CONFIG_MENU, ConfigScreen::new);
         MenuScreens.register(ModMenuTypes.GLOBAL_SETTINGS_MENU, GlobalSettingsScreen::new);

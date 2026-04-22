@@ -69,6 +69,7 @@ public record SyncMarketPricesPacket(double inflationMultiplier, double averageB
             com.servermanagement.client.ClientMarketData.update(
                 inflationMultiplier, averageBalance, totalPlayerCount, starterMoney, supplyData, recipePrices
             );
+            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
 
 }
 }

@@ -47,6 +47,7 @@ public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRe
             // Store achievements on client side for GUI display
             com.servermanagement.client.ClientAchievementsData.setEarnedAchievements(earnedAchievements);
             com.servermanagement.client.ClientAchievementsData.setTotalRewardsEarned(totalRewards);
+            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
 
 }
 }

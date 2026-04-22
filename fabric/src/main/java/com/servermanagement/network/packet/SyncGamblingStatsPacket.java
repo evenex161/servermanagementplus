@@ -41,6 +41,7 @@ public record SyncGamblingStatsPacket(long totalBets, long totalWins, long total
                 totalWagered, totalWon, totalLost,
                 biggestWin, biggestLoss
             );
+            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
 
 }
 }

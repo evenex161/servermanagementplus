@@ -18,8 +18,13 @@ public class DailyTasksMenu extends AbstractContainerMenu {
     private long resetTime;
 
     public DailyTasksMenu(int containerId, Inventory playerInventory) {
-        super(com.servermanagement.gui.ModMenuTypes.DAILY_TASKS_MENU.get(), containerId);
-        this.tasks = new ArrayList<>(ClientDailyTasksData.getTasks());
+        super(com.servermanagement.gui.ModMenuTypes.DAILY_TASKS_MENU.get(), containerId);        reloadFromClientCache();
+    }
+
+    /** Re-pull task list and reset time from the client cache. Called from the
+     *  screen's init() so a late SyncDailyTasksPacket triggering refreshOpenScreen()
+     *  picks up freshly synced data instead of the constructor snapshot. */
+    public void reloadFromClientCache() {        this.tasks = new ArrayList<>(ClientDailyTasksData.getTasks());
         this.resetTime = ClientDailyTasksData.getResetTime();
     }
 

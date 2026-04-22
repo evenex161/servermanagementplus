@@ -88,18 +88,16 @@ public class PortalEventHandler {
             return;
         }
         
-        // Check if timer is active and not finished
-        if (worldData.hasActiveTimer(dimensionId)) {
-            long remainingTime = worldData.getRemainingTime(dimensionId);
-            if (remainingTime > 0) {
-                event.setCanceled(true);
-                long minutes = remainingTime / 60;
-                long seconds = remainingTime % 60;
-                player.sendSystemMessage(Component.literal(
-                    String.format("§cPortal timer active! Wait %d:%02d", minutes, seconds)));
-                return;
-            }
-        }
+        // NOTE: An active portal timer no longer cancels travel. The portal
+        // state itself only flips at timer completion, so during the countdown
+        // the portal is in its pre-flip state and travel should respect that:
+        //   - enabled → disabled timer: portal is still enabled, so allowing
+        //     travel gives players the announced window to escape (the entire
+        //     point of the heads-up). Previously this was blocked, which made
+        //     the warning system pointless.
+        //   - disabled → enabled timer: portal is still disabled, so the
+        //     `!portalAllowed` check above already cancels travel with a
+        //     clear, dimension-aware message. No additional block needed.
     }
     
     /**

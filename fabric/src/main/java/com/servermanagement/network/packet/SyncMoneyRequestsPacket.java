@@ -71,6 +71,7 @@ public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             ClientMoneyRequestData.setIncomingRequests(incoming);
             ClientMoneyRequestData.setOutgoingRequests(outgoing);
+            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
 
 }
 }

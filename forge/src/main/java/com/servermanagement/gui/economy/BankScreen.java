@@ -68,6 +68,10 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
+        // Pull fresh balance + transaction history from the cache on every init()
+        // so a late SyncBankAccountPacket triggering refreshOpenScreen() reflects
+        // the new state instead of the snapshot latched in the menu constructor.
+        this.menu.reloadFromClientCache();
         this.clearWidgets();
 
         int x0 = (this.width - this.imageWidth) / 2;

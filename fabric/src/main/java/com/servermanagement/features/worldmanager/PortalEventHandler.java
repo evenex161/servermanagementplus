@@ -68,21 +68,20 @@ public class PortalEventHandler {
         
         if (!portalAllowed) {
             String dimName = WorldManager.getDimensionName(dimensionId);
-            player.sendSystemMessage(Component.literal("Â§c" + portalTypeName + " portals are disabled in " + dimName + "!"));
+            player.sendSystemMessage(Component.literal("§c" + portalTypeName + " portals are disabled in " + dimName + "!"));
             return false;
         }
         
-        if (worldData.hasActiveTimer(dimensionId)) {
-            long remainingTime = worldData.getRemainingTime(dimensionId);
-            if (remainingTime > 0) {
-                long minutes = remainingTime / 60;
-                long seconds = remainingTime % 60;
-                player.sendSystemMessage(Component.literal(
-                    String.format("Â§cPortal timer active! Wait %d:%02d", minutes, seconds)));
-                return false;
-            }
-        }
-        
+        // NOTE: An active portal timer no longer cancels travel. The portal
+        // state itself only flips at timer completion, so during the countdown
+        // the portal is in its pre-flip state and travel should respect that:
+        //   - enabled → disabled timer: portal is still enabled, so allowing
+        //     travel gives players the announced window to escape (the entire
+        //     point of the heads-up). Previously this was blocked, which made
+        //     the warning system pointless.
+        //   - disabled → enabled timer: portal is still disabled, so the
+        //     `!portalAllowed` check above already cancels travel with a
+        //     clear, dimension-aware message. No additional block needed.
         return true;
     }
     
@@ -119,7 +118,7 @@ public class PortalEventHandler {
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areNetherPortalsEnabled(dimensionId)) {
-                serverPlayer.sendSystemMessage(Component.literal("Â§cNether portals are disabled in this dimension!"));
+                serverPlayer.sendSystemMessage(Component.literal("§cNether portals are disabled in this dimension!"));
                 return InteractionResult.FAIL;
             }
         }
@@ -131,7 +130,7 @@ public class PortalEventHandler {
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areEndPortalsEnabled(dimensionId)) {
-                serverPlayer.sendSystemMessage(Component.literal("Â§cEnd portals are disabled in this dimension!"));
+                serverPlayer.sendSystemMessage(Component.literal("§cEnd portals are disabled in this dimension!"));
                 return InteractionResult.FAIL;
             }
         }
@@ -163,7 +162,7 @@ public class PortalEventHandler {
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areNetherPortalsEnabled(dimensionId)) {
-                player.sendSystemMessage(Component.literal("Â§cNether portals are disabled in this dimension!"));
+                player.sendSystemMessage(Component.literal("§cNether portals are disabled in this dimension!"));
                 return false;
             }
         }
@@ -173,7 +172,7 @@ public class PortalEventHandler {
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areEndPortalsEnabled(dimensionId)) {
-                player.sendSystemMessage(Component.literal("Â§cEnd portals are disabled in this dimension!"));
+                player.sendSystemMessage(Component.literal("§cEnd portals are disabled in this dimension!"));
                 return false;
             }
         }

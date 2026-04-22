@@ -25,8 +25,14 @@ public class BankMenu extends AbstractContainerMenu {
     public BankMenu(int containerId, Inventory playerInventory) {
         super(ModMenuTypes.BANK_MENU.get(), containerId);
         
-        // Balance and transactions will be synced from server via SyncBankAccountPacket
-        this.balance = com.servermanagement.client.ClientBankData.getBalance();
+        // Balance and transactions will be synced from server via SyncBankAccountPacket        reloadFromClientCache();
+    }
+
+    /** Re-pull balance + transaction history from the client cache. Called from
+     *  the screen's init() so that a late SyncBankAccountPacket triggering
+     *  refreshOpenScreen() picks up the freshly synced values instead of the
+     *  snapshot latched in the constructor. */
+    public void reloadFromClientCache() {        this.balance = com.servermanagement.client.ClientBankData.getBalance();
         this.recentTransactions = new ArrayList<>(com.servermanagement.client.ClientBankData.getTransactions());
     }
 

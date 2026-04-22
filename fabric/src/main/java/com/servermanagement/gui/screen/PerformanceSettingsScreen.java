@@ -67,6 +67,11 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
+        // Fabric: re-pull settings from the client cache on every init() so that
+        // a late SyncPerformanceSettingsPacket triggering refreshOpenScreen()
+        // updates the toggles/tunables on the second init() pass instead of
+        // showing the stale snapshot latched in the menu constructor.
+        this.menu.reloadFromClientCache();
         rebuildWidgets();
     }
 

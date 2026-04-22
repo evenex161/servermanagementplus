@@ -28,14 +28,25 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     private EditBox timerInput;
     private String selectedPortalType = "both"; // "nether", "end", or "both"
     private ModernButton portalTypeButton;
+
+    // Live countdown state — anchored at init() from the SyncWorldDetailPacket
+    // snapshot, then decremented locally via the player's tickCount.
+    private int syncedTimerSeconds = 0;
+    private long syncedAtTick = 0L;
+    private boolean refreshRequested = false;
     
     public WorldDetailScreen(WorldDetailMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
         this.imageHeight = 280;
         this.imageWidth = 380;
-        
-        // Get dimension ID from cached data
-        this.dimensionId = ClientPacketHandler.getCachedDimensionId();
+
+        // Fabric: SyncWorldDetailPacket may not have been processed yet at
+        // construction time because ClientPlayNetworking receivers re-schedule
+        // through client.execute(), which can land after the vanilla
+        // ClientboundOpenScreen handler. Default to empty here and refresh from
+        // the cache lazily in init()/render() once the sync arrives.
+        String cached = ClientPacketHandler.getCachedDimensionId();
+        this.dimensionId = cached == null ? "" : cached;
     }
     
     @Override
@@ -44,6 +55,15 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
+
+        // Fabric: re-read dimensionId from the cache on every init() so that
+        // when refreshOpenScreen() re-runs init() after a late SyncWorldDetailPacket,
+        // the title and portal-toggle visibility match the freshly synced dimension.
+        String cached = ClientPacketHandler.getCachedDimensionId();
+        if (cached != null && !cached.isEmpty()) {
+            this.dimensionId = cached;
+        }
+
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -58,6 +78,13 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         boolean chatConnected = ClientPacketHandler.isChatConnected();
         boolean hasTimer = ClientPacketHandler.hasTimer();
         int timerSeconds = ClientPacketHandler.getTimerSeconds();
+
+        // Anchor the live countdown to this init() pass. SyncWorldDetailPacket
+        // delivered the remaining seconds; pair with player.tickCount so render()
+        // can compute a smooth real-time decrement without further packets.
+        this.syncedTimerSeconds = hasTimer ? timerSeconds : 0;
+        this.syncedAtTick = (minecraft != null && minecraft.player != null) ? minecraft.player.tickCount : 0L;
+        this.refreshRequested = false;
         
         // Determine which portal toggles to show based on dimension
         boolean showNether = !dimensionId.equals("minecraft:the_end");
@@ -146,40 +173,49 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
             this.selectedPortalType = showNether ? "nether" : "end";
         }
         
-        // Timer input
+        // Timer input — locked while a timer is running so the user isn't confused
+        // by the live remaining-seconds value (the live countdown is rendered separately).
         int timerInputX = (showNether && showEnd) ? leftCol + 85 : leftCol;
         int timerInputWidth = (showNether && showEnd) ? 55 : 80;
         this.timerInput = new EditBox(this.font, timerInputX, currentY, timerInputWidth, 22, Component.literal("Seconds"));
-        this.timerInput.setValue(hasTimer ? String.valueOf(timerSeconds) : "60");
         this.timerInput.setMaxLength(6);
+        if (hasTimer) {
+            this.timerInput.setValue("");
+            this.timerInput.setHint(Component.literal("running"));
+            this.timerInput.setEditable(false);
+        } else {
+            this.timerInput.setValue("60");
+            this.timerInput.setEditable(true);
+        }
         this.addRenderableWidget(this.timerInput);
         
-        // Set Timer button
+        // Set Timer button — only available when no timer is running.
         int btnX = timerInputX + timerInputWidth + 5;
-        this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("Set Timer"),
-            button -> {
-                try {
-                    int seconds = Integer.parseInt(this.timerInput.getValue());
-                    if (seconds > 0) {
-                        long clientTick = minecraft.player.tickCount;
-                        ModNetworking.sendToServer(new WMSetTimerPacket(dimensionId, seconds, selectedPortalType, clientTick));
+        if (!hasTimer) {
+            this.addRenderableWidget(new ModernButton.Builder(
+                Component.literal("Set Timer"),
+                button -> {
+                    try {
+                        int seconds = Integer.parseInt(this.timerInput.getValue());
+                        if (seconds > 0) {
+                            long clientTick = minecraft.player.tickCount;
+                            ModNetworking.sendToServer(new WMSetTimerPacket(dimensionId, seconds, selectedPortalType, clientTick));
+                        }
+                    } catch (NumberFormatException e) {
+                        // Invalid input, ignore
                     }
-                } catch (NumberFormatException e) {
-                    // Invalid input, ignore
-                }
-            })
-            .bounds(btnX, currentY, 70, 22)
-            .style(ModernButton.ButtonStyle.SUCCESS)
-            .build());
+                })
+                .bounds(btnX, currentY, 70, 22)
+                .style(ModernButton.ButtonStyle.SUCCESS)
+                .build());
+        }
         
-        // Clear Timer button
+        // Clear Timer button — always available so admins can cancel a running timer.
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Clear"),
             button -> {
                 long clientTick = minecraft.player.tickCount;
                 ModNetworking.sendToServer(new WMSetTimerPacket(dimensionId, 0, selectedPortalType, clientTick));
-                this.timerInput.setValue("60");
             })
             .bounds(btnX + 75, currentY, 55, 22)
             .style(ModernButton.ButtonStyle.DANGER)
@@ -220,12 +256,26 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // If the sync packet arrived after construction, pick up the dimension
+        // id now and rebuild widgets so the correct portal toggles appear.
+        if (this.dimensionId == null || this.dimensionId.isEmpty()) {
+            String cached = ClientPacketHandler.getCachedDimensionId();
+            if (cached != null && !cached.isEmpty()) {
+                this.dimensionId = cached;
+                this.rebuildWidgets();
+            }
+        }
+
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
-        
-        // Title
-        String dimName = this.dimensionId.replace("minecraft:", "");
-        dimName = dimName.substring(0, 1).toUpperCase() + dimName.substring(1).replace("_", " ");
+
+        // Title (guard against empty dimensionId until sync arrives)
+        String dimName = this.dimensionId == null ? "" : this.dimensionId.replace("minecraft:", "");
+        if (dimName.isEmpty()) {
+            dimName = "Loading...";
+        } else {
+            dimName = dimName.substring(0, 1).toUpperCase() + dimName.substring(1).replace("_", " ");
+        }
         guiGraphics.drawString(this.font, dimName, 
             this.leftPos + 15, this.topPos + 8, 0xFFD700, true);
         
@@ -266,6 +316,28 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         // Timer section header - drawn ABOVE the controls
         guiGraphics.drawString(this.font, "Portal Timer", 
             leftCol, currentY - 12, 0xFFFFFF, true);
+
+        // Live countdown — sits between the timer controls (top of currentY,
+        // 22 px tall) and the Back/Close button row (currentY + 40). Updates
+        // every render frame from the local tick clock; auto-requests a fresh
+        // SyncWorldDetailPacket once the countdown reaches zero so the toggle
+        // states reflect the new portal status.
+        if (this.syncedTimerSeconds > 0) {
+            int remaining = computeLiveRemaining();
+            String type = ClientPacketHandler.getTimerPortalType();
+            String typeLabel = "both".equals(type) ? "Both" : ("nether".equals(type) ? "Nether" : "End");
+            int color = remaining <= 5  ? 0xFFFF5555
+                      : remaining <= 10 ? 0xFFFFAA00
+                      : remaining <= 30 ? 0xFFFFFF55
+                      :                   0xFF55FF55;
+            String text = String.format("Time left: %d:%02d  (%s)",
+                    remaining / 60, remaining % 60, typeLabel);
+            guiGraphics.drawString(this.font, text, leftCol, currentY + 26, color, true);
+            if (remaining == 0 && !this.refreshRequested && this.dimensionId != null && !this.dimensionId.isEmpty()) {
+                this.refreshRequested = true;
+                ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_DETAIL, this.dimensionId));
+            }
+        }
         
         // Render widgets on top
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -275,5 +347,16 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         // Don't render default labels
+    }
+
+    /**
+     * Estimates the remaining timer seconds without waiting for a server packet.
+     * Anchored at init() to {@code syncedTimerSeconds} (from SyncWorldDetailPacket)
+     * and the player's tickCount; decremented locally at 20 tps.
+     */
+    private int computeLiveRemaining() {
+        if (minecraft == null || minecraft.player == null) return syncedTimerSeconds;
+        long elapsed = (minecraft.player.tickCount - syncedAtTick) / 20L;
+        return Math.max(0, syncedTimerSeconds - (int) elapsed);
     }
 }

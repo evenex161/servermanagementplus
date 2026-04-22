@@ -47,6 +47,22 @@ public record WMSetTimerPacket(String dimensionId, int seconds, String portalTyp
                             : "unknown";
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                             "§cA timer is already running for " + activeDimName + "! Only one timer can be active at a time."));
+                    } else {
+                        // Push a fresh world-detail snapshot so the open screen sees the new
+                        // timer (or its cancellation) immediately instead of waiting for a reopen.
+                        var data = com.servermanagement.features.worldmanager.WorldManager.getInstance().getData();
+                        com.servermanagement.network.ModNetworking.sendToPlayer(
+                            new com.servermanagement.network.packet.SyncWorldDetailPacket(
+                                dimensionId,
+                                data.areNetherPortalsEnabled(dimensionId),
+                                data.areEndPortalsEnabled(dimensionId),
+                                data.hasActiveTimer(dimensionId),
+                                (int) data.getRemainingTime(dimensionId),
+                                data.isDimensionChatConnected(dimensionId),
+                                data.getTimerPortalType(dimensionId)
+                            ),
+                            player
+                        );
                     }
                 }
             }

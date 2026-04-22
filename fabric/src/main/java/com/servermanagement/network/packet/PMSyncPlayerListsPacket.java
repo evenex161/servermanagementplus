@@ -49,6 +49,7 @@ public record PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> w
             com.servermanagement.features.playermanager.PlayerManagerClientData.setBannedPlayers(bannedPlayers);
             com.servermanagement.features.playermanager.PlayerManagerClientData.setWhitelistedPlayers(whitelistedPlayers);
             com.servermanagement.features.playermanager.PlayerManagerClientData.setWhitelistEnabled(whitelistEnabled);
+            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
             
             // Trigger UI refresh if Player Manager screen is open.
             var mc = net.minecraft.client.Minecraft.getInstance();

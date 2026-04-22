@@ -17,8 +17,14 @@ public class AchievementsMenu extends AbstractContainerMenu {
     private int totalRewards;
 
     public AchievementsMenu(int containerId, Inventory playerInventory) {
-        super(com.servermanagement.gui.ModMenuTypes.ACHIEVEMENTS_MENU.get(), containerId);
-        this.earnedAchievements = new HashSet<>(ClientAchievementsData.getEarnedAchievements());
+        super(com.servermanagement.gui.ModMenuTypes.ACHIEVEMENTS_MENU.get(), containerId);        reloadFromClientCache();
+    }
+
+    /** Re-pull earned achievements + reward total from the client cache. Called
+     *  from the screen's init() so a late SyncAchievementsPacket triggering
+     *  refreshOpenScreen() picks up freshly synced data instead of the
+     *  constructor snapshot. */
+    public void reloadFromClientCache() {        this.earnedAchievements = new HashSet<>(ClientAchievementsData.getEarnedAchievements());
         this.totalRewards = ClientAchievementsData.getTotalRewardsEarned();
     }
 

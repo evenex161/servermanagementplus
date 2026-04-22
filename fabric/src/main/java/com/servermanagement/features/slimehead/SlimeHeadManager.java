@@ -150,40 +150,42 @@ public class SlimeHeadManager implements Feature {
     }
     
     /**
+     * Plays slime sound when noteblock below slime head is played.
+     * Returns true if the slime sound was played (caller should cancel default).
+     */
+    public static boolean tryPlaySlimeSound(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos noteBlockPos) {
+        if (!ModConfig.SLIME_HEADS_ENABLED.get()) {
+            return false;
+        }
+
+        BlockPos abovePos = noteBlockPos.above();
+        var blockAbove = level.getBlockState(abovePos);
+        if (blockAbove.getBlock() != net.minecraft.world.level.block.Blocks.PLAYER_HEAD &&
+            blockAbove.getBlock() != net.minecraft.world.level.block.Blocks.PLAYER_WALL_HEAD) {
+            return false;
+        }
+
+        var blockEntity = level.getBlockEntity(abovePos);
+        if (!(blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity)) {
+            return false;
+        }
+
+        var owner = skullEntity.getOwnerProfile();
+        if (owner == null || owner.name().isEmpty() || !owner.name().get().equals("Slime")) {
+            return false;
+        }
+
+        if (!level.isClientSide) {
+            level.playSound(null, noteBlockPos, SoundEvents.SLIME_SQUISH,
+                SoundSource.RECORDS, 3.0F, 1.0F);
+        }
+        return true;
+    }
+
+    /**
      * Plays slime sound when noteblock below slime head is played
      */
     public static void onNoteBlockPlay(net.minecraft.world.level.Level world, net.minecraft.core.BlockPos pos) {
-        if (!ModConfig.SLIME_HEADS_ENABLED.get()) {
-            return;
-        }
-        
-        var levelAccessor = world;
-        if (!(levelAccessor instanceof Level level)) {
-            return;
-        }
-        
-        BlockPos noteBlockPos = pos;
-        BlockPos abovePos = noteBlockPos.above();
-        
-        // Check if there's a player head above the noteblock
-        var blockAbove = level.getBlockState(abovePos);
-        if (blockAbove.getBlock() == net.minecraft.world.level.block.Blocks.PLAYER_HEAD ||
-            blockAbove.getBlock() == net.minecraft.world.level.block.Blocks.PLAYER_WALL_HEAD) {
-            
-            var blockEntity = level.getBlockEntity(abovePos);
-            if (blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity) {
-                var owner = skullEntity.getOwnerProfile();
-                if (owner != null && owner.name().isPresent() && owner.name().get().equals("Slime")) {
-                    // Cancel default noteblock sound
-                    // Fabric: block break cancellation handled by return value
-                    
-                    // Play slime sound instead
-                    if (!level.isClientSide) {
-                        level.playSound(null, noteBlockPos, SoundEvents.SLIME_SQUISH, 
-                            SoundSource.RECORDS, 3.0F, 1.0F);
-                    }
-                }
-            }
-        }
+        tryPlaySlimeSound(world, pos);
     }
 }

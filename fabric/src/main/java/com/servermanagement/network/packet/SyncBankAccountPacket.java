@@ -65,6 +65,7 @@ public record SyncBankAccountPacket(double balance, List<Transaction> recentTran
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             com.servermanagement.client.ClientBankData.setBalance(balance);
             com.servermanagement.client.ClientBankData.setTransactions(recentTransactions);
+            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
 
 }
 }

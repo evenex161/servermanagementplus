@@ -102,6 +102,13 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
         this.imageWidth = dim[0];
         this.imageHeight = dim[1];
         super.init();
+        // Pull fresh MOTD text from the cache on every init() — but only before
+        // the user has started editing (originalMotdText == null), so a late
+        // SyncMotdPacket triggering refreshOpenScreen() doesn't clobber pending
+        // typing.
+        if (this.originalMotdText == null) {
+            this.menu.reloadFromClientCache();
+        }
 
         int cx = (this.width - this.imageWidth) / 2;
         int cy = (this.height - this.imageHeight) / 2;
