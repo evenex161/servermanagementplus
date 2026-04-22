@@ -45,6 +45,10 @@ neoforge-server 1.21.1/
 # Old source backup (MultiLoader migration)
 src.bak/
 
+# Session artifacts
+docs/
+session_summary.md
+
 # Mac
 .DS_Store
 

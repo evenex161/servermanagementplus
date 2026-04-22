@@ -535,7 +535,7 @@ ServerManagement shutdown complete
 
 ---
 
-## Post-Release Patches (April 22, 2026)
+## Pre-Release Patches (April 22, 2026)
 
 Follow-up bug-fix passes against the v2.1.0 baseline. All three loaders compile clean (`:forge:compileJava :neoforge:compileJava :fabric:compileJava` â†’ BUILD SUCCESSFUL).
 
@@ -586,7 +586,7 @@ Follow-up bug-fix passes against the v2.1.0 baseline. All three loaders compile 
   - **disabled â†’ enabled**: portal state hasn't flipped yet â†’ still disabled. The upstream `if (!portalAllowed)` check already cancels travel with a clean, dimension-aware message. The timer-active block was redundant
 - **Fix**: Removed the timer-active travel cancellation block from `PortalEventHandler.onEntityTravelToDimension` (Ã— 3 loaders). Travel during an enabledâ†’disabled countdown now works, giving players the actual escape window. Travel during a disabledâ†’enabled countdown is still correctly blocked by the existing `!portalAllowed` branch with a dimension-aware error message. Manual portal frame ignition / portal block placement during a timer is also unaffected â€” those checks only consult the current portal-enabled state
 
-### Files Modified (Post-Release)
+### Files Modified (Pre-Release)
 
 - `network/packet/WMSetTimerPacket.java` Ã— 3 â€” pushes fresh `SyncWorldDetailPacket` on success
 - `gui/screen/WorldDetailScreen.java` Ã— 3 â€” EditBox lock + Set Timer button hide while timer active
