@@ -1477,6 +1477,16 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Frame the player inventory + hotbar so it's visually distinct from
+        // the listing area. Painted BEFORE super.renderContent so slots and
+        // items render on top of the frosted strip and outline.
+        if (menu.isInventoryVisible()) {
+            // MineBayMenu places the inventory grid at panel-relative
+            // (x=219, y=230) - see MineBayMenu inventoryX/inventoryY.
+            drawInventoryPanel(guiGraphics, this.leftPos + 219, this.topPos + 230,
+                3, 4, false);
+        }
+
         super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;

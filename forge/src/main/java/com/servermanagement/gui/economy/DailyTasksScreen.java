@@ -351,9 +351,18 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
             int taskY = centerY + 70 + (i * taskSlotHeight);
             
             renderTask(guiGraphics, task, centerX + 15, taskY, i, partialTick);
+
+            // Divider between tasks (not after the last visible one).
+            int displayed = Math.min(tasks.size(), MAX_TASKS);
+            if (i < displayed - 1) {
+                int dividerY = taskY + taskSlotHeight - 4;
+                int dx0 = centerX + 20;
+                int dx1 = centerX + this.imageWidth - 20;
+                guiGraphics.fill(dx0, dividerY, dx1, dividerY + 1, 0x40FFFFFF);
+            }
         }
     }
-    
+
     private void renderTask(GuiGraphics guiGraphics, DailyTask task, int x, int y, int index, float partialTick) {
         // Task number and icon with bounce animation during claim
         float bounceOffset = 0f;

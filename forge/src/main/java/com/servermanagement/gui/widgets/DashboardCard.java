@@ -76,8 +76,16 @@ public class DashboardCard extends AbstractWidget {
             this.getY() + 10,
             0xFFFFFF, false);
         
-        // Title
-        guiGraphics.drawCenteredString(font, this.getMessage(),
+        // Title (truncated to fit within card)
+        var titleStr = this.getMessage().getString();
+        int maxTitleW = this.width - 6;
+        if (font.width(titleStr) > maxTitleW) {
+            while (font.width(titleStr + "..") > maxTitleW && titleStr.length() > 1) {
+                titleStr = titleStr.substring(0, titleStr.length() - 1);
+            }
+            titleStr += "..";
+        }
+        guiGraphics.drawCenteredString(font, titleStr,
             this.getX() + this.width / 2,
             this.getY() + 30,
             0xFFFFFF);

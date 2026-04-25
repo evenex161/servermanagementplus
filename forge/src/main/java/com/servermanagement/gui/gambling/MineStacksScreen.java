@@ -72,6 +72,16 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
     private float winAnimationProgress = 0f;
     private int particleCount = 0;
     private java.util.List<AnimatedParticle> particles = new java.util.ArrayList<>();
+
+    // Real-time delta tracking. The {@code partialTick} parameter passed to
+    // {@code Screen.render} has different semantics across loaders/MC patch
+    // versions (Forge: per-tick fraction 0..1; NeoForge 21.x: realtime delta
+    // ticks per frame, often >1.0), which made every multiplier-driven
+    // animation run far too fast on NeoForge. We compute our own monotonic
+    // delta in tick units (50 ms = 1 tick) so animation speed is identical
+    // across loaders.
+    private long lastFrameNanos = 0L;
+    private float frameDeltaTicks = 0f;
     
     // Animated particle class for win effects
     private static class AnimatedParticle {
@@ -704,6 +714,20 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
     
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Compute a loader-independent frame delta in tick units (50 ms = 1
+        // tick). Drive every animation speed multiplier off this instead of
+        // the {@code partialTick} parameter, whose semantics differ between
+        // Forge and NeoForge 21.x.
+        long now = System.nanoTime();
+        if (lastFrameNanos == 0L) {
+            frameDeltaTicks = 0.05f; // first frame: assume ~one 60-fps frame
+        } else {
+            frameDeltaTicks = (now - lastFrameNanos) / 50_000_000f;
+            // Clamp huge deltas (window unfocused / GC pause) so animations
+            // don't jump multiple seconds in one frame on resume.
+            if (frameDeltaTicks > 1.0f) frameDeltaTicks = 1.0f;
+        }
+        lastFrameNanos = now;
         // Update tension animation
         if (isTensionActive) {
             long elapsed = System.currentTimeMillis() - tensionStartTime;
@@ -718,11 +742,11 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             float progress = elapsed / (float)TENSION_DURATION;
             
             // Update rotation for spinning animations
-            tensionRotation += partialTick * 20f; // Fast spin
+            tensionRotation += frameDeltaTicks * 20f; // Fast spin
             if (tensionRotation > 360f) tensionRotation -= 360f;
             
             // Update reel offset for slot machine
-            tensionReelOffset += partialTick * 10f;
+            tensionReelOffset += frameDeltaTicks * 10f;
             if (tensionReelOffset > 32f) tensionReelOffset -= 32f; // Reset every 32 pixels
         }
         
@@ -742,18 +766,18 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             } else {
                 // Slow down rotation for ending effect
                 float slowdownFactor = 1.0f - progress; // Gradually slow to 0
-                tensionRotation += partialTick * 20f * slowdownFactor;
+                tensionRotation += frameDeltaTicks * 20f * slowdownFactor;
                 if (tensionRotation > 360f) tensionRotation -= 360f;
                 
                 // Slow down reels
-                tensionReelOffset += partialTick * 10f * slowdownFactor;
+                tensionReelOffset += frameDeltaTicks * 10f * slowdownFactor;
                 if (tensionReelOffset > 32f) tensionReelOffset -= 32f;
             }
         }
         
         // Update animation
         if (isAnimating) {
-            winAnimationProgress += partialTick * 0.02f;
+            winAnimationProgress += frameDeltaTicks * 0.02f;
             if (winAnimationProgress >= 1.0f) {
                 isAnimating = false;
                 winAnimationProgress = 0f;
@@ -865,7 +889,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         
         guiGraphics.pose().popPose();
         
-        animationTime += partialTick * 0.05f;
+        animationTime += frameDeltaTicks * 0.05f;
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -983,7 +1007,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.pose().translate(0, 0, 200);
         
         // Dark overlay
-        guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
+        fillScreen(guiGraphics, 0x80000000);
         
         int animX = centerX + this.imageWidth / 2;
         int animY = centerY + 100;
@@ -1165,7 +1189,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.pose().translate(0, 0, 200);
         
         // Dark overlay (slightly lighter than tension)
-        guiGraphics.fill(0, 0, this.width, this.height, 0x60000000);
+        fillScreen(guiGraphics, 0x60000000);
         
         int animX = centerX + this.imageWidth / 2;
         int animY = centerY + 100;
