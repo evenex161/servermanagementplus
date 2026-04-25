@@ -1,15 +1,15 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.playermanager.PlayerManagerClientData;
 import com.servermanagement.gui.PlayerManagerMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Reworked Player Manager Screen with tabs for Online, Banned, and Whitelist.
  */
-public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMenu> {
+public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMenu> {
     
     private enum Tab { ONLINE, BANNED, WHITELIST }
     private enum SubView { LIST, ACTIONS, KICK_CONFIRM, BAN_CONFIRM }
@@ -40,16 +40,13 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
     private String savedWhitelistInput = "";
 
     public PlayerManagerScreen(PlayerManagerMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 380, 280);
         this.imageWidth = 380;
         this.imageHeight = 280;
     }
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(380, 280, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         
         // Request player lists from server
@@ -448,7 +445,7 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -490,7 +487,7 @@ public class PlayerManagerScreen extends AbstractContainerScreen<PlayerManagerMe
             guiGraphics.drawCenteredString(this.font, emptyMsg, x0 + this.imageWidth / 2, emptyY, 0x666666);
         }
         
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
     

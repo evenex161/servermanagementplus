@@ -1,18 +1,18 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.menu.PerformanceSettingsMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public class PerformanceSettingsScreen extends AbstractContainerScreen<PerformanceSettingsMenu> {
+public class PerformanceSettingsScreen extends ScalableContainerScreen<PerformanceSettingsMenu> {
 
     private int scrollOffset = 0;
     private static final int SCROLL_STEP = 16;
@@ -27,7 +27,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
     private int currentPage = 0;
 
     public PerformanceSettingsScreen(PerformanceSettingsMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 430, 420);
         this.imageWidth = 430;
         this.imageHeight = 420;
     }
@@ -63,9 +63,6 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(430, 420, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         // Fabric: re-pull settings from the client cache on every init() so that
         // a late SyncPerformanceSettingsPacket triggering refreshOpenScreen()
@@ -267,7 +264,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(g, mouseX, mouseY, partialTick);
         this.renderBg(g, partialTick, mouseX, mouseY);
 
@@ -277,7 +274,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int contentBottom = getContentBottom();
 
         // 1) Render widgets (super.render includes all addRenderableWidget items)
-        super.render(g, mouseX, mouseY, partialTick);
+        super.renderContent(g, mouseX, mouseY, partialTick);
 
         // 2) Repaint header zone to cover any widget bleed from scrolling
         g.fill(cX, cY, cX + this.imageWidth, cY + 35, 0xFF1A1A2E);

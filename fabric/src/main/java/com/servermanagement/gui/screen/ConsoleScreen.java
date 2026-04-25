@@ -1,8 +1,9 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.ConsoleMenu;
 import com.servermanagement.gui.widgets.ConsoleOutput;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.ConsoleCommandPacket;
@@ -10,20 +11,19 @@ import com.servermanagement.network.packet.ConsoleSubscribePacket;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
  * In-game console GUI for executing server commands and viewing logs
  */
-public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
+public class ConsoleScreen extends ScalableContainerScreen<ConsoleMenu> {
     
     private ConsoleOutput consoleOutput;
     private EditBox commandInput;
     
     public ConsoleScreen(ConsoleMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 550, 330);
         this.imageHeight = 330;
         this.imageWidth = 550;
     }
@@ -39,9 +39,6 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(550, 330, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -124,7 +121,7 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -137,7 +134,7 @@ public class ConsoleScreen extends AbstractContainerScreen<ConsoleMenu> {
             this.leftPos + 32, this.topPos + 20, 0xAAAAAA, true);
         
         // Render widgets on top
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
     

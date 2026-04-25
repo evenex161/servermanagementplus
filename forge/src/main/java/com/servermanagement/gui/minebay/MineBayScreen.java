@@ -1,18 +1,18 @@
 package com.servermanagement.gui.minebay;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.PriceItemEntry;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Main MineBay screen - Browse and create listings
  */
-public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
+public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     
     private ScreenState currentState;
     private List<MineBayListing> listings;
@@ -88,7 +88,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     }
     
     public MineBayScreen(MineBayMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 600, 400);
         this.imageWidth = 600;
         this.imageHeight = 400;
         this.currentState = ScreenState.BROWSE; // Default to browse
@@ -113,9 +113,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(600, 400, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         this.inventoryLabelY = 222;
         super.init();
         
@@ -1479,8 +1476,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;

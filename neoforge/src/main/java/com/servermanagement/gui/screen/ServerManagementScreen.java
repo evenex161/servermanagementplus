@@ -1,36 +1,33 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.menu.ServerManagementMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.ToggleFeaturePacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
  * Modern, minimal ServerManagement GUI
  */
-public class ServerManagementScreen extends AbstractContainerScreen<ServerManagementMenu> {
+public class ServerManagementScreen extends ScalableContainerScreen<ServerManagementMenu> {
     
     private ToggleSwitch worldManagerSwitch;
     private ToggleSwitch playerManagerSwitch;
     private ToggleSwitch slimeHeadSwitch;
     
     public ServerManagementScreen(ServerManagementMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 300, 180);
         this.imageHeight = 180;
         this.imageWidth = 300;
     }
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(300, 180, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         
         // Refresh menu states from FeatureManager before displaying
@@ -104,7 +101,7 @@ public class ServerManagementScreen extends AbstractContainerScreen<ServerManage
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -134,7 +131,7 @@ public class ServerManagementScreen extends AbstractContainerScreen<ServerManage
             leftCol, startY + spacing * 2 + 18, 0x808080, false);
         
         // Render widgets on top
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
     

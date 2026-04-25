@@ -1,14 +1,14 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.MotdEditorMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.SaveMotdPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
@@ -20,7 +20,7 @@ import net.minecraft.world.entity.player.Inventory;
  * Supports Minecraft color codes (&amp;0-&amp;f), formatting codes (&amp;l, &amp;o, &amp;n, &amp;m, &amp;k),
  * and provides a live rendered preview of the final server list MOTD.
  */
-public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
+public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
 
     private static final int SCREEN_WIDTH = 420;
     private static final int SCREEN_HEIGHT = 330;
@@ -91,16 +91,13 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
     private final ModernButton[] formatButtons = new ModernButton[5]; // l, o, n, m, k (not reset)
 
     public MotdEditorScreen(MotdEditorMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, SCREEN_WIDTH, SCREEN_HEIGHT);
         this.imageWidth = SCREEN_WIDTH;
         this.imageHeight = SCREEN_HEIGHT;
     }
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(SCREEN_WIDTH, SCREEN_HEIGHT, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         // Pull fresh MOTD text from the cache on every init() — but only before
         // the user has started editing (originalMotdText == null), so a late
@@ -503,7 +500,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
 
@@ -511,7 +508,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
         int cy = this.topPos;
 
         // Render widgets first (super.render calls renderBg internally)
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
 
         // Draw all labels AFTER super.render() so they don't get covered
         // by the second renderBg call inside AbstractContainerScreen.render()

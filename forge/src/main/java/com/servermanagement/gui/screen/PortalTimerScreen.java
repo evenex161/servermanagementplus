@@ -1,18 +1,18 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.PortalTimerMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.WMSetTimerPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> {
+public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> {
     
     private String dimensionId;
     private EditBox hoursInput;
@@ -28,7 +28,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     private String selectedPortalType = "both";
     
     public PortalTimerScreen(PortalTimerMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 300, 240);
         this.imageHeight = 240;
         this.imageWidth = 300;
         
@@ -37,9 +37,6 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(300, 240, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         // Refresh dimensionId from the cache on every init() in case the
         // SyncWorldDetailPacket arrived after the screen ctor but before the
@@ -195,7 +192,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -242,7 +239,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         guiGraphics.drawString(this.font, "Quick Presets:", 
             this.leftPos + 30, this.topPos + 115, 0xFFFFFF, false);
         
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
     

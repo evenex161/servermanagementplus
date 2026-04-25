@@ -1,32 +1,29 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.DashboardMenu;
 import com.servermanagement.gui.widgets.DashboardCard;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
  * Main ServerManagement Dashboard - Central hub for all features
  */
-public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
+public class DashboardScreen extends ScalableContainerScreen<DashboardMenu> {
     
     public DashboardScreen(DashboardMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 400, 330);
         this.imageHeight = 330; // Increased for 3 rows
         this.imageWidth = 400;
     }
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(400, 330, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -137,7 +134,7 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -150,7 +147,7 @@ public class DashboardScreen extends AbstractContainerScreen<DashboardMenu> {
             this.leftPos + 15, this.topPos + 20, 0xAAAAAA, true);
         
         // Render widgets on top
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
     

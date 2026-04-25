@@ -1,7 +1,8 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.GlobalSettingsMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
@@ -9,29 +10,25 @@ import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.WMToggleChatIsolationPacket;
 import com.servermanagement.network.packet.WMToggleTabIsolationPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
  * Modern Global Settings Screen - Chat and Tab Isolation
  */
-public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettingsMenu> {
+public class GlobalSettingsScreen extends ScalableContainerScreen<GlobalSettingsMenu> {
     
     private ToggleSwitch chatIsolationSwitch;
     private ToggleSwitch tabIsolationSwitch;
 
     public GlobalSettingsScreen(GlobalSettingsMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 360, 240);
         this.imageWidth = 320;
         this.imageHeight = 200;
     }
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(360, 240, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
 
         // Fabric: re-pull toggle state from the client cache on every init() so
@@ -95,7 +92,7 @@ public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettings
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -138,7 +135,7 @@ public class GlobalSettingsScreen extends AbstractContainerScreen<GlobalSettings
             x0 + 20, y0 + this.imageHeight - 55, 0x666666, false);
         
         // Render widgets on top
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 

@@ -1,21 +1,21 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.ConfigMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.ToggleFeaturePacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
  * Modern Config Screen - Feature Toggles (shows ALL features regardless of state)
  */
-public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
+public class ConfigScreen extends ScalableContainerScreen<ConfigMenu> {
     
     private ToggleSwitch worldManagerSwitch;
     private ToggleSwitch playerManagerSwitch;
@@ -25,16 +25,13 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
     private ToggleSwitch motdSwitch;
     
     public ConfigScreen(ConfigMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 400, 380);
         this.imageWidth = 400;
         this.imageHeight = 380;
     }
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(400, 380, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         // Refresh feature toggle states from FeatureManager so that init() re-runs
         // triggered by SyncFeatureStatesPacket reflect the latest server state.
@@ -174,7 +171,7 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -208,7 +205,7 @@ public class ConfigScreen extends AbstractContainerScreen<ConfigMenu> {
         }
         
         // Render widgets on top
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 

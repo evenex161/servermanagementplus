@@ -29,18 +29,18 @@ public class MineBayMenu extends AbstractContainerMenu {
     public MineBayMenu(int containerId, Inventory playerInventory) {
         super(ModMenuTypes.MINEBAY_MENU, containerId);
         
-        // Calculate scaled panel width AND uniform vertical scale for slot positioning.
-        // Both axes must use the same factor so slots stay inside the (uniformly scaled)
-        // panel rectangle drawn by the screen.
-        int panelWidth = getScaledPanelWidth(playerInventory);
-        float vScale = getScaledVerticalFactor(playerInventory);
+        // All slot positions are in design space (panel width 600).
+        // The matching ScalableContainerScreen renders everything through a uniform
+        // pose-matrix scale, so slots are visually scaled with the panel even when
+        // the workspace is smaller than the design size.
+        int panelWidth = 600;
         
         // Initialize offering container (1 slot for item to sell)
         this.offeringContainer = new SimpleContainer(1);
         
         // Add offering slot (centered, visible only in CREATE_STEP1)
         int offeringX = panelWidth / 2 - 8;
-        int offeringY = Math.round(85 * vScale);
+        int offeringY = 85;
         offeringSlot = new ToggleableSlot(offeringContainer, 0, offeringX, offeringY);
         offeringSlot.setVisible(false); // Hidden by default
         this.addSlot(offeringSlot);
@@ -51,7 +51,7 @@ public class MineBayMenu extends AbstractContainerMenu {
         // Add 3 offer slots (evenly spaced, visible only in MAKE_OFFER)
         int offerSlotSpacing = 50;
         int offerStartX = (panelWidth - (3 * 18 + 2 * (offerSlotSpacing - 18))) / 2;
-        int offerSlotY = Math.round(148 * vScale);
+        int offerSlotY = 148;
         for (int i = 0; i < 3; i++) {
             ToggleableSlot slot = new ToggleableSlot(offerContainer, i, 
                 offerStartX + (i * offerSlotSpacing), offerSlotY);
@@ -60,9 +60,9 @@ public class MineBayMenu extends AbstractContainerMenu {
             offerSlots.add(slot);
         }
         
-        // Position inventory centered at bottom of panel (Y scaled to match panel height)
+        // Position inventory centered at bottom of panel (design-space Y)
         int inventoryX = (panelWidth - 162) / 2; // Center 9-column inventory (9*18=162px)
-        int inventoryY = Math.round(230 * vScale);
+        int inventoryY = 230;
         
         // Add player inventory slots (3 rows)
         for (int row = 0; row < 3; row++) {
@@ -80,47 +80,6 @@ public class MineBayMenu extends AbstractContainerMenu {
             inventorySlots.add(slot);
         }
     }
-    
-    /**
-     * Get the scaled panel width, using ScreenScaler on client or defaulting to 600 on server
-     */
-    private static int getScaledPanelWidth(Inventory playerInventory) {
-        if (playerInventory.player.level().isClientSide()) {
-            return getClientPanelWidth();
-        }
-        return 600;
-    }
-    
-    private static int getClientPanelWidth() {
-        try {
-            var mc = net.minecraft.client.Minecraft.getInstance();
-            int guiW = mc.getWindow().getGuiScaledWidth();
-            int guiH = mc.getWindow().getGuiScaledHeight();
-            return com.servermanagement.gui.ScreenScaler.scale(600, 400, guiW, guiH)[0];
-        } catch (Throwable t) {
-            return 600;
-        }
-    }
-    
-    /**
-     * Get the uniform scale factor used by the matching screen (600x400 design),
-     * so menu slot Y positions shrink in lockstep with the panel rectangle.
-     * Falls back to 1.0 on the server side or if Minecraft is not available.
-     */
-    private static float getScaledVerticalFactor(Inventory playerInventory) {
-        if (!playerInventory.player.level().isClientSide()) {
-            return 1.0f;
-        }
-        try {
-            var mc = net.minecraft.client.Minecraft.getInstance();
-            int guiW = mc.getWindow().getGuiScaledWidth();
-            int guiH = mc.getWindow().getGuiScaledHeight();
-            return com.servermanagement.gui.ScreenScaler.scaleFactor(600, 400, guiW, guiH);
-        } catch (Throwable t) {
-            return 1.0f;
-        }
-    }
-    
     public int getOfferingSlotX() {
         return offeringSlot.x;
     }

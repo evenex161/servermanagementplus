@@ -1,10 +1,11 @@
 package com.servermanagement.gui.economy;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.client.ClientBankData;
 import com.servermanagement.client.ClientMoneyRequestData;
 import com.servermanagement.features.economy.Transaction;
 import com.servermanagement.features.economy.TransactionType;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.BankTransferPacket;
@@ -13,7 +14,6 @@ import com.servermanagement.network.packet.RespondMoneyRequestPacket;
 import com.servermanagement.network.packet.SendMoneyRequestPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -25,7 +25,7 @@ import java.util.Locale;
  * Redesigned Bank Account GUI with tabbed interface.
  * Tabs: Account (balance + history), Transfer, Requests
  */
-public class BankScreen extends AbstractContainerScreen<BankMenu> {
+public class BankScreen extends ScalableContainerScreen<BankMenu> {
 
     private enum Tab { ACCOUNT, TRANSFER, REQUESTS }
 
@@ -56,7 +56,7 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
     private int statusTimer = 0;
 
     public BankScreen(BankMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 440, 340);
         this.imageHeight = 340;
         this.imageWidth = 440;
         this.currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
@@ -64,9 +64,6 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(440, 340, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         // Pull fresh balance + transaction history from the cache on every init()
         // so a late SyncBankAccountPacket triggering refreshOpenScreen() reflects
@@ -463,8 +460,8 @@ public class BankScreen extends AbstractContainerScreen<BankMenu> {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
 
         int x0 = (this.width - this.imageWidth) / 2;
         int y0 = (this.height - this.imageHeight) / 2;

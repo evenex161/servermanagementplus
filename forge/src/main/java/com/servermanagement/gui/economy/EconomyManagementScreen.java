@@ -1,7 +1,8 @@
 package com.servermanagement.gui.economy;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.economy.TaskType;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.DeleteTemplatePacket;
@@ -13,7 +14,6 @@ import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.client.ClientPacketHandler;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Economy Management Screen for admins to configure templates and rewards
  */
-public class EconomyManagementScreen extends AbstractContainerScreen<EconomyManagementMenu> {
+public class EconomyManagementScreen extends ScalableContainerScreen<EconomyManagementMenu> {
     
     private static final int TEMPLATE_HEIGHT = 70;
     private static final int TEMPLATE_PADDING = 5;
@@ -60,16 +60,13 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     private ItemStack freeRewardItemStack = ItemStack.EMPTY; // Item reward for free reward
     
     public EconomyManagementScreen(EconomyManagementMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 600, 450);
         this.imageHeight = 450;
         this.imageWidth = 600;
     }
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(600, 450, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -443,8 +440,8 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;

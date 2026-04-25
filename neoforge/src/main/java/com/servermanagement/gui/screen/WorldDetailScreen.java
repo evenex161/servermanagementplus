@@ -1,8 +1,9 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.WorldDetailMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
@@ -12,14 +13,13 @@ import com.servermanagement.network.packet.WMToggleChatIsolationPacket;
 import com.servermanagement.network.packet.WMTogglePortalsPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
  * Modern World Detail GUI with proper state management
  */
-public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> {
+public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> {
     
     private String dimensionId;
     private ToggleSwitch netherPortalsSwitch;
@@ -36,7 +36,7 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     private boolean refreshRequested = false;
     
     public WorldDetailScreen(WorldDetailMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 380, 280);
         this.imageHeight = 280;
         this.imageWidth = 380;
         
@@ -46,9 +46,6 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(380, 280, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -241,7 +238,7 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
@@ -312,7 +309,7 @@ public class WorldDetailScreen extends AbstractContainerScreen<WorldDetailMenu> 
         }
         
         // Render widgets on top
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
     

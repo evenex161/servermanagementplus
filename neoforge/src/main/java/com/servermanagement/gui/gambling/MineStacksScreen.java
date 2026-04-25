@@ -1,15 +1,15 @@
 package com.servermanagement.gui.gambling;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.gambling.GamblingResult;
 import com.servermanagement.features.gambling.games.*;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +20,7 @@ import java.util.Locale;
 /**
  * MineStacks - Gambling interface
  */
-public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
+public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
     
     private enum GameMode {
         MENU,           // Main menu - select game
@@ -115,7 +115,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     public MineStacksScreen(MineStacksMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 420, 230);
         this.imageWidth = 420;
         this.imageHeight = 230;
         this.inventoryLabelY = 1000; // Hide
@@ -125,9 +125,6 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(420, 230, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -706,7 +703,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         // Update tension animation
         if (isTensionActive) {
             long elapsed = System.currentTimeMillis() - tensionStartTime;

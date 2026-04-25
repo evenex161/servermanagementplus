@@ -1,14 +1,14 @@
 package com.servermanagement.gui.economy;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.economy.DailyTask;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.ClaimDailyTaskPacket;
 import com.servermanagement.network.packet.ClaimFreeRewardPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * - Smooth transitions and fades
  * - Pulsing effects for claimable rewards
  */
-public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
+public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
     
     private static final int TASK_HEIGHT = 65;
     private static final int TASK_PADDING = 10;
@@ -53,7 +53,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     private int taskCardHeight = TASK_HEIGHT;
     
     public DailyTasksScreen(DailyTasksMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 400, 430);
         this.imageHeight = 430; // Tall enough to fit 3 tasks + free reward section
         this.imageWidth = 400;
         
@@ -68,10 +68,6 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(400, 430, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
-        
         // Dynamically compute task slot height so free reward section does not overlap
         int availableForTasks = this.imageHeight - 70 - FREE_REWARD_HEIGHT - 25;
         this.taskSlotHeight = availableForTasks / MAX_TASKS;
@@ -276,8 +272,8 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
