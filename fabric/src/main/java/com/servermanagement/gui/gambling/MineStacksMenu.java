@@ -47,23 +47,25 @@ public class MineStacksMenu extends AbstractContainerMenu {
         this.data = data;
         this.addDataSlots(data);
         
-        // Calculate scaled panel dimensions for slot positioning
+        // Calculate scaled panel dimensions for slot positioning. Both axes use the
+        // same uniform factor so slots stay inside the (uniformly scaled) panel rectangle.
         int panelWidth = getScaledPanelWidth(playerInventory);
+        float vScale = getScaledVerticalFactor(playerInventory);
         
         // Initialize betting container (1 slot for item bets)
         this.bettingContainer = new SimpleContainer(1);
         
         // Add betting slot centered horizontally in panel
         int betSlotX = (panelWidth - 18) / 2;
-        int betSlotY = 30;
+        int betSlotY = Math.round(30 * vScale);
         bettingSlot = new GamblingSlot(bettingContainer, 0, betSlotX, betSlotY);
         // Start disabled - will be enabled when switching to item betting mode
         bettingSlot.setEnabled(false);
         this.addSlot(bettingSlot);
         
-        // Add player inventory centered in panel
+        // Add player inventory centered in panel (Y scaled to match panel height)
         int inventoryX = (panelWidth - 162) / 2; // Center 9-column inventory (9*18=162px)
-        int inventoryY = 140;
+        int inventoryY = Math.round(140 * vScale);
         
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
@@ -102,6 +104,24 @@ public class MineStacksMenu extends AbstractContainerMenu {
             return com.servermanagement.gui.ScreenScaler.scale(400, 220, guiW, guiH)[0];
         } catch (Throwable t) {
             return 400;
+        }
+    }
+    
+    /**
+     * Get the uniform scale factor used by the matching screen (400x220 design),
+     * so menu slot Y positions shrink in lockstep with the panel rectangle.
+     */
+    private static float getScaledVerticalFactor(Inventory playerInventory) {
+        if (!playerInventory.player.level().isClientSide()) {
+            return 1.0f;
+        }
+        try {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            int guiW = mc.getWindow().getGuiScaledWidth();
+            int guiH = mc.getWindow().getGuiScaledHeight();
+            return com.servermanagement.gui.ScreenScaler.scaleFactor(400, 220, guiW, guiH);
+        } catch (Throwable t) {
+            return 1.0f;
         }
     }
     
