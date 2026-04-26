@@ -77,13 +77,18 @@ public class DashboardCard extends AbstractWidget {
             0xFFFFFF, false);
         
         // Title (truncated to fit within card)
+        // Use a generous safety margin (10px = 5 each side) because the panel
+        // can be drawn inside a pose-scaled matrix (ScalableContainerScreen).
+        // GuiGraphics.enableScissor does NOT honour the pose transform, so any
+        // overflow would visually escape the card and be overpainted by the
+        // next card's background. Truncating in design-space here guarantees
+        // the rendered text always sits well inside the card, regardless of
+        // the active GUI scale.
         var titleStr = this.getMessage().getString();
-        int maxTitleW = this.width - 6;
+        int maxTitleW = Math.max(8, this.width - 10);
         if (font.width(titleStr) > maxTitleW) {
-            while (font.width(titleStr + "..") > maxTitleW && titleStr.length() > 1) {
-                titleStr = titleStr.substring(0, titleStr.length() - 1);
-            }
-            titleStr += "..";
+            String elide = "..";
+            titleStr = font.plainSubstrByWidth(titleStr, maxTitleW - font.width(elide)) + elide;
         }
         guiGraphics.drawCenteredString(font, titleStr,
             this.getX() + this.width / 2,
@@ -92,12 +97,10 @@ public class DashboardCard extends AbstractWidget {
         
         // Description (truncated to fit within card)
         String desc = this.description;
-        int maxDescW = this.width - 6;
+        int maxDescW = Math.max(8, this.width - 10);
         if (font.width(desc) > maxDescW) {
-            while (font.width(desc + "..") > maxDescW && desc.length() > 1) {
-                desc = desc.substring(0, desc.length() - 1);
-            }
-            desc += "..";
+            String elide = "..";
+            desc = font.plainSubstrByWidth(desc, maxDescW - font.width(elide)) + elide;
         }
         guiGraphics.drawCenteredString(font, desc,
             this.getX() + this.width / 2,

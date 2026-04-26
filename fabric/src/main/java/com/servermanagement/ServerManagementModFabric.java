@@ -134,7 +134,43 @@ public class ServerManagementModFabric implements ModInitializer {
             } catch (Throwable t) {
                 LOGGER.error("TimerTickHandler tick failed", t);
             }
+            // Daily task: passive distance-traveled tracking. Forge wires
+            // PlayerMovementTracker via @SubscribeEvent on PlayerTickEvent;
+            // Fabric needs an explicit dispatch from the server tick loop or
+            // TRAVEL_DISTANCE tasks would never accumulate any progress.
+            try {
+                com.servermanagement.features.economy.PlayerMovementTracker.onPlayerTick(server);
+            } catch (Throwable t) {
+                LOGGER.error("PlayerMovementTracker tick failed", t);
+            }
         });
+
+        // Daily task: block-break tracking. Forge fires DailyTaskProgressListener
+        // via @SubscribeEvent on BlockEvent.BreakEvent; Fabric needs explicit
+        // wiring through PlayerBlockBreakEvents.AFTER. Without this, BREAK_BLOCKS
+        // and MINE_ORES tasks could never make any progress.
+        net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.AFTER.register(
+            (level, player, pos, state, blockEntity) -> {
+                try {
+                    com.servermanagement.features.economy.DailyTaskProgressListener
+                        .onBlockBreak(level, player, pos, state);
+                } catch (Throwable t) {
+                    LOGGER.error("DailyTaskProgressListener.onBlockBreak failed", t);
+                }
+            });
+
+        // Daily task: mob kill tracking. Forge uses @SubscribeEvent on
+        // LivingDeathEvent; Fabric needs ServerLivingEntityEvents.AFTER_DEATH.
+        // Without this, KILL_MOBS tasks would never advance.
+        net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register(
+            (entity, source) -> {
+                try {
+                    com.servermanagement.features.economy.DailyTaskProgressListener
+                        .onEntityKilled(entity, source);
+                } catch (Throwable t) {
+                    LOGGER.error("DailyTaskProgressListener.onEntityKilled failed", t);
+                }
+            });
 
         // Player join — initialise tab/chat isolation and player-manager state
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {

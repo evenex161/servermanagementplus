@@ -52,6 +52,9 @@ src.bak/
 # Session artifacts
 docs/
 session_summary.md
+*.log
+compile.log
+fabric_compile.log
 
 # Mac
 .DS_Store

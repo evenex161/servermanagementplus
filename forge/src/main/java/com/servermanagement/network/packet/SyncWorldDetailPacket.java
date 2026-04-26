@@ -31,6 +31,13 @@ public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEna
                 dimensionId, netherPortalsEnabled, endPortalsEnabled,
                 hasTimer, timerSeconds, chatConnected, timerPortalType
             );
+            // If the open screen is the WorldDetailScreen for this dimension,
+            // rebuild widgets immediately so the new timer/portal state is
+            // reflected without waiting for the user to close & reopen.
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.screen instanceof com.servermanagement.gui.screen.WorldDetailScreen wds) {
+                wds.resize(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+            }
         });
         ctx.setPacketHandled(true);
     }

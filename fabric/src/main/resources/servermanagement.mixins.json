@@ -6,6 +6,7 @@
     "EntityChangeDimensionMixin",
     "NoteBlockMixin",
     "PlayerAdvancementsMixin",
+    "ResultSlotMixin",
     "ServerPlayerChangeDimensionMixin"
   ],
   "client": [],

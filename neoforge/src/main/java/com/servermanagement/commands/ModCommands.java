@@ -268,8 +268,10 @@ public class ModCommands {
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
                         String targetName = StringArgumentType.getString(context, "player");
+                        // PlayerManagerSingleton.spectatePlayer sends its own success/failure
+                        // chat message; sending one here would duplicate the success or
+                        // contradict an error (self-spectate / player-not-found).
                         PlayerManagerSingleton.spectatePlayer(player, targetName);
-                        context.getSource().sendSuccess(() -> Component.literal("Now spectating " + targetName), false);
                     }
                     return 1;
                 })

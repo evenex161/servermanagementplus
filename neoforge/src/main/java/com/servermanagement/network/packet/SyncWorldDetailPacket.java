@@ -37,6 +37,10 @@ public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEna
                 dimensionId, netherPortalsEnabled, endPortalsEnabled,
                 hasTimer, timerSeconds, chatConnected, timerPortalType
             );
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.screen instanceof com.servermanagement.gui.screen.WorldDetailScreen wds) {
+                wds.resize(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+            }
         });
         // packet handled
     }
