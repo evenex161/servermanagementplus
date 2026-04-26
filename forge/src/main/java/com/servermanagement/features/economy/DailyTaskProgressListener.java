@@ -59,6 +59,9 @@ public class DailyTaskProgressListener {
                 }
             }
             // Removed save() call - only save on completion
+            // Push live sync so the open DailyTasks GUI updates without
+            // having to be closed and reopened
+            pushSyncDailyTasks(player);
         }
     }
 
@@ -86,6 +89,7 @@ public class DailyTaskProgressListener {
                 manager.save();
             }
             // Removed save() call - only save on completion
+            pushSyncDailyTasks(player);
         }
     }
 
@@ -118,6 +122,7 @@ public class DailyTaskProgressListener {
                     manager.save();
                 }
                 // Removed save() call - only save on completion
+                pushSyncDailyTasks(player);
             }
         }
     }
@@ -145,6 +150,7 @@ public class DailyTaskProgressListener {
                 manager.save();
             }
             // Removed save() call - only save on completion
+            pushSyncDailyTasks(player);
         }
     }
 
@@ -162,5 +168,35 @@ public class DailyTaskProgressListener {
                block == Blocks.COPPER_ORE || block == Blocks.DEEPSLATE_COPPER_ORE ||
                block == Blocks.NETHER_GOLD_ORE || block == Blocks.NETHER_QUARTZ_ORE ||
                block == Blocks.ANCIENT_DEBRIS;
+    }
+
+    /**
+     * Push the player's current daily-task state to the client so an open
+     * DailyTasks GUI updates live (instead of only refreshing on next reopen).
+     * Mirrors the snapshot logic in {@code OpenGuiPacket.syncDailyTasks}.
+     */
+    public static void pushSyncDailyTasks(ServerPlayer player) {
+        try {
+            EconomyManager manager = EconomyManager.getInstance();
+            var dailyTasksManager = manager.getDailyTasksManager();
+            var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+            var templateManager = manager.getTemplateManager();
+            int freeRewardAmount = templateManager != null
+                ? (int) templateManager.getFreeRewardAmount()
+                : playerTasks.getFreeRewardAmount();
+            long resetTime = System.currentTimeMillis() + playerTasks.getTimeUntilTaskRefresh();
+            com.servermanagement.network.ModNetworking.sendToPlayer(
+                new com.servermanagement.network.packet.SyncDailyTasksPacket(
+                    playerTasks.getTasks(),
+                    resetTime,
+                    playerTasks.isFreeRewardAvailable(),
+                    freeRewardAmount,
+                    playerTasks.getTimeUntilFreeReward()
+                ),
+                player
+            );
+        } catch (Throwable t) {
+            ServerManagementMod.LOGGER.debug("pushSyncDailyTasks failed", t);
+        }
     }
 }

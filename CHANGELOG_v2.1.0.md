@@ -673,3 +673,33 @@ Five user-reported bugs against the Phase 2.3 baseline. All fixes applied symmet
 - `gui/widgets/DashboardCard.java` × 3
 
 Verified clean compile across all three loaders (`:forge:compileJava :neoforge:compileJava :fabric:compileJava` → `BUILD SUCCESSFUL`).
+
+
+### Phase 2.5 — Fabric daily-task live sync, MineBay edit-back navigation, dashboard-card cutoff (round 2) (April 26, 2026)
+
+Three regressions / persistent bugs reported against the Phase 2.4 baseline.
+
+- **Fabric — Daily tasks still not crediting / not visible in GUI (3 loaders)**: Phase 2.4 wired the Fabric event callbacks correctly, but logs from the user's test run showed no DailyTask traces because the listener had no logging, and the GUI never refreshed because progress was only pushed when the player re-opened the screen.
+  - DailyTaskProgressListener (forge / neoforge / fabric): added a static pushSyncDailyTasks(ServerPlayer) helper that builds a SyncDailyTasksPacket (tasks, reset time, free-reward flags) from EconomyManager and sends it via ModNetworking.sendToPlayer. Called at the END of all four handlers (onBlockBreak, onItemCrafted, onEntityKilled, onVillagerTrade) so the open Daily Tasks GUI updates live as soon as progress is recorded
+  - PlayerMovementTracker (3 loaders): same live-push call after the existing if (completedTask != null) notification block, so TRAVEL_DISTANCE progress also pushes a sync packet
+  - ServerManagementModFabric (fabric only): added AtomicBoolean first-fire INFO logs to PlayerBlockBreakEvents.AFTER and ServerLivingEntityEvents.AFTER_DEATH so the server log unambiguously confirms the events are firing
+  - ResultSlotMixin (fabric only): added a one-shot servermanagement INFO log on first crafting hook fire for the same diagnostic visibility
+- **MineBay EditListing — Back button must not return to the place-item step (3 loaders)**: initCreateStep2's Back button was hardcoded to switchState(CREATE_STEP1) regardless of edit mode, which dropped the player into the create-listing item-placement screen they never came from. Now:
+  - When `isEditMode == false`, behaviour is unchanged — Back goes to CREATE_STEP1
+  - When `isEditMode == true`, the Back button checks `hasUnsavedEdits()` (compares selectedOfferType, money price box text, margin percent box text, and each of the 3 priceItems[] entries — itemstack identity via ItemStack.isSameItemSameComponents, amount, and useStacks — against the original listingBeingEdited). With no changes, edit state clears and the screen returns to editOriginState (the screen the player was on when they pressed "Edit", typically VIEW_MY_LISTINGS or VIEW_DETAILS). With changes, a new EDIT_DISCARD_CONFIRM modal opens with two buttons — "Discard Changes" (clears edit state and returns to origin) and "Keep Editing" (returns to CREATE_STEP2 with the form values intact)
+  - Added editOriginState field captured in editListing(...) (defensively reset to BROWSE if the source was somehow inside the create flow)
+  - New ScreenState.EDIT_DISCARD_CONFIRM, new initEditDiscardConfirm and enderEditDiscardConfirm (yellow-border modal mirroring the delete-confirm style), and corresponding cases in the init() and ender() switches
+- **DashboardCard — title and description still cut off at GUI Scale 4 / 5 / Auto (3 loaders)**: Phase 2.4's "wider truncation + 10px margin" was insufficient; the user supplied 5 screenshots showing the card border still painted over the text. Root cause is unchanged (GuiGraphics.enableScissor ignores the parent ScalableContainerScreen pose scale), so the fix doubles down on defensive truncation:
+  - Padding raised from 5px to **16px each side** (32px total)
+  - .. (two-char) ellipsis replaced with … (single-char) to free another pixel of budget
+  - Defensive second-pass while loop trims one character at a time until `font.width(text) <= maxW`, so glyph-width rounding from plainSubstrByWidth can never push the result over budget
+
+**Files**:
+- eatures/economy/DailyTaskProgressListener.java × 3
+- eatures/economy/PlayerMovementTracker.java × 3
+- ServerManagementModFabric.java (fabric only)
+- mixin/ResultSlotMixin.java (fabric only)
+- gui/minebay/MineBayScreen.java × 3
+- gui/widgets/DashboardCard.java × 3
+
+Verified clean compile across all three loaders (`.\gradlew :forge:compileJava :neoforge:compileJava :fabric:compileJava` → `BUILD SUCCESSFUL`).

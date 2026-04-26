@@ -149,8 +149,13 @@ public class ServerManagementModFabric implements ModInitializer {
         // via @SubscribeEvent on BlockEvent.BreakEvent; Fabric needs explicit
         // wiring through PlayerBlockBreakEvents.AFTER. Without this, BREAK_BLOCKS
         // and MINE_ORES tasks could never make any progress.
+        java.util.concurrent.atomic.AtomicBoolean firstBreakLogged = new java.util.concurrent.atomic.AtomicBoolean(false);
         net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents.AFTER.register(
             (level, player, pos, state, blockEntity) -> {
+                if (firstBreakLogged.compareAndSet(false, true)) {
+                    LOGGER.info("[DailyTaskDiag] PlayerBlockBreakEvents.AFTER first fire (player={}, pos={})",
+                        player.getName().getString(), pos);
+                }
                 try {
                     com.servermanagement.features.economy.DailyTaskProgressListener
                         .onBlockBreak(level, player, pos, state);
@@ -162,8 +167,14 @@ public class ServerManagementModFabric implements ModInitializer {
         // Daily task: mob kill tracking. Forge uses @SubscribeEvent on
         // LivingDeathEvent; Fabric needs ServerLivingEntityEvents.AFTER_DEATH.
         // Without this, KILL_MOBS tasks would never advance.
+        java.util.concurrent.atomic.AtomicBoolean firstDeathLogged = new java.util.concurrent.atomic.AtomicBoolean(false);
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.AFTER_DEATH.register(
             (entity, source) -> {
+                if (firstDeathLogged.compareAndSet(false, true)) {
+                    LOGGER.info("[DailyTaskDiag] ServerLivingEntityEvents.AFTER_DEATH first fire (entity={}, source={})",
+                        entity.getType().getDescriptionId(),
+                        source.getEntity() != null ? source.getEntity().getType().getDescriptionId() : "none");
+                }
                 try {
                     com.servermanagement.features.economy.DailyTaskProgressListener
                         .onEntityKilled(entity, source);

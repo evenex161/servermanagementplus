@@ -20,10 +20,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(ResultSlot.class)
 public class ResultSlotMixin {
+    private static boolean servermanagement$firstCraftLogged = false;
 
     @Inject(method = "onTake", at = @At("HEAD"))
     private void servermanagement$trackCraftedItems(Player player, ItemStack stack, CallbackInfo ci) {
         try {
+            if (!servermanagement$firstCraftLogged) {
+                servermanagement$firstCraftLogged = true;
+                org.slf4j.LoggerFactory.getLogger("servermanagement").info(
+                    "[DailyTaskDiag] ResultSlot.onTake first fire (player={}, item={}, count={})",
+                    player.getName().getString(), stack.getItem(), stack.getCount());
+            }
             com.servermanagement.features.economy.DailyTaskProgressListener
                 .onItemCrafted(player, stack);
         } catch (Throwable ignored) {

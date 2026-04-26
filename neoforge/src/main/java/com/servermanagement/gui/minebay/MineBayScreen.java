@@ -43,6 +43,10 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     // Edit state
     private MineBayListing listingBeingEdited = null;
     private boolean isEditMode = false;
+    // Screen state the user was on when they pressed "Edit" — Back from
+    // CREATE_STEP2 in edit mode returns here instead of going to CREATE_STEP1
+    // (which would re-prompt for the item to sell).
+    private ScreenState editOriginState = ScreenState.BROWSE;
     
     // Negotiation state
     private MineBayListing selectedListingForOffer = null;
@@ -84,7 +88,8 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         VIEW_MY_LISTINGS,    // View your own listings and manage offers
         DELETE_CONFIRM,      // Confirmation dialog for deleting a listing
         BUY_CONFIRM,         // Confirmation dialog for buying a listing
-        VIEW_OFFERS          // View and manage offers on own listing
+        VIEW_OFFERS,         // View and manage offers on own listing
+        EDIT_DISCARD_CONFIRM // Confirmation dialog for discarding unsaved edits to a listing
     }
     
     public MineBayScreen(MineBayMenu menu, Inventory playerInventory, Component title) {
@@ -163,6 +168,9 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
                 break;
             case VIEW_OFFERS:
                 initViewOffers(centerX, centerY);
+                break;
+            case EDIT_DISCARD_CONFIRM:
+                initEditDiscardConfirm(centerX, centerY);
                 break;
         }
     }
@@ -370,11 +378,26 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         int formY = centerY + 76; // Below title + underline + spacing
         int formRight = centerX + this.imageWidth - 15;
         
-        // Back button
+        // Back button — in edit mode, return to where the player came from
+        // (with a discard-changes confirmation if anything was modified). In
+        // create mode, fall back to CREATE_STEP1 as before.
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
             Component.literal("← Back"),
-            button -> switchState(ScreenState.CREATE_STEP1),
+            button -> {
+                if (isEditMode) {
+                    if (hasUnsavedEdits()) {
+                        switchState(ScreenState.EDIT_DISCARD_CONFIRM);
+                    } else {
+                        ScreenState target = editOriginState != null ? editOriginState : ScreenState.BROWSE;
+                        isEditMode = false;
+                        listingBeingEdited = null;
+                        switchState(target);
+                    }
+                } else {
+                    switchState(ScreenState.CREATE_STEP1);
+                }
+            },
             ModernButton.ButtonStyle.SECONDARY
         ));
         
@@ -677,6 +700,17 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Set edit mode and populate form with existing listing data
         isEditMode = true;
         listingBeingEdited = listing;
+        // Remember where the user came from so Back returns there instead of
+        // CREATE_STEP1 (the place-item step, which is irrelevant when editing).
+        editOriginState = currentState;
+        if (editOriginState == ScreenState.CREATE_STEP1
+            || editOriginState == ScreenState.CREATE_STEP2
+            || editOriginState == ScreenState.CREATE_STEP3
+            || editOriginState == ScreenState.EDIT_DISCARD_CONFIRM) {
+            // Defensive: don't loop back into the create flow if Edit was somehow
+            // pressed from one of those states.
+            editOriginState = ScreenState.BROWSE;
+        }
         
         // Pre-populate the item being sold
         itemPlaced = true;
@@ -705,7 +739,86 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Go to CREATE_STEP2 to edit prices (item is already placed, skip Step 1)
         switchState(ScreenState.CREATE_STEP2);
     }
-    
+
+    /**
+     * Returns {@code true} if the player has changed any field on the
+     * EditListing (CREATE_STEP2 in edit mode) screen relative to the
+     * original {@code listingBeingEdited}. Used by the Back button to decide
+     * whether to show a Discard / Keep Editing confirmation.
+     */
+    private boolean hasUnsavedEdits() {
+        if (!isEditMode || listingBeingEdited == null) return false;
+
+        // OfferType change
+        if (selectedOfferType != listingBeingEdited.getOfferType()) return true;
+
+        // Money price text vs. the originally formatted value
+        if (moneyPriceBox != null) {
+            String originalMoney = String.format(java.util.Locale.US, "%.2f", listingBeingEdited.getMoneyPrice());
+            String currentMoney = moneyPriceBox.getValue();
+            if (!originalMoney.equals(currentMoney)) return true;
+        }
+
+        // Margin percent text vs. originally formatted value (only for negotiable listings)
+        if (marginPercentBox != null
+            && listingBeingEdited.getOfferType() == MineBayListing.OfferType.NEGOTIABLE) {
+            String originalMargin = String.valueOf((int) listingBeingEdited.getMarginPercent());
+            String currentMargin = marginPercentBox.getValue();
+            if (!originalMargin.equals(currentMargin)) return true;
+        }
+
+        // Price items: compare item, amount, and stack mode for each of the 3 slots
+        java.util.List<PriceItemEntry> originalItems = listingBeingEdited.getPriceItems();
+        for (int i = 0; i < 3; i++) {
+            PriceItemEntry current = priceItems[i];
+            boolean currentEmpty = current == null || current.isEmpty();
+            PriceItemEntry original = (originalItems != null && i < originalItems.size()) ? originalItems.get(i) : null;
+            boolean originalEmpty = original == null || original.isEmpty();
+            if (currentEmpty != originalEmpty) return true;
+            if (currentEmpty) continue;
+            // Both non-empty \u2014 compare item identity, amount and stack mode
+            if (!net.minecraft.world.item.ItemStack.isSameItemSameComponents(
+                    current.getItemStack(), original.getItemStack())) return true;
+            if (current.getAmount() != original.getAmount()) return true;
+            if (current.isUseStacks() != original.isUseStacks()) return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Discard / Keep Editing confirmation shown when Back is pressed on
+     * the EditListing screen with unsaved changes.
+     */
+    private void initEditDiscardConfirm(int centerX, int centerY) {
+        // Two centered buttons under a heading rendered by the renderer.
+        int btnW = 160;
+        int gap = 20;
+        int totalW = btnW * 2 + gap;
+        int btnY = centerY + this.imageHeight / 2 - 10;
+
+        // Discard Changes \u2014 leave edit mode and return to origin screen
+        this.addRenderableWidget(new ModernButton(
+            centerX + (this.imageWidth - totalW) / 2, btnY, btnW, 28,
+            Component.literal("Discard Changes"),
+            button -> {
+                ScreenState target = editOriginState != null ? editOriginState : ScreenState.BROWSE;
+                isEditMode = false;
+                listingBeingEdited = null;
+                switchState(target);
+            },
+            ModernButton.ButtonStyle.DANGER
+        ));
+
+        // Keep Editing \u2014 return to CREATE_STEP2 with all current values intact
+        this.addRenderableWidget(new ModernButton(
+            centerX + (this.imageWidth - totalW) / 2 + btnW + gap, btnY, btnW, 28,
+            Component.literal("Keep Editing"),
+            button -> switchState(ScreenState.CREATE_STEP2),
+            ModernButton.ButtonStyle.SUCCESS
+        ));
+    }
+
     private void deleteListing(MineBayListing listing) {
         // Show confirmation dialog instead of immediately deleting
         listingToDelete = listing;
@@ -1551,6 +1664,9 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             case VIEW_OFFERS:
                 renderViewOffers(guiGraphics, centerX, centerY);
                 break;
+            case EDIT_DISCARD_CONFIRM:
+                renderEditDiscardConfirm(guiGraphics, centerX, centerY);
+                break;
         }
         
         // Disable scissor
@@ -2233,6 +2349,49 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Handled by browse screen with filter - should not render here
     }
     
+    private void renderEditDiscardConfirm(GuiGraphics guiGraphics, int centerX, int centerY) {
+        // Same modal style as renderDeleteConfirm but with neutral colours
+        // since this is a "you might lose data" warning, not a destructive action.
+        int dialogWidth = 400;
+        int dialogHeight = 160;
+        int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
+        int dialogY = centerY + (this.imageHeight - dialogHeight) / 2 - 20;
+
+        // Dim the rest of the panel
+        guiGraphics.fill(centerX, centerY,
+            centerX + this.imageWidth, centerY + this.imageHeight,
+            0x80000000);
+
+        // Dialog background
+        guiGraphics.fill(dialogX, dialogY,
+            dialogX + dialogWidth, dialogY + dialogHeight,
+            0xFF2B2B2B);
+
+        // Yellow warning border
+        int border = 0xFFFFC857;
+        guiGraphics.fill(dialogX - 2, dialogY - 2,           dialogX + dialogWidth + 2, dialogY + 2,             border);
+        guiGraphics.fill(dialogX - 2, dialogY + dialogHeight - 2, dialogX + dialogWidth + 2, dialogY + dialogHeight + 2, border);
+        guiGraphics.fill(dialogX - 2, dialogY,               dialogX + 2,               dialogY + dialogHeight,    border);
+        guiGraphics.fill(dialogX + dialogWidth - 2, dialogY, dialogX + dialogWidth + 2, dialogY + dialogHeight,    border);
+
+        // Title
+        Component titleText = Component.literal("\u26A0 Discard changes?");
+        int titleWidth = this.font.width(titleText);
+        guiGraphics.drawString(this.font, titleText,
+            dialogX + (dialogWidth - titleWidth) / 2, dialogY + 20, 0xFFFFC857, true);
+
+        // Body
+        Component line1 = Component.literal("You have unsaved changes to this listing.");
+        int w1 = this.font.width(line1);
+        guiGraphics.drawString(this.font, line1,
+            dialogX + (dialogWidth - w1) / 2, dialogY + 50, 0xFFFFFFFF, true);
+
+        Component line2 = Component.literal("Discard them and go back, or keep editing?");
+        int w2 = this.font.width(line2);
+        guiGraphics.drawString(this.font, line2,
+            dialogX + (dialogWidth - w2) / 2, dialogY + 65, 0xFFAAAAAA, true);
+    }
+
     private void renderDeleteConfirm(GuiGraphics guiGraphics, int centerX, int centerY) {
         if (listingToDelete == null) {
             return;

@@ -77,18 +77,27 @@ public class DashboardCard extends AbstractWidget {
             0xFFFFFF, false);
         
         // Title (truncated to fit within card)
-        // Use a generous safety margin (10px = 5 each side) because the panel
-        // can be drawn inside a pose-scaled matrix (ScalableContainerScreen).
-        // GuiGraphics.enableScissor does NOT honour the pose transform, so any
-        // overflow would visually escape the card and be overpainted by the
-        // next card's background. Truncating in design-space here guarantees
-        // the rendered text always sits well inside the card, regardless of
-        // the active GUI scale.
+        // Use a *very* generous safety margin (16px each side, 32 total)
+        // because the panel can be drawn inside a pose-scaled matrix
+        // (ScalableContainerScreen). GuiGraphics.enableScissor does NOT honour
+        // the pose transform, so the scissor rectangle effectively moves
+        // around at non-1:1 GUI scales (especially scale 4/5/Auto on small
+        // windows) and cannot be relied upon to clip overflowing text.
+        // Truncating aggressively in design-space here guarantees the
+        // rendered text always sits well inside the visible card border.
         var titleStr = this.getMessage().getString();
-        int maxTitleW = Math.max(8, this.width - 10);
+        int textPadding = 16; // px each side
+        int maxTitleW = Math.max(8, this.width - textPadding * 2);
+        String elide = "\u2026"; // single-char ellipsis to save horizontal space
+        int elideW = font.width(elide);
         if (font.width(titleStr) > maxTitleW) {
-            String elide = "..";
-            titleStr = font.plainSubstrByWidth(titleStr, maxTitleW - font.width(elide)) + elide;
+            titleStr = font.plainSubstrByWidth(titleStr, Math.max(0, maxTitleW - elideW)) + elide;
+            // Defensive second pass: plainSubstrByWidth + elide can still
+            // round just over budget for some glyph combinations \u2014 trim
+            // one char at a time until it strictly fits.
+            while (titleStr.length() > 1 && font.width(titleStr) > maxTitleW) {
+                titleStr = titleStr.substring(0, titleStr.length() - 2) + elide;
+            }
         }
         guiGraphics.drawCenteredString(font, titleStr,
             this.getX() + this.width / 2,
@@ -97,10 +106,12 @@ public class DashboardCard extends AbstractWidget {
         
         // Description (truncated to fit within card)
         String desc = this.description;
-        int maxDescW = Math.max(8, this.width - 10);
+        int maxDescW = Math.max(8, this.width - textPadding * 2);
         if (font.width(desc) > maxDescW) {
-            String elide = "..";
-            desc = font.plainSubstrByWidth(desc, maxDescW - font.width(elide)) + elide;
+            desc = font.plainSubstrByWidth(desc, Math.max(0, maxDescW - elideW)) + elide;
+            while (desc.length() > 1 && font.width(desc) > maxDescW) {
+                desc = desc.substring(0, desc.length() - 2) + elide;
+            }
         }
         guiGraphics.drawCenteredString(font, desc,
             this.getX() + this.width / 2,

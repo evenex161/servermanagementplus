@@ -91,6 +91,13 @@ public class PlayerMovementTracker {
                         // Only save when task completes
                         manager.save();
                     }
+                    // Push live sync so an open DailyTasks GUI sees the
+                    // accumulated travel progress without a reopen.
+                    net.minecraft.server.level.ServerPlayer sp =
+                        manager.getServer().getPlayerList().getPlayer(playerUUID);
+                    if (sp != null) {
+                        DailyTaskProgressListener.pushSyncDailyTasks(sp);
+                    }
                     // No save if task not completed - data will be saved eventually
                 }
             }
