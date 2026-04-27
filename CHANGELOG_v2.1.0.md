@@ -703,3 +703,24 @@ Three regressions / persistent bugs reported against the Phase 2.4 baseline.
 - gui/widgets/DashboardCard.java × 3
 
 Verified clean compile across all three loaders (`.\gradlew :forge:compileJava :neoforge:compileJava :fabric:compileJava` → `BUILD SUCCESSFUL`).
+
+
+### Phase 2.6 — Restore item-slot clicks at non-1.0 GUI scale, dashboard cards shrink-to-fit (April 27, 2026)
+
+Two issues against the Phase 2.5 baseline.
+
+- **Item registry didn't open when clicking price-item slots on MineBay Step_2 / EditListing (3 loaders)**: Regression introduced by the GUI scaling pose-stack work. ScalableContainerScreen.mouseClicked correctly converts raw screen-pixel mouse coords into design space before delegating to super, so vanilla widgets and slots receive the right coords. But MineBayScreen.mouseClicked is the most-derived override and is dispatched FIRST with raw screen coords; it then performs custom design-space hit-tests against the 3 price-item slot rects. At any non-1.0 GUI scale (Auto, Scale 4, Scale 5 on small windows) raw screen coords no longer match design-space rects, so clicks silently missed and the item-picker never opened. Fix: at the top of the override, compute `designMouseX = inverseMouseX(mouseX); designMouseY = inverseMouseY(mouseY);` and use those for every custom hit-test (price-item slots in CREATE_STEP2 + the BUY_CONFIRM payment grid). The trailing `super.mouseClicked(mouseX, mouseY, button)` keeps the raw coords because the base class will invert them itself.
+  - Same regression also fixed in EconomyManagementScreen (Task Templates + Free Reward item slots) and MotdEditorScreen (Discard / Cancel buttons of the Discard-Changes confirm dialog) — both extend ScalableContainerScreen and have the same custom-hit-test pattern.
+- **Admin Dashboard Card title / description still cut off (3 loaders)**: Phase 2.5's "padding 16px each side + defensive truncate-loop" did not fully resolve the visual cutoff at GUI Scale 4 / 5 / Auto reported by the user. Replaced the truncation strategy entirely with a **shrink-to-fit** approach via a new `DashboardCard.drawScaledCenteredString(g, font, text, centerX, y, maxWidth, color)` helper:
+  - If `font.width(text) <= maxWidth` the text is rendered normally
+  - Otherwise the pose is pushed, an X-only scale `maxWidth / font.width(text)` is applied around (centerX, y), and the text is rendered — guaranteeing the rendered glyphs fit exactly within the card budget no matter the parent pose scale or the broken `GuiGraphics.enableScissor` clip. Vertical glyph height is preserved by leaving Y scale at 1.0
+  - Inner padding lowered from 16px to 4px each side because shrink-to-fit doesn't need the slack
+  - Truncation logic, ellipsis handling, and defensive while-loop removed (no longer needed)
+
+**Files**:
+- `gui/minebay/MineBayScreen.java` × 3
+- `gui/economy/EconomyManagementScreen.java` × 3
+- `gui/screen/MotdEditorScreen.java` × 3
+- `gui/widgets/DashboardCard.java` × 3
+
+Verified clean compile across all three loaders (`.\gradlew :forge:compileJava :neoforge:compileJava :fabric:compileJava` → `BUILD SUCCESSFUL`).

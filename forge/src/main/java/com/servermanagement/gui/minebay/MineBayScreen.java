@@ -2662,6 +2662,16 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // The screen is rendered through ScalableContainerScreen's pose-stack
+        // scale; widgets/slots receive design-space coords because the base
+        // class inverts them inside its own mouseClicked. But this override
+        // is dispatched FIRST with raw screen-pixel coords, so any custom
+        // hit-tests below must operate in design space too — otherwise at
+        // non-1.0 GUI scales (Auto / Scale 4 / Scale 5 on small windows)
+        // the price-item slots and BUY_CONFIRM payment grid stop responding.
+        double designMouseX = inverseMouseX(mouseX);
+        double designMouseY = inverseMouseY(mouseY);
+
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -2683,8 +2693,8 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
                     int slotX = gridStartX + col * slotSize;
                     int slotY = gridStartY + row * slotSize;
                     
-                    if (mouseX >= slotX && mouseX < slotX + slotSize &&
-                        mouseY >= slotY && mouseY < slotY + slotSize) {
+                    if (designMouseX >= slotX && designMouseX < slotX + slotSize &&
+                        designMouseY >= slotY && designMouseY < slotY + slotSize) {
                         int slotIdx = row < 3 ? 9 + (row * 9) + col : col;
                         
                         // Only toggle if slot has an item with value
@@ -2716,8 +2726,8 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
                 int slotX = formX;
                 int slotY = priceItemY + (i * 30);
                 
-                if (mouseX >= slotX && mouseX < slotX + 18 &&
-                    mouseY >= slotY && mouseY < slotY + 18) {
+                if (designMouseX >= slotX && designMouseX < slotX + 18 &&
+                    designMouseY >= slotY && designMouseY < slotY + 18) {
                     handlePriceItemSlotClick(i);
                     return true;
                 }

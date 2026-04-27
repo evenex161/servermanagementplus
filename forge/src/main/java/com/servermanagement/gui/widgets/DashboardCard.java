@@ -76,49 +76,52 @@ public class DashboardCard extends AbstractWidget {
             this.getY() + 10,
             0xFFFFFF, false);
         
-        // Title (truncated to fit within card)
-        // Use a *very* generous safety margin (16px each side, 32 total)
-        // because the panel can be drawn inside a pose-scaled matrix
-        // (ScalableContainerScreen). GuiGraphics.enableScissor does NOT honour
-        // the pose transform, so the scissor rectangle effectively moves
-        // around at non-1:1 GUI scales (especially scale 4/5/Auto on small
-        // windows) and cannot be relied upon to clip overflowing text.
-        // Truncating aggressively in design-space here guarantees the
-        // rendered text always sits well inside the visible card border.
-        var titleStr = this.getMessage().getString();
-        int textPadding = 16; // px each side
-        int maxTitleW = Math.max(8, this.width - textPadding * 2);
-        String elide = "\u2026"; // single-char ellipsis to save horizontal space
-        int elideW = font.width(elide);
-        if (font.width(titleStr) > maxTitleW) {
-            titleStr = font.plainSubstrByWidth(titleStr, Math.max(0, maxTitleW - elideW)) + elide;
-            // Defensive second pass: plainSubstrByWidth + elide can still
-            // round just over budget for some glyph combinations \u2014 trim
-            // one char at a time until it strictly fits.
-            while (titleStr.length() > 1 && font.width(titleStr) > maxTitleW) {
-                titleStr = titleStr.substring(0, titleStr.length() - 2) + elide;
-            }
-        }
-        guiGraphics.drawCenteredString(font, titleStr,
-            this.getX() + this.width / 2,
-            this.getY() + 30,
-            0xFFFFFF);
-        
-        // Description (truncated to fit within card)
-        String desc = this.description;
-        int maxDescW = Math.max(8, this.width - textPadding * 2);
-        if (font.width(desc) > maxDescW) {
-            desc = font.plainSubstrByWidth(desc, Math.max(0, maxDescW - elideW)) + elide;
-            while (desc.length() > 1 && font.width(desc) > maxDescW) {
-                desc = desc.substring(0, desc.length() - 2) + elide;
-            }
-        }
-        guiGraphics.drawCenteredString(font, desc,
-            this.getX() + this.width / 2,
-            this.getY() + 42,
-            0xCCCCCC);
-        
+        // Title and description — render via the helper below so any text
+        // wider than the card budget is *visually shrunk* (pose scale) rather
+        // than truncated. This is bullet-proof against pose-scale interactions
+        // with enableScissor (which still doesn't reliably clip when the
+        // parent ScalableContainerScreen has applied its own pose scale at
+        // small GUI workspaces / Auto / Scale 4 / Scale 5).
+        int textPadding = 4; // tiny padding because we shrink-to-fit instead of truncate
+        int maxLineW = Math.max(8, this.width - textPadding * 2);
+
+        drawScaledCenteredString(guiGraphics, font, this.getMessage().getString(),
+            this.getX() + this.width / 2, this.getY() + 30, maxLineW, 0xFFFFFF);
+
+        drawScaledCenteredString(guiGraphics, font, this.description,
+            this.getX() + this.width / 2, this.getY() + 42, maxLineW, 0xCCCCCC);
+
         guiGraphics.disableScissor();
+    }
+
+    /**
+     * Draw {@code text} centered horizontally on {@code centerX}, baseline
+     * at {@code y}. If the text is wider than {@code maxWidth}, the pose is
+     * pushed and a uniform horizontal-only scale is applied so the rendered
+     * glyphs fit exactly within {@code maxWidth}. Vertical glyph height is
+     * preserved by counter-scaling Y so the line stays visually centered on
+     * the same baseline. This guarantees the text never paints outside the
+     * card border at any GUI scale (Phase 2.5 truncation was insufficient
+     * because {@code GuiGraphics.enableScissor} does not honour pose scaling
+     * applied by {@link com.servermanagement.gui.ScalableContainerScreen}).
+     */
+    private static void drawScaledCenteredString(GuiGraphics g, net.minecraft.client.gui.Font font,
+                                                 String text, int centerX, int y,
+                                                 int maxWidth, int color) {
+        if (text == null || text.isEmpty()) return;
+        int w = font.width(text);
+        if (w <= maxWidth) {
+            g.drawCenteredString(font, text, centerX, y, color);
+            return;
+        }
+        float scale = (float) maxWidth / (float) w;
+        g.pose().pushPose();
+        // Translate to centerX/y, scale X only, translate back.
+        g.pose().translate(centerX, y, 0f);
+        g.pose().scale(scale, 1f, 1f);
+        g.pose().translate(-centerX, -y, 0f);
+        g.drawCenteredString(font, text, centerX, y, color);
+        g.pose().popPose();
     }
     
     @Override

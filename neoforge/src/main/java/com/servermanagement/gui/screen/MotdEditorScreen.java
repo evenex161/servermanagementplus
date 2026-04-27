@@ -1071,6 +1071,13 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (showingConfirmDialog) {
+            // Convert raw screen-pixel coords to design-space because the
+            // screen is rendered through ScalableContainerScreen's pose
+            // scale. Without this the discard-confirm dialog buttons stop
+            // responding at non-1.0 GUI scales.
+            double designMouseX = inverseMouseX(mouseX);
+            double designMouseY = inverseMouseY(mouseY);
+
             int dialogW = 240;
             int dialogH = 100;
             int dx = (this.width - dialogW) / 2;
@@ -1083,14 +1090,14 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
             int discardX = dx + dialogW / 2 + 8;
 
             // Cancel button click
-            if (mouseX >= cancelX && mouseX < cancelX + btnW && mouseY >= btnY && mouseY < btnY + btnH) {
+            if (designMouseX >= cancelX && designMouseX < cancelX + btnW && designMouseY >= btnY && designMouseY < btnY + btnH) {
                 showingConfirmDialog = false;
                 pendingExitAction = null;
                 return true;
             }
 
             // Discard & Exit button click
-            if (mouseX >= discardX && mouseX < discardX + btnW && mouseY >= btnY && mouseY < btnY + btnH) {
+            if (designMouseX >= discardX && designMouseX < discardX + btnW && designMouseY >= btnY && designMouseY < btnY + btnH) {
                 showingConfirmDialog = false;
                 if (pendingExitAction != null) {
                     // Reset original so onClose doesn't re-trigger the dialog

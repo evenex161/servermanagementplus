@@ -715,6 +715,13 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Convert raw screen-pixel coords to design-space because the screen
+        // is rendered through ScalableContainerScreen's pose scale. Without
+        // this the custom slot hit-tests below silently miss at non-1.0 GUI
+        // scales (Auto / Scale 4 / Scale 5).
+        double designMouseX = inverseMouseX(mouseX);
+        double designMouseY = inverseMouseY(mouseY);
+
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -724,8 +731,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             int itemSlotX = centerX + 35;
             int itemSlotY = formY + 150;
             
-            if (mouseX >= itemSlotX && mouseX < itemSlotX + 18 && 
-                mouseY >= itemSlotY && mouseY < itemSlotY + 18) {
+            if (designMouseX >= itemSlotX && designMouseX < itemSlotX + 18 && 
+                designMouseY >= itemSlotY && designMouseY < itemSlotY + 18) {
                 handleItemSlotClick(true);
                 return true;
             }
@@ -737,8 +744,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             int itemSlotX = centerX + 55;
             int itemSlotY = formY + 80;
             
-            if (mouseX >= itemSlotX && mouseX < itemSlotX + 18 && 
-                mouseY >= itemSlotY && mouseY < itemSlotY + 18) {
+            if (designMouseX >= itemSlotX && designMouseX < itemSlotX + 18 && 
+                designMouseY >= itemSlotY && designMouseY < itemSlotY + 18) {
                 handleItemSlotClick(false);
                 return true;
             }
