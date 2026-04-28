@@ -1,18 +1,18 @@
 package com.servermanagement.gui.minebay;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.PriceItemEntry;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Main MineBay screen - Browse and create listings
  */
-public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
+public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     
     private ScreenState currentState;
     private List<MineBayListing> listings;
@@ -43,6 +43,10 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     // Edit state
     private MineBayListing listingBeingEdited = null;
     private boolean isEditMode = false;
+    // Screen state the user was on when they pressed "Edit" ÔÇö Back from
+    // CREATE_STEP2 in edit mode returns here instead of going to CREATE_STEP1
+    // (which would re-prompt for the item to sell).
+    private ScreenState editOriginState = ScreenState.BROWSE;
     
     // Negotiation state
     private MineBayListing selectedListingForOffer = null;
@@ -84,11 +88,12 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         VIEW_MY_LISTINGS,    // View your own listings and manage offers
         DELETE_CONFIRM,      // Confirmation dialog for deleting a listing
         BUY_CONFIRM,         // Confirmation dialog for buying a listing
-        VIEW_OFFERS          // View and manage offers on own listing
+        VIEW_OFFERS,         // View and manage offers on own listing
+        EDIT_DISCARD_CONFIRM // Confirmation dialog for discarding unsaved edits to a listing
     }
     
     public MineBayScreen(MineBayMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 600, 400);
         this.imageWidth = 600;
         this.imageHeight = 400;
         this.currentState = ScreenState.BROWSE; // Default to browse
@@ -113,9 +118,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(600, 400, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         this.inventoryLabelY = 222;
         super.init();
         
@@ -166,6 +168,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 break;
             case VIEW_OFFERS:
                 initViewOffers(centerX, centerY);
+                break;
+            case EDIT_DISCARD_CONFIRM:
+                initEditDiscardConfirm(centerX, centerY);
                 break;
         }
     }
@@ -233,7 +238,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (scrollOffset > 0) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 50, navY, 90, 18,
-                Component.literal("◀ Previous"),
+                Component.literal("ÔùÇ Previous"),
                 button -> {
                     scrollOffset--;
                     this.rebuildWidgets();
@@ -245,7 +250,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (scrollOffset + LISTINGS_PER_PAGE < listings.size()) {
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 140, navY, 90, 18,
-                Component.literal("Next ▶"),
+                Component.literal("Next ÔûÂ"),
                 button -> {
                     scrollOffset++;
                     this.rebuildWidgets();
@@ -321,7 +326,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> {
                 // Clear edit mode when going back
                 isEditMode = false;
@@ -331,14 +336,29 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             ModernButton.ButtonStyle.SECONDARY
         ));
         
-        // Action button positioned inside content area (above inventory)
+        // Step indicators (1, 2, 3) - in header row, right of title
+        int stepW = 22;
+        int stepGap = 3;
+        int totalStepW = stepW * 3 + stepGap * 2;
+        int stepStartX = centerX + (this.imageWidth - totalStepW) / 2;
+        for (int i = 0; i < 3; i++) {
+            this.addRenderableWidget(new ModernButton(
+                stepStartX + i * (stepW + stepGap), centerY + 30, stepW, 14,
+                Component.literal(String.valueOf(i + 1)),
+                button -> {},
+                i == 0 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
+            ));
+        }
+        
+        // Action button - wide, uses most of panel width
         int contentBottom = centerY + 46 + (menu.isInventoryVisible() ? 165 : (this.imageHeight - 60));
         int buttonY = contentBottom - 40;
         ItemStack currentOffering = this.menu.getOfferingItem();
         boolean hasItem = !currentOffering.isEmpty();
+        int btnW = Math.min(350, this.imageWidth - 40);
         
         this.addRenderableWidget(new ModernButton(
-            centerX + (this.imageWidth - 170) / 2, buttonY, 170, 30,
+            centerX + (this.imageWidth - btnW) / 2, buttonY, btnW, 30,
             Component.literal(hasItem ? "Next: Set Prices \u2192" : "Place Item"),
             button -> {
                 ItemStack offeringItem = this.menu.getOfferingItem();
@@ -356,20 +376,37 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Step 2: Set Prices (item is already placed from Step 1)
         int formX = centerX + 15;
         int formY = centerY + 76; // Below title + underline + spacing
+        int formRight = centerX + this.imageWidth - 15;
         
-        // Back button
+        // Back button ÔÇö in edit mode, return to where the player came from
+        // (with a discard-changes confirmation if anything was modified). In
+        // create mode, fall back to CREATE_STEP1 as before.
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("← Back"),
-            button -> switchState(ScreenState.CREATE_STEP1),
+            Component.literal("ÔåÉ Back"),
+            button -> {
+                if (isEditMode) {
+                    if (hasUnsavedEdits()) {
+                        switchState(ScreenState.EDIT_DISCARD_CONFIRM);
+                    } else {
+                        ScreenState target = editOriginState != null ? editOriginState : ScreenState.BROWSE;
+                        isEditMode = false;
+                        listingBeingEdited = null;
+                        switchState(target);
+                    }
+                } else {
+                    switchState(ScreenState.CREATE_STEP1);
+                }
+            },
             ModernButton.ButtonStyle.SECONDARY
         ));
         
-        // Layout widths relative to imageWidth
+        // Layout widths - use full panel width with 3 columns
         int availWidth = this.imageWidth - 30; // total form width
-        int priceW = (int)(availWidth * 0.40); // 40% for price input
-        int marginW = (int)(availWidth * 0.20); // 20% for margin input
-        int typeW = (int)(availWidth * 0.35); // 35% for type button
+        int gap = 8;
+        int priceW = (availWidth - gap * 2) * 45 / 100;
+        int marginW = (availWidth - gap * 2) * 20 / 100;
+        int typeW = availWidth - priceW - marginW - gap * 2;
         
         // Money price input
         if (moneyPriceBox == null) {
@@ -378,7 +415,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             if (isEditMode && listingBeingEdited != null) {
                 moneyPriceBox.setValue(String.format(Locale.US, "%.2f", listingBeingEdited.getMoneyPrice()));
             } else if (!placedItem.isEmpty()) {
-                // Auto-populate with market base price for the placed item
                 double basePrice = com.servermanagement.client.ClientMarketData.getStackPrice(placedItem);
                 moneyPriceBox.setValue(String.format(Locale.US, "%.2f", basePrice));
             } else {
@@ -393,14 +429,14 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         this.addRenderableWidget(moneyPriceBox);
         
         // Margin % input (dynamic pricing)
-        int marginX = formX + priceW + 10;
+        int marginX = formX + priceW + gap;
         if (marginPercentBox == null) {
             marginPercentBox = new EditBox(this.font, marginX, formY, marginW, 18, Component.literal("Margin %"));
             marginPercentBox.setMaxLength(5);
             if (isEditMode && listingBeingEdited != null) {
                 marginPercentBox.setValue(String.valueOf((int) listingBeingEdited.getMarginPercent()));
             } else {
-                marginPercentBox.setValue("10"); // Default 10% margin
+                marginPercentBox.setValue("10");
             }
             marginPercentBox.setHint(Component.literal("%"));
             marginPercentBox.setFilter(s -> s.matches("-?\\d*"));
@@ -411,7 +447,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         this.addRenderableWidget(marginPercentBox);
         
         // Offer type selector
-        int typeX = marginX + marginW + 10;
+        int typeX = marginX + marginW + gap;
         this.addRenderableWidget(new ModernButton(
             typeX, formY - 2, typeW, 22,
             Component.literal(selectedOfferType == MineBayListing.OfferType.FIXED ? 
@@ -424,27 +460,33 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             ModernButton.ButtonStyle.SECONDARY
         ));
         
-        // Price Items section (3 slots)
+        // Price Items section - use full width with proper column layout
         int priceItemY = formY + 65;
+        int slotSize = 18;
+        int amountBoxW = 70;
+        int modeButtonW = 95;
+        int clearButtonW = 30;
+        
         for (int i = 0; i < 3; i++) {
-            int slotY = priceItemY + (i * 28);
+            int slotY = priceItemY + (i * 30);
             
             // Amount input for each price item
             if (priceAmountBoxes[i] == null) {
-                priceAmountBoxes[i] = new EditBox(this.font, formX + 22, slotY + 1, 35, 16, 
+                priceAmountBoxes[i] = new EditBox(this.font, formX + slotSize + 4, slotY + 1, amountBoxW, 16, 
                     Component.literal("Amount"));
                 priceAmountBoxes[i].setMaxLength(4);
                 priceAmountBoxes[i].setValue("1");
                 priceAmountBoxes[i].setFilter(s -> s.matches("\\d*"));
             } else {
-                priceAmountBoxes[i].setPosition(formX + 22, slotY + 1);
+                priceAmountBoxes[i].setPosition(formX + slotSize + 4, slotY + 1);
+                priceAmountBoxes[i].setWidth(amountBoxW);
             }
             this.addRenderableWidget(priceAmountBoxes[i]);
             
             // Stack/Count toggle button for each price item
             final int index = i;
             this.addRenderableWidget(new ModernButton(
-                formX + 62, slotY - 1, 55, 20,
+                formX + slotSize + 4 + amountBoxW + 4, slotY - 1, modeButtonW, 20,
                 Component.literal(useStacks[i] ? "Stacks" : "Items"),
                 button -> {
                     useStacks[index] = !useStacks[index];
@@ -456,7 +498,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             // Clear button (only show if item is set)
             if (priceItems[i] != null && !priceItems[i].isEmpty()) {
                 this.addRenderableWidget(new ModernButton(
-                    formX + 122, slotY - 1, 18, 20,
+                    formX + slotSize + 4 + amountBoxW + 4 + modeButtonW + 4, slotY - 1, clearButtonW, 20,
                     Component.literal("x"),
                     button -> {
                         priceItems[index] = new PriceItemEntry();
@@ -471,12 +513,12 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
         }
         
-        // Next button
+        // Next button - centered, full width
         String nextButtonText = isEditMode ? "Next: Confirm Changes \u2192" : "Next: Confirm \u2192";
-        int buttonWidth = isEditMode ? 200 : 160;
+        int nextBtnW = Math.min(250, availWidth);
         
         this.addRenderableWidget(new ModernButton(
-            formX, priceItemY + (3 * 28) + 10, buttonWidth, 25,
+            centerX + (this.imageWidth - nextBtnW) / 2, priceItemY + (3 * 30) + 8, nextBtnW, 28,
             Component.literal(nextButtonText),
             button -> switchState(ScreenState.CREATE_STEP3),
             ModernButton.ButtonStyle.SUCCESS
@@ -495,7 +537,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Cancel button - returns item
         this.addRenderableWidget(new ModernButton(
             centerX + 150, buttonY, 120, 30,
-            Component.literal("✗ Cancel"),
+            Component.literal("Ô£ù Cancel"),
             button -> {
                 boolean wasEditMode = isEditMode;
                 // Clear edit mode when canceling
@@ -517,7 +559,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         ));
         
         // Confirm button - creates listing (or updates if editing)
-        String confirmText = isEditMode ? "✓ Update Listing" : "✓ Create Listing";
+        String confirmText = isEditMode ? "Ô£ô Update Listing" : "Ô£ô Create Listing";
         this.addRenderableWidget(new ModernButton(
             centerX + 280, buttonY, 140, 30,
             Component.literal(confirmText),
@@ -528,6 +570,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     private void switchState(ScreenState newState) {
         ScreenState oldState = this.currentState;
+        com.servermanagement.gui.debug.DebugLogger.logStateChange("MineBayScreen", "screenState", oldState, newState);
         this.currentState = newState;
         
         // Reset EditBox references when leaving create/edit flow
@@ -657,6 +700,17 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Set edit mode and populate form with existing listing data
         isEditMode = true;
         listingBeingEdited = listing;
+        // Remember where the user came from so Back returns there instead of
+        // CREATE_STEP1 (the place-item step, which is irrelevant when editing).
+        editOriginState = currentState;
+        if (editOriginState == ScreenState.CREATE_STEP1
+            || editOriginState == ScreenState.CREATE_STEP2
+            || editOriginState == ScreenState.CREATE_STEP3
+            || editOriginState == ScreenState.EDIT_DISCARD_CONFIRM) {
+            // Defensive: don't loop back into the create flow if Edit was somehow
+            // pressed from one of those states.
+            editOriginState = ScreenState.BROWSE;
+        }
         
         // Pre-populate the item being sold
         itemPlaced = true;
@@ -685,7 +739,86 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Go to CREATE_STEP2 to edit prices (item is already placed, skip Step 1)
         switchState(ScreenState.CREATE_STEP2);
     }
-    
+
+    /**
+     * Returns {@code true} if the player has changed any field on the
+     * EditListing (CREATE_STEP2 in edit mode) screen relative to the
+     * original {@code listingBeingEdited}. Used by the Back button to decide
+     * whether to show a Discard / Keep Editing confirmation.
+     */
+    private boolean hasUnsavedEdits() {
+        if (!isEditMode || listingBeingEdited == null) return false;
+
+        // OfferType change
+        if (selectedOfferType != listingBeingEdited.getOfferType()) return true;
+
+        // Money price text vs. the originally formatted value
+        if (moneyPriceBox != null) {
+            String originalMoney = String.format(java.util.Locale.US, "%.2f", listingBeingEdited.getMoneyPrice());
+            String currentMoney = moneyPriceBox.getValue();
+            if (!originalMoney.equals(currentMoney)) return true;
+        }
+
+        // Margin percent text vs. originally formatted value (only for negotiable listings)
+        if (marginPercentBox != null
+            && listingBeingEdited.getOfferType() == MineBayListing.OfferType.NEGOTIABLE) {
+            String originalMargin = String.valueOf((int) listingBeingEdited.getMarginPercent());
+            String currentMargin = marginPercentBox.getValue();
+            if (!originalMargin.equals(currentMargin)) return true;
+        }
+
+        // Price items: compare item, amount, and stack mode for each of the 3 slots
+        java.util.List<PriceItemEntry> originalItems = listingBeingEdited.getPriceItems();
+        for (int i = 0; i < 3; i++) {
+            PriceItemEntry current = priceItems[i];
+            boolean currentEmpty = current == null || current.isEmpty();
+            PriceItemEntry original = (originalItems != null && i < originalItems.size()) ? originalItems.get(i) : null;
+            boolean originalEmpty = original == null || original.isEmpty();
+            if (currentEmpty != originalEmpty) return true;
+            if (currentEmpty) continue;
+            // Both non-empty \u2014 compare item identity, amount and stack mode
+            if (!net.minecraft.world.item.ItemStack.isSameItemSameComponents(
+                    current.getItemStack(), original.getItemStack())) return true;
+            if (current.getAmount() != original.getAmount()) return true;
+            if (current.isUseStacks() != original.isUseStacks()) return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Discard / Keep Editing confirmation shown when Back is pressed on
+     * the EditListing screen with unsaved changes.
+     */
+    private void initEditDiscardConfirm(int centerX, int centerY) {
+        // Two centered buttons under a heading rendered by the renderer.
+        int btnW = 160;
+        int gap = 20;
+        int totalW = btnW * 2 + gap;
+        int btnY = centerY + this.imageHeight / 2 - 10;
+
+        // Discard Changes \u2014 leave edit mode and return to origin screen
+        this.addRenderableWidget(new ModernButton(
+            centerX + (this.imageWidth - totalW) / 2, btnY, btnW, 28,
+            Component.literal("Discard Changes"),
+            button -> {
+                ScreenState target = editOriginState != null ? editOriginState : ScreenState.BROWSE;
+                isEditMode = false;
+                listingBeingEdited = null;
+                switchState(target);
+            },
+            ModernButton.ButtonStyle.DANGER
+        ));
+
+        // Keep Editing \u2014 return to CREATE_STEP2 with all current values intact
+        this.addRenderableWidget(new ModernButton(
+            centerX + (this.imageWidth - totalW) / 2 + btnW + gap, btnY, btnW, 28,
+            Component.literal("Keep Editing"),
+            button -> switchState(ScreenState.CREATE_STEP2),
+            ModernButton.ButtonStyle.SUCCESS
+        ));
+    }
+
     private void deleteListing(MineBayListing listing) {
         // Show confirmation dialog instead of immediately deleting
         listingToDelete = listing;
@@ -747,7 +880,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> {
                 selectedListingForOffer = null;
                 switchState(ScreenState.BROWSE);
@@ -826,7 +959,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> {
                 selectedListingForDetails = null;
                 switchState(ScreenState.BROWSE);
@@ -923,7 +1056,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Confirm button (destructive action)
         this.addRenderableWidget(new ModernButton(
             dialogX + 30, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("✓ Yes, Delete"),
+            Component.literal("Ô£ô Yes, Delete"),
             button -> confirmDelete(),
             ModernButton.ButtonStyle.DANGER
         ));
@@ -931,7 +1064,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Cancel button
         this.addRenderableWidget(new ModernButton(
             dialogX + dialogWidth - 190, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("✗ Cancel"),
+            Component.literal("Ô£ù Cancel"),
             button -> cancelDelete(),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -1069,7 +1202,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Back button (always available, even while loading)
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> {
                 selectedListingForOffers = null;
                 cachedOffers.clear();
@@ -1100,7 +1233,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (offerScrollOffset > 0) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 50, navY, 90, 18,
-                Component.literal("◀ Previous"),
+                Component.literal("ÔùÇ Previous"),
                 button -> { offerScrollOffset--; this.rebuildWidgets(); },
                 ModernButton.ButtonStyle.SECONDARY
             ));
@@ -1108,7 +1241,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         if (offerScrollOffset + OFFERS_PER_PAGE < cachedOffers.size()) {
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 140, navY, 90, 18,
-                Component.literal("Next ▶"),
+                Component.literal("Next ÔûÂ"),
                 button -> { offerScrollOffset++; this.rebuildWidgets(); },
                 ModernButton.ButtonStyle.SECONDARY
             ));
@@ -1122,7 +1255,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 130, cardY + 10, 100, 20,
-                Component.literal("✓ Accept"),
+                Component.literal("Ô£ô Accept"),
                 button -> {
                     ModNetworking.sendToServer(
                         new com.servermanagement.network.packet.minebay.AcceptOfferPacket(
@@ -1137,7 +1270,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 130, cardY + 35, 100, 20,
-                Component.literal("✗ Reject"),
+                Component.literal("Ô£ù Reject"),
                 button -> {
                     ModNetworking.sendToServer(
                         new com.servermanagement.network.packet.minebay.RejectOfferPacket(
@@ -1208,7 +1341,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             guiGraphics.fill(cardX + 1, cardY + 1, cardRight - 1, cardY + 71, 0xFF1E1E1E);
             
             // Buyer name
-            guiGraphics.drawString(this.font, Component.literal("From: §e" + offer.getBuyerName()),
+            guiGraphics.drawString(this.font, Component.literal("From: ┬ºe" + offer.getBuyerName()),
                 cardX + 8, cardY + 5, 0xFFFFFF, true);
             
             // Money offer
@@ -1279,7 +1412,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             return;
         }
         
-        // Send offer packet — items will be taken from inventory by server
+        // Send offer packet ÔÇö items will be taken from inventory by server
         com.servermanagement.network.ModNetworking.sendToServer(
             new com.servermanagement.network.packet.minebay.CreateOfferPacket(
                 selectedListingForOffer.getListingId(),
@@ -1456,8 +1589,18 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Frame the player inventory + hotbar so it's visually distinct from
+        // the listing area. Painted BEFORE super.renderContent so slots and
+        // items render on top of the frosted strip and outline.
+        if (menu.isInventoryVisible()) {
+            // MineBayMenu places the inventory grid at panel-relative
+            // (x=219, y=230) - see MineBayMenu inventoryX/inventoryY.
+            drawInventoryPanel(guiGraphics, this.leftPos + 219, this.topPos + 230,
+                3, 4, false);
+        }
+
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -1520,6 +1663,9 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 break;
             case VIEW_OFFERS:
                 renderViewOffers(guiGraphics, centerX, centerY);
+                break;
+            case EDIT_DISCARD_CONFIRM:
+                renderEditDiscardConfirm(guiGraphics, centerX, centerY);
                 break;
         }
         
@@ -1722,17 +1868,30 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Step 1: Place Item to Sell
         guiGraphics.drawString(this.font, 
             Component.literal("Step 1: Place Item to Sell"),
-            centerX + 15, centerY + 50, 0xFFD700, true);
-        guiGraphics.fill(centerX + 15, centerY + 61, centerX + 215, centerY + 62, 0x60FFD700);
-        
-        // Instructions
-        guiGraphics.drawString(this.font, 
-            Component.literal("Place or drag an item into the slot below:"),
-            centerX + 30, centerY + 68, 0xFFFFFF, true);
+            centerX + 15, centerY + 52, 0xFFD700, true);
+        // Full-width underline
+        guiGraphics.fill(centerX + 15, centerY + 63, centerX + this.imageWidth - 15, centerY + 64, 0x60FFD700);
         
         // Offering slot rendered by menu system - use actual slot position
         int slotX = centerX + this.menu.getOfferingSlotX();
         int slotY = centerY + this.menu.getOfferingSlotY();
+        
+        // Draw a visual drop zone frame around the slot area ÔÇö wide enough to contain text
+        int zoneW = Math.min(this.imageWidth - 40, this.imageWidth - 30);
+        int zoneX = centerX + (this.imageWidth - zoneW) / 2;
+        int zoneY = centerY + 68;
+        int zoneH = 60;
+        guiGraphics.fill(zoneX, zoneY, zoneX + zoneW, zoneY + zoneH, 0x15FFFFFF);
+        guiGraphics.fill(zoneX, zoneY, zoneX + zoneW, zoneY + 1, 0x30FFFFFF);
+        guiGraphics.fill(zoneX, zoneY + zoneH - 1, zoneX + zoneW, zoneY + zoneH, 0x30FFFFFF);
+        guiGraphics.fill(zoneX, zoneY, zoneX + 1, zoneY + zoneH, 0x30FFFFFF);
+        guiGraphics.fill(zoneX + zoneW - 1, zoneY, zoneX + zoneW, zoneY + zoneH, 0x30FFFFFF);
+        
+        // Instructions - centered inside drop zone
+        Component instrText = Component.literal("Place or drag an item into the slot below:");
+        int instrW = this.font.width(instrText);
+        guiGraphics.drawString(this.font, instrText,
+            centerX + (this.imageWidth - instrW) / 2, zoneY + 5, 0xFFFFFF, true);
         
         ItemStack offeringItem = this.menu.getOfferingItem();
         
@@ -1757,44 +1916,48 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 slotX + 9 - nameW / 2, slotY + 25, 0x55FF55, true);
         }
         
-        // Help text
-        guiGraphics.drawString(this.font, 
-            Component.literal("* Shift+Click to quick-move items"),
-            centerX + 30, centerY + 115, 0x888888, true);
+        // Help text - centered, below drop zone with spacing
+        Component helpText = Component.literal("* Shift+Click to quick-move items");
+        int helpW = this.font.width(helpText);
+        guiGraphics.drawString(this.font, helpText,
+            centerX + (this.imageWidth - helpW) / 2, zoneY + zoneH + 12, 0x888888, true);
     }
     
     private void renderCreateStep2(GuiGraphics guiGraphics, int centerX, int centerY) {
         // Step 2: Set Prices (item already placed)
         int formX = centerX + 15;
         int formY = centerY + 76; // Must match initCreateStep2 and mouseClicked
+        int formRight = centerX + this.imageWidth - 15;
         
-        // Section header with underline
+        // Section header with underline spanning full width
         guiGraphics.drawString(this.font, 
             Component.literal(isEditMode ? "Edit Listing - Set Prices" : "Step 2: Set Prices"),
             formX, centerY + 50, 0xFFD700, true);
-        guiGraphics.fill(formX, centerY + 61, formX + 200, centerY + 62, 0x60FFD700);
+        guiGraphics.fill(formX, centerY + 61, formRight, centerY + 62, 0x60FFD700);
         
         // Money price label
         guiGraphics.drawString(this.font, 
             Component.literal("Price ($):"),
             formX, formY - 12, 0xFFFFFF, true);
         
-        // Margin % label (positioned relative to imageWidth)
+        // Margin % label
         int availWidth = this.imageWidth - 30;
-        int priceW = (int)(availWidth * 0.40);
-        int marginX = formX + priceW + 10;
+        int gap = 8;
+        int priceW = (availWidth - gap * 2) * 45 / 100;
+        int marginW = (availWidth - gap * 2) * 20 / 100;
+        int typeW = availWidth - priceW - marginW - gap * 2;
+        int marginX = formX + priceW + gap;
         guiGraphics.drawString(this.font, 
             Component.literal("Margin %:"),
             marginX, formY - 12, 0xFFFFFF, true);
         
         // Offer type label
-        int marginW = (int)(availWidth * 0.20);
-        int typeX = marginX + marginW + 10;
+        int typeX = marginX + marginW + gap;
         guiGraphics.drawString(this.font, 
             Component.literal("Type:"),
             typeX, formY - 12, 0xFFFFFF, true);
         
-        // Show market pricing info (item is always placed at this step)
+        // Market pricing info row spanning full width
         if (!placedItem.isEmpty()) {
             double basePrice = com.servermanagement.client.ClientMarketData.getStackPrice(placedItem);
             double margin = 0.0;
@@ -1803,20 +1966,20 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             }
             double finalPrice = com.servermanagement.client.ClientMarketData.calculateFinalPrice(basePrice, margin);
             
-            // Market base price (left side)
+            // Market base price (left)
             guiGraphics.drawString(this.font,
                 Component.literal("Market Base: $" + String.format(Locale.US, "%.2f", basePrice)),
                 formX, formY + 22, 0x55FFFF, true);
             
-            // Final price preview (right-aligned)
+            // Final price (right-aligned)
             String finalStr = "Final Price: $" + String.format(Locale.US, "%.2f", finalPrice);
             int finalColor = margin >= 0 ? 0x55FF55 : 0xFFAA00;
             int finalW = this.font.width(finalStr);
             guiGraphics.drawString(this.font,
                 Component.literal(finalStr),
-                centerX + this.imageWidth - 15 - finalW, formY + 22, finalColor, true);
+                formRight - finalW, formY + 22, finalColor, true);
             
-            // Listing preview (item icon + truncated name below market info)
+            // Listing preview (item icon + name)
             guiGraphics.drawString(this.font,
                 Component.literal("Listing: "),
                 formX, formY + 34, 0x999999, true);
@@ -1824,7 +1987,6 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             String listingLabel = placedItem.getCount() > 1 
                 ? placedItem.getCount() + "x " + placedItem.getHoverName().getString()
                 : placedItem.getHoverName().getString();
-            // Truncate to fit available space
             int maxNameWidth = this.imageWidth - 100;
             if (this.font.width(listingLabel) > maxNameWidth) {
                 while (this.font.width(listingLabel + "...") > maxNameWidth && listingLabel.length() > 3) {
@@ -1837,20 +1999,35 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 formX + 70, formY + 34, 0xFFFFFF, true);
         }
         
-        // Price Items section header (below market info with proper spacing)
+        // Price Items section header
         int priceItemY = formY + 65; // Must match initCreateStep2 and mouseClicked
         guiGraphics.drawString(this.font, 
             Component.literal("Price Items (buyer provides):"),
             formX, priceItemY - 13, 0xFFAA00, true);
         
-        // Render 3 price item slots
+        // Render 3 price item rows with proper spacing
+        int slotSize = 18;
+        int amountBoxW = 70;
+        int modeButtonW = 95;
+        int clearButtonW = 30;
+        int controlsEnd = formX + slotSize + 4 + amountBoxW + 4 + modeButtonW + 4 + clearButtonW + 8;
+        
         for (int i = 0; i < 3; i++) {
-            int slotY = priceItemY + (i * 28);
+            int slotY = priceItemY + (i * 30);
             
             // Item slot visual (18x18)
             int slotX = formX;
             guiGraphics.fill(slotX - 1, slotY - 1, slotX + 19, slotY + 19, 0xFFFFFFFF);
             guiGraphics.fill(slotX, slotY, slotX + 18, slotY + 18, 0xFF8B8B8B);
+            
+            // Bordered preview area on the right side (fills remaining space)
+            int previewX = controlsEnd;
+            int previewW = formRight - previewX;
+            if (previewW > 20) {
+                guiGraphics.fill(previewX, slotY - 1, previewX + previewW, slotY + 19, 0x15FFFFFF);
+                guiGraphics.fill(previewX, slotY - 1, previewX + previewW, slotY, 0x25FFFFFF);
+                guiGraphics.fill(previewX, slotY + 18, previewX + previewW, slotY + 19, 0x25FFFFFF);
+            }
             
             // Render placed item if any
             if (!priceItems[i].isEmpty()) {
@@ -1858,24 +2035,29 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                 guiGraphics.renderItem(itemStack, slotX, slotY);
                 guiGraphics.renderItemDecorations(this.font, itemStack, slotX, slotY);
                 
+                // Item name in the preview area
                 String itemName = itemStack.getHoverName().getString();
-                if (itemName.length() > 20) {
-                    itemName = itemName.substring(0, 18) + "...";
+                int nameMaxW = previewW - 10;
+                if (this.font.width(itemName) > nameMaxW) {
+                    while (this.font.width(itemName + "...") > nameMaxW && itemName.length() > 3) {
+                        itemName = itemName.substring(0, itemName.length() - 1);
+                    }
+                    itemName += "...";
                 }
                 guiGraphics.drawString(this.font, 
                     Component.literal(itemName),
-                    slotX + 145, slotY + 5, 0xFFFFFF, true);
+                    previewX + 5, slotY + 5, 0xFFFFFF, true);
             } else {
                 guiGraphics.drawString(this.font, 
                     Component.literal("\u2190 Click to pick"),
-                    slotX + 145, slotY + 5, 0x888888, true);
+                    previewX + 5, slotY + 5, 0x888888, true);
             }
         }
         
-        // Help text at bottom
+        // Help text spanning full width
         guiGraphics.drawString(this.font, 
-            Component.literal("* Click slots to pick items"),
-            formX, priceItemY + 78, 0x888888, true);
+            Component.literal("* Click item slots to pick items from the registry"),
+            formX, priceItemY + 80, 0x888888, true);
     }
     
     private void renderCreateStep3(GuiGraphics guiGraphics, int centerX, int centerY) {
@@ -1959,7 +2141,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         
         // Warning at bottom of card
         guiGraphics.drawString(this.font, 
-            Component.literal("⚠ Item cannot be retrieved until sold or cancelled."),
+            Component.literal("ÔÜá Item cannot be retrieved until sold or cancelled."),
             infoX, centerY + 166, 0xFF5555, true);
     }
     
@@ -2102,7 +2284,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Price section header
         infoY += 20;
         guiGraphics.drawString(this.font, 
-            Component.literal("— Price —"),
+            Component.literal("ÔÇö Price ÔÇö"),
             itemX, infoY, 0xFFD700, true);
         
         // Money price
@@ -2167,6 +2349,49 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
         // Handled by browse screen with filter - should not render here
     }
     
+    private void renderEditDiscardConfirm(GuiGraphics guiGraphics, int centerX, int centerY) {
+        // Same modal style as renderDeleteConfirm but with neutral colours
+        // since this is a "you might lose data" warning, not a destructive action.
+        int dialogWidth = 400;
+        int dialogHeight = 160;
+        int dialogX = centerX + (this.imageWidth - dialogWidth) / 2;
+        int dialogY = centerY + (this.imageHeight - dialogHeight) / 2 - 20;
+
+        // Dim the rest of the panel
+        guiGraphics.fill(centerX, centerY,
+            centerX + this.imageWidth, centerY + this.imageHeight,
+            0x80000000);
+
+        // Dialog background
+        guiGraphics.fill(dialogX, dialogY,
+            dialogX + dialogWidth, dialogY + dialogHeight,
+            0xFF2B2B2B);
+
+        // Yellow warning border
+        int border = 0xFFFFC857;
+        guiGraphics.fill(dialogX - 2, dialogY - 2,           dialogX + dialogWidth + 2, dialogY + 2,             border);
+        guiGraphics.fill(dialogX - 2, dialogY + dialogHeight - 2, dialogX + dialogWidth + 2, dialogY + dialogHeight + 2, border);
+        guiGraphics.fill(dialogX - 2, dialogY,               dialogX + 2,               dialogY + dialogHeight,    border);
+        guiGraphics.fill(dialogX + dialogWidth - 2, dialogY, dialogX + dialogWidth + 2, dialogY + dialogHeight,    border);
+
+        // Title
+        Component titleText = Component.literal("\u26A0 Discard changes?");
+        int titleWidth = this.font.width(titleText);
+        guiGraphics.drawString(this.font, titleText,
+            dialogX + (dialogWidth - titleWidth) / 2, dialogY + 20, 0xFFFFC857, true);
+
+        // Body
+        Component line1 = Component.literal("You have unsaved changes to this listing.");
+        int w1 = this.font.width(line1);
+        guiGraphics.drawString(this.font, line1,
+            dialogX + (dialogWidth - w1) / 2, dialogY + 50, 0xFFFFFFFF, true);
+
+        Component line2 = Component.literal("Discard them and go back, or keep editing?");
+        int w2 = this.font.width(line2);
+        guiGraphics.drawString(this.font, line2,
+            dialogX + (dialogWidth - w2) / 2, dialogY + 65, 0xFFAAAAAA, true);
+    }
+
     private void renderDeleteConfirm(GuiGraphics guiGraphics, int centerX, int centerY) {
         if (listingToDelete == null) {
             return;
@@ -2203,7 +2428,7 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             0xFFFF5555); // Red border right
         
         // Draw title
-        Component titleText = Component.literal("⚠ Delete Listing?");
+        Component titleText = Component.literal("ÔÜá Delete Listing?");
         int titleWidth = this.font.width(titleText);
         guiGraphics.drawString(this.font, titleText,
             dialogX + (dialogWidth - titleWidth) / 2,
@@ -2437,6 +2662,16 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // The screen is rendered through ScalableContainerScreen's pose-stack
+        // scale; widgets/slots receive design-space coords because the base
+        // class inverts them inside its own mouseClicked. But this override
+        // is dispatched FIRST with raw screen-pixel coords, so any custom
+        // hit-tests below must operate in design space too ÔÇö otherwise at
+        // non-1.0 GUI scales (Auto / Scale 4 / Scale 5 on small windows)
+        // the price-item slots and BUY_CONFIRM payment grid stop responding.
+        double designMouseX = inverseMouseX(mouseX);
+        double designMouseY = inverseMouseY(mouseY);
+
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -2458,8 +2693,8 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
                     int slotX = gridStartX + col * slotSize;
                     int slotY = gridStartY + row * slotSize;
                     
-                    if (mouseX >= slotX && mouseX < slotX + slotSize &&
-                        mouseY >= slotY && mouseY < slotY + slotSize) {
+                    if (designMouseX >= slotX && designMouseX < slotX + slotSize &&
+                        designMouseY >= slotY && designMouseY < slotY + slotSize) {
                         int slotIdx = row < 3 ? 9 + (row * 9) + col : col;
                         
                         // Only toggle if slot has an item with value
@@ -2489,10 +2724,10 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
             
             for (int i = 0; i < 3; i++) {
                 int slotX = formX;
-                int slotY = priceItemY + (i * 28);
+                int slotY = priceItemY + (i * 30);
                 
-                if (mouseX >= slotX && mouseX < slotX + 18 &&
-                    mouseY >= slotY && mouseY < slotY + 18) {
+                if (designMouseX >= slotX && designMouseX < slotX + 18 &&
+                    designMouseY >= slotY && designMouseY < slotY + 18) {
                     handlePriceItemSlotClick(i);
                     return true;
                 }
@@ -2614,18 +2849,18 @@ public class MineBayScreen extends AbstractContainerScreen<MineBayMenu> {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (currentState == ScreenState.BROWSE && !listings.isEmpty()) {
             int maxScroll = Math.max(0, listings.size() - LISTINGS_PER_PAGE);
-            if (scroll > 0) {
+            if (scrollY > 0) {
                 scrollOffset = Math.max(0, scrollOffset - 1);
-            } else if (scroll < 0) {
+            } else if (scrollY < 0) {
                 scrollOffset = Math.min(maxScroll, scrollOffset + 1);
             }
             this.rebuildWidgets();
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, scroll);
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
     
     @Override

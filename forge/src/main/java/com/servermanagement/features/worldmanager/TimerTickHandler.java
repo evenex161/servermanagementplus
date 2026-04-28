@@ -65,9 +65,14 @@ public class TimerTickHandler {
             
             long remainingTime = worldData.getRemainingTime(dimensionId);
             
-            if (remainingTime <= 0) {
-                // Timer finished - apply portal state change and notify
+            // When this is the final second, play the "1" beat AND complete the
+            // timer in the same tick. hasActiveTimer requires value > 0, so if we
+            // only decremented to 0 here the next tick would skip this dimension
+            // and handleTimerComplete would never run -> portals would never flip.
+            if (remainingTime <= 1) {
+                sendTimerWarnings(server, dimensionId, worldData, remainingTime);
                 handleTimerComplete(server, level, dimensionId, worldData);
+                needsSave = true;
                 continue;
             }
             
@@ -105,19 +110,27 @@ public class TimerTickHandler {
         
         // Build contextual messages
         String portalDesc = WorldManager.getPortalDescription(dimensionId, portalType);
+        String dimName = WorldManager.getDimensionName(dimensionId);
         String actionWord = enablePortals ? "open" : "closed";
-        String colorCode = enablePortals ? "§a" : "§c";
+        String colorCode = enablePortals ? "┬ºa" : "┬ºc";
         
-        Component message = Component.literal(colorCode + "✔ " + portalDesc + " are now " + actionWord + "!");
+        // Always mention the dimension so players in other worlds aren't
+        // misled into thinking their own portals just changed state.
+        Component message = Component.literal(colorCode + "Ô£ö " + portalDesc + " in " + dimName + " are now " + actionWord + "!");
         Component title = Component.literal(colorCode + portalDesc);
-        Component subtitle = Component.literal(enablePortals ? "are now open!" : "are now closed!");
+        Component subtitle = Component.literal((enablePortals ? "are now open in " : "are now closed in ") + dimName);
         
         // Notify ALL players on the server (not just the dimension)
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             player.sendSystemMessage(message);
             player.connection.send(new ClientboundSetTitleTextPacket(title));
             player.connection.send(new ClientboundSetSubtitleTextPacket(subtitle));
-            player.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.MASTER, 1.0f, 1.0f);
+            // Distinct "timer finished" cue: pitch-shifted level-up (high for open,
+            // low for close) layered with a decisive anvil land. Both are clearly
+            // different from the per-second NOTE_BLOCK_PLING countdown ticks.
+            float finalPitch = enablePortals ? 1.2f : 0.8f;
+            player.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.MASTER, 1.0f, finalPitch);
+            player.playNotifySound(SoundEvents.ANVIL_LAND, SoundSource.MASTER, 0.6f, enablePortals ? 1.4f : 0.7f);
         }
         
         // Log for ops
@@ -135,6 +148,7 @@ public class TimerTickHandler {
         String portalType = worldData.getTimerPortalType(dimensionId);
         boolean enablePortals = worldData.getTimerEnablesPortal(dimensionId);
         String portalDesc = WorldManager.getPortalDescription(dimensionId, portalType);
+        String dimName = WorldManager.getDimensionName(dimensionId);
         String actionWord = enablePortals ? "open" : "close";
         
         Component warning = null;
@@ -142,45 +156,45 @@ public class TimerTickHandler {
         Component subtitleText = null;
         boolean playSound = false;
         
-        // Build contextual subtitle
-        String subtitleBase = portalDesc + " " + actionWord;
+        // Subtitle always mentions the dimension so players in other worlds
+        // know exactly which portals are about to change state and don't
+        // mistakenly think their own dimension's portals are being toggled.
+        String subtitleBase = portalDesc + " in " + dimName + " " + actionWord;
         
-        // 60 second warning
+        // 60 second warning ÔÇö chat heads-up so the announcement reaches players
+        // who don't have title text on screen.
         if (remainingTime == 60 && !announced60s.contains(dimensionId)) {
-            warning = Component.literal("§e⚠ " + portalDesc + " " + actionWord + " in 1 minute");
-            titleText = Component.literal("§e1 Minute");
+            warning = Component.literal("┬ºeÔÜá " + portalDesc + " in " + dimName + " " + actionWord + " in 1 minute");
+            titleText = Component.literal("┬ºe1 Minute");
             subtitleText = Component.literal(subtitleBase + " soon");
             playSound = true;
             announced60s.add(dimensionId);
         }
-        // 30 second warning
+        // 30 second warning ÔÇö title + sound only (no chat to reduce spam)
         else if (remainingTime == 30 && !announced30s.contains(dimensionId)) {
-            warning = Component.literal("§6⚠ " + portalDesc + " " + actionWord + " in 30 seconds");
-            titleText = Component.literal("§630 Seconds");
+            titleText = Component.literal("┬º630 Seconds");
             subtitleText = Component.literal(subtitleBase + " soon");
             playSound = true;
             announced30s.add(dimensionId);
         }
-        // 10 second warning
+        // 10 second warning ÔÇö title + sound only
         else if (remainingTime == 10 && !announced10s.contains(dimensionId)) {
-            warning = Component.literal("§c⚠ " + portalDesc + " " + actionWord + " in 10 seconds");
-            titleText = Component.literal("§c10 Seconds");
-            subtitleText = Component.literal("Get ready!");
+            titleText = Component.literal("┬ºc10 Seconds");
+            subtitleText = Component.literal(portalDesc + " in " + dimName);
             playSound = true;
             announced10s.add(dimensionId);
         }
-        // 5 second countdown
+        // 5 second countdown ÔÇö title + sound only
         else if (remainingTime == 5 && !announced5s.contains(dimensionId)) {
-            warning = Component.literal("§4⚠ " + portalDesc + " " + actionWord + " in 5 seconds");
-            titleText = Component.literal("§45");
+            titleText = Component.literal("┬º45");
             subtitleText = Component.literal(subtitleBase + " soon!");
             playSound = true;
             announced5s.add(dimensionId);
         }
-        // Final countdown (4, 3, 2, 1)
+        // Final countdown (4, 3, 2, 1) ÔÇö title + sound only
         else if (remainingTime <= 4 && remainingTime >= 1) {
-            titleText = Component.literal("§4" + remainingTime);
-            subtitleText = Component.literal("...");
+            titleText = Component.literal("┬º4" + remainingTime);
+            subtitleText = Component.literal(portalDesc + " in " + dimName);
             playSound = true;
         }
         

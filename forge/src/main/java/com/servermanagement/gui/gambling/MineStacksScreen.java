@@ -1,15 +1,15 @@
 package com.servermanagement.gui.gambling;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.gambling.GamblingResult;
 import com.servermanagement.features.gambling.games.*;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -20,7 +20,7 @@ import java.util.Locale;
 /**
  * MineStacks - Gambling interface
  */
-public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
+public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
     
     private enum GameMode {
         MENU,           // Main menu - select game
@@ -72,6 +72,16 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private float winAnimationProgress = 0f;
     private int particleCount = 0;
     private java.util.List<AnimatedParticle> particles = new java.util.ArrayList<>();
+
+    // Real-time delta tracking. The {@code partialTick} parameter passed to
+    // {@code Screen.render} has different semantics across loaders/MC patch
+    // versions (Forge: per-tick fraction 0..1; NeoForge 21.x: realtime delta
+    // ticks per frame, often >1.0), which made every multiplier-driven
+    // animation run far too fast on NeoForge. We compute our own monotonic
+    // delta in tick units (50 ms = 1 tick) so animation speed is identical
+    // across loaders.
+    private long lastFrameNanos = 0L;
+    private float frameDeltaTicks = 0f;
     
     // Animated particle class for win effects
     private static class AnimatedParticle {
@@ -115,9 +125,9 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     public MineStacksScreen(MineStacksMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
-        this.imageWidth = 400;
-        this.imageHeight = 220;
+        super(menu, playerInventory, title, 420, 230);
+        this.imageWidth = 420;
+        this.imageHeight = 230;
         this.inventoryLabelY = 1000; // Hide
         this.titleLabelY = 1000; // Hide
         this.currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
@@ -125,9 +135,6 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(400, 220, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -381,7 +388,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -415,7 +422,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("← Back"),
+            Component.literal("ÔåÉ Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -446,7 +453,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private boolean validateBet() {
         if (useMoney) {
             if (betAmountBox == null || betAmountBox.getValue().isEmpty()) {
-                lastResult = "§cEnter a bet amount!";
+                lastResult = "┬ºcEnter a bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -454,19 +461,19 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             try {
                 double amount = Double.parseDouble(betAmountBox.getValue());
                 if (amount < 10.0) {
-                    lastResult = "§cMinimum bet is $10";
+                    lastResult = "┬ºcMinimum bet is $10";
                     resultShowTime = System.currentTimeMillis();
                     return false;
                 }
             } catch (NumberFormatException e) {
-                lastResult = "§cInvalid bet amount!";
+                lastResult = "┬ºcInvalid bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
         } else {
             ItemStack bettingItem = menu.getBettingItem();
             if (bettingItem.isEmpty()) {
-                lastResult = "§cPlace an item in the slot!";
+                lastResult = "┬ºcPlace an item in the slot!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -505,7 +512,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         }
         
         // Show pending message
-        lastResult = "§ePlacing bet...";
+        lastResult = "┬ºePlacing bet...";
         resultShowTime = System.currentTimeMillis();
     }
     
@@ -528,7 +535,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     private void showPendingResult() {
         if (!hasPendingResult) return;
         
-        lastResult = pendingResultWon ? "§a" + pendingResultMessage : "§c" + pendingResultMessage;
+        lastResult = pendingResultWon ? "┬ºa" + pendingResultMessage : "┬ºc" + pendingResultMessage;
         lastResultWon = pendingResultWon;
         resultShowTime = System.currentTimeMillis();
         
@@ -638,6 +645,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     private void switchMode(GameMode mode) {
+        com.servermanagement.gui.debug.DebugLogger.logStateChange("MineStacksScreen", "gameMode", currentMode, mode);
         currentMode = mode;
         lastResult = "";
         this.rebuildWidgets();
@@ -705,7 +713,21 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Compute a loader-independent frame delta in tick units (50 ms = 1
+        // tick). Drive every animation speed multiplier off this instead of
+        // the {@code partialTick} parameter, whose semantics differ between
+        // Forge and NeoForge 21.x.
+        long now = System.nanoTime();
+        if (lastFrameNanos == 0L) {
+            frameDeltaTicks = 0.05f; // first frame: assume ~one 60-fps frame
+        } else {
+            frameDeltaTicks = (now - lastFrameNanos) / 50_000_000f;
+            // Clamp huge deltas (window unfocused / GC pause) so animations
+            // don't jump multiple seconds in one frame on resume.
+            if (frameDeltaTicks > 1.0f) frameDeltaTicks = 1.0f;
+        }
+        lastFrameNanos = now;
         // Update tension animation
         if (isTensionActive) {
             long elapsed = System.currentTimeMillis() - tensionStartTime;
@@ -720,11 +742,11 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             float progress = elapsed / (float)TENSION_DURATION;
             
             // Update rotation for spinning animations
-            tensionRotation += partialTick * 20f; // Fast spin
+            tensionRotation += frameDeltaTicks * 20f; // Fast spin
             if (tensionRotation > 360f) tensionRotation -= 360f;
             
             // Update reel offset for slot machine
-            tensionReelOffset += partialTick * 10f;
+            tensionReelOffset += frameDeltaTicks * 10f;
             if (tensionReelOffset > 32f) tensionReelOffset -= 32f; // Reset every 32 pixels
         }
         
@@ -744,18 +766,18 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
             } else {
                 // Slow down rotation for ending effect
                 float slowdownFactor = 1.0f - progress; // Gradually slow to 0
-                tensionRotation += partialTick * 20f * slowdownFactor;
+                tensionRotation += frameDeltaTicks * 20f * slowdownFactor;
                 if (tensionRotation > 360f) tensionRotation -= 360f;
                 
                 // Slow down reels
-                tensionReelOffset += partialTick * 10f * slowdownFactor;
+                tensionReelOffset += frameDeltaTicks * 10f * slowdownFactor;
                 if (tensionReelOffset > 32f) tensionReelOffset -= 32f;
             }
         }
         
         // Update animation
         if (isAnimating) {
-            winAnimationProgress += partialTick * 0.02f;
+            winAnimationProgress += frameDeltaTicks * 0.02f;
             if (winAnimationProgress >= 1.0f) {
                 isAnimating = false;
                 winAnimationProgress = 0f;
@@ -778,7 +800,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         }
         
         // Render background first
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         
         // Save matrix state and apply shake
         guiGraphics.pose().pushPose();
@@ -867,7 +889,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         
         guiGraphics.pose().popPose();
         
-        animationTime += partialTick * 0.05f;
+        animationTime += frameDeltaTicks * 0.05f;
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -985,14 +1007,14 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         guiGraphics.pose().translate(0, 0, 200);
         
         // Dark overlay
-        guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
+        fillScreen(guiGraphics, 0x80000000);
         
         int animX = centerX + this.imageWidth / 2;
         int animY = centerY + 100;
         
         // Draw tension text
         guiGraphics.drawCenteredString(this.font,
-            Component.literal("§6Rolling..."),
+            Component.literal("┬º6Rolling..."),
             animX, animY - 40, 0xFFD700);
         
         // Cache locally to avoid null between check and switch
@@ -1080,7 +1102,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
+        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1167,7 +1189,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         guiGraphics.pose().translate(0, 0, 200);
         
         // Dark overlay (slightly lighter than tension)
-        guiGraphics.fill(0, 0, this.width, this.height, 0x60000000);
+        fillScreen(guiGraphics, 0x60000000);
         
         int animX = centerX + this.imageWidth / 2;
         int animY = centerY + 100;
@@ -1267,7 +1289,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
+        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1440,7 +1462,7 @@ public class MineStacksScreen extends AbstractContainerScreen<MineStacksMenu> {
      * Render the item being dragged by the cursor
      */
     private void renderFloatingItem(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Get the carried item (item being dragged) — cache locally
+        // Get the carried item (item being dragged) ÔÇö cache locally
         ItemStack carriedStack = this.menu.getCarried();
         if (carriedStack != null && !carriedStack.isEmpty()) {
             // Render the item centered on the cursor

@@ -1,24 +1,24 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.menu.PerformanceSettingsMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.gui.widgets.ToggleSwitch;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public class PerformanceSettingsScreen extends AbstractContainerScreen<PerformanceSettingsMenu> {
+public class PerformanceSettingsScreen extends ScalableContainerScreen<PerformanceSettingsMenu> {
 
     private int scrollOffset = 0;
     private static final int SCROLL_STEP = 16;
 
     // Layout constants
-    private static final int HEADER_HEIGHT = 72;
+    private static final int HEADER_HEIGHT = 78;
     private static final int FOOTER_HEIGHT = 35;
     private static final int ROW_SPACING = 30;
     private static final int TOGGLE_HEIGHT = 20;
@@ -27,9 +27,9 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
     private int currentPage = 0;
 
     public PerformanceSettingsScreen(PerformanceSettingsMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
-        this.imageWidth = 380;
-        this.imageHeight = 340;
+        super(menu, playerInventory, title, 430, 420);
+        this.imageWidth = 430;
+        this.imageHeight = 420;
     }
 
     private int getContentTop() {
@@ -48,6 +48,11 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int rows;
         if (currentPage == 0) rows = 8;
         else if (currentPage == 1) rows = 10;
+        else if (currentPage == 2) {
+            // Stats page: ~9 lines at 22px + padding
+            int statsHeight = 9 * 22 + 10;
+            return Math.max(0, statsHeight - getContentHeight());
+        }
         else return 0;
         return Math.max(0, rows * ROW_SPACING - getContentHeight());
     }
@@ -58,9 +63,6 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(380, 340, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         rebuildWidgets();
     }
@@ -73,25 +75,27 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int cY = this.topPos;
 
         // --- Tab buttons (fixed position, never scrolled) ---
-        int tabWidth = (this.imageWidth - 40) / 3;
+        int tabGap = 5;
+        int tabTotalWidth = this.imageWidth - 20; // 10px margin each side
+        int tabWidth = (tabTotalWidth - tabGap * 2) / 3;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Toggles"),
-            btn -> { currentPage = 0; scrollOffset = 0; rebuildWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "0/Toggles"); currentPage = 0; scrollOffset = 0; rebuildWidgets(); })
             .bounds(cX + 10, cY + 42, tabWidth, 20)
             .style(currentPage == 0 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Settings"),
-            btn -> { currentPage = 1; scrollOffset = 0; rebuildWidgets(); })
-            .bounds(cX + 15 + tabWidth, cY + 42, tabWidth, 20)
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "1/Settings"); currentPage = 1; scrollOffset = 0; rebuildWidgets(); })
+            .bounds(cX + 10 + tabWidth + tabGap, cY + 42, tabWidth, 20)
             .style(currentPage == 1 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Stats"),
-            btn -> { currentPage = 2; scrollOffset = 0; rebuildWidgets(); })
-            .bounds(cX + 20 + tabWidth * 2, cY + 42, tabWidth, 20)
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "2/Stats"); currentPage = 2; scrollOffset = 0; rebuildWidgets(); })
+            .bounds(cX + 10 + (tabWidth + tabGap) * 2, cY + 42, tabWidth, 20)
             .style(currentPage == 2 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
@@ -105,18 +109,19 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
             buildSettingsPage(cX, contentY);
         }
 
-        // --- Bottom buttons (fixed position) ---
+        // --- Bottom buttons (fixed position, symmetrical) ---
+        int bottomBtnW = (this.imageWidth - 30) / 2;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("\u2190 Dashboard"),
             btn -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
-            .bounds(cX + 10, cY + this.imageHeight - 30, 110, 22)
+            .bounds(cX + 10, cY + this.imageHeight - 30, bottomBtnW, 22)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Close"),
             btn -> this.onClose())
-            .bounds(cX + this.imageWidth - 80, cY + this.imageHeight - 30, 70, 22)
+            .bounds(cX + this.imageWidth - bottomBtnW - 10, cY + this.imageHeight - 30, bottomBtnW, 22)
             .style(ModernButton.ButtonStyle.SECONDARY)
             .build());
     }
@@ -245,17 +250,17 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         int maxScroll = getMaxScroll();
         if (maxScroll <= 0) return true;
-        scrollOffset = (int) Math.max(0, Math.min(maxScroll, scrollOffset - scroll * SCROLL_STEP));
+        scrollOffset = (int) Math.max(0, Math.min(maxScroll, scrollOffset - scrollY * SCROLL_STEP));
         rebuildWidgets();
         return true;
     }
 
     @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(g);
+    protected void renderContent(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(g, mouseX, mouseY, partialTick);
         this.renderBg(g, partialTick, mouseX, mouseY);
 
         int cX = this.leftPos;
@@ -264,7 +269,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         int contentBottom = getContentBottom();
 
         // 1) Render widgets (super.render includes all addRenderableWidget items)
-        super.render(g, mouseX, mouseY, partialTick);
+        super.renderContent(g, mouseX, mouseY, partialTick);
 
         // 2) Repaint header zone to cover any widget bleed from scrolling
         g.fill(cX, cY, cX + this.imageWidth, cY + 35, 0xFF1A1A2E);
@@ -303,7 +308,7 @@ public class PerformanceSettingsScreen extends AbstractContainerScreen<Performan
         } else if (currentPage == 1) {
             renderSettingsLabels(g, cX, contentY);
         } else if (currentPage == 2) {
-            renderStatsPage(g, cX, contentTop);
+            renderStatsPage(g, cX, contentTop - scrollOffset);
         }
 
         g.disableScissor();

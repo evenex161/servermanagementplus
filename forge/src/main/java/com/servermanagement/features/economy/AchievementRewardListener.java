@@ -2,6 +2,7 @@ package com.servermanagement.features.economy;
 
 import com.servermanagement.ServerManagementMod;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,22 +26,22 @@ public class AchievementRewardListener {
         }
 
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        Advancement advancement = event.getAdvancement();
+        AdvancementHolder holder = event.getAdvancement();
         
         // Only reward for advancements that have a display (shown in-game)
         // This filters out recipe unlocks and hidden advancements
-        DisplayInfo displayInfo = advancement.getDisplay();
+        DisplayInfo displayInfo = holder.value().display().orElse(null);
         if (displayInfo == null) {
             return;
         }
 
         // Check if this advancement was already rewarded
-        if (wasAlreadyRewarded(player, advancement)) {
+        if (wasAlreadyRewarded(player, holder)) {
             return;
         }
 
         // Calculate reward tier (single calculation, used for both reward and display)
-        AchievementRewardTier tier = calculateTier(advancement, displayInfo);
+        AchievementRewardTier tier = calculateTier(holder, displayInfo);
         int reward = tier.getAverageReward();
         
         // Give the reward
@@ -52,29 +53,29 @@ public class AchievementRewardListener {
         );
 
         // Mark as rewarded
-        markAsRewarded(player, advancement);
+        markAsRewarded(player, holder);
 
         // Notify player
         String tierName = tier.getDisplayName();
         player.sendSystemMessage(Component.literal(
-            String.format("§a§l✓ Achievement Reward! §r§a+$%d §7(%s)", reward, tierName)
+            String.format("┬ºa┬ºlÔ£ô Achievement Reward! ┬ºr┬ºa+$%d ┬º7(%s)", reward, tierName)
         ));
 
         ServerManagementMod.LOGGER.info(
             "Rewarded player {} with ${} for advancement: {}",
             player.getName().getString(),
             reward,
-            advancement.getId()
+            holder.id()
         );
     }
 
     /**
      * Calculate the reward tier based on advancement properties
      */
-    private static AchievementRewardTier calculateTier(Advancement advancement, DisplayInfo displayInfo) {
-        AchievementRewardTier tierFromFrame = AchievementRewardTier.fromFrameType(displayInfo.getFrame());
-        int criteriaCount = advancement.getCriteria().size();
-        boolean hasParent = advancement.getParent() != null;
+    private static AchievementRewardTier calculateTier(AdvancementHolder holder, DisplayInfo displayInfo) {
+        AchievementRewardTier tierFromFrame = AchievementRewardTier.fromFrameType(displayInfo.getType());
+        int criteriaCount = holder.value().criteria().size();
+        boolean hasParent = holder.value().parent().isPresent();
         AchievementRewardTier tierFromComplexity = AchievementRewardTier.fromComplexity(criteriaCount, hasParent);
         return tierFromComplexity.ordinal() > tierFromFrame.ordinal() 
             ? tierFromComplexity 
@@ -84,9 +85,9 @@ public class AchievementRewardListener {
     /**
      * Check if player was already rewarded for this advancement
      */
-    private static boolean wasAlreadyRewarded(ServerPlayer player, Advancement advancement) {
+    private static boolean wasAlreadyRewarded(ServerPlayer player, AdvancementHolder holder) {
         // Use the achievement tracker for reliable duplicate detection
-        String achievementId = advancement.getId().toString();
+        String achievementId = holder.id().toString();
         return EconomyManager.getInstance()
             .getAchievementTracker()
             .hasBeenRewarded(player.getUUID(), achievementId);
@@ -95,8 +96,8 @@ public class AchievementRewardListener {
     /**
      * Mark advancement as rewarded
      */
-    private static void markAsRewarded(ServerPlayer player, Advancement advancement) {
-        String achievementId = advancement.getId().toString();
+    private static void markAsRewarded(ServerPlayer player, AdvancementHolder holder) {
+        String achievementId = holder.id().toString();
         EconomyManager.getInstance()
             .getAchievementTracker()
             .markAsRewarded(player.getUUID(), achievementId);

@@ -37,11 +37,15 @@ public class ConfigMigration {
         MIGRATIONS.put(0, new Migration() {
             @Override
             public void apply() throws Exception {
-                ServerManagementMod.LOGGER.info("Applying migration 0->1: Adding config version field");
+                ServerManagementMod.LOGGER.debug("Applying migration 0->1: Adding config version field");
                 // Version 0 configs don't have a version field at all
                 // This migration is implicit - just adding the version field updates it
-                ModConfig.CONFIG_VERSION.set(1);
-                ModConfig.SPEC.save();
+                // Guard against ForgeConfigSpec not being bound yet (during mod construction)
+                if (ModConfig.SPEC.isLoaded()) {
+                    ModConfig.CONFIG_VERSION.set(1);
+                    ModConfig.SPEC.save();
+                }
+                // If not loaded yet, the version will be set to default (1) when config loads
             }
             
             @Override
@@ -63,12 +67,18 @@ public class ConfigMigration {
      */
     public static boolean checkAndMigrate() {
         try {
+            // Cannot migrate if config spec isn't loaded yet
+            if (!ModConfig.SPEC.isLoaded()) {
+                ServerManagementMod.LOGGER.debug("Config spec not loaded yet, skipping migration");
+                return true;
+            }
+            
             Path configPath = getConfigPath();
             File configFile = configPath.toFile();
             
             // If config doesn't exist, no migration needed (will be created fresh)
             if (!configFile.exists()) {
-                ServerManagementMod.LOGGER.info("Config file does not exist, no migration needed");
+                ServerManagementMod.LOGGER.debug("Config file does not exist, no migration needed");
                 return true;
             }
             
@@ -76,11 +86,11 @@ public class ConfigMigration {
             int currentVersion = getCurrentConfigVersion();
             int targetVersion = ModConfig.CURRENT_CONFIG_VERSION;
             
-            ServerManagementMod.LOGGER.info("Config version check: Current={}, Target={}", currentVersion, targetVersion);
+            ServerManagementMod.LOGGER.debug("Config version check: Current={}, Target={}", currentVersion, targetVersion);
             
             // No migration needed if versions match
             if (currentVersion == targetVersion) {
-                ServerManagementMod.LOGGER.info("Config is up to date (version {})", currentVersion);
+                ServerManagementMod.LOGGER.debug("Config is up to date (version {})", currentVersion);
                 return true;
             }
             
@@ -93,7 +103,6 @@ public class ConfigMigration {
             }
             
             // Migration needed
-            ServerManagementMod.LOGGER.info("=== CONFIG MIGRATION REQUIRED ===");
             ServerManagementMod.LOGGER.info("Migrating config from version {} to {}", currentVersion, targetVersion);
             
             return performMigration(currentVersion, targetVersion, configFile);
@@ -116,7 +125,7 @@ public class ConfigMigration {
             return version;
         } catch (Exception e) {
             // If reading fails, this is likely a pre-versioning config
-            ServerManagementMod.LOGGER.info("No version field found in config - treating as version 0");
+            ServerManagementMod.LOGGER.debug("No version field found in config - treating as version 0");
             return 0;
         }
     }
@@ -143,13 +152,13 @@ public class ConfigMigration {
                     return false;
                 }
                 
-                ServerManagementMod.LOGGER.info("Applying migration {}->{}: {}", 
+                ServerManagementMod.LOGGER.debug("Applying migration {}->{}: {}", 
                     currentVersion, currentVersion + 1, migration.getDescription());
                 
                 try {
                     migration.apply();
                     currentVersion++;
-                    ServerManagementMod.LOGGER.info("Migration {}->{} completed successfully", 
+                    ServerManagementMod.LOGGER.debug("Migration {}->{} completed successfully", 
                         currentVersion - 1, currentVersion);
                 } catch (Exception e) {
                     ServerManagementMod.LOGGER.error("Migration {}->{} failed!", 
@@ -162,9 +171,7 @@ public class ConfigMigration {
             ModConfig.CONFIG_VERSION.set(newVersion);
             ModConfig.SPEC.save();
             
-            ServerManagementMod.LOGGER.info("=== MIGRATION SUCCESSFUL ===");
-            ServerManagementMod.LOGGER.info("Config updated from version {} to {}", oldVersion, newVersion);
-            ServerManagementMod.LOGGER.info("A backup of your old config was created");
+            ServerManagementMod.LOGGER.info("Config migrated successfully from version {} to {}", oldVersion, newVersion);
             
             return true;
             
@@ -184,7 +191,7 @@ public class ConfigMigration {
             Path backupPath = configFile.toPath().getParent().resolve(backupName);
             
             Files.copy(configFile.toPath(), backupPath, StandardCopyOption.REPLACE_EXISTING);
-            ServerManagementMod.LOGGER.info("Created migration backup: {}", backupPath);
+            ServerManagementMod.LOGGER.debug("Created migration backup: {}", backupPath);
             
             return true;
             
@@ -271,6 +278,11 @@ public class ConfigMigration {
      */
     public static boolean needsMigration() {
         try {
+            // Cannot check migration if config spec isn't loaded yet
+            if (!ModConfig.SPEC.isLoaded()) {
+                return false;
+            }
+            
             Path configPath = getConfigPath();
             if (!configPath.toFile().exists()) {
                 return false; // New config, no migration needed

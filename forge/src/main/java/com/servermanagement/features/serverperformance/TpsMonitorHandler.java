@@ -41,10 +41,10 @@ public class TpsMonitorHandler {
 
         String message;
         if (status == ServerPerformanceManager.TpsStatus.CRITICAL) {
-            message = String.format("§c§l[SM] §cServer TPS critical: §f%.1f TPS §7(%.1f mspt)%s",
-                    tps, mspt, manager.isAutoOptimizeActive() ? " §e[Auto-Optimize Active]" : "");
+            message = String.format("┬ºc┬ºl[SM] ┬ºcServer TPS critical: ┬ºf%.1f TPS ┬º7(%.1f mspt)%s",
+                    tps, mspt, manager.isAutoOptimizeActive() ? " ┬ºe[Auto-Optimize Active]" : "");
         } else {
-            message = String.format("§e[SM] §eServer TPS warning: §f%.1f TPS §7(%.1f mspt)", tps, mspt);
+            message = String.format("┬ºe[SM] ┬ºeServer TPS warning: ┬ºf%.1f TPS ┬º7(%.1f mspt)", tps, mspt);
         }
 
         // Send to all ops

@@ -59,19 +59,19 @@ public class OTAUpdateManager {
         
         if (player != null) {
             player.sendSystemMessage(Component.literal(""));
-            player.sendSystemMessage(Component.literal("§c§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-            player.sendSystemMessage(Component.literal("§6§l⚠ MOD VERSION MISMATCH"));
+            player.sendSystemMessage(Component.literal("┬ºc┬ºlÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü"));
+            player.sendSystemMessage(Component.literal("┬º6┬ºlÔÜá MOD VERSION MISMATCH"));
             player.sendSystemMessage(Component.literal(""));
-            player.sendSystemMessage(Component.literal("§7Your version: §c" + clientVersion));
-            player.sendSystemMessage(Component.literal("§7Server version: §a" + serverVersion));
+            player.sendSystemMessage(Component.literal("┬º7Your version: ┬ºc" + clientVersion));
+            player.sendSystemMessage(Component.literal("┬º7Server version: ┬ºa" + serverVersion));
             player.sendSystemMessage(Component.literal(""));
-            player.sendSystemMessage(Component.literal("§eAn automatic update is available!"));
-            player.sendSystemMessage(Component.literal("§7File: §f" + serverModJarName));
-            player.sendSystemMessage(Component.literal("§7Size: §f" + formatFileSize(serverModJarSize)));
+            player.sendSystemMessage(Component.literal("┬ºeAn automatic update is available!"));
+            player.sendSystemMessage(Component.literal("┬º7File: ┬ºf" + serverModJarName));
+            player.sendSystemMessage(Component.literal("┬º7Size: ┬ºf" + formatFileSize(serverModJarSize)));
             player.sendSystemMessage(Component.literal(""));
-            player.sendSystemMessage(Component.literal("§aThe update will download automatically."));
-            player.sendSystemMessage(Component.literal("§7Please wait while the update downloads..."));
-            player.sendSystemMessage(Component.literal("§c§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
+            player.sendSystemMessage(Component.literal("┬ºaThe update will download automatically."));
+            player.sendSystemMessage(Component.literal("┬º7Please wait while the update downloads..."));
+            player.sendSystemMessage(Component.literal("┬ºc┬ºlÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü"));
             player.sendSystemMessage(Component.literal(""));
         } else {
             ServerManagementMod.LOGGER.warn("Player is null, cannot send chat messages");
@@ -148,7 +148,7 @@ public class OTAUpdateManager {
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer player = minecraft.player;
             if (player != null) {
-                player.sendSystemMessage(Component.literal("§7[OTA] §aDownload started..."));
+                player.sendSystemMessage(Component.literal("┬º7[OTA] ┬ºaDownload started..."));
             }
         }
         
@@ -175,7 +175,7 @@ public class OTAUpdateManager {
             LocalPlayer player = minecraft.player;
             if (player != null) {
                 player.sendSystemMessage(Component.literal(
-                    String.format("§7[OTA] §eDownloading: %.1f%% (%d/%d)", 
+                    String.format("┬º7[OTA] ┬ºeDownloading: %.1f%% (%d/%d)", 
                         progressPercent, chunkIndex + 1, totalChunks)
                 ));
             }
@@ -202,8 +202,8 @@ public class OTAUpdateManager {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (player != null) {
-            player.sendSystemMessage(Component.literal("§7[OTA] §aDownload complete!"));
-            player.sendSystemMessage(Component.literal("§7[OTA] §eVerifying file integrity..."));
+            player.sendSystemMessage(Component.literal("┬º7[OTA] ┬ºaDownload complete!"));
+            player.sendSystemMessage(Component.literal("┬º7[OTA] ┬ºeVerifying file integrity..."));
         }
         
         try {
@@ -225,8 +225,8 @@ public class OTAUpdateManager {
             ServerManagementMod.LOGGER.info("File verification successful");
             
             if (player != null) {
-                player.sendSystemMessage(Component.literal("§7[OTA] §aVerification successful!"));
-                player.sendSystemMessage(Component.literal("§7[OTA] §eInstalling update..."));
+                player.sendSystemMessage(Component.literal("┬º7[OTA] ┬ºaVerification successful!"));
+                player.sendSystemMessage(Component.literal("┬º7[OTA] ┬ºeInstalling update..."));
             }
             
             // Install the update
@@ -236,7 +236,7 @@ public class OTAUpdateManager {
             ServerManagementMod.LOGGER.error("Failed to verify/install update", e);
             
             if (player != null) {
-                player.sendSystemMessage(Component.literal("§7[OTA] §cUpdate failed: " + e.getMessage()));
+                player.sendSystemMessage(Component.literal("┬º7[OTA] ┬ºcUpdate failed: " + e.getMessage()));
             }
             
             cancelUpdate(e.getMessage());
@@ -252,7 +252,7 @@ public class OTAUpdateManager {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (player != null) {
-            player.sendSystemMessage(Component.literal("§7[OTA] §cUpdate failed: " + message));
+            player.sendSystemMessage(Component.literal("┬º7[OTA] ┬ºcUpdate failed: " + message));
         }
         
         cancelUpdate(message);
@@ -368,17 +368,17 @@ public class OTAUpdateManager {
             LocalPlayer player = minecraft.player;
             if (player != null) {
                 player.sendSystemMessage(Component.literal(""));
-                player.sendSystemMessage(Component.literal("§a§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
-                player.sendSystemMessage(Component.literal("§a§l✓ UPDATE INSTALLED SUCCESSFULLY"));
+                player.sendSystemMessage(Component.literal("┬ºa┬ºlÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü"));
+                player.sendSystemMessage(Component.literal("┬ºa┬ºlÔ£ô UPDATE INSTALLED SUCCESSFULLY"));
                 player.sendSystemMessage(Component.literal(""));
-                player.sendSystemMessage(Component.literal("§7Version: §a" + version));
-                player.sendSystemMessage(Component.literal("§7File: §f" + newModFile.getName()));
+                player.sendSystemMessage(Component.literal("┬º7Version: ┬ºa" + version));
+                player.sendSystemMessage(Component.literal("┬º7File: ┬ºf" + newModFile.getName()));
                 player.sendSystemMessage(Component.literal(""));
-                player.sendSystemMessage(Component.literal("§e⚠ RESTART REQUIRED"));
-                player.sendSystemMessage(Component.literal("§7Please restart your game to apply the update."));
+                player.sendSystemMessage(Component.literal("┬ºeÔÜá RESTART REQUIRED"));
+                player.sendSystemMessage(Component.literal("┬º7Please restart your game to apply the update."));
                 player.sendSystemMessage(Component.literal(""));
-                player.sendSystemMessage(Component.literal("§8Old version backed up as .backup"));
-                player.sendSystemMessage(Component.literal("§a§l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"));
+                player.sendSystemMessage(Component.literal("┬º8Old version backed up as .backup"));
+                player.sendSystemMessage(Component.literal("┬ºa┬ºlÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöüÔöü"));
                 player.sendSystemMessage(Component.literal(""));
             }
             

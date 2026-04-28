@@ -64,6 +64,7 @@ public class ToggleSwitch extends AbstractWidget {
     @Override
     public void onClick(double mouseX, double mouseY) {
         this.toggled = !this.toggled;
+        com.servermanagement.gui.debug.DebugLogger.logToggleChange(this.getMessage().getString(), this.toggled);
         this.onToggle.onToggle(this.toggled);
     }
     

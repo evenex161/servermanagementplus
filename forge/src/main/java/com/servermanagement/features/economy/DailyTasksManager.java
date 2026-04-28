@@ -13,12 +13,12 @@ import java.util.*;
  */
 public class DailyTasksManager {
     private int dataVersion = DataVersion.CURRENT_VERSION;
-    private Map<UUID, PlayerDailyTasks> playerTasks = new HashMap<>();
+    private Map<UUID, PlayerDailyTasks> playerTasks = new java.util.concurrent.ConcurrentHashMap<>();
     private transient Random random; // Not serialized - causes Java module issues with Gson
     private transient DailyTaskTemplateManager templateManager; // Not serialized
 
     public DailyTasksManager() {
-        this.playerTasks = new HashMap<>();
+        this.playerTasks = new java.util.concurrent.ConcurrentHashMap<>();
         this.random = new Random(); // Initialize random
     }
 
@@ -45,7 +45,9 @@ public class DailyTasksManager {
             new DailyTasksManager());
         
         if (manager.playerTasks == null) {
-            manager.playerTasks = new HashMap<>();
+            manager.playerTasks = new java.util.concurrent.ConcurrentHashMap<>();
+        } else if (!(manager.playerTasks instanceof java.util.concurrent.ConcurrentHashMap)) {
+            manager.playerTasks = new java.util.concurrent.ConcurrentHashMap<>(manager.playerTasks);
         }
         
         // Check data version and migrate if needed
@@ -69,7 +71,7 @@ public class DailyTasksManager {
             manager.random = new Random();
         }
         
-        ServerManagementMod.LOGGER.info("Loaded daily tasks for {} players (v{})", 
+        ServerManagementMod.LOGGER.debug("Loaded daily tasks for {} players (v{})", 
             manager.playerTasks.size(), manager.dataVersion);
         return manager;
     }

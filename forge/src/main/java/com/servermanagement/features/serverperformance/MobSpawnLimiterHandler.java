@@ -12,8 +12,8 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class MobSpawnLimiterHandler {
 
-    private static int spawnedThisTick = 0;
-    private static long lastTickTime = 0;
+    private static volatile int spawnedThisTick = 0;
+    private static volatile long lastTickTime = 0;
 
     @SubscribeEvent
     public static void onMobSpawnCheck(MobSpawnEvent.FinalizeSpawn event) {

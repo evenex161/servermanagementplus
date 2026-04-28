@@ -88,7 +88,9 @@ public class ClientMarketData {
         
         // Apply enchantment bonus
         if (singleItem.isEnchanted()) {
-            var enchantments = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantments(singleItem);
+            var enchantments = singleItem.getOrDefault(
+                    net.minecraft.core.component.DataComponents.ENCHANTMENTS,
+                    net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
             int enchantmentCount = enchantments.size();
             staticValue *= (1.0 + (enchantmentCount * 0.2));
         }

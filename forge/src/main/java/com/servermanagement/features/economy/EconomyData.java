@@ -41,10 +41,10 @@ public class EconomyData {
         
         // Check version and migrate if needed
         if (data.dataVersion == 0) {
-            ServerManagementMod.LOGGER.info("Migrating legacy economy data to version {}", DataVersion.CURRENT_VERSION);
+            ServerManagementMod.LOGGER.debug("Migrating legacy economy data to version {}", DataVersion.CURRENT_VERSION);
             data.dataVersion = DataVersion.CURRENT_VERSION;
         } else if (data.dataVersion < DataVersion.CURRENT_VERSION) {
-            ServerManagementMod.LOGGER.info("Migrating economy data from version {} to {}", 
+            ServerManagementMod.LOGGER.debug("Migrating economy data from version {} to {}", 
                 data.dataVersion, DataVersion.CURRENT_VERSION);
             data.migrateData(data.dataVersion, DataVersion.CURRENT_VERSION);
             data.dataVersion = DataVersion.CURRENT_VERSION;
@@ -53,7 +53,7 @@ public class EconomyData {
                 data.dataVersion, DataVersion.CURRENT_VERSION);
         }
         
-        ServerManagementMod.LOGGER.info("Loaded economy data v{} with {} accounts", 
+        ServerManagementMod.LOGGER.debug("Loaded economy data v{} with {} accounts", 
             data.dataVersion, data.accounts.size());
         return data;
     }
@@ -62,7 +62,7 @@ public class EconomyData {
      * Migrate data between versions
      */
     private void migrateData(int fromVersion, int toVersion) {
-        ServerManagementMod.LOGGER.info("Performing economy data migration: {}", 
+        ServerManagementMod.LOGGER.debug("Performing economy data migration: {}", 
             DataVersion.getMigrationPath(fromVersion, toVersion));
         
         // Future version migrations will be added here

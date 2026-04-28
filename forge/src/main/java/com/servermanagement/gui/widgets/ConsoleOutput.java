@@ -121,7 +121,7 @@ public class ConsoleOutput extends AbstractWidget {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (this.isHoveredOrFocused()) {
             // Shift+scroll = horizontal scroll
             boolean shiftHeld = net.minecraft.client.Minecraft.getInstance().getWindow() != null &&
@@ -130,15 +130,15 @@ public class ConsoleOutput extends AbstractWidget {
                     org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
             
             if (shiftHeld) {
-                if (scroll > 0) {
+                if (scrollY > 0) {
                     scrollLeft();
-                } else if (scroll < 0) {
+                } else if (scrollY < 0) {
                     scrollRight();
                 }
             } else {
-                if (scroll > 0) {
+                if (scrollY > 0) {
                     scrollUp();
-                } else if (scroll < 0) {
+                } else if (scrollY < 0) {
                     scrollDown();
                 }
             }

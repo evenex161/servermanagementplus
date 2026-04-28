@@ -1,15 +1,15 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.WorldListMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.RequestWorldListPacket;
 import com.servermanagement.network.packet.SyncWorldListPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -19,22 +19,19 @@ import java.util.List;
 /**
  * Modern World List Screen
  */
-public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
+public class WorldListScreen extends ScalableContainerScreen<WorldListMenu> {
     
     private List<ModernButton> worldButtons = new ArrayList<>();
     private int scrollOffset = 0;
 
     public WorldListScreen(WorldListMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 350, 240);
         this.imageWidth = 350;
         this.imageHeight = 240;
     }
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(350, 240, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         
         // Request world list from server
@@ -45,7 +42,7 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
         
         // Back to Dashboard button
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("← Dashboard"),
+            Component.literal("ÔåÉ Dashboard"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
             .bounds(centerX + 10, centerY + this.imageHeight - 35, 100, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)
@@ -125,8 +122,8 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
         // Title
@@ -139,7 +136,7 @@ public class WorldListScreen extends AbstractContainerScreen<WorldListMenu> {
             this.leftPos + 15, this.topPos + 20, 0xAAAAAA, true);
         
         // Render widgets on top
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 

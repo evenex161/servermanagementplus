@@ -112,7 +112,7 @@ public class MarketPricingEngine {
     public double getBasePrice(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
 
-        // Get static base value — prefer recipe-based pricing over flat ItemValuation
+        // Get static base value ÔÇö prefer recipe-based pricing over flat ItemValuation
         ItemStack singleItem = stack.copyWithCount(1);
         double staticValue;
         RecipeBasedPricing recipePricing = RecipeBasedPricing.getInstance();
@@ -124,7 +124,9 @@ public class MarketPricingEngine {
 
         // Apply enchantment bonus
         if (singleItem.isEnchanted()) {
-            var enchantments = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantments(singleItem);
+            var enchantments = singleItem.getOrDefault(
+                    net.minecraft.core.component.DataComponents.ENCHANTMENTS,
+                    net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
             int enchantmentCount = enchantments.size();
             staticValue *= (1.0 + (enchantmentCount * 0.2));
         }

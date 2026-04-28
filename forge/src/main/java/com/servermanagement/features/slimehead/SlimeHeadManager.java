@@ -5,8 +5,8 @@ import com.mojang.authlib.properties.Property;
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import com.servermanagement.features.Feature;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -15,6 +15,8 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -57,7 +59,7 @@ public class SlimeHeadManager implements Feature {
     
     @Override
     public void initialize(MinecraftServer server) {
-        ServerManagementMod.LOGGER.info("SlimeHead feature initialized");
+        ServerManagementMod.LOGGER.debug("SlimeHead feature initialized");
     }
     
     @Override
@@ -67,7 +69,7 @@ public class SlimeHeadManager implements Feature {
     
     @Override
     public void onDisable() {
-        ServerManagementMod.LOGGER.info("SlimeHead feature disabled");
+        ServerManagementMod.LOGGER.debug("SlimeHead feature disabled");
     }
     
     /**
@@ -80,16 +82,17 @@ public class SlimeHeadManager implements Feature {
         GameProfile profile = new GameProfile(UUID.randomUUID(), "Slime");
         profile.getProperties().put("textures", new Property("textures", SLIME_TEXTURE));
         
-        // Set profile via NBT
-        CompoundTag skullTag = head.getOrCreateTag();
-        skullTag.put("SkullOwner", NbtUtils.writeGameProfile(new CompoundTag(), profile));
+        // Set profile component
+        head.set(DataComponents.PROFILE, new ResolvableProfile(profile));
         
         // Set custom name
-        head.setHoverName(net.minecraft.network.chat.Component.literal("§aSlime Head"));
+        head.setHoverName(net.minecraft.network.chat.Component.literal("┬ºaSlime Head"));
         
         // Set custom data for slime head identification
-        head.getOrCreateTag().putBoolean(SLIME_HEAD_TAG, true);
-        head.getOrCreateTag().putBoolean("Unbreakable", true);
+        CompoundTag customTag = new CompoundTag();
+        customTag.putBoolean(SLIME_HEAD_TAG, true);
+        customTag.putBoolean("Unbreakable", true);
+        head.set(DataComponents.CUSTOM_DATA, CustomData.of(customTag));
         
         return head;
     }
@@ -101,8 +104,8 @@ public class SlimeHeadManager implements Feature {
         if (stack.isEmpty() || stack.getItem() != Items.PLAYER_HEAD) {
             return false;
         }
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.getBoolean(SLIME_HEAD_TAG);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+        return customData != null && customData.copyTag().getBoolean(SLIME_HEAD_TAG);
     }
     
     /**
@@ -118,7 +121,7 @@ public class SlimeHeadManager implements Feature {
             player.drop(slimeHead, false);
         }
         
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aYou received a Slime Head!"));
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬ºaYou received a Slime Head!"));
     }
     
     /**
@@ -142,12 +145,12 @@ public class SlimeHeadManager implements Feature {
             if (blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity) {
                 // Check if it has slime head data
                 var owner = skullEntity.getOwnerProfile();
-                if (owner != null && "Slime".equals(owner.getName())) {
+                if (owner != null && owner.name().isPresent() && owner.name().get().equals("Slime")) {
                     // Check if player has permission to break
                     if (event.getPlayer() instanceof ServerPlayer player) {
                         if (!player.hasPermissions(2)) {
                             event.setCanceled(true);
-                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSlime Heads cannot be broken!"));
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬ºcSlime Heads cannot be broken!"));
                         }
                     }
                 }
@@ -180,7 +183,7 @@ public class SlimeHeadManager implements Feature {
             var blockEntity = level.getBlockEntity(abovePos);
             if (blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity) {
                 var owner = skullEntity.getOwnerProfile();
-                if (owner != null && "Slime".equals(owner.getName())) {
+                if (owner != null && owner.name().isPresent() && owner.name().get().equals("Slime")) {
                     // Cancel default noteblock sound
                     event.setCanceled(true);
                     

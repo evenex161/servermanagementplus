@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MarginHistoryTracker {
     private static MarginHistoryTracker instance;
     
-    // Item ID → list of margin entries (capped per item)
+    // Item ID ÔåÆ list of margin entries (capped per item)
     private final ConcurrentHashMap<String, List<MarginEntry>> marginHistory = new ConcurrentHashMap<>();
     
     // Per-item averages cache (recalculated periodically)
@@ -141,7 +141,7 @@ public class MarginHistoryTracker {
         if (!dirty) return;
         
         try {
-            Path dir = server.getServerDirectory().toPath().resolve("servermanagement");
+            Path dir = server.getServerDirectory().resolve("servermanagement");
             Files.createDirectories(dir);
             Path file = dir.resolve("margin_history.dat");
             
@@ -171,11 +171,11 @@ public class MarginHistoryTracker {
     
     public void load(MinecraftServer server) {
         try {
-            Path file = server.getServerDirectory().toPath()
+            Path file = server.getServerDirectory()
                 .resolve("servermanagement").resolve("margin_history.dat");
             
             if (!Files.exists(file)) {
-                ServerManagementMod.LOGGER.info("No margin history found, starting fresh");
+                ServerManagementMod.LOGGER.debug("No margin history found, starting fresh");
                 return;
             }
             
@@ -204,7 +204,7 @@ public class MarginHistoryTracker {
                 recalculateAverage(itemId);
             }
             
-            ServerManagementMod.LOGGER.info("Loaded margin history: {} items, global avg margin: {}%", 
+            ServerManagementMod.LOGGER.debug("Loaded margin history: {} items, global avg margin: {}%", 
                 marginHistory.size(), String.format("%.1f", getGlobalAverageMargin()));
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to load margin history", e);

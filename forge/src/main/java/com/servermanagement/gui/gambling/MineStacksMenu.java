@@ -47,8 +47,11 @@ public class MineStacksMenu extends AbstractContainerMenu {
         this.data = data;
         this.addDataSlots(data);
         
-        // Calculate scaled panel dimensions for slot positioning
-        int panelWidth = getScaledPanelWidth(playerInventory);
+        // All slot positions are in design space (panel 400x220).
+        // The matching ScalableContainerScreen renders everything through a uniform
+        // pose-matrix scale, so slots are visually scaled with the panel even when
+        // the workspace is smaller than the design size.
+        int panelWidth = 400;
         
         // Initialize betting container (1 slot for item bets)
         this.bettingContainer = new SimpleContainer(1);
@@ -61,7 +64,7 @@ public class MineStacksMenu extends AbstractContainerMenu {
         bettingSlot.setEnabled(false);
         this.addSlot(bettingSlot);
         
-        // Add player inventory centered in panel
+        // Add player inventory centered in panel (design-space Y)
         int inventoryX = (panelWidth - 162) / 2; // Center 9-column inventory (9*18=162px)
         int inventoryY = 140;
         
@@ -81,27 +84,6 @@ public class MineStacksMenu extends AbstractContainerMenu {
             slot.setEnabled(false); // Start disabled
             this.addSlot(slot);
             inventorySlots.add(slot);
-        }
-    }
-    
-    /**
-     * Get the scaled panel width, using ScreenScaler on client or defaulting to 400 on server
-     */
-    private static int getScaledPanelWidth(Inventory playerInventory) {
-        if (playerInventory.player.level().isClientSide()) {
-            return getClientPanelWidth();
-        }
-        return 400;
-    }
-    
-    private static int getClientPanelWidth() {
-        try {
-            var mc = net.minecraft.client.Minecraft.getInstance();
-            int guiW = mc.getWindow().getGuiScaledWidth();
-            int guiH = mc.getWindow().getGuiScaledHeight();
-            return com.servermanagement.gui.ScreenScaler.scale(400, 220, guiW, guiH)[0];
-        } catch (Throwable t) {
-            return 400;
         }
     }
     

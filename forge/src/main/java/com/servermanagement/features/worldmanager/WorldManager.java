@@ -151,9 +151,9 @@ public class WorldManager {
 
         String dimName = getDimensionName(dimensionId);
         String portalDesc = getPortalDescription(dimensionId, portalType);
-        String action = enabled ? "§aenabled" : "§cdisabled";
+        String action = enabled ? "┬ºaenabled" : "┬ºcdisabled";
 
-        Component message = Component.literal("§6[Server] §e" + portalDesc + " in " + dimName + " have been " + action + "§e!");
+        Component message = Component.literal("┬º6[Server] ┬ºe" + portalDesc + " in " + dimName + " have been " + action + "┬ºe!");
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             player.sendSystemMessage(message);
@@ -170,9 +170,9 @@ public class WorldManager {
         getInstance().save();
     }
 
-    public static void setLobbySpawn(BlockPos pos, String dimensionId) {
+    public static void setLobbySpawn(double x, double y, double z, String dimensionId, float yaw, float pitch) {
         getInstance().data.setLobbySpawn(new WorldManagerData.LobbySpawn(
-            pos.getX(), pos.getY(), pos.getZ(), dimensionId, 0, 0
+            x, y, z, dimensionId, yaw, pitch
         ));
         getInstance().save();
     }
@@ -189,7 +189,7 @@ public class WorldManager {
                 if (remaining > 0) {
                     int secondsLeft = (int) Math.ceil(remaining / 1000.0);
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cTeleport on cooldown! Wait " + secondsLeft + " second" + (secondsLeft != 1 ? "s" : "") + "."
+                        "┬ºcTeleport on cooldown! Wait " + secondsLeft + " second" + (secondsLeft != 1 ? "s" : "") + "."
                     ));
                     return;
                 }

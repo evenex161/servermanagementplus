@@ -1,11 +1,11 @@
 package com.servermanagement.gui.economy;
 
-import com.servermanagement.gui.ScreenScaler;
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -17,7 +17,7 @@ import java.util.Set;
  * Professional Achievements GUI
  * Displays earned achievements and total rewards
  */
-public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu> {
+public class AchievementsScreen extends ScalableContainerScreen<AchievementsMenu> {
     
     private static final int ROW_HEIGHT = 14;
     private int achievementsPerPage = 8;
@@ -29,7 +29,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
     private ModernButton nextPageButton;
     
     public AchievementsScreen(AchievementsMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 350, 260);
         this.imageHeight = 260;
         this.imageWidth = 350;
         Set<String> earned = menu.getEarnedAchievements();
@@ -38,16 +38,18 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(350, 260, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
-        
         // Dynamically calculate how many achievements fit per page
         // List area: from listTop (75 from top) + header (18px) to bottom buttons (imageHeight - 30)
         int availableListHeight = this.imageHeight - 75 - 18 - 35;
         this.achievementsPerPage = Math.max(3, availableListHeight / ROW_HEIGHT);
         
         super.init();
+        // Pull fresh earned-achievements set from the cache on every init() so a
+        // late SyncAchievementsPacket triggering refreshOpenScreen() reflects the
+        // new state instead of the snapshot latched in the menu/screen constructors.
+        this.menu.reloadFromClientCache();
+        java.util.Set<String> earnedRefreshed = this.menu.getEarnedAchievements();
+        this.achievementsList = earnedRefreshed != null ? new java.util.ArrayList<>(earnedRefreshed) : new java.util.ArrayList<>();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -56,7 +58,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         // Back to Bank button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 10, 100, 20,
-            Component.literal("← Bank"),
+            Component.literal("ÔåÉ Bank"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.BANK)),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -72,7 +74,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         // Navigation buttons
         prevPageButton = new ModernButton(
             centerX + 20, centerY + this.imageHeight - 30, 80, 20,
-            Component.literal("← Previous"),
+            Component.literal("ÔåÉ Previous"),
             button -> {
                 if (currentPage > 0) {
                     currentPage--;
@@ -84,7 +86,7 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         
         nextPageButton = new ModernButton(
             centerX + this.imageWidth - 100, centerY + this.imageHeight - 30, 80, 20,
-            Component.literal("Next →"),
+            Component.literal("Next ÔåÆ"),
             button -> {
                 if (currentPage < maxPages - 1) {
                     currentPage++;
@@ -133,8 +135,8 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -153,13 +155,13 @@ public class AchievementsScreen extends AbstractContainerScreen<AchievementsMenu
         // Achievements list
         renderAchievements(guiGraphics, centerX, centerY);
         
-        // Page indicator
+        // Page indicator (centered between prev/next buttons)
         if (maxPages > 1) {
             String pageText = "Page " + (currentPage + 1) + " / " + maxPages;
             int pageWidth = this.font.width(pageText);
             guiGraphics.drawString(this.font, Component.literal(pageText),
                 centerX + (this.imageWidth - pageWidth) / 2, 
-                centerY + this.imageHeight - 35, 
+                centerY + this.imageHeight - 24, 
                 0x808080, false);
         }
     }

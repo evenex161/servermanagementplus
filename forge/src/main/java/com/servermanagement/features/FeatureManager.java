@@ -14,7 +14,7 @@ public class FeatureManager {
     public static void registerFeature(Feature feature) {
         features.put(feature.getId(), feature);
         featureStates.put(feature.getId(), true); // Default enabled
-        ServerManagementMod.LOGGER.info("Registered feature: {}", feature.getId());
+        ServerManagementMod.LOGGER.debug("Registered feature: {}", feature.getId());
     }
 
     public static void initializeFeatures(MinecraftServer srv) {
@@ -35,11 +35,19 @@ public class FeatureManager {
                     feature.onDisable();
                 }
                 
-                ServerManagementMod.LOGGER.info("Initialized feature: {} ({})", feature.getId(), enabled ? "enabled" : "disabled");
+                ServerManagementMod.LOGGER.debug("Initialized feature: {} ({})", feature.getId(), enabled ? "enabled" : "disabled");
             } catch (Exception e) {
                 ServerManagementMod.LOGGER.error("Failed to initialize feature: {}", feature.getId(), e);
             }
         });
+        
+        long enabledCount = features.keySet().stream()
+            .filter(id -> featureStates.getOrDefault(id, true))
+            .count();
+        long disabledCount = features.size() - enabledCount;
+        
+        ServerManagementMod.LOGGER.info("Initialized {} features ({} enabled, {} disabled)", 
+            features.size(), enabledCount, disabledCount);
     }
     
     private static void loadFeatureStatesFromConfig() {
@@ -56,6 +64,7 @@ public class FeatureManager {
     }
 
     public static void toggleFeature(String featureId, boolean enabled) {
+        com.servermanagement.gui.debug.DebugLogger.logFeatureToggle(featureId, enabled);
         featureStates.put(featureId, enabled);
         
         if (features.containsKey(featureId)) {

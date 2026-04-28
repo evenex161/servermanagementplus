@@ -17,11 +17,11 @@ public class NotificationManager {
      * Send admin ServerManagement dashboard notification
      */
     public static void sendAdminDashboardNotification(ServerPlayer player) {
-        MutableComponent header = Component.literal("═══════════════════════════════════════")
+        MutableComponent header = Component.literal("ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ")
                 .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
         
         MutableComponent title = Component.literal("\n")
-                .append(Component.literal("⚙ ServerManagement Dashboard")
+                .append(Component.literal("ÔÜÖ ServerManagement Dashboard")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
         
         MutableComponent message = Component.literal("\n")
@@ -36,7 +36,7 @@ public class NotificationManager {
                                                 .withStyle(ChatFormatting.YELLOW)))));
         
         MutableComponent footer = Component.literal("\n")
-                .append(Component.literal("═══════════════════════════════════════")
+                .append(Component.literal("ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ")
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         
         player.sendSystemMessage(header);
@@ -50,7 +50,7 @@ public class NotificationManager {
      */
     public static void sendUnifiedDailyTasksNotification(ServerPlayer player, boolean hasFreeReward, 
                                                          int unfinishedCount, int unclaimedCount) {
-        MutableComponent message = Component.literal("💰 ")
+        MutableComponent message = Component.literal("­ƒÆ░ ")
                 .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
                 .append(Component.literal("Daily Tasks & Rewards: ")
                         .withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
@@ -59,17 +59,17 @@ public class NotificationManager {
         java.util.List<String> available = new java.util.ArrayList<>();
         
         if (hasFreeReward) {
-            available.add("§aFREE REWARD");
+            available.add("┬ºaFREE REWARD");
         }
         if (unclaimedCount > 0) {
-            available.add("§e" + unclaimedCount + " Task" + (unclaimedCount > 1 ? "s" : "") + " to Claim");
+            available.add("┬ºe" + unclaimedCount + " Task" + (unclaimedCount > 1 ? "s" : "") + " to Claim");
         }
         if (unfinishedCount > 0) {
-            available.add("§6" + unfinishedCount + " Task" + (unfinishedCount > 1 ? "s" : "") + " in Progress");
+            available.add("┬º6" + unfinishedCount + " Task" + (unfinishedCount > 1 ? "s" : "") + " in Progress");
         }
 
         if (!available.isEmpty()) {
-            message.append(Component.literal(String.join(" §8| ", available))
+            message.append(Component.literal(String.join(" ┬º8| ", available))
                     .withStyle(ChatFormatting.WHITE))
                     .append(Component.literal(" ")
                             .withStyle(ChatFormatting.WHITE));
@@ -91,7 +91,7 @@ public class NotificationManager {
      */
     @Deprecated
     public static void sendFreeRewardNotification(ServerPlayer player) {
-        MutableComponent message = Component.literal("💰 ")
+        MutableComponent message = Component.literal("­ƒÆ░ ")
                 .withStyle(ChatFormatting.GOLD)
                 .append(Component.literal("You have a ")
                         .withStyle(ChatFormatting.YELLOW))
@@ -118,7 +118,7 @@ public class NotificationManager {
             return;
         }
 
-        MutableComponent message = Component.literal("📋 ")
+        MutableComponent message = Component.literal("­ƒôï ")
                 .withStyle(ChatFormatting.AQUA);
 
         if (unclaimedCount > 0) {
@@ -155,7 +155,7 @@ public class NotificationManager {
         double change = newBalance - oldBalance;
         boolean isPositive = change > 0;
 
-        MutableComponent message = Component.literal("💳 ")
+        MutableComponent message = Component.literal("­ƒÆ│ ")
                 .withStyle(ChatFormatting.GOLD);
 
         if (isPositive) {
@@ -183,7 +183,7 @@ public class NotificationManager {
      * Send deposit notification
      */
     public static void sendDepositNotification(ServerPlayer player, double amount) {
-        MutableComponent message = Component.literal("💰 ")
+        MutableComponent message = Component.literal("­ƒÆ░ ")
                 .withStyle(ChatFormatting.GOLD)
                 .append(Component.literal("Deposited: $" + String.format("%.2f", amount))
                         .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD))
@@ -204,7 +204,7 @@ public class NotificationManager {
      * Send payment notification
      */
     public static void sendPaymentNotification(ServerPlayer player, String recipientName, double amount) {
-        MutableComponent message = Component.literal("💸 ")
+        MutableComponent message = Component.literal("­ƒÆ© ")
                 .withStyle(ChatFormatting.GOLD)
                 .append(Component.literal("Paid $" + String.format("%.2f", amount))
                         .withStyle(ChatFormatting.YELLOW))
@@ -227,7 +227,7 @@ public class NotificationManager {
      * Send received payment notification
      */
     public static void sendReceivedPaymentNotification(ServerPlayer player, String senderName, double amount) {
-        MutableComponent message = Component.literal("💰 ")
+        MutableComponent message = Component.literal("­ƒÆ░ ")
                 .withStyle(ChatFormatting.GOLD)
                 .append(Component.literal("Received $" + String.format("%.2f", amount))
                         .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD))
@@ -250,7 +250,7 @@ public class NotificationManager {
      * Send task completed notification
      */
     public static void sendTaskCompletedNotification(ServerPlayer player, String taskDescription) {
-        MutableComponent message = Component.literal("✓ ")
+        MutableComponent message = Component.literal("Ô£ô ")
                 .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD)
                 .append(Component.literal("Task Complete: ")
                         .withStyle(ChatFormatting.WHITE))
@@ -273,7 +273,7 @@ public class NotificationManager {
      * Send reward claimed notification
      */
     public static void sendRewardClaimedNotification(ServerPlayer player, double amount) {
-        MutableComponent message = Component.literal("🎁 ")
+        MutableComponent message = Component.literal("­ƒÄü ")
                 .withStyle(ChatFormatting.GOLD)
                 .append(Component.literal("Reward Claimed: $" + String.format("%.2f", amount))
                         .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD))

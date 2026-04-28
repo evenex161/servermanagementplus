@@ -1,7 +1,8 @@
 package com.servermanagement.gui.economy;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.economy.TaskType;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.DeleteTemplatePacket;
@@ -13,7 +14,6 @@ import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.client.ClientPacketHandler;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -24,10 +24,10 @@ import java.util.List;
 /**
  * Economy Management Screen for admins to configure templates and rewards
  */
-public class EconomyManagementScreen extends AbstractContainerScreen<EconomyManagementMenu> {
+public class EconomyManagementScreen extends ScalableContainerScreen<EconomyManagementMenu> {
     
-    private static final int TEMPLATE_HEIGHT = 90;
-    private static final int TEMPLATE_PADDING = 8;
+    private static final int TEMPLATE_HEIGHT = 70;
+    private static final int TEMPLATE_PADDING = 5;
     
     private enum Tab {
         TASK_TEMPLATES,
@@ -60,16 +60,13 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     private ItemStack freeRewardItemStack = ItemStack.EMPTY; // Item reward for free reward
     
     public EconomyManagementScreen(EconomyManagementMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 600, 450);
         this.imageHeight = 450;
         this.imageWidth = 600;
     }
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(600, 450, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
@@ -87,7 +84,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         // Back to Dashboard button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 10, 120, 20,
-            Component.literal("← Dashboard"),
+            Component.literal("ÔåÉ Dashboard"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD)),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -156,17 +153,17 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             // Template list buttons (Edit/Delete for each template)
             for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                 int templateIndex = i + scrollOffset;
-                int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                int yPos = centerY + 112 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                 
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 150, yPos + 28, 60, 20,
+                    centerX + this.imageWidth - 145, yPos + 22, 55, 20,
                     Component.literal("Edit"),
                     button -> editTemplate(templateIndex),
                     ModernButton.ButtonStyle.PRIMARY
                 ));
                 
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 80, yPos + 28, 70, 20,
+                    centerX + this.imageWidth - 85, yPos + 22, 60, 20,
                     Component.literal("Delete"),
                     button -> deleteTemplate(templateIndex),
                     ModernButton.ButtonStyle.DANGER
@@ -175,7 +172,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
                 // Enable/Disable toggle
                 SyncEconomyTemplatesPacket.TemplateData template = templates.get(templateIndex);
                 this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 150, yPos + 52, 140, 20,
+                    centerX + this.imageWidth - 145, yPos + 46, 120, 20,
                     Component.literal(template.enabled() ? "Enabled" : "Disabled"),
                     button -> toggleTemplate(templateIndex),
                     template.enabled() ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
@@ -187,7 +184,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             if (scrollOffset > 0) {
                 this.addRenderableWidget(new ModernButton(
                     centerX + this.imageWidth / 2 - 85, scrollY, 80, 22,
-                    Component.literal("▲ Previous"),
+                    Component.literal("Ôû▓ Previous"),
                     button -> { scrollOffset--; this.rebuildWidgets(); },
                     ModernButton.ButtonStyle.SECONDARY
                 ));
@@ -196,7 +193,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             if (scrollOffset + 3 < templates.size()) {
                 this.addRenderableWidget(new ModernButton(
                     centerX + this.imageWidth / 2 + 5, scrollY, 80, 22,
-                    Component.literal("▼ Next"),
+                    Component.literal("Ôû╝ Next"),
                     button -> { scrollOffset++; this.rebuildWidgets(); },
                     ModernButton.ButtonStyle.SECONDARY
                 ));
@@ -214,14 +211,14 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         // Task Type selector
         this.addRenderableWidget(new ModernButton(
             formX, formY, 100, 20,
-            Component.literal("◄ Type"),
+            Component.literal("Ôùä Type"),
             button -> cycleTaskType(-1),
             ModernButton.ButtonStyle.SECONDARY
         ));
         
         this.addRenderableWidget(new ModernButton(
             formX + 110, formY, 100, 20,
-            Component.literal("Type ►"),
+            Component.literal("Type Ôû║"),
             button -> cycleTaskType(1),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -301,7 +298,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
         // Refresh button
         this.addRenderableWidget(new ModernButton(
             centerX + this.imageWidth - 140, centerY + 88, 120, 20,
-            Component.literal("↻ Refresh"),
+            Component.literal("Ôå╗ Refresh"),
             button -> {
                 ModNetworking.sendToServer(new com.servermanagement.network.packet.RequestEconomyStatsPacket());
             },
@@ -310,6 +307,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     }
     
     private void switchTab(Tab tab) {
+        com.servermanagement.gui.debug.DebugLogger.logTabChange("EconomyManagementScreen", currentTab.name(), tab.name());
         this.currentTab = tab;
         this.scrollOffset = 0;
         this.editMode = false;
@@ -428,7 +426,7 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             // Render template boxes
             for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                 int templateIndex = i + scrollOffset;
-                int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                int yPos = centerY + 112 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                 
                 // Template background
                 guiGraphics.fill(centerX + 20, yPos, centerX + this.imageWidth - 20, 
@@ -442,8 +440,8 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -475,37 +473,37 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
                 for (int i = 0; i < Math.min(3, templates.size() - scrollOffset); i++) {
                     int templateIndex = i + scrollOffset;
                     SyncEconomyTemplatesPacket.TemplateData template = templates.get(templateIndex);
-                    int yPos = centerY + 118 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
+                    int yPos = centerY + 112 + (i * (TEMPLATE_HEIGHT + TEMPLATE_PADDING));
                     
                     // Template number
                     guiGraphics.drawString(this.font, Component.literal("#" + (templateIndex + 1)),
-                        centerX + 30, yPos + 8, 0xFFAA00, true);
+                        centerX + 30, yPos + 5, 0xFFAA00, true);
                     
                     // Task type and description
                     guiGraphics.drawString(this.font, Component.literal(template.getTaskType().getDisplayName() + ": " + template.description()),
-                        centerX + 60, yPos + 8, 0xFFFFFF, true);
+                        centerX + 60, yPos + 5, 0xFFFFFF, true);
                     
                     // Goal and reward
                     guiGraphics.drawString(this.font, Component.literal("Goal: " + template.goal()),
-                        centerX + 30, yPos + 24, 0xCCCCCC, true);
+                        centerX + 30, yPos + 18, 0xCCCCCC, true);
                     
                     guiGraphics.drawString(this.font, Component.literal("Reward: $" + template.rewardAmount()),
-                        centerX + 30, yPos + 38, 0x55FF55, true);
+                        centerX + 30, yPos + 31, 0x55FF55, true);
                     
                     // Show reward item if set
                     if (template.rewardItem() != null && !template.rewardItem().isEmpty()) {
                         int itemX = centerX + 160;
-                        guiGraphics.renderItem(template.rewardItem(), itemX, yPos + 34);
+                        guiGraphics.renderItem(template.rewardItem(), itemX, yPos + 27);
                         guiGraphics.drawString(this.font, 
                             Component.literal("+ " + template.rewardItem().getHoverName().getString()),
-                            itemX + 20, yPos + 38, 0x55FFAA, true);
+                            itemX + 20, yPos + 31, 0x55FFAA, true);
                     }
                     
                     // Status
                     String status = template.enabled() ? "Active" : "Disabled";
                     int statusColor = template.enabled() ? 0x55FF55 : 0x888888;
                     guiGraphics.drawString(this.font, Component.literal(status),
-                        centerX + 30, yPos + 66, statusColor, true);
+                        centerX + 30, yPos + 52, statusColor, true);
                 }
             }
         } else {
@@ -717,6 +715,13 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Convert raw screen-pixel coords to design-space because the screen
+        // is rendered through ScalableContainerScreen's pose scale. Without
+        // this the custom slot hit-tests below silently miss at non-1.0 GUI
+        // scales (Auto / Scale 4 / Scale 5).
+        double designMouseX = inverseMouseX(mouseX);
+        double designMouseY = inverseMouseY(mouseY);
+
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -726,8 +731,8 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             int itemSlotX = centerX + 35;
             int itemSlotY = formY + 150;
             
-            if (mouseX >= itemSlotX && mouseX < itemSlotX + 18 && 
-                mouseY >= itemSlotY && mouseY < itemSlotY + 18) {
+            if (designMouseX >= itemSlotX && designMouseX < itemSlotX + 18 && 
+                designMouseY >= itemSlotY && designMouseY < itemSlotY + 18) {
                 handleItemSlotClick(true);
                 return true;
             }
@@ -739,8 +744,8 @@ public class EconomyManagementScreen extends AbstractContainerScreen<EconomyMana
             int itemSlotX = centerX + 55;
             int itemSlotY = formY + 80;
             
-            if (mouseX >= itemSlotX && mouseX < itemSlotX + 18 && 
-                mouseY >= itemSlotY && mouseY < itemSlotY + 18) {
+            if (designMouseX >= itemSlotX && designMouseX < itemSlotX + 18 && 
+                designMouseY >= itemSlotY && designMouseY < itemSlotY + 18) {
                 handleItemSlotClick(false);
                 return true;
             }

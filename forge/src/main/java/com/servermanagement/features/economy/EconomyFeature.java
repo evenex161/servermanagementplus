@@ -27,10 +27,10 @@ public class EconomyFeature implements Feature {
     @Override
     public String getDetailedDescription() {
         return "Economy Feature:\n\n" +
-               "• Bank accounts for every player\n" +
-               "• View balance and transaction history\n" +
-               "• Transfer money between players\n" +
-               "• Command: /bank to access your account\n\n" +
+               "ÔÇó Bank accounts for every player\n" +
+               "ÔÇó View balance and transaction history\n" +
+               "ÔÇó Transfer money between players\n" +
+               "ÔÇó Command: /bank to access your account\n\n" +
                "This feature provides a comprehensive money system where players can:\n" +
                "- Check their balance\n" +
                "- View transaction history (last 50 transactions)\n" +

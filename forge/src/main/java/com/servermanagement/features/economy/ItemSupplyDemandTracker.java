@@ -32,16 +32,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * The supply factor influences MarketPricingEngine:
  *   supplyFactor = 1.0 / (1.0 + log10(max(supplyCount / BASELINE, 1)))
- *   Higher supply → lower prices, lower supply → higher prices.
+ *   Higher supply ÔåÆ lower prices, lower supply ÔåÆ higher prices.
  */
 @Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class ItemSupplyDemandTracker {
     private static ItemSupplyDemandTracker instance;
     
-    // Item ID → cumulative supply count
+    // Item ID ÔåÆ cumulative supply count
     private final ConcurrentHashMap<String, Long> supplyMap = new ConcurrentHashMap<>();
     
-    // Baseline supply count — items below this have no price reduction
+    // Baseline supply count ÔÇö items below this have no price reduction
     private static final long SUPPLY_BASELINE = 500;
     
     // Decay factor: supply counts decay over time to prevent runaway deflation
@@ -85,7 +85,7 @@ public class ItemSupplyDemandTracker {
     }
     
     /**
-     * Get the supply factor for an item. Values < 1.0 reduce price (high supply),
+     * Get the supply factor for an item. Values &lt;lt; 1.0 reduce price (high supply),
      * values close to 1.0 mean normal supply.
      * 
      * Formula: 1.0 / (1.0 + log10(max(supplyCount / BASELINE, 1)))
@@ -96,13 +96,13 @@ public class ItemSupplyDemandTracker {
         long supply = supplyMap.getOrDefault(itemId, 0L);
         
         if (supply <= SUPPLY_BASELINE) {
-            // Below baseline — scarcity bonus (slight price increase)
+            // Below baseline ÔÇö scarcity bonus (slight price increase)
             if (supply <= 0) return 1.2; // Very scarce
             double scarcityRatio = (double) supply / SUPPLY_BASELINE;
             return 1.0 + (1.0 - scarcityRatio) * 0.2; // Up to 20% bonus
         }
         
-        // Above baseline — supply pressure reduces price
+        // Above baseline ÔÇö supply pressure reduces price
         double supplyRatio = (double) supply / SUPPLY_BASELINE;
         return 1.0 / (1.0 + Math.log10(supplyRatio));
     }
@@ -198,7 +198,7 @@ public class ItemSupplyDemandTracker {
         if (!dirty) return;
         
         try {
-            Path dir = server.getServerDirectory().toPath().resolve("servermanagement");
+            Path dir = server.getServerDirectory().resolve("servermanagement");
             Files.createDirectories(dir);
             Path file = dir.resolve("supply_demand.dat");
             
@@ -221,11 +221,11 @@ public class ItemSupplyDemandTracker {
     
     public void load(MinecraftServer server) {
         try {
-            Path file = server.getServerDirectory().toPath()
+            Path file = server.getServerDirectory()
                 .resolve("servermanagement").resolve("supply_demand.dat");
             
             if (!Files.exists(file)) {
-                ServerManagementMod.LOGGER.info("No supply/demand data found, starting fresh");
+                ServerManagementMod.LOGGER.debug("No supply/demand data found, starting fresh");
                 return;
             }
             
@@ -242,14 +242,14 @@ public class ItemSupplyDemandTracker {
                 }
             }
             
-            ServerManagementMod.LOGGER.info("Loaded supply/demand data: {} items tracked", supplyMap.size());
+            ServerManagementMod.LOGGER.debug("Loaded supply/demand data: {} items tracked", supplyMap.size());
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to load supply/demand data", e);
         }
     }
     
     /**
-     * Periodic save check — called from server tick handler.
+     * Periodic save check ÔÇö called from server tick handler.
      */
     public void tickSave(MinecraftServer server) {
         if (dirty && System.currentTimeMillis() - lastSave > SAVE_INTERVAL_MS) {

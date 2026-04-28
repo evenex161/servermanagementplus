@@ -38,7 +38,7 @@ public class GamblingManager {
     
     private GamblingManager() {}
     
-    public static GamblingManager getInstance() {
+    public static synchronized GamblingManager getInstance() {
         if (instance == null) {
             instance = new GamblingManager();
         }
@@ -207,7 +207,7 @@ public class GamblingManager {
             @SuppressWarnings("unchecked")
             Map<UUID, GamblingStats> loaded = (Map<UUID, GamblingStats>) ois.readObject();
             playerStats = new ConcurrentHashMap<>(loaded);
-            ServerManagementMod.LOGGER.info("Loaded gambling stats for {} players", playerStats.size());
+            ServerManagementMod.LOGGER.debug("Loaded gambling stats for {} players", playerStats.size());
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to load gambling stats", e);
         }
@@ -237,6 +237,17 @@ public class GamblingManager {
      */
     public void forceSave() {
         doSaveStats();
+    }
+    
+    /**
+     * Shut down the save scheduler to prevent executor thread leak on server restart.
+     * Should be called during server stopping.
+     */
+    public void shutdown() {
+        if (saveScheduler != null) {
+            saveScheduler.shutdown();
+        }
+        doSaveStats(); // Final save
     }
     
     /**

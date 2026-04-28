@@ -21,7 +21,7 @@ public class PlayerPreferences {
     private static int dataVersion = DataVersion.CURRENT_VERSION;
 
     public static void initialize(MinecraftServer server) {
-        File configDir = new File(server.getServerDirectory(), "config/servermanagement");
+        File configDir = server.getServerDirectory().resolve("config/servermanagement").toFile();
         configDir.mkdirs();
         configFile = new File(configDir, "player_preferences.json");
         load();
@@ -47,10 +47,10 @@ public class PlayerPreferences {
                     
                     // Check data version
                     if (data.dataVersion == 0) {
-                        ServerManagementMod.LOGGER.info("Migrating legacy PlayerPreferences data to version {}", 
+                        ServerManagementMod.LOGGER.debug("Migrating legacy PlayerPreferences data to version {}", 
                             DataVersion.CURRENT_VERSION);
                     } else if (data.dataVersion < DataVersion.CURRENT_VERSION) {
-                        ServerManagementMod.LOGGER.info("Migrating PlayerPreferences data from version {} to {}", 
+                        ServerManagementMod.LOGGER.debug("Migrating PlayerPreferences data from version {} to {}", 
                             data.dataVersion, DataVersion.CURRENT_VERSION);
                     } else if (data.dataVersion > DataVersion.CURRENT_VERSION) {
                         ServerManagementMod.LOGGER.error("PlayerPreferences data version {} is newer than supported version {}!", 

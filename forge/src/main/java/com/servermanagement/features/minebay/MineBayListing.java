@@ -70,7 +70,7 @@ public class MineBayListing {
         tag.putString("ListingId", listingId);
         tag.putUUID("SellerId", sellerId);
         tag.putString("SellerName", sellerName);
-        tag.put("ItemForSale", itemForSale.save(new CompoundTag()));
+        tag.put("ItemForSale", itemForSale.saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
         tag.putDouble("MoneyPrice", moneyPrice);
         tag.putDouble("BaseMarketPrice", baseMarketPrice);
         tag.putDouble("MarginPercent", marginPercent);
@@ -111,7 +111,7 @@ public class MineBayListing {
         listing.listingId = tag.getString("ListingId");
         listing.sellerId = tag.getUUID("SellerId");
         listing.sellerName = tag.getString("SellerName");
-        listing.itemForSale = ItemStack.of(tag.getCompound("ItemForSale"));
+        listing.itemForSale = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("ItemForSale"));
         listing.moneyPrice = tag.getDouble("MoneyPrice");
         listing.baseMarketPrice = tag.contains("BaseMarketPrice") ? tag.getDouble("BaseMarketPrice") : 0.0;
         listing.marginPercent = tag.contains("MarginPercent") ? tag.getDouble("MarginPercent") : 0.0;

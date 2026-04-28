@@ -1,14 +1,14 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.gui.MotdEditorMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.SaveMotdPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
@@ -20,7 +20,7 @@ import net.minecraft.world.entity.player.Inventory;
  * Supports Minecraft color codes (&amp;0-&amp;f), formatting codes (&amp;l, &amp;o, &amp;n, &amp;m, &amp;k),
  * and provides a live rendered preview of the final server list MOTD.
  */
-public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
+public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
 
     private static final int SCREEN_WIDTH = 420;
     private static final int SCREEN_HEIGHT = 330;
@@ -91,17 +91,21 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
     private final ModernButton[] formatButtons = new ModernButton[5]; // l, o, n, m, k (not reset)
 
     public MotdEditorScreen(MotdEditorMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, SCREEN_WIDTH, SCREEN_HEIGHT);
         this.imageWidth = SCREEN_WIDTH;
         this.imageHeight = SCREEN_HEIGHT;
     }
 
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(SCREEN_WIDTH, SCREEN_HEIGHT, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
+        // Pull fresh MOTD text from the cache on every init() ÔÇö but only before
+        // the user has started editing (originalMotdText == null), so a late
+        // SyncMotdPacket triggering refreshOpenScreen() doesn't clobber pending
+        // typing.
+        if (this.originalMotdText == null) {
+            this.menu.reloadFromClientCache();
+        }
 
         int cx = (this.width - this.imageWidth) / 2;
         int cy = (this.height - this.imageHeight) / 2;
@@ -496,15 +500,15 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
 
         int cx = this.leftPos;
         int cy = this.topPos;
 
         // Render widgets first (super.render calls renderBg internally)
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
 
         // Draw all labels AFTER super.render() so they don't get covered
         // by the second renderBg call inside AbstractContainerScreen.render()
@@ -772,7 +776,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
         }
 
         if (active[codeIndex]) {
-            // Format is active — deactivate it
+            // Format is active ÔÇö deactivate it
             EditBox target = (activeLineIndex == 2) ? line2Box : line1Box;
 
             String text;
@@ -800,7 +804,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
             target.setFocused(true);
             updateMenuMotd();
         } else {
-            // Format is not active — just insert it
+            // Format is not active ÔÇö just insert it
             insertCode('&', code);
         }
     }
@@ -824,7 +828,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
                 && isFormattingCode(sb.charAt(pos + 1))) {
             if (Character.toLowerCase(sb.charAt(pos + 1)) == Character.toLowerCase(code)) {
                 sb.delete(pos, pos + 2);
-                // don't advance — text shifted left
+                // don't advance ÔÇö text shifted left
             } else {
                 pos += 2;
             }
@@ -1015,6 +1019,7 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
             line2Box.setValue(line2Formatted);
             advancedMode = true;
         }
+        com.servermanagement.gui.debug.DebugLogger.logStateChange("MotdEditorScreen", "advancedMode", !advancedMode, advancedMode);
         suppressResponder = false;
         modeToggleButton.setMessage(Component.literal(advancedMode ? "Advanced" : "Simple"));
         updateMenuMotd();
@@ -1066,6 +1071,13 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (showingConfirmDialog) {
+            // Convert raw screen-pixel coords to design-space because the
+            // screen is rendered through ScalableContainerScreen's pose
+            // scale. Without this the discard-confirm dialog buttons stop
+            // responding at non-1.0 GUI scales.
+            double designMouseX = inverseMouseX(mouseX);
+            double designMouseY = inverseMouseY(mouseY);
+
             int dialogW = 240;
             int dialogH = 100;
             int dx = (this.width - dialogW) / 2;
@@ -1078,14 +1090,14 @@ public class MotdEditorScreen extends AbstractContainerScreen<MotdEditorMenu> {
             int discardX = dx + dialogW / 2 + 8;
 
             // Cancel button click
-            if (mouseX >= cancelX && mouseX < cancelX + btnW && mouseY >= btnY && mouseY < btnY + btnH) {
+            if (designMouseX >= cancelX && designMouseX < cancelX + btnW && designMouseY >= btnY && designMouseY < btnY + btnH) {
                 showingConfirmDialog = false;
                 pendingExitAction = null;
                 return true;
             }
 
             // Discard & Exit button click
-            if (mouseX >= discardX && mouseX < discardX + btnW && mouseY >= btnY && mouseY < btnY + btnH) {
+            if (designMouseX >= discardX && designMouseX < discardX + btnW && designMouseY >= btnY && designMouseY < btnY + btnH) {
                 showingConfirmDialog = false;
                 if (pendingExitAction != null) {
                     // Reset original so onClose doesn't re-trigger the dialog

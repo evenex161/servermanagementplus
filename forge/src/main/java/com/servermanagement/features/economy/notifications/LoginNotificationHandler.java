@@ -42,10 +42,10 @@ public class LoginNotificationHandler {
             int remaining = overflow.deliverItems(player);
             if (remaining > 0) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§e[MineBay] You have " + remaining + " overflow item(s) that couldn't fit in your inventory. Use /overflow to claim them."));
+                    "┬ºe[MineBay] You have " + remaining + " overflow item(s) that couldn't fit in your inventory. Use /overflow to claim them."));
             } else {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§a[MineBay] Overflow items have been delivered to your inventory!"));
+                    "┬ºa[MineBay] Overflow items have been delivered to your inventory!"));
             }
         }
         

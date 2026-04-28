@@ -2,6 +2,7 @@ package com.servermanagement.features.playermanager;
 
 import com.servermanagement.ServerManagementMod;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -12,13 +13,25 @@ public class PlayerManagerEvents {
         if (instance == null) {
             instance = new PlayerManagerEvents();
             MinecraftForge.EVENT_BUS.register(instance);
-            ServerManagementMod.LOGGER.info("Registered PlayerManager events");
+            ServerManagementMod.LOGGER.debug("Registered PlayerManager events");
+        }
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            PlayerManagerSingleton.tickSpectators();
         }
     }
 
     @SubscribeEvent
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        // Player joined server
+        // Send fake game mode for active spectators so joining player doesn't see
+        // italic+gray spectator styling in tab list
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            // Delay by 1 tick so vanilla finishes sending initial player info first
+            player.getServer().execute(() -> PlayerManagerSingleton.onPlayerJoined(player));
+        }
     }
 
     @SubscribeEvent

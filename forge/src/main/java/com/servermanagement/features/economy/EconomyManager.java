@@ -89,7 +89,7 @@ public class EconomyManager {
         // Load margin history data
         MarginHistoryTracker.getInstance().load(server);
         
-        ServerManagementMod.LOGGER.info("Economy system initialized with performance optimizations");
+        ServerManagementMod.LOGGER.debug("Economy system initialized with performance optimizations");
     }
 
     /**
@@ -193,7 +193,7 @@ public class EconomyManager {
      * Shutdown economy system gracefully
      */
     public void shutdown() {
-        ServerManagementMod.LOGGER.info("Shutting down economy system");
+        ServerManagementMod.LOGGER.debug("Shutting down economy system");
         
         if (saveScheduler != null) {
             try {
@@ -208,7 +208,7 @@ public class EconomyManager {
         try {
             saveSync();
         } catch (Exception e) {
-            ServerManagementMod.LOGGER.error("Failed to save economy data during shutdown — data may be lost", e);
+            ServerManagementMod.LOGGER.error("Failed to save economy data during shutdown ÔÇö data may be lost", e);
         }
         
         // Clear caches
@@ -441,7 +441,7 @@ public class EconomyManager {
      */
     private void loadBankInventories() {
         try {
-            java.io.File bankInvDir = new java.io.File(server.getServerDirectory(), "servermanagement/bankinventories");
+            java.io.File bankInvDir = server.getServerDirectory().resolve("servermanagement/bankinventories").toFile();
             if (!bankInvDir.exists()) {
                 return;
             }
@@ -450,7 +450,7 @@ public class EconomyManager {
             if (files != null) {
                 for (java.io.File file : files) {
                     try {
-                        net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.NbtIo.readCompressed(file);
+                        net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024));
                         BankInventory inventory = BankInventory.fromNBT(tag);
                         bankInventories.put(inventory.playerId, inventory);
                     } catch (Exception e) {
@@ -458,7 +458,7 @@ public class EconomyManager {
                     }
                 }
             }
-            ServerManagementMod.LOGGER.info("Loaded {} bank inventories", bankInventories.size());
+            ServerManagementMod.LOGGER.debug("Loaded {} bank inventories", bankInventories.size());
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to load bank inventories", e);
         }
@@ -469,7 +469,7 @@ public class EconomyManager {
      */
     public void saveBankInventories() {
         try {
-            java.io.File bankInvDir = new java.io.File(server.getServerDirectory(), "servermanagement/bankinventories");
+            java.io.File bankInvDir = server.getServerDirectory().resolve("servermanagement/bankinventories").toFile();
             if (!bankInvDir.exists()) {
                 bankInvDir.mkdirs();
             }
@@ -477,7 +477,7 @@ public class EconomyManager {
             for (BankInventory inventory : bankInventories.values()) {
                 if (!inventory.isEmpty()) {
                     java.io.File file = new java.io.File(bankInvDir, inventory.playerId.toString() + ".dat");
-                    net.minecraft.nbt.NbtIo.writeCompressed(inventory.toNBT(), file);
+                    net.minecraft.nbt.NbtIo.writeCompressed(inventory.toNBT(), file.toPath());
                 }
             }
         } catch (Exception e) {

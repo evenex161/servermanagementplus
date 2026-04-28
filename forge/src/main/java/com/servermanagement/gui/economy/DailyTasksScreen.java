@@ -1,14 +1,14 @@
 package com.servermanagement.gui.economy;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.economy.DailyTask;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.gui.widgets.ModernButton;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.ClaimDailyTaskPacket;
 import com.servermanagement.network.packet.ClaimFreeRewardPacket;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * - Smooth transitions and fades
  * - Pulsing effects for claimable rewards
  */
-public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
+public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
     
     private static final int TASK_HEIGHT = 65;
     private static final int TASK_PADDING = 10;
@@ -53,7 +53,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     private int taskCardHeight = TASK_HEIGHT;
     
     public DailyTasksScreen(DailyTasksMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 400, 430);
         this.imageHeight = 430; // Tall enough to fit 3 tasks + free reward section
         this.imageWidth = 400;
         
@@ -68,16 +68,16 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(400, 430, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
-        
         // Dynamically compute task slot height so free reward section does not overlap
         int availableForTasks = this.imageHeight - 70 - FREE_REWARD_HEIGHT - 25;
         this.taskSlotHeight = availableForTasks / MAX_TASKS;
         this.taskCardHeight = Math.max(TASK_HEIGHT, this.taskSlotHeight - TASK_PADDING);
         
         super.init();
+        // Pull fresh task list + reset time from the cache on every init() so a
+        // late SyncDailyTasksPacket triggering refreshOpenScreen() reflects the
+        // new state instead of the snapshot latched in the menu constructor.
+        this.menu.reloadFromClientCache();
         this.clearWidgets(); // Clear widgets to prevent accumulation
         
         int centerX = (this.width - this.imageWidth) / 2;
@@ -86,7 +86,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
         // Back to Bank button for ALL players (removed admin check)
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 10, 100, 20,
-            Component.literal("← Bank"),
+            Component.literal("ÔåÉ Bank"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.BANK)),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -139,7 +139,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
         isClaimingFreeReward = true;
         int freeRewardAmount = com.servermanagement.client.ClientDailyTasksData.getFreeRewardAmount();
         celebrationTimer = CELEBRATION_DURATION;
-        celebrationMessage = "§6+$" + freeRewardAmount + " Free Reward!";
+        celebrationMessage = "┬º6+$" + freeRewardAmount + " Free Reward!";
         
         // Mark as unavailable locally for immediate visual feedback
         com.servermanagement.client.ClientDailyTasksData.setFreeRewardAvailable(false);
@@ -162,7 +162,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
         isClaiming[taskIndex] = true;
         claimAnimations[taskIndex] = 0f;
         celebrationTimer = CELEBRATION_DURATION;
-        celebrationMessage = "§6+$" + task.getReward() + " Claimed!";
+        celebrationMessage = "┬º6+$" + task.getReward() + " Claimed!";
         
         // Mark as claimed locally for immediate visual feedback
         task.setClaimed(true);
@@ -272,8 +272,8 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -351,9 +351,18 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
             int taskY = centerY + 70 + (i * taskSlotHeight);
             
             renderTask(guiGraphics, task, centerX + 15, taskY, i, partialTick);
+
+            // Divider between tasks (not after the last visible one).
+            int displayed = Math.min(tasks.size(), MAX_TASKS);
+            if (i < displayed - 1) {
+                int dividerY = taskY + taskSlotHeight - 4;
+                int dx0 = centerX + 20;
+                int dx1 = centerX + this.imageWidth - 20;
+                guiGraphics.fill(dx0, dividerY, dx1, dividerY + 1, 0x40FFFFFF);
+            }
         }
     }
-    
+
     private void renderTask(GuiGraphics guiGraphics, DailyTask task, int x, int y, int index, float partialTick) {
         // Task number and icon with bounce animation during claim
         float bounceOffset = 0f;
@@ -447,14 +456,14 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
         
         // Status badge
         if (task.isClaimed()) {
-            guiGraphics.drawString(this.font, Component.literal("✓ CLAIMED"),
+            guiGraphics.drawString(this.font, Component.literal("Ô£ô CLAIMED"),
                 x + this.imageWidth - 120, y + 52, 0x888888, false);
         } else if (task.isCompleted()) {
             // Pulsing "COMPLETE" badge
             float pulse = (float) Math.sin(pulseAnimations[index]) * 0.3f + 0.7f;
             int alpha = (int) (pulse * 255);
             int completeColor = (alpha << 24) | 0x55FF55;
-            guiGraphics.drawString(this.font, Component.literal("✓ COMPLETE"),
+            guiGraphics.drawString(this.font, Component.literal("Ô£ô COMPLETE"),
                 x + this.imageWidth - 120, y + 52, completeColor, true);
         } else {
             guiGraphics.drawString(this.font, Component.literal("IN PROGRESS"),
@@ -469,7 +478,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
         long timeUntilFree = com.servermanagement.client.ClientDailyTasksData.getTimeUntilFreeReward();
         
         // Title
-        String title = "💎 FREE DAILY REWARD";
+        String title = "­ƒÆÄ FREE DAILY REWARD";
         guiGraphics.drawString(this.font, Component.literal(title),
             centerX + 20, freeRewardY + 8, 0x55FF55, true);
         
@@ -489,7 +498,7 @@ public class DailyTasksScreen extends AbstractContainerScreen<DailyTasksMenu> {
             guiGraphics.drawString(this.font, Component.literal(cooldownText),
                 centerX + 20, freeRewardY + 28, 0x888888, false);
             
-            guiGraphics.drawString(this.font, Component.literal("⏰ Come back later!"),
+            guiGraphics.drawString(this.font, Component.literal("ÔÅ░ Come back later!"),
                 centerX + 20, freeRewardY + 42, 0x666666, false);
         }
     }

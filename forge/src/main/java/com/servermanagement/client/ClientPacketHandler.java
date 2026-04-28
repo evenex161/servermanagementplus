@@ -20,6 +20,7 @@ public class ClientPacketHandler {
     private static String cachedMotdText = "";
 
     public static void handleMotdSync(String motdText) {
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("MOTD", "text=\"" + (motdText.length() > 60 ? motdText.substring(0, 57) + "..." : motdText) + "\"");
         cachedMotdText = motdText;
     }
 
@@ -32,6 +33,7 @@ public class ClientPacketHandler {
     private static boolean cachedTabIsolationEnabled = false;
 
     public static void handleWorldList(List<SyncWorldListPacket.WorldInfo> worlds) {
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("WorldList", worlds.size() + " worlds");
         cachedWorldList = new ArrayList<>(worlds);
     }
 
@@ -41,6 +43,9 @@ public class ClientPacketHandler {
 
     public static void handleWorldDetail(String dimensionId, boolean netherPortalsEnabled, boolean endPortalsEnabled,
                                           boolean hasTimer, int timerSeconds, boolean chatConnected, String timerPortalType) {
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("WorldDetail",
+                String.format("dim=%s nether=%s end=%s timer=%s(%ds) chat=%s portalType=%s",
+                        dimensionId, netherPortalsEnabled, endPortalsEnabled, hasTimer, timerSeconds, chatConnected, timerPortalType));
         cachedDimensionId = dimensionId;
         cachedNetherPortalsEnabled = netherPortalsEnabled;
         cachedEndPortalsEnabled = endPortalsEnabled;
@@ -79,6 +84,8 @@ public class ClientPacketHandler {
     }
     
     public static void handleGlobalSettings(boolean chatIsolationEnabled, boolean tabIsolationEnabled) {
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("GlobalSettings",
+                String.format("chatIsolation=%s tabIsolation=%s", chatIsolationEnabled, tabIsolationEnabled));
         cachedChatIsolationEnabled = chatIsolationEnabled;
         cachedTabIsolationEnabled = tabIsolationEnabled;
     }
@@ -98,6 +105,8 @@ public class ClientPacketHandler {
     
     public static void handleEconomyTemplates(List<SyncEconomyTemplatesPacket.TemplateData> templates,
             int freeRewardAmount, int freeRewardCooldownHours) {
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("EconomyTemplates",
+                String.format("%d templates, freeReward=%d, cooldown=%dh", templates.size(), freeRewardAmount, freeRewardCooldownHours));
         cachedTemplates = new ArrayList<>(templates);
         cachedFreeRewardAmount = freeRewardAmount;
         cachedFreeRewardCooldownHours = freeRewardCooldownHours;
@@ -145,6 +154,9 @@ public class ClientPacketHandler {
             int gamblingBetCount, int gamblingWinCount, int freeRewardCount,
             int transferCount, double totalPurchaseVolume, double totalSaleVolume,
             double totalGamblingWagered, double totalGamblingWon) {
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("EconomyStats",
+                String.format("accounts=%d totalMoney=%.0f avgBal=%.0f richest=%s(%.0f) listings=%d txns=%d",
+                        totalAccounts, totalMoney, averageBalance, richestPlayerName, richestBalance, activeListings, totalTransactions));
         statTotalAccounts = totalAccounts;
         statTotalMoney = totalMoney;
         statAverageBalance = averageBalance;
@@ -227,6 +239,9 @@ public class ClientPacketHandler {
             double currentTps, double averageMspt, boolean autoOptimizeActive,
             long totalItemsMerged, long totalSpawnsCancelled,
             long totalEntitiesThrottled, long totalRedstoneThrottled) {
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("PerformanceSettings",
+                String.format("enabled=%s tps=%.1f mspt=%.1f autoOpt=%s merged=%d spawns=%d throttled=%d",
+                        featureEnabled, currentTps, averageMspt, autoOptimizeActive, totalItemsMerged, totalSpawnsCancelled, totalEntitiesThrottled));
         perfFeatureEnabled = featureEnabled;
         perfItemMergingEnabled = itemMergingEnabled;
         perfMobSpawnLimiterEnabled = mobSpawnLimiterEnabled;

@@ -4,11 +4,11 @@ package com.servermanagement.features.economy;
  * Status of a money request
  */
 public enum RequestStatus {
-    PENDING("Pending", "§e"),
-    ACCEPTED("Accepted", "§a"),
-    DENIED("Denied", "§c"),
-    EXPIRED("Expired", "§7"),
-    CANCELLED("Cancelled", "§7");
+    PENDING("Pending", "┬ºe"),
+    ACCEPTED("Accepted", "┬ºa"),
+    DENIED("Denied", "┬ºc"),
+    EXPIRED("Expired", "┬º7"),
+    CANCELLED("Cancelled", "┬º7");
 
     private final String displayName;
     private final String colorCode;

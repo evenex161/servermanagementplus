@@ -28,14 +28,21 @@ public class ConfigValidator {
      */
     public static boolean validateAndRepair() {
         try {
+            // Skip validation if config spec isn't loaded yet (during mod construction)
+            // Forge will load and validate the config spec automatically
+            if (!ModConfig.SPEC.isLoaded()) {
+                ServerManagementMod.LOGGER.debug("Config spec not loaded yet, deferring validation");
+                return true;
+            }
+            
             Path configPath = getConfigPath();
             File configFile = configPath.toFile();
             
-            ServerManagementMod.LOGGER.info("Validating configuration file: {}", configPath);
+            ServerManagementMod.LOGGER.debug("Validating configuration file: {}", configPath);
             
             // Check if config file exists
             if (!configFile.exists()) {
-                ServerManagementMod.LOGGER.info("Config file does not exist. It will be created with defaults.");
+                ServerManagementMod.LOGGER.debug("Config file does not exist, will be created with defaults");
                 return true; // ForgeConfigSpec will create it
             }
             
@@ -48,7 +55,6 @@ public class ConfigValidator {
             // Check if migration is needed BEFORE validating values
             // (old configs might have different structure)
             if (ConfigMigration.needsMigration()) {
-                ServerManagementMod.LOGGER.info("Config migration is needed");
                 if (!ConfigMigration.checkAndMigrate()) {
                     ServerManagementMod.LOGGER.error("Config migration failed!");
                     return false;
@@ -61,7 +67,7 @@ public class ConfigValidator {
                 return repairConfig(configFile);
             }
             
-            ServerManagementMod.LOGGER.info("Configuration validated successfully");
+            ServerManagementMod.LOGGER.debug("Configuration validated successfully");
             return true;
             
         } catch (Exception e) {
@@ -232,7 +238,7 @@ public class ConfigValidator {
                 name.startsWith(CONFIG_FILENAME + BACKUP_SUFFIX));
             
             if (backups != null && backups.length > 5) {
-                ServerManagementMod.LOGGER.info("Found {} config backups, cleaning up old ones", backups.length);
+                ServerManagementMod.LOGGER.debug("Found {} config backups, cleaning up old ones", backups.length);
                 
                 // Sort by last modified time
                 java.util.Arrays.sort(backups, (a, b) -> 

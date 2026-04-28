@@ -29,8 +29,11 @@ public class MineBayMenu extends AbstractContainerMenu {
     public MineBayMenu(int containerId, Inventory playerInventory) {
         super(ModMenuTypes.MINEBAY_MENU.get(), containerId);
         
-        // Calculate scaled panel width for slot positioning
-        int panelWidth = getScaledPanelWidth(playerInventory);
+        // All slot positions are in design space (panel width 600).
+        // The matching ScalableContainerScreen renders everything through a uniform
+        // pose-matrix scale, so slots are visually scaled with the panel even when
+        // the workspace is smaller than the design size.
+        int panelWidth = 600;
         
         // Initialize offering container (1 slot for item to sell)
         this.offeringContainer = new SimpleContainer(1);
@@ -57,7 +60,7 @@ public class MineBayMenu extends AbstractContainerMenu {
             offerSlots.add(slot);
         }
         
-        // Position inventory centered at bottom of panel
+        // Position inventory centered at bottom of panel (design-space Y)
         int inventoryX = (panelWidth - 162) / 2; // Center 9-column inventory (9*18=162px)
         int inventoryY = 230;
         
@@ -75,27 +78,6 @@ public class MineBayMenu extends AbstractContainerMenu {
             ToggleableSlot slot = new ToggleableSlot(playerInventory, col, inventoryX + col * 18, inventoryY + 58);
             this.addSlot(slot);
             inventorySlots.add(slot);
-        }
-    }
-    
-    /**
-     * Get the scaled panel width, using ScreenScaler on client or defaulting to 600 on server
-     */
-    private static int getScaledPanelWidth(Inventory playerInventory) {
-        if (playerInventory.player.level().isClientSide()) {
-            return getClientPanelWidth();
-        }
-        return 600;
-    }
-    
-    private static int getClientPanelWidth() {
-        try {
-            var mc = net.minecraft.client.Minecraft.getInstance();
-            int guiW = mc.getWindow().getGuiScaledWidth();
-            int guiH = mc.getWindow().getGuiScaledHeight();
-            return com.servermanagement.gui.ScreenScaler.scale(600, 400, guiW, guiH)[0];
-        } catch (Throwable t) {
-            return 600;
         }
     }
     

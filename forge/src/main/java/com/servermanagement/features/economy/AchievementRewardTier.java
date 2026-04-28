@@ -42,7 +42,7 @@ public enum AchievementRewardTier {
     /**
      * Determine tier from advancement frame type
      */
-    public static AchievementRewardTier fromFrameType(net.minecraft.advancements.FrameType frameType) {
+    public static AchievementRewardTier fromFrameType(net.minecraft.advancements.AdvancementType frameType) {
         switch (frameType) {
             case TASK:
                 return COMMON;

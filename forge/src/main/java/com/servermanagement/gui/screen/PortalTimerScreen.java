@@ -1,18 +1,18 @@
 package com.servermanagement.gui.screen;
 
+
+import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.client.ClientPacketHandler;
 import com.servermanagement.gui.PortalTimerMenu;
-import com.servermanagement.gui.ScreenScaler;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.WMSetTimerPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> {
+public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> {
     
     private String dimensionId;
     private EditBox hoursInput;
@@ -28,7 +28,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     private String selectedPortalType = "both";
     
     public PortalTimerScreen(PortalTimerMenu menu, Inventory playerInventory, Component title) {
-        super(menu, playerInventory, title);
+        super(menu, playerInventory, title, 300, 240);
         this.imageHeight = 240;
         this.imageWidth = 300;
         
@@ -37,10 +37,14 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     
     @Override
     protected void init() {
-        int[] dim = ScreenScaler.scale(300, 240, this.width, this.height);
-        this.imageWidth = dim[0];
-        this.imageHeight = dim[1];
         super.init();
+        // Refresh dimensionId from the cache on every init() in case the
+        // SyncWorldDetailPacket arrived after the screen ctor but before the
+        // first render ÔÇö keeps portal-toggle visibility correct.
+        String cachedDim = ClientPacketHandler.getCachedDimensionId();
+        if (cachedDim != null && !cachedDim.isEmpty()) {
+            this.dimensionId = cachedDim;
+        }
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -53,17 +57,17 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         if (showNether && showEnd) {
             this.selectedPortalType = "both";
             this.portalTypeButton = Button.builder(
-                Component.literal("§bPortal Type: Both"),
+                Component.literal("┬ºbPortal Type: Both"),
                 button -> {
                     if ("both".equals(selectedPortalType)) {
                         selectedPortalType = "nether";
-                        button.setMessage(Component.literal("§bPortal Type: Nether"));
+                        button.setMessage(Component.literal("┬ºbPortal Type: Nether"));
                     } else if ("nether".equals(selectedPortalType)) {
                         selectedPortalType = "end";
-                        button.setMessage(Component.literal("§bPortal Type: End"));
+                        button.setMessage(Component.literal("┬ºbPortal Type: End"));
                     } else {
                         selectedPortalType = "both";
-                        button.setMessage(Component.literal("§bPortal Type: Both"));
+                        button.setMessage(Component.literal("┬ºbPortal Type: Both"));
                     }
                 })
                 .bounds(centerX + 30, startY - 10, 240, 20)
@@ -102,7 +106,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         
         // Start button
         this.startButton = Button.builder(
-            Component.literal("§aStart Timer"),
+            Component.literal("┬ºaStart Timer"),
             button -> {
                 try {
                     int hours = Integer.parseInt(this.hoursInput.getValue());
@@ -124,7 +128,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         
         // Stop/Cancel button
         this.stopButton = Button.builder(
-            Component.literal("§cCancel"),
+            Component.literal("┬ºcCancel"),
             button -> {
                 long clientTick = minecraft.player.tickCount;
                 ModNetworking.sendToServer(new WMSetTimerPacket(dimensionId, 0, selectedPortalType, clientTick));
@@ -188,8 +192,8 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
     }
     
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics);
+    protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
         // Title
@@ -216,7 +220,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
             int seconds = timerSeconds % 60;
             
             String statusLabel = "Current Timer:";
-            String timeDisplay = String.format("§e%d:%02d:%02d", hours, minutes, seconds);
+            String timeDisplay = String.format("┬ºe%d:%02d:%02d", hours, minutes, seconds);
             
             int statusY = this.topPos + 165;
             guiGraphics.drawString(this.font, statusLabel, 
@@ -235,7 +239,7 @@ public class PortalTimerScreen extends AbstractContainerScreen<PortalTimerMenu> 
         guiGraphics.drawString(this.font, "Quick Presets:", 
             this.leftPos + 30, this.topPos + 115, 0xFFFFFF, false);
         
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
     

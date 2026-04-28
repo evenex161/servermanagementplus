@@ -39,7 +39,7 @@ public class ServerPerformanceManager {
     public void initialize(MinecraftServer server) {
         this.server = server;
         this.initialized.set(true);
-        ServerManagementMod.LOGGER.info("Server Performance system initialized");
+        ServerManagementMod.LOGGER.debug("Server Performance system initialized");
     }
 
     public void shutdown() {
@@ -91,13 +91,13 @@ public class ServerPerformanceManager {
 
     private void activateAutoOptimize() {
         autoOptimizeActive = true;
-        ServerManagementMod.LOGGER.warn("TPS dropped below critical threshold ({}) for 5 seconds — auto-optimize activated",
+        ServerManagementMod.LOGGER.warn("TPS dropped below critical threshold ({}) for 5 seconds ÔÇö auto-optimize activated",
                 String.format("%.1f", currentTps));
     }
 
     private void deactivateAutoOptimize() {
         autoOptimizeActive = false;
-        ServerManagementMod.LOGGER.info("TPS recovered above warning threshold ({}) — auto-optimize deactivated",
+        ServerManagementMod.LOGGER.info("TPS recovered above warning threshold ({}) ÔÇö auto-optimize deactivated",
                 String.format("%.1f", currentTps));
     }
 
@@ -196,9 +196,9 @@ public class ServerPerformanceManager {
     }
 
     public enum TpsStatus {
-        HEALTHY("§a"),
-        WARNING("§e"),
-        CRITICAL("§c");
+        HEALTHY("┬ºa"),
+        WARNING("┬ºe"),
+        CRITICAL("┬ºc");
 
         private final String colorCode;
 

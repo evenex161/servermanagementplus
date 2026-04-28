@@ -37,7 +37,7 @@ public class TransactionManager {
     }
     
     public void initialize(MinecraftServer server) {
-        this.dataDirectory = new File(server.getServerDirectory(), "servermanagement/transactions");
+        this.dataDirectory = server.getServerDirectory().resolve("servermanagement/transactions").toFile();
         if (!dataDirectory.exists()) {
             dataDirectory.mkdirs();
         }
@@ -207,7 +207,7 @@ public class TransactionManager {
             int count = 0;
             for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
                 ItemStack invItem = player.getInventory().getItem(i);
-                if (ItemStack.isSameItemSameTags(invItem, requiredItem)) {
+                if (ItemStack.isSameItemSameComponents(invItem, requiredItem)) {
                     count += invItem.getCount();
                 }
             }
@@ -226,7 +226,7 @@ public class TransactionManager {
             int remaining = requiredItem.getCount();
             for (int i = 0; i < player.getInventory().getContainerSize() && remaining > 0; i++) {
                 ItemStack invItem = player.getInventory().getItem(i);
-                if (ItemStack.isSameItemSameTags(invItem, requiredItem)) {
+                if (ItemStack.isSameItemSameComponents(invItem, requiredItem)) {
                     int toRemove = Math.min(invItem.getCount(), remaining);
                     invItem.shrink(toRemove);
                     remaining -= toRemove;
@@ -253,7 +253,7 @@ public class TransactionManager {
             bankInventory.addItem(item, source, details);
             
             player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                "§e⚠ Inventory full! Item sent to Bank Storage. Use /bank to retrieve it."
+                "┬ºeÔÜá Inventory full! Item sent to Bank Storage. Use /bank to retrieve it."
             ));
             
             ServerManagementMod.LOGGER.info("Item sent to bank storage for {}: {}", 
@@ -314,14 +314,23 @@ public class TransactionManager {
             CompoundTag rootTag = new CompoundTag();
             
             // Save completed transactions (keep last 1000)
-            ListTag completedTag = new ListTag();
-            completedTransactions.values().stream()
+            List<Transaction> sorted = completedTransactions.values().stream()
                 .sorted(Comparator.comparingLong(t -> -t.completedTimestamp))
                 .limit(1000)
-                .forEach(t -> completedTag.add(t.toNBT()));
+                .toList();
+            ListTag completedTag = new ListTag();
+            sorted.forEach(t -> completedTag.add(t.toNBT()));
             rootTag.put("Completed", completedTag);
             
-            NbtIo.writeCompressed(rootTag, file);
+            NbtIo.writeCompressed(rootTag, file.toPath());
+            
+            // Trim in-memory map to match saved limit ÔÇö prevents unbounded growth
+            if (completedTransactions.size() > 1000) {
+                Set<String> keepIds = sorted.stream()
+                    .map(t -> t.transactionId)
+                    .collect(java.util.stream.Collectors.toSet());
+                completedTransactions.keySet().retainAll(keepIds);
+            }
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to save transactions", e);
         }
@@ -337,7 +346,7 @@ public class TransactionManager {
                 return;
             }
             
-            CompoundTag rootTag = NbtIo.readCompressed(file);
+            CompoundTag rootTag = NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024));
             
             ListTag completedTag = rootTag.getList("Completed", Tag.TAG_COMPOUND);
             for (int i = 0; i < completedTag.size(); i++) {
@@ -345,7 +354,7 @@ public class TransactionManager {
                 completedTransactions.put(transaction.transactionId, transaction);
             }
             
-            ServerManagementMod.LOGGER.info("Loaded {} completed transactions", completedTransactions.size());
+            ServerManagementMod.LOGGER.debug("Loaded {} completed transactions", completedTransactions.size());
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to load transactions", e);
         }
@@ -408,7 +417,7 @@ public class TransactionManager {
             if (buyerId != null) tag.putUUID("Buyer", buyerId);
             if (sellerId != null) tag.putUUID("Seller", sellerId);
             if (listingId != null) tag.putString("Listing", listingId);
-            if (item != null) tag.put("Item", item.save(new CompoundTag()));
+            if (item != null) tag.put("Item", item.saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
             tag.putDouble("Money", moneyAmount);
             tag.putLong("Created", createdTimestamp);
             tag.putLong("Completed", completedTimestamp);
@@ -430,7 +439,7 @@ public class TransactionManager {
             if (tag.contains("Buyer")) transaction.buyerId = tag.getUUID("Buyer");
             if (tag.contains("Seller")) transaction.sellerId = tag.getUUID("Seller");
             if (tag.contains("Listing")) transaction.listingId = tag.getString("Listing");
-            if (tag.contains("Item")) transaction.item = ItemStack.of(tag.getCompound("Item"));
+            if (tag.contains("Item")) transaction.item = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("Item"));
             transaction.moneyAmount = tag.getDouble("Money");
             transaction.createdTimestamp = tag.getLong("Created");
             transaction.completedTimestamp = tag.getLong("Completed");
