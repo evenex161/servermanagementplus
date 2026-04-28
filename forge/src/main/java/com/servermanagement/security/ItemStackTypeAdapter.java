@@ -39,7 +39,7 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
         // Store count
         out.name("count").value(src.getCount());
 
-        // Store NBT data if present
+        // Store NBT data if present (1.20.1 uses ItemStack.getTag() directly)
         CompoundTag tag = src.getTag();
         if (tag != null && !tag.isEmpty()) {
             out.name("nbt").value(tag.toString());
@@ -95,7 +95,7 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
 
         ItemStack stack = new ItemStack(item, count);
 
-        // Apply NBT if present
+        // Apply NBT if present (1.20.1 sets directly on the ItemStack)
         if (nbtString != null) {
             try {
                 CompoundTag tag = TagParser.parseTag(nbtString);

@@ -1,0 +1,11 @@
+forge/src/main/java/com/servermanagement/util/AsyncSaveScheduler.java
+forge/src/main/java/com/servermanagement/util/PerformanceMetrics.java
+forge/src/main/java/com/servermanagement/util/MigrationManager.java
+forge/src/main/java/com/servermanagement/util/VersionTracker.java
+forge/src/main/java/com/servermanagement/util/ExpiringCache.java
+forge/src/main/java/com/servermanagement/util/DataVersion.java
+forge/src/main/java/com/servermanagement/security/EncryptionManager.java
+forge/src/main/java/com/servermanagement/security/SecureDataStorage.java
+forge/src/main/java/com/servermanagement/security/SessionManager.java
+forge/src/main/java/com/servermanagement/security/SessionEventHandler.java
+forge/src/main/java/com/servermanagement/security/ItemStackTypeAdapter.java

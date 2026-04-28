@@ -67,7 +67,7 @@ public class EncryptionManager {
                 // Load existing key
                 byte[] keyBytes = java.nio.file.Files.readAllBytes(keyFile.toPath());
                 this.serverKey = new SecretKeySpec(keyBytes, "AES");
-                ServerManagementMod.LOGGER.info("Loaded encryption key");
+                ServerManagementMod.LOGGER.debug("Loaded encryption key");
             } else {
                 // Generate new key
                 KeyGenerator keyGen = KeyGenerator.getInstance("AES");
@@ -92,7 +92,7 @@ public class EncryptionManager {
                     keyFile.setWritable(true, true);
                 }
                 
-                ServerManagementMod.LOGGER.info("Generated new encryption key");
+                ServerManagementMod.LOGGER.debug("Generated new encryption key");
             }
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to initialize encryption", e);
