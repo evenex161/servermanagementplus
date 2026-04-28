@@ -101,6 +101,6 @@ public class ItemMergeHandler {
 
     private static boolean canMergeStacks(ItemStack a, ItemStack b) {
         // Use ItemStack.isSameItemSameComponents which handles DataComponents in 1.21.1
-        return ItemStack.isSameItemSameComponents(a, b);
+        return ItemStack.isSameItemSameTags(a, b);
     }
 }

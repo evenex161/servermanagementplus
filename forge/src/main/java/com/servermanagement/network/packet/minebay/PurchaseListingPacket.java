@@ -114,7 +114,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                 
                 int count = 0;
                 for (ItemStack stack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
+                    if (ItemStack.isSameItemSameTags(stack, priceItem.getItemStack())) {
                         count += stack.getCount();
                     }
                 }
@@ -211,7 +211,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                 
                 for (int i = 0; i < buyer.getInventory().items.size() && remaining > 0; i++) {
                     ItemStack stack = buyer.getInventory().items.get(i);
-                    if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
+                    if (ItemStack.isSameItemSameTags(stack, priceItem.getItemStack())) {
                         int toRemove = Math.min(remaining, stack.getCount());
                         stack.shrink(toRemove);
                         remaining -= toRemove;

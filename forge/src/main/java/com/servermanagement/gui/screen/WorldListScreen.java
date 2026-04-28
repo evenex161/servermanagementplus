@@ -123,7 +123,7 @@ public class WorldListScreen extends ScalableContainerScreen<WorldListMenu> {
 
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderBackground(guiGraphics);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
         // Title

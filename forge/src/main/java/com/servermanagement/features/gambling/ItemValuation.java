@@ -100,7 +100,7 @@ public class ItemValuation {
         
         // Bonus for enchantments
         if (stack.isEnchanted()) {
-            var enchantments = stack.getOrDefault(net.minecraft.core.component.DataComponents.ENCHANTMENTS, net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+            var enchantments = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantments(stack);
             int enchantmentCount = enchantments.size();
             totalValue *= (1.0 + (enchantmentCount * 0.2)); // 20% bonus per enchantment
         }

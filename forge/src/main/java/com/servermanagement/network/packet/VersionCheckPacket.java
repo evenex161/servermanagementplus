@@ -31,9 +31,8 @@ public record VersionCheckPacket(String serverModVersion, int serverDataVersion,
         buf.writeUtf(serverModLoader, 32);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        Supplier<NetworkEvent.Context> context = contextSupplier;
-        context.enqueueWork(() -> {
+    public void handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
             // This runs on the client
             com.servermanagement.ota.OTAVersion clientOTAVersion = 
                 com.servermanagement.ota.OTAVersion.loadFromResources();
@@ -65,7 +64,7 @@ public record VersionCheckPacket(String serverModVersion, int serverDataVersion,
                     clientOTAVersion.getDisplayVersion(), serverOTAVersion.getDisplayVersion());
                 
                 // Notify client and offer to download update
-                if (context.getSender() == null) {
+                if (ctx.get().getSender() == null) {
                     // We're on the client side
                     OTAUpdateManager.handleVersionMismatch(
                         clientOTAVersion.getDisplayVersion(), 
@@ -78,13 +77,13 @@ public record VersionCheckPacket(String serverModVersion, int serverDataVersion,
                         serverModLoader
                     );
                 } else {
-                    ServerManagementMod.LOGGER.error("context.getSender() was not null on client! This shouldn't happen.");
+                    ServerManagementMod.LOGGER.error("ctx.get().getSender() was not null on client! This shouldn't happen.");
                 }
             } else {
                 ServerManagementMod.LOGGER.debug("Client and server OTA versions match: {}", 
                     clientOTAVersion.getDisplayVersion());
             }
         });
-        context.setPacketHandled(true);
+        ctx.get().setPacketHandled(true);
     }
 }

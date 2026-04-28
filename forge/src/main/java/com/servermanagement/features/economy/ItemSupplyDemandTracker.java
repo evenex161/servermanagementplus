@@ -198,7 +198,7 @@ public class ItemSupplyDemandTracker {
         if (!dirty) return;
         
         try {
-            Path dir = server.getServerDirectory().resolve("servermanagement");
+            Path dir = server.getServerDirectory().toPath().resolve("servermanagement");
             Files.createDirectories(dir);
             Path file = dir.resolve("supply_demand.dat");
             
@@ -221,7 +221,7 @@ public class ItemSupplyDemandTracker {
     
     public void load(MinecraftServer server) {
         try {
-            Path file = server.getServerDirectory()
+            Path file = server.getServerDirectory().toPath()
                 .resolve("servermanagement").resolve("supply_demand.dat");
             
             if (!Files.exists(file)) {

@@ -37,11 +37,10 @@ public record ModFileChunkPacket(int chunkIndex, int totalChunks, String fileHas
     }
     
     @Override
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        Supplier<NetworkEvent.Context> context = contextSupplier;
-        context.enqueueWork(() -> {
+    public void handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
             // This runs on the client
-            if (context.getSender() == null) {
+            if (ctx.get().getSender() == null) {
                 // We're on the client side
                 OTAUpdateManager.handleModFileChunk(chunkIndex, totalChunks, chunkData, fileHash);
                 
@@ -53,6 +52,6 @@ public record ModFileChunkPacket(int chunkIndex, int totalChunks, String fileHas
                 }
             }
         });
-        context.setPacketHandled(true);
+        ctx.get().setPacketHandled(true);
     }
 }

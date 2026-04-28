@@ -32,10 +32,9 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        Supplier<NetworkEvent.Context> context = contextSupplier;
-        context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
+    public void handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
 
             EconomyManager econ = EconomyManager.getInstance(player.server);
@@ -133,7 +132,7 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                 }
             }
         });
-        context.setPacketHandled(true);
+        ctx.get().setPacketHandled(true);
     }
 
     private void syncBankAndRequests(ServerPlayer player, EconomyManager econ) {

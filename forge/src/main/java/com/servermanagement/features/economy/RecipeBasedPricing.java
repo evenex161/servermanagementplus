@@ -7,7 +7,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmithingRecipe;
@@ -181,14 +180,14 @@ public class RecipeBasedPricing {
     }
 
     @SuppressWarnings("unchecked")
-    private <I extends net.minecraft.world.item.crafting.RecipeInput, T extends Recipe<I>> void collectFromType(
+    private <I extends net.minecraft.world.Container, T extends Recipe<I>> void collectFromType(
             RecipeManager mgr, RecipeType<T> type,
             net.minecraft.core.RegistryAccess registryAccess,
             double markup, List<RecipeEntry> result) {
         try {
-            for (RecipeHolder<T> holder : mgr.getAllRecipesFor(type)) {
+            for (T holder : mgr.getAllRecipesFor(type)) {
                 try {
-                    Recipe<?> recipe = holder.value();
+                    Recipe<?> recipe = holder;
                     ItemStack output = recipe.getResultItem(registryAccess);
                     if (output.isEmpty()) continue;
 
@@ -215,9 +214,9 @@ public class RecipeBasedPricing {
     private void collectSmithingRecipes(RecipeManager mgr,
             net.minecraft.core.RegistryAccess registryAccess, List<RecipeEntry> result) {
         try {
-            for (RecipeHolder<SmithingRecipe> holder : mgr.getAllRecipesFor(RecipeType.SMITHING)) {
+            for (SmithingRecipe holder : mgr.getAllRecipesFor(RecipeType.SMITHING)) {
                 try {
-                    SmithingRecipe recipe = holder.value();
+                    SmithingRecipe recipe = holder;
                     ItemStack output = recipe.getResultItem(registryAccess);
                     if (output.isEmpty()) continue;
 

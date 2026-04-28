@@ -37,7 +37,7 @@ public class OverflowInventoryManager {
 
     public void initialize(MinecraftServer server) {
         this.server = server;
-        this.dataDirectory = server.getServerDirectory().resolve("servermanagement/overflow").toFile();
+        this.dataDirectory = new java.io.File(server.getServerDirectory(), "servermanagement/overflow");
         if (!dataDirectory.exists()) {
             dataDirectory.mkdirs();
         }
@@ -114,7 +114,7 @@ public class OverflowInventoryManager {
             if (invStack.isEmpty()) {
                 return true; // Empty slot can fit the stack
             }
-            if (ItemStack.isSameItemSameComponents(invStack, stack)) {
+            if (ItemStack.isSameItemSameTags(invStack, stack)) {
                 remaining -= (invStack.getMaxStackSize() - invStack.getCount());
                 if (remaining <= 0) return true;
             }
@@ -192,8 +192,7 @@ public class OverflowInventoryManager {
                 synchronized (items) {
                     CompoundTag itemsTag = new CompoundTag();
                     for (int i = 0; i < items.size(); i++) {
-                        itemsTag.put("Item" + i, items.get(i).saveOptional(
-                            server.registryAccess()));
+                        itemsTag.put("Item" + i, items.get(i).save(new CompoundTag()));
                     }
                     itemsTag.putInt("Count", items.size());
                     playerTag.put("Items", itemsTag);
@@ -205,7 +204,7 @@ public class OverflowInventoryManager {
             playersTag.putInt("Count", playerIndex);
             rootTag.put("Players", playersTag);
 
-            NbtIo.writeCompressed(rootTag, overflowFile.toPath());
+            NbtIo.writeCompressed(rootTag, overflowFile);
             ServerManagementMod.LOGGER.debug("Saved overflow inventory data");
         } catch (Exception e) {
             ServerManagementMod.LOGGER.error("Failed to save overflow inventory data", e);
@@ -221,8 +220,7 @@ public class OverflowInventoryManager {
             File overflowFile = new File(dataDirectory, "overflow.dat");
             if (!overflowFile.exists()) return;
 
-            CompoundTag rootTag = NbtIo.readCompressed(overflowFile.toPath(),
-                net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024)); // 10MB limit
+            CompoundTag rootTag = NbtIo.readCompressed(overflowFile); // 10MB limit
 
             CompoundTag playersTag = rootTag.getCompound("Players");
             int playerCount = playersTag.getInt("Count");
@@ -237,9 +235,7 @@ public class OverflowInventoryManager {
                 List<ItemStack> items = Collections.synchronizedList(new ArrayList<>());
 
                 for (int i = 0; i < itemCount; i++) {
-                    ItemStack stack = ItemStack.parseOptional(
-                        server.registryAccess(),
-                        itemsTag.getCompound("Item" + i));
+                    ItemStack stack = ItemStack.of(itemsTag.getCompound("Item" + i));
                     if (!stack.isEmpty()) {
                         items.add(stack);
                     }

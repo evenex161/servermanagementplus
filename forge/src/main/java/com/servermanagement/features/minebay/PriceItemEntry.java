@@ -80,7 +80,7 @@ public class PriceItemEntry {
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putInt("DataVersion", DataVersion.CURRENT_VERSION);
-        tag.put("Item", itemStack.saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
+        tag.put("Item", itemStack.save(new CompoundTag()));
         tag.putInt("Amount", amount);
         tag.putBoolean("UseStacks", useStacks);
         return tag;
@@ -95,7 +95,7 @@ public class PriceItemEntry {
         }
         
         PriceItemEntry entry = new PriceItemEntry();
-        entry.itemStack = ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("Item"));
+        entry.itemStack = ItemStack.of(tag.getCompound("Item"));
         entry.amount = tag.getInt("Amount");
         entry.useStacks = tag.getBoolean("UseStacks");
         return entry;

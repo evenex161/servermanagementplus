@@ -123,7 +123,7 @@ public final class DebugLogEventHandler {
         Screen screen = event.getScreen();
         if (!isModScreen(screen)) return;
 
-        DebugLogger.logMouseScroll(screen.getClass().getSimpleName(), event.getDeltaY());
+        DebugLogger.logMouseScroll(screen.getClass().getSimpleName(), event.getScrollDelta());
     }
 
     // ÔöÇÔöÇ Keyboard events ÔöÇÔöÇ

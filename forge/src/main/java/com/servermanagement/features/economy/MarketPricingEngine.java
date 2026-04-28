@@ -124,9 +124,7 @@ public class MarketPricingEngine {
 
         // Apply enchantment bonus
         if (singleItem.isEnchanted()) {
-            var enchantments = singleItem.getOrDefault(
-                    net.minecraft.core.component.DataComponents.ENCHANTMENTS,
-                    net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+            var enchantments = net.minecraft.world.item.enchantment.EnchantmentHelper.getEnchantments(stack);
             int enchantmentCount = enchantments.size();
             staticValue *= (1.0 + (enchantmentCount * 0.2));
         }

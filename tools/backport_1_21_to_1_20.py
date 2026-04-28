@@ -53,6 +53,41 @@ RULES = [
     (re.compile(r"\bctx\.setPacketHandled\("), "ctx.get().setPacketHandled("),
     (re.compile(r"\bctx\.getSender\(\)"), "ctx.get().getSender()"),
     (re.compile(r"\bctx\.getDirection\(\)"), "ctx.get().getDirection()"),
+
+    # ItemStack equivalence (1.21 distinguishes components, 1.20.1 only tags)
+    (re.compile(r"\bItemStack\.isSameItemSameComponents\("), "ItemStack.isSameItemSameTags("),
+    (re.compile(r"\.isSameItemSameComponents\("), ".isSameItemSameTags("),
+
+    # AdvancementHolder<X> → Advancement (1.20.1 has no holder wrapper)
+    # holder.id() → holder.getId(), holder.value() → holder
+    (re.compile(r"\bAdvancementHolder\b"), "Advancement"),
+    (re.compile(r"import net\.minecraft\.advancements\.AdvancementHolder;\s*\n"), ""),
+
+    # RecipeHolder<X> → X (strip wrapper); .value() → ; (caller still works)
+    (re.compile(r"\bRecipeHolder<([^>]+)>"), r"\1"),
+    (re.compile(r"import net\.minecraft\.world\.item\.crafting\.RecipeHolder;\s*\n"), ""),
+
+    # Strip 1.21 component package imports (force fall-through to NBT)
+    (re.compile(r"import net\.minecraft\.core\.component\.[^;]+;\s*\n"), ""),
+    (re.compile(r"import net\.minecraft\.world\.item\.component\.[^;]+;\s*\n"), ""),
+
+    # ItemStack save/parse with component lookup
+    # stack.saveOptional(registries) → stack.save(new CompoundTag())
+    (re.compile(r"(\w+)\.saveOptional\(\s*[^)]+\)"),
+     r"\1.save(new CompoundTag())"),
+    # ItemStack.parseOptional(registries, tag) → ItemStack.of(tag)
+    (re.compile(r"ItemStack\.parseOptional\(\s*[^,]+,\s*([^)]+)\)"),
+     r"ItemStack.of(\1)"),
+
+    # NbtIo Path overloads → File overloads
+    (re.compile(r"NbtIo\.writeCompressed\(\s*([^,]+),\s*([\w.]+)\.toFile\(\)\)"),
+     r"NbtIo.writeCompressed(\1, \2.toFile())"),  # idempotent
+    (re.compile(r"NbtIo\.writeCompressed\(\s*([^,]+),\s*([\w]+)\)"),
+     r"NbtIo.writeCompressed(\1, \2.toFile())"),
+    (re.compile(r"NbtIo\.readCompressed\(\s*([\w]+)\.toFile\(\)\)"),
+     r"NbtIo.readCompressed(\1.toFile())"),  # idempotent
+    (re.compile(r"NbtIo\.readCompressed\(\s*([\w]+)\)(?!\.toFile)"),
+     r"NbtIo.readCompressed(\1.toFile())"),
 ]
 
 def translate(text: str) -> str:
@@ -64,8 +99,14 @@ def main():
     if len(sys.argv) < 2:
         print(__doc__, file=sys.stderr)
         sys.exit(2)
+    paths = []
     for arg in sys.argv[1:]:
         p = Path(arg)
+        if p.is_dir():
+            paths.extend(p.rglob("*.java"))
+        else:
+            paths.append(p)
+    for p in paths:
         src = p.read_text(encoding="utf-8")
         dst = translate(src)
         if dst != src:

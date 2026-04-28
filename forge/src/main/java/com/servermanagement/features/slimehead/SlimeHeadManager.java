@@ -5,7 +5,6 @@ import com.mojang.authlib.properties.Property;
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import com.servermanagement.features.Feature;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -15,8 +14,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -77,23 +74,21 @@ public class SlimeHeadManager implements Feature {
      */
     public static ItemStack createSlimeHead() {
         ItemStack head = new ItemStack(Items.PLAYER_HEAD);
-        
+
         // Create game profile with slime texture
         GameProfile profile = new GameProfile(UUID.randomUUID(), "Slime");
         profile.getProperties().put("textures", new Property("textures", SLIME_TEXTURE));
-        
-        // Set profile component
-        head.set(DataComponents.PROFILE, new ResolvableProfile(profile));
-        
-        // Set custom name
-        head.setHoverName(net.minecraft.network.chat.Component.literal("┬ºaSlime Head"));
-        
-        // Set custom data for slime head identification
-        CompoundTag customTag = new CompoundTag();
-        customTag.putBoolean(SLIME_HEAD_TAG, true);
-        customTag.putBoolean("Unbreakable", true);
-        head.set(DataComponents.CUSTOM_DATA, CustomData.of(customTag));
-        
+
+        // Write SkullOwner NBT (1.20.1 way)
+        CompoundTag tag = head.getOrCreateTag();
+        CompoundTag skullOwner = net.minecraft.nbt.NbtUtils.writeGameProfile(new CompoundTag(), profile);
+        tag.put("SkullOwner", skullOwner);
+
+        // Set custom name + slime-head marker tags
+        head.setHoverName(net.minecraft.network.chat.Component.literal("\u00a7aSlime Head"));
+        tag.putBoolean(SLIME_HEAD_TAG, true);
+        tag.putBoolean("Unbreakable", true);
+
         return head;
     }
     
@@ -104,8 +99,8 @@ public class SlimeHeadManager implements Feature {
         if (stack.isEmpty() || stack.getItem() != Items.PLAYER_HEAD) {
             return false;
         }
-        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        return customData != null && customData.copyTag().getBoolean(SLIME_HEAD_TAG);
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.getBoolean(SLIME_HEAD_TAG);
     }
     
     /**
@@ -145,7 +140,7 @@ public class SlimeHeadManager implements Feature {
             if (blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity) {
                 // Check if it has slime head data
                 var owner = skullEntity.getOwnerProfile();
-                if (owner != null && owner.name().isPresent() && owner.name().get().equals("Slime")) {
+                if (owner != null && owner.getName() != null && owner.getName().equals("Slime")) {
                     // Check if player has permission to break
                     if (event.getPlayer() instanceof ServerPlayer player) {
                         if (!player.hasPermissions(2)) {
@@ -183,7 +178,7 @@ public class SlimeHeadManager implements Feature {
             var blockEntity = level.getBlockEntity(abovePos);
             if (blockEntity instanceof net.minecraft.world.level.block.entity.SkullBlockEntity skullEntity) {
                 var owner = skullEntity.getOwnerProfile();
-                if (owner != null && owner.name().isPresent() && owner.name().get().equals("Slime")) {
+                if (owner != null && owner.getName() != null && owner.getName().equals("Slime")) {
                     // Cancel default noteblock sound
                     event.setCanceled(true);
                     

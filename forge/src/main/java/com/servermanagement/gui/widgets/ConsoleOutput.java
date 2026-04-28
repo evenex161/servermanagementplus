@@ -121,7 +121,7 @@ public class ConsoleOutput extends AbstractWidget {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
         if (this.isHoveredOrFocused()) {
             // Shift+scroll = horizontal scroll
             boolean shiftHeld = net.minecraft.client.Minecraft.getInstance().getWindow() != null &&

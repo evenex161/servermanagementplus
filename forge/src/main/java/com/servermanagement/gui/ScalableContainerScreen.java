@@ -107,10 +107,8 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
         //    to also invoke renderBg(), which would paint an unscaled "ghost" panel
         //    at design-space (leftPos, topPos) before our pose scale is applied.
         if (this.minecraft != null && this.minecraft.level == null) {
-            this.renderPanorama(g, partialTick);
         }
-        this.renderBlurredBackground(partialTick);
-        this.renderMenuBackground(g);
+        this.renderBackground(g);
 
         // 2. Suppress every further renderBackground call (the one inside
         //    Screen.render, plus any explicit calls inside subclasses'
@@ -218,11 +216,11 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
     }
 
     @Override
-    public void renderBackground(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    public void renderBackground(GuiGraphics g) {
         if (suppressBackgroundOnce) {
             return;
         }
-        super.renderBackground(g, mouseX, mouseY, partialTick);
+        super.renderBackground(g);
     }
 
     @Override
@@ -243,8 +241,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        return super.mouseScrolled(inverseMouseX(mouseX), inverseMouseY(mouseY),
-                scrollX, scrollY);
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
+        return super.mouseScrolled(inverseMouseX(mouseX), inverseMouseY(mouseY), scrollY);
     }
 }

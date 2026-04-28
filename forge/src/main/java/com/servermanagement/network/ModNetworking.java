@@ -79,11 +79,14 @@ public class ModNetworking {
     }
 
     public static void register() {
-        INSTANCE = ChannelBuilder.named(new ResourceLocation(ServerManagementMod.MOD_ID, "main"))
-            .networkProtocolVersion(1)
-            .clientAcceptedVersions((status, version) -> true)
-            .serverAcceptedVersions((status, version) -> true)
-            .simpleChannel();
+        INSTANCE = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation(ServerManagementMod.MOD_ID, "main"),
+            () -> PROTOCOL_VERSION,
+            s -> true,
+            s -> true
+        );
+
+        ServerManagementMod.LOGGER.info("Registering network packets");
         
         // Config packets (bidirectional)
         INSTANCE.registerMessage(id(), ToggleFeaturePacket.class, ToggleFeaturePacket::encode, ToggleFeaturePacket::new, ToggleFeaturePacket::handle);

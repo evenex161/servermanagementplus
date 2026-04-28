@@ -2,7 +2,7 @@ package com.servermanagement.features.economy;
 
 import com.servermanagement.ServerManagementMod;
 import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,11 +26,11 @@ public class AchievementRewardListener {
         }
 
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        AdvancementHolder holder = event.getAdvancement();
+        Advancement holder = event.getAdvancement();
         
         // Only reward for advancements that have a display (shown in-game)
         // This filters out recipe unlocks and hidden advancements
-        DisplayInfo displayInfo = holder.value().display().orElse(null);
+        DisplayInfo displayInfo = holder.getDisplay();
         if (displayInfo == null) {
             return;
         }
@@ -65,17 +65,17 @@ public class AchievementRewardListener {
             "Rewarded player {} with ${} for advancement: {}",
             player.getName().getString(),
             reward,
-            holder.id()
+            holder.getId()
         );
     }
 
     /**
      * Calculate the reward tier based on advancement properties
      */
-    private static AchievementRewardTier calculateTier(AdvancementHolder holder, DisplayInfo displayInfo) {
-        AchievementRewardTier tierFromFrame = AchievementRewardTier.fromFrameType(displayInfo.getType());
-        int criteriaCount = holder.value().criteria().size();
-        boolean hasParent = holder.value().parent().isPresent();
+    private static AchievementRewardTier calculateTier(Advancement holder, DisplayInfo displayInfo) {
+        AchievementRewardTier tierFromFrame = AchievementRewardTier.fromFrameType(displayInfo.getFrame());
+        int criteriaCount = holder.getCriteria().size();
+        boolean hasParent = java.util.Optional.ofNullable(holder.getParent()).isPresent();
         AchievementRewardTier tierFromComplexity = AchievementRewardTier.fromComplexity(criteriaCount, hasParent);
         return tierFromComplexity.ordinal() > tierFromFrame.ordinal() 
             ? tierFromComplexity 
@@ -85,9 +85,9 @@ public class AchievementRewardListener {
     /**
      * Check if player was already rewarded for this advancement
      */
-    private static boolean wasAlreadyRewarded(ServerPlayer player, AdvancementHolder holder) {
+    private static boolean wasAlreadyRewarded(ServerPlayer player, Advancement holder) {
         // Use the achievement tracker for reliable duplicate detection
-        String achievementId = holder.id().toString();
+        String achievementId = holder.getId().toString();
         return EconomyManager.getInstance()
             .getAchievementTracker()
             .hasBeenRewarded(player.getUUID(), achievementId);
@@ -96,8 +96,8 @@ public class AchievementRewardListener {
     /**
      * Mark advancement as rewarded
      */
-    private static void markAsRewarded(ServerPlayer player, AdvancementHolder holder) {
-        String achievementId = holder.id().toString();
+    private static void markAsRewarded(ServerPlayer player, Advancement holder) {
+        String achievementId = holder.getId().toString();
         EconomyManager.getInstance()
             .getAchievementTracker()
             .markAsRewarded(player.getUUID(), achievementId);

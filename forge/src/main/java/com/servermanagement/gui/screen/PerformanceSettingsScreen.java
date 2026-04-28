@@ -250,7 +250,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
         int maxScroll = getMaxScroll();
         if (maxScroll <= 0) return true;
         scrollOffset = (int) Math.max(0, Math.min(maxScroll, scrollOffset - scrollY * SCROLL_STEP));
@@ -260,7 +260,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
 
     @Override
     protected void renderContent(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(g, mouseX, mouseY, partialTick);
+        this.renderBackground(g);
         this.renderBg(g, partialTick, mouseX, mouseY);
 
         int cX = this.leftPos;

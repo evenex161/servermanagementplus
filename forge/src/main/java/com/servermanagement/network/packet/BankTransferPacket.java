@@ -25,10 +25,9 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
         buf.writeDouble(this.amount);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        Supplier<NetworkEvent.Context> context = contextSupplier;
-        context.enqueueWork(() -> {
-            ServerPlayer sender = context.getSender();
+    public void handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            ServerPlayer sender = ctx.get().getSender();
             if (sender == null) {
                 return; // No sender - reject packet
             }
@@ -103,6 +102,6 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
                     "┬ºcTransfer failed - insufficient funds"));
             }
         });
-        context.setPacketHandled(true);
+        ctx.get().setPacketHandled(true);
     }
 }

@@ -141,7 +141,7 @@ public class PlayerManagerSingleton {
                 // Teleport back to original position/dimension
                 var dimensionKey = net.minecraft.resources.ResourceKey.create(
                     net.minecraft.core.registries.Registries.DIMENSION,
-                    net.minecraft.resources.new ResourceLocation(data.dimension)
+                    new net.minecraft.resources.ResourceLocation(data.dimension)
                 );
                 var level = getInstance().server.getLevel(dimensionKey);
                 if (level != null) {
@@ -214,7 +214,7 @@ public class PlayerManagerSingleton {
                     spectator.setCamera(spectator);
                     var dimensionKey = net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.DIMENSION,
-                        net.minecraft.resources.new ResourceLocation(data.dimension)
+                        new net.minecraft.resources.ResourceLocation(data.dimension)
                     );
                     var level = instance.server.getLevel(dimensionKey);
                     if (level != null) {
@@ -259,7 +259,7 @@ public class PlayerManagerSingleton {
                 if (!spectator.level().dimension().location().toString().equals(data.dimension)) {
                     var dimKey = net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.DIMENSION,
-                        net.minecraft.resources.new ResourceLocation(data.dimension)
+                        new net.minecraft.resources.ResourceLocation(data.dimension)
                     );
                     var origLevel = instance.server.getLevel(dimKey);
                     if (origLevel != null) {
@@ -327,7 +327,7 @@ public class PlayerManagerSingleton {
                     spectator.setCamera(spectator);
                     var dimKey = net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.DIMENSION,
-                        net.minecraft.resources.new ResourceLocation(data.dimension)
+                        new net.minecraft.resources.ResourceLocation(data.dimension)
                     );
                     var origLevel = instance.server.getLevel(dimKey);
                     if (origLevel != null) {
@@ -616,15 +616,14 @@ public class PlayerManagerSingleton {
         MinecraftServer server = spectator.getServer();
         if (server == null) return;
         
-        FriendlyByteBuf buf = new FriendlyByteBuf(
-            Unpooled.buffer(), server.registryAccess());
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         try {
             buf.writeEnumSet(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE),
                 ClientboundPlayerInfoUpdatePacket.Action.class);
             buf.writeVarInt(1);
             buf.writeUUID(spectator.getUUID());
             buf.writeVarInt(fakeMode.getId());
-            ClientboundPlayerInfoUpdatePacket fakePacket = ClientboundPlayerInfoUpdatePacket.STREAM_CODEC.decode(buf);
+            ClientboundPlayerInfoUpdatePacket fakePacket = new ClientboundPlayerInfoUpdatePacket(buf);
             
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 if (!player.getUUID().equals(spectator.getUUID())) {
@@ -667,15 +666,14 @@ public class PlayerManagerSingleton {
             ServerPlayer spectator = instance.server.getPlayerList().getPlayer(spectatorUUID);
             if (spectator == null) continue;
             
-            FriendlyByteBuf buf = new FriendlyByteBuf(
-                Unpooled.buffer(), instance.server.registryAccess());
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             try {
                 buf.writeEnumSet(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE),
                     ClientboundPlayerInfoUpdatePacket.Action.class);
                 buf.writeVarInt(1);
                 buf.writeUUID(spectatorUUID);
                 buf.writeVarInt(data.gameMode.getId());
-                ClientboundPlayerInfoUpdatePacket fakePacket = ClientboundPlayerInfoUpdatePacket.STREAM_CODEC.decode(buf);
+                ClientboundPlayerInfoUpdatePacket fakePacket = new ClientboundPlayerInfoUpdatePacket(buf);
                 joiningPlayer.connection.send(fakePacket);
             } finally {
                 buf.release();

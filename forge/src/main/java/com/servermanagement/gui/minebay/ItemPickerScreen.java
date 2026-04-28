@@ -128,7 +128,7 @@ public class ItemPickerScreen extends Screen {
         
         for (int i = 0; i < filteredItems.size(); i++) {
             ItemStack stack = filteredItems.get(i);
-            if (ItemStack.isSameItemSameComponents(stack, item)) {
+            if (ItemStack.isSameItemSameTags(stack, item)) {
                 int row = i / GRID_COLS;
                 // Center the row in view
                 scrollOffset = Math.max(0, Math.min(maxScroll, row - GRID_ROWS / 2));
@@ -178,7 +178,7 @@ public class ItemPickerScreen extends Screen {
             ItemStack stack = filteredItems.get(i);
             
             // Check if this is the highlighted item
-            isHighlighted = highlightItem != null && ItemStack.isSameItemSameComponents(stack, highlightItem);
+            isHighlighted = highlightItem != null && ItemStack.isSameItemSameTags(stack, highlightItem);
             
             // Slot background
             int slotColor = 0xFF8B8B8B;
@@ -266,7 +266,7 @@ public class ItemPickerScreen extends Screen {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
         if (scrollY > 0) {
             scrollOffset = Math.max(0, scrollOffset - 1);
         } else if (scrollY < 0) {

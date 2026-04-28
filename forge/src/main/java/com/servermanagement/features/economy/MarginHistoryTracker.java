@@ -141,7 +141,7 @@ public class MarginHistoryTracker {
         if (!dirty) return;
         
         try {
-            Path dir = server.getServerDirectory().resolve("servermanagement");
+            Path dir = server.getServerDirectory().toPath().resolve("servermanagement");
             Files.createDirectories(dir);
             Path file = dir.resolve("margin_history.dat");
             
@@ -171,7 +171,7 @@ public class MarginHistoryTracker {
     
     public void load(MinecraftServer server) {
         try {
-            Path file = server.getServerDirectory()
+            Path file = server.getServerDirectory().toPath()
                 .resolve("servermanagement").resolve("margin_history.dat");
             
             if (!Files.exists(file)) {

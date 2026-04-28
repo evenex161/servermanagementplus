@@ -239,7 +239,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
     
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderBackground(guiGraphics);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
         // Title

@@ -24,10 +24,9 @@ public record ModFileRequestPacket(String requestedVersion, String clientVersion
         buf.writeUtf(clientMinecraftVersion, 32);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        Supplier<NetworkEvent.Context> context = contextSupplier;
-        context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
+    public void handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            ServerPlayer player = ctx.get().getSender();
             if (player != null) {
                 // Rate limit: one transfer per player per session (prevent DoS/bandwidth abuse)
                 if (ModFileTransferManager.hasActiveOrCompletedTransfer(player)) {
@@ -51,6 +50,6 @@ public record ModFileRequestPacket(String requestedVersion, String clientVersion
                 ModFileTransferManager.startTransfer(player, requestedVersion);
             }
         });
-        context.setPacketHandled(true);
+        ctx.get().setPacketHandled(true);
     }
 }

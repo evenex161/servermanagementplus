@@ -446,7 +446,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
 
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderBackground(guiGraphics);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         
         int x0 = this.leftPos;
@@ -492,7 +492,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
         if (currentSubView == SubView.LIST) {
             int maxRows = getMaxRows();
             List<String> entries = getListEntries();
@@ -507,7 +507,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
                 return true;
             }
         }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return super.mouseScrolled(mouseX, mouseY, scrollY);
     }
 
     @Override

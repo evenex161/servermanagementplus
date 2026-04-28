@@ -34,10 +34,9 @@ public record SendMoneyRequestPacket(String targetPlayerName, double amount, Str
     }
 
     @Override
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        Supplier<NetworkEvent.Context> context = contextSupplier;
-        context.enqueueWork(() -> {
-            ServerPlayer sender = context.getSender();
+    public void handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            ServerPlayer sender = ctx.get().getSender();
             if (sender == null) return;
 
             // Validate player name
@@ -103,7 +102,7 @@ public record SendMoneyRequestPacket(String targetPlayerName, double amount, Str
             syncRequestsToPlayer(sender, econ);
             syncRequestsToPlayer(target, econ);
         });
-        context.setPacketHandled(true);
+        ctx.get().setPacketHandled(true);
     }
 
     static void syncRequestsToPlayer(ServerPlayer player, EconomyManager econ) {

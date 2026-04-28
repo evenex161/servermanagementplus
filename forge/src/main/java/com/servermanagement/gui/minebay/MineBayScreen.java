@@ -777,7 +777,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             if (currentEmpty != originalEmpty) return true;
             if (currentEmpty) continue;
             // Both non-empty \u2014 compare item identity, amount and stack mode
-            if (!net.minecraft.world.item.ItemStack.isSameItemSameComponents(
+            if (!net.minecraft.world.item.ItemStack.isSameItemSameTags(
                     current.getItemStack(), original.getItemStack())) return true;
             if (current.getAmount() != original.getAmount()) return true;
             if (current.isUseStacks() != original.isUseStacks()) return true;
@@ -2849,7 +2849,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     }
     
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollY) {
         if (currentState == ScreenState.BROWSE && !listings.isEmpty()) {
             int maxScroll = Math.max(0, listings.size() - LISTINGS_PER_PAGE);
             if (scrollY > 0) {
@@ -2860,7 +2860,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             this.rebuildWidgets();
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return super.mouseScrolled(mouseX, mouseY, scrollY);
     }
     
     @Override

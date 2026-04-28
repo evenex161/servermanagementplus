@@ -800,7 +800,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         }
         
         // Render background first
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderBackground(guiGraphics);
         
         // Save matrix state and apply shake
         guiGraphics.pose().pushPose();

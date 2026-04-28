@@ -26,11 +26,10 @@ public record ModFileCompletePacket(String fileHash, long fileSize, String versi
         buf.writeUtf(message, 256);
     }
     
-    public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        Supplier<NetworkEvent.Context> context = contextSupplier;
-        context.enqueueWork(() -> {
+    public void handle(Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
             // This runs on the client
-            if (context.getSender() == null) {
+            if (ctx.get().getSender() == null) {
                 // We're on the client side
                 if (success) {
                     ServerManagementMod.LOGGER.info("Mod file transfer completed successfully");
@@ -44,6 +43,6 @@ public record ModFileCompletePacket(String fileHash, long fileSize, String versi
                 }
             }
         });
-        context.setPacketHandled(true);
+        ctx.get().setPacketHandled(true);
     }
 }

@@ -58,7 +58,7 @@ public class MineBayOffer {
         // Save item offers
         CompoundTag itemOffersTag = new CompoundTag();
         for (int i = 0; i < itemOffers.size(); i++) {
-            itemOffersTag.put("Item" + i, itemOffers.get(i).saveOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
+            itemOffersTag.put("Item" + i, itemOffers.get(i).save(new CompoundTag()));
         }
         itemOffersTag.putInt("Count", itemOffers.size());
         tag.put("ItemOffers", itemOffersTag);
@@ -89,7 +89,7 @@ public class MineBayOffer {
         int itemCount = itemOffersTag.getInt("Count");
         offer.itemOffers = new ArrayList<>();
         for (int i = 0; i < itemCount; i++) {
-            offer.itemOffers.add(ItemStack.parseOptional(net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), itemOffersTag.getCompound("Item" + i)));
+            offer.itemOffers.add(ItemStack.of(itemOffersTag.getCompound("Item" + i)));
         }
         
         return offer;

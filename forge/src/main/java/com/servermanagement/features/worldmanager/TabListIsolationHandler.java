@@ -244,8 +244,7 @@ public class TabListIsolationHandler {
      */
     private static ClientboundPlayerInfoUpdatePacket createUpdateListedPacket(
             MinecraftServer server, List<UUID> playerUUIDs, boolean listed) {
-        FriendlyByteBuf buf = new FriendlyByteBuf(
-            Unpooled.buffer(), server.registryAccess());
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
         try {
             buf.writeEnumSet(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED),
                 ClientboundPlayerInfoUpdatePacket.Action.class);
@@ -254,7 +253,7 @@ public class TabListIsolationHandler {
                 buf.writeUUID(uuid);
                 buf.writeBoolean(listed);
             }
-            return ClientboundPlayerInfoUpdatePacket.STREAM_CODEC.decode(buf);
+            return new ClientboundPlayerInfoUpdatePacket(buf);
         } finally {
             buf.release();
         }
