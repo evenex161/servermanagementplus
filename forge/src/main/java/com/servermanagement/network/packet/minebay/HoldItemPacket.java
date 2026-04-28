@@ -6,6 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
@@ -13,15 +14,10 @@ import java.util.function.Supplier;
  * Packet sent from client to server to hold an item for listing creation
  * Removes item from player inventory and stores it server-side
  */
-public class HoldItemPacket implements IPacket {
-    private final int slotIndex;
-    
-    public HoldItemPacket(int slotIndex) {
-        this.slotIndex = slotIndex;
-    }
+public record HoldItemPacket(int slotIndex) implements IPacket {
     
     public HoldItemPacket(FriendlyByteBuf buf) {
-        this.slotIndex = buf.readInt();
+        this(buf.readInt());
     }
     
     @Override

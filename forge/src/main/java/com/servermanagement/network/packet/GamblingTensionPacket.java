@@ -2,6 +2,7 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
@@ -9,9 +10,7 @@ import java.util.function.Supplier;
  * Packet sent from server to client to trigger gambling tension animation
  * Sent immediately when bet is placed, before the actual result
  */
-public class GamblingTensionPacket implements IPacket {
-    private final GameType gameType;
-    private final String gameOption; // For specific animations (e.g., which roulette bet)
+public record GamblingTensionPacket(GameType gameType, String gameOption) implements IPacket {
     
     public enum GameType {
         COIN_FLIP,
@@ -20,14 +19,8 @@ public class GamblingTensionPacket implements IPacket {
         ROULETTE
     }
     
-    public GamblingTensionPacket(GameType gameType, String gameOption) {
-        this.gameType = gameType;
-        this.gameOption = gameOption;
-    }
-    
     public GamblingTensionPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(GameType.class);
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(GameType.class), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {

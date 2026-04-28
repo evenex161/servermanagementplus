@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,38 +17,36 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to create a new MineBay listing
  */
-public class CreateListingPacket implements IPacket {
-    private final ItemStack itemToSell;
-    private final double moneyPrice;
-    private final double marginPercent; // Seller's desired margin %
-    private final MineBayListing.OfferType offerType;
-    private final List<PriceItemEntry> priceItems;
-    
-    public CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent, MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) {
+public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent,
+                                   MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) implements IPacket {
+
+    public CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent,
+                               MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) {
         this.itemToSell = itemToSell.copy();
         this.moneyPrice = moneyPrice;
         this.marginPercent = marginPercent;
         this.offerType = offerType;
         this.priceItems = new ArrayList<>(priceItems);
     }
-    
+
     public CreateListingPacket(FriendlyByteBuf buf) {
-        this.itemToSell = buf.readItem();
-        this.moneyPrice = buf.readDouble();
-        this.marginPercent = buf.readDouble();
-        this.offerType = buf.readEnum(MineBayListing.OfferType.class);
-        
-        // Read price items
-        int priceItemCount = buf.readInt();
-        this.priceItems = new ArrayList<>();
+        this(buf.readItem(),
+             buf.readDouble(), buf.readDouble(), buf.readEnum(MineBayListing.OfferType.class),
+             readPriceItems(buf));
+    }
+
+    private static List<PriceItemEntry> readPriceItems(FriendlyByteBuf buf) {
+        int priceItemCount = Math.min(buf.readInt(), 54);
+        List<PriceItemEntry> items = new ArrayList<>();
         for (int i = 0; i < priceItemCount; i++) {
             ItemStack itemStack = buf.readItem();
             int amount = buf.readInt();
             boolean useStacks = buf.readBoolean();
             if (!itemStack.isEmpty()) {
-                this.priceItems.add(new PriceItemEntry(itemStack, amount, useStacks));
+                items.add(new PriceItemEntry(itemStack, amount, useStacks));
             }
         }
+        return items;
     }
     
     @Override
@@ -88,7 +87,7 @@ public class CreateListingPacket implements IPacket {
                 if (serverItem.isEmpty()) {
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "§c✗ Error: No item was placed for listing"
+                            "┬ºcÔ£ù Error: No item was placed for listing"
                         )
                     );
                     return;
@@ -130,7 +129,7 @@ public class CreateListingPacket implements IPacket {
                     player.getInventory().placeItemBackInInventory(serverItem);
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "§c✗ You have reached the maximum number of active listings (" + maxListings + ")"
+                            "┬ºcÔ£ù You have reached the maximum number of active listings (" + maxListings + ")"
                         )
                     );
                     return;
@@ -147,7 +146,7 @@ public class CreateListingPacket implements IPacket {
                 // Send success message
                 player.displayClientMessage(
                     net.minecraft.network.chat.Component.literal(
-                        "§a§l✓ §r§6[MineBay] §aListing created for §f" + listing.getItemForSale().getHoverName().getString()
+                        "┬ºa┬ºlÔ£ô ┬ºr┬º6[MineBay] ┬ºaListing created for ┬ºf" + listing.getItemForSale().getHoverName().getString()
                     ), true
                 );
                 

@@ -2,23 +2,23 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class SyncWorldListPacket implements IPacket {
-    private final List<WorldInfo> worlds;
-
-    public SyncWorldListPacket(List<WorldInfo> worlds) {
-        this.worlds = worlds;
-    }
+public record SyncWorldListPacket(List<WorldInfo> worlds) implements IPacket {
 
     public SyncWorldListPacket(FriendlyByteBuf buf) {
+        this(readWorlds(buf));
+    }
+
+    private static List<WorldInfo> readWorlds(FriendlyByteBuf buf) {
         int size = buf.readInt();
-        this.worlds = new ArrayList<>();
+        List<WorldInfo> list = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            worlds.add(new WorldInfo(
+            list.add(new WorldInfo(
                 buf.readUtf(256),
                 buf.readUtf(128),
                 buf.readBoolean(),
@@ -26,6 +26,7 @@ public class SyncWorldListPacket implements IPacket {
                 buf.readInt()
             ));
         }
+        return list;
     }
 
     @Override
@@ -47,10 +48,6 @@ public class SyncWorldListPacket implements IPacket {
             com.servermanagement.client.ClientPacketHandler.handleWorldList(worlds);
         });
         ctx.get().setPacketHandled(true);
-    }
-
-    public List<WorldInfo> getWorlds() {
-        return worlds;
     }
 
     public static class WorldInfo {

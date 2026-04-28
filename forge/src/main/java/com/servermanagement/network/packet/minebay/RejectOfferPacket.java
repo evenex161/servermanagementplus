@@ -19,18 +19,10 @@ import java.util.function.Supplier;
  * Packet sent from client to server when a seller rejects an offer.
  * Returns escrowed items and money to the buyer.
  */
-public class RejectOfferPacket implements IPacket {
-    private final String listingId;
-    private final String offerId;
-    
-    public RejectOfferPacket(String listingId, String offerId) {
-        this.listingId = listingId;
-        this.offerId = offerId;
-    }
+public record RejectOfferPacket(String listingId, String offerId) implements IPacket {
     
     public RejectOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.offerId = buf.readUtf(36);
+        this(buf.readUtf(36), buf.readUtf(36));
     }
     
     @Override
@@ -50,12 +42,12 @@ public class RejectOfferPacket implements IPacket {
             
             // Validation
             if (listing == null) {
-                seller.sendSystemMessage(Component.literal("§cListing not found!"));
+                seller.sendSystemMessage(Component.literal("┬ºcListing not found!"));
                 return;
             }
             
             if (!listing.getSellerId().equals(seller.getUUID())) {
-                seller.sendSystemMessage(Component.literal("§cYou can only reject offers on your own listings!"));
+                seller.sendSystemMessage(Component.literal("┬ºcYou can only reject offers on your own listings!"));
                 return;
             }
             
@@ -69,7 +61,7 @@ public class RejectOfferPacket implements IPacket {
             }
             
             if (rejectedOffer == null) {
-                seller.sendSystemMessage(Component.literal("§cOffer not found or already processed!"));
+                seller.sendSystemMessage(Component.literal("┬ºcOffer not found or already processed!"));
                 return;
             }
             
@@ -93,10 +85,10 @@ public class RejectOfferPacket implements IPacket {
                     if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, stack)) {
                         com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                             .addItem(buyer.getUUID(), stack);
-                        buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                        buyer.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
                     }
                 } else {
-                    // Buyer is offline — store in overflow
+                    // Buyer is offline ÔÇö store in overflow
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(rejectedOffer.getBuyerId(), stack);
                 }
@@ -108,7 +100,7 @@ public class RejectOfferPacket implements IPacket {
             
             // Notify seller (action bar)
             seller.displayClientMessage(Component.literal(
-                "§e[MineBay] §cOffer rejected §7— escrowed items/money returned to buyer"), true);
+                "┬ºe[MineBay] ┬ºcOffer rejected ┬º7ÔÇö escrowed items/money returned to buyer"), true);
             
             // Sync bank account if buyer is online
             if (buyer != null) {
@@ -116,12 +108,12 @@ public class RejectOfferPacket implements IPacket {
                     .getOrCreateAccount(rejectedOffer.getBuyerId());
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new com.servermanagement.network.packet.SyncBankAccountPacket(
-                        buyerAccount.getBalance(), buyerAccount.getRecentTransactions(10)),
+                        buyerAccount.getBalance(), buyerAccount.getTransactions()),
                     buyer
                 );
                 buyer.displayClientMessage(Component.literal(
-                    "§e[MineBay] §c" + seller.getName().getString() + " rejected your offer on §f" + 
-                    listing.getItemForSale().getHoverName().getString() + " §7— escrowed items/money returned"), true);
+                    "┬ºe[MineBay] ┬ºc" + seller.getName().getString() + " rejected your offer on ┬ºf" + 
+                    listing.getItemForSale().getHoverName().getString() + " ┬º7ÔÇö escrowed items/money returned"), true);
             }
         });
         ctx.get().setPacketHandled(true);

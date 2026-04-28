@@ -4,13 +4,12 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-public record PMSpectatePlayerPacket(String playerName) implements IPacket {
+public record PMUnbanPlayerPacket(String playerName) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
 
-    public PMSpectatePlayerPacket(FriendlyByteBuf buf) {
+    public PMUnbanPlayerPacket(FriendlyByteBuf buf) {
         this(buf.readUtf(16));
     }
 
@@ -27,7 +26,8 @@ public record PMSpectatePlayerPacket(String playerName) implements IPacket {
                 if (playerName == null || playerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(playerName).matches()) {
                     return;
                 }
-                com.servermanagement.features.playermanager.PlayerManagerSingleton.spectatePlayer(player, playerName);
+                com.servermanagement.features.playermanager.PlayerManagerSingleton.unbanPlayer(player, playerName);
+                com.servermanagement.features.playermanager.PlayerManagerSingleton.sendPlayerLists(player);
             }
         });
         ctx.get().setPacketHandled(true);

@@ -7,6 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -14,18 +15,10 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to place a gambling bet with an item
  */
-public class PlaceGamblingBetWithItemPacket implements IPacket {
-    private final PlaceGamblingBetPacket.GameType gameType;
-    private final String gameOption;
-    
-    public PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gameType, String gameOption) {
-        this.gameType = gameType;
-        this.gameOption = gameOption;
-    }
+public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gameType, String gameOption) implements IPacket {
     
     public PlaceGamblingBetWithItemPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(PlaceGamblingBetPacket.GameType.class);
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(PlaceGamblingBetPacket.GameType.class), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -43,7 +36,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
             // Validate game option
             if (this.gameOption == null || this.gameOption.length() > 50) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid game option"));
+                    "┬ºcInvalid game option"));
                 return;
             }
             
@@ -56,7 +49,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                 // Validate item
                 if (bettingItem == null || bettingItem.isEmpty()) {
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cNo betting item found"));
+                        "┬ºcNo betting item found"));
                     return;
                 }
                 
@@ -66,7 +59,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                         .getBasePrice(bettingItem) * bettingItem.getCount();
                     if (marketValue < GamblingManager.MIN_BET) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cThis item cannot be used for gambling (value: $" + 
+                            "┬ºcThis item cannot be used for gambling (value: $" + 
                             String.format("%.2f", marketValue) + ", min: $" + 
                             String.format("%.0f", GamblingManager.MIN_BET) + ")"));
                         return;
@@ -81,7 +74,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                     game = createGame(this.gameType, this.gameOption);
                 } catch (Exception e) {
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cInvalid game parameters"));
+                        "┬ºcInvalid game parameters"));
                     return;
                 }
                 
@@ -146,7 +139,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                                 
                                 // Sync updated balance to client
                                 com.servermanagement.network.ModNetworking.sendToPlayer(
-                                    new SyncBankAccountPacket(account.getBalance(), account.getRecentTransactions(10)),
+                                    new SyncBankAccountPacket(account.getBalance(), account.getTransactions()),
                                     onlinePlayer
                                 );
                                 
@@ -175,7 +168,7 @@ public class PlaceGamblingBetWithItemPacket implements IPacket {
                 }
             } else {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid gambling menu state"));
+                    "┬ºcInvalid gambling menu state"));
             }
         });
         ctx.get().setPacketHandled(true);

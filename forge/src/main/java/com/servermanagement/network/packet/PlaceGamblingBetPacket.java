@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,34 +18,22 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to place a gambling bet
  */
-public class PlaceGamblingBetPacket implements IPacket {
+public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String gameOption) implements IPacket {
     private static final ScheduledExecutorService DELAYED_EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "ServerManagement-GamblingDelay");
         t.setDaemon(true);
         return t;
     });
 
-    private final GameType gameType;
-    private final double betAmount;
-    private final String gameOption; // e.g., "heads", "HIGH", "RED", etc.
-    
     public enum GameType {
         COIN_FLIP,
         DICE_ROLL,
         SLOT_MACHINE,
         ROULETTE
     }
-    
-    public PlaceGamblingBetPacket(GameType gameType, double betAmount, String gameOption) {
-        this.gameType = gameType;
-        this.betAmount = betAmount;
-        this.gameOption = gameOption;
-    }
-    
+
     public PlaceGamblingBetPacket(FriendlyByteBuf buf) {
-        this.gameType = buf.readEnum(GameType.class);
-        this.betAmount = buf.readDouble();
-        this.gameOption = buf.readUtf(64);
+        this(buf.readEnum(GameType.class), buf.readDouble(), buf.readUtf(64));
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -63,19 +52,19 @@ public class PlaceGamblingBetPacket implements IPacket {
             // Input validation - prevent exploits
             if (Double.isNaN(this.betAmount) || Double.isInfinite(this.betAmount)) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid bet amount"));
+                    "┬ºcInvalid bet amount"));
                 return;
             }
             
             if (this.betAmount < 10.0 || this.betAmount > 10000.0) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cBet amount must be between $10 and $10,000"));
+                    "┬ºcBet amount must be between $10 and $10,000"));
                 return;
             }
             
             if (this.gameOption == null || this.gameOption.length() > 50) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid game option"));
+                    "┬ºcInvalid game option"));
                 return;
             }
             
@@ -87,7 +76,7 @@ public class PlaceGamblingBetPacket implements IPacket {
                 game = createGame(this.gameType, this.gameOption);
             } catch (Exception e) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid game parameters"));
+                    "┬ºcInvalid game parameters"));
                 return;
             }
             
@@ -134,28 +123,40 @@ public class PlaceGamblingBetPacket implements IPacket {
                 com.servermanagement.features.gambling.GamblingStats stats = 
                     gamblingManager.getStats(player.getUUID());
                 
+                // Capture player UUID for safe re-lookup after delay
+                java.util.UUID playerUUID = player.getUUID();
+                
                 // Schedule delayed result reveal (3 seconds) without blocking server thread
                 MinecraftServer server = gamblingManager.getServer();
                 if (server != null) {
                     DELAYED_EXECUTOR.schedule(() -> {
                         // Execute on the main server thread for thread safety
                         server.execute(() -> {
+                            // Re-lookup player by UUID ÔÇö original reference may be stale
+                            // (player could have disconnected/reconnected during the 3s delay)
+                            ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUUID);
+                            if (currentPlayer == null) return; // Player disconnected
+                            
+                            // Re-fetch account with fresh data
+                            com.servermanagement.features.economy.BankAccount freshAccount = 
+                                economyManager.getOrCreateAccount(playerUUID);
+                            
                             // Send result back to client after delay
                             com.servermanagement.network.ModNetworking.sendToPlayer(
                                 new GamblingResultPacket(result.isWon(), result.getPayout(), result.getMessage()),
-                                player
+                                currentPlayer
                             );
                             
                             // Sync updated balance to client
                             com.servermanagement.network.ModNetworking.sendToPlayer(
-                                new SyncBankAccountPacket(account.getBalance(), account.getRecentTransactions(10)),
-                                player
+                                new SyncBankAccountPacket(freshAccount.getBalance(), freshAccount.getTransactions()),
+                                currentPlayer
                             );
                             
                             // Update MineStacks menu balance if the player has it open
-                            if (player.containerMenu instanceof com.servermanagement.gui.gambling.MineStacksMenu) {
-                                ((com.servermanagement.gui.gambling.MineStacksMenu) player.containerMenu)
-                                    .updateBalance(account.getBalance());
+                            if (currentPlayer.containerMenu instanceof com.servermanagement.gui.gambling.MineStacksMenu) {
+                                ((com.servermanagement.gui.gambling.MineStacksMenu) currentPlayer.containerMenu)
+                                    .updateBalance(freshAccount.getBalance());
                             }
                             
                             // Sync gambling stats to client
@@ -170,7 +171,7 @@ public class PlaceGamblingBetPacket implements IPacket {
                                     stats.getBiggestWin(),
                                     stats.getBiggestLoss()
                                 ),
-                                player
+                                currentPlayer
                             );
                         });
                     }, 3, TimeUnit.SECONDS);

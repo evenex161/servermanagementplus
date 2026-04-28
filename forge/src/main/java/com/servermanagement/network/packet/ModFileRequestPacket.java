@@ -5,27 +5,17 @@ import com.servermanagement.server.ModFileTransferManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Packet sent from client to server to request the mod JAR file for OTA update.
  */
-public class ModFileRequestPacket implements IPacket {
-    private final String requestedVersion;
-    private final String clientVersion;
-    private final String clientMinecraftVersion;
-    
-    public ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) {
-        this.requestedVersion = requestedVersion;
-        this.clientVersion = clientVersion;
-        this.clientMinecraftVersion = clientMinecraftVersion;
-    }
+public record ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) implements IPacket {
     
     public ModFileRequestPacket(FriendlyByteBuf buf) {
-        this.requestedVersion = buf.readUtf(64);
-        this.clientVersion = buf.readUtf(64);
-        this.clientMinecraftVersion = buf.readUtf(32);
+        this(buf.readUtf(64), buf.readUtf(64), buf.readUtf(32));
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -35,10 +25,17 @@ public class ModFileRequestPacket implements IPacket {
     }
     
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
+        Supplier<NetworkEvent.Context> context = contextSupplier;
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player != null) {
+                // Rate limit: one transfer per player per session (prevent DoS/bandwidth abuse)
+                if (ModFileTransferManager.hasActiveOrCompletedTransfer(player)) {
+                    ServerManagementMod.LOGGER.warn("Player {} already has an active or completed transfer, rejecting request",
+                        player.getName().getString());
+                    return;
+                }
+                
                 ServerManagementMod.LOGGER.info("Player {} requested mod update from {} to {} (MC {})", 
                     player.getName().getString(), clientVersion, requestedVersion, clientMinecraftVersion);
                 
@@ -55,17 +52,5 @@ public class ModFileRequestPacket implements IPacket {
             }
         });
         context.setPacketHandled(true);
-    }
-    
-    public String getRequestedVersion() {
-        return requestedVersion;
-    }
-    
-    public String getClientVersion() {
-        return clientVersion;
-    }
-    
-    public String getClientMinecraftVersion() {
-        return clientMinecraftVersion;
     }
 }

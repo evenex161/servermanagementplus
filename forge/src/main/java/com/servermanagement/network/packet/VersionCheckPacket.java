@@ -5,6 +5,7 @@ import com.servermanagement.client.OTAUpdateManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
@@ -12,35 +13,12 @@ import java.util.function.Supplier;
  * Packet sent from server to client to check mod version compatibility.
  * Triggers OTA update if versions don't match.
  */
-public class VersionCheckPacket implements IPacket {
-    private final String serverModVersion;
-    private final int serverDataVersion;
-    private final String serverModJarName;
-    private final String serverModJarHash; // SHA-256 hash
-    private final long serverModJarSize;
-    private final String serverMinecraftVersion;
-    private final String serverModLoader;
-    
-    public VersionCheckPacket(String serverModVersion, int serverDataVersion, 
-                             String serverModJarName, String serverModJarHash, long serverModJarSize,
-                             String serverMinecraftVersion, String serverModLoader) {
-        this.serverModVersion = serverModVersion;
-        this.serverDataVersion = serverDataVersion;
-        this.serverModJarName = serverModJarName;
-        this.serverModJarHash = serverModJarHash;
-        this.serverModJarSize = serverModJarSize;
-        this.serverMinecraftVersion = serverMinecraftVersion;
-        this.serverModLoader = serverModLoader;
-    }
-    
+public record VersionCheckPacket(String serverModVersion, int serverDataVersion, String serverModJarName,
+                                  String serverModJarHash, long serverModJarSize, String serverMinecraftVersion,
+                                  String serverModLoader) implements IPacket {
+
     public VersionCheckPacket(FriendlyByteBuf buf) {
-        this.serverModVersion = buf.readUtf(64);
-        this.serverDataVersion = buf.readInt();
-        this.serverModJarName = buf.readUtf(256);
-        this.serverModJarHash = buf.readUtf(128);
-        this.serverModJarSize = buf.readLong();
-        this.serverMinecraftVersion = buf.readUtf(32);
-        this.serverModLoader = buf.readUtf(32);
+        this(buf.readUtf(64), buf.readInt(), buf.readUtf(256), buf.readUtf(128), buf.readLong(), buf.readUtf(32), buf.readUtf(32));
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -54,7 +32,7 @@ public class VersionCheckPacket implements IPacket {
     }
     
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
+        Supplier<NetworkEvent.Context> context = contextSupplier;
         context.enqueueWork(() -> {
             // This runs on the client
             com.servermanagement.ota.OTAVersion clientOTAVersion = 
@@ -108,33 +86,5 @@ public class VersionCheckPacket implements IPacket {
             }
         });
         context.setPacketHandled(true);
-    }
-    
-    public String getServerModVersion() {
-        return serverModVersion;
-    }
-    
-    public int getServerDataVersion() {
-        return serverDataVersion;
-    }
-    
-    public String getServerModJarName() {
-        return serverModJarName;
-    }
-    
-    public String getServerModJarHash() {
-        return serverModJarHash;
-    }
-    
-    public long getServerModJarSize() {
-        return serverModJarSize;
-    }
-    
-    public String getServerMinecraftVersion() {
-        return serverMinecraftVersion;
-    }
-    
-    public String getServerModLoader() {
-        return serverModLoader;
     }
 }

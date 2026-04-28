@@ -7,30 +7,22 @@ import com.servermanagement.features.economy.MoneyRequestManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Client → Server: Respond to a money request (accept, deny, or cancel)
+ * Client ÔåÆ Server: Respond to a money request (accept, deny, or cancel)
  */
-public class RespondMoneyRequestPacket implements IPacket {
+public record RespondMoneyRequestPacket(UUID requestId, Action action) implements IPacket {
     
     public enum Action {
         ACCEPT, DENY, CANCEL
     }
 
-    private final UUID requestId;
-    private final Action action;
-
-    public RespondMoneyRequestPacket(UUID requestId, Action action) {
-        this.requestId = requestId;
-        this.action = action;
-    }
-
     public RespondMoneyRequestPacket(FriendlyByteBuf buf) {
-        this.requestId = buf.readUUID();
-        this.action = buf.readEnum(Action.class);
+        this(buf.readUUID(), buf.readEnum(Action.class));
     }
 
     @Override
@@ -41,7 +33,7 @@ public class RespondMoneyRequestPacket implements IPacket {
 
     @Override
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
+        Supplier<NetworkEvent.Context> context = contextSupplier;
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null) return;
@@ -52,16 +44,16 @@ public class RespondMoneyRequestPacket implements IPacket {
 
             if (request == null) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cRequest not found or already processed"));
+                    "┬ºcRequest not found or already processed"));
                 return;
             }
 
             switch (action) {
                 case ACCEPT -> {
-                    // Player is the target — they pay the requester
+                    // Player is the target ÔÇö they pay the requester
                     if (!request.getTargetUUID().equals(player.getUUID())) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cYou cannot accept this request"));
+                            "┬ºcYou cannot accept this request"));
                         return;
                     }
 
@@ -69,7 +61,7 @@ public class RespondMoneyRequestPacket implements IPacket {
                     BankAccount payerAccount = econ.getOrCreateAccount(player.getUUID());
                     if (payerAccount.getBalance() < request.getAmount()) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cInsufficient funds to fulfill this request"));
+                            "┬ºcInsufficient funds to fulfill this request"));
                         return;
                     }
 
@@ -77,7 +69,7 @@ public class RespondMoneyRequestPacket implements IPacket {
                     boolean success = econ.transfer(player.getUUID(), request.getRequesterUUID(), request.getAmount());
                     if (!success) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cTransfer failed"));
+                            "┬ºcTransfer failed"));
                         return;
                     }
 
@@ -85,13 +77,13 @@ public class RespondMoneyRequestPacket implements IPacket {
                     reqManager.save(player.server);
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        String.format("§aPaid $%.2f to fulfill the request", request.getAmount())));
+                        String.format("┬ºaPaid $%.2f to fulfill the request", request.getAmount())));
 
                     // Notify requester if online
                     ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            String.format("§a%s accepted your money request for $%.2f!",
+                            String.format("┬ºa%s accepted your money request for $%.2f!",
                                 player.getName().getString(), request.getAmount())));
                         // Sync both players' bank data + requests
                         syncBankAndRequests(requester, econ);
@@ -101,20 +93,20 @@ public class RespondMoneyRequestPacket implements IPacket {
                 case DENY -> {
                     if (!request.getTargetUUID().equals(player.getUUID())) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cYou cannot deny this request"));
+                            "┬ºcYou cannot deny this request"));
                         return;
                     }
 
                     reqManager.denyRequest(requestId, player.getUUID());
                     reqManager.save(player.server);
 
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request denied"));
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬º7Request denied"));
 
                     // Notify requester if online
                     ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            String.format("§c%s denied your request for $%.2f",
+                            String.format("┬ºc%s denied your request for $%.2f",
                                 player.getName().getString(), request.getAmount())));
                         SendMoneyRequestPacket.syncRequestsToPlayer(requester, econ);
                     }
@@ -123,14 +115,14 @@ public class RespondMoneyRequestPacket implements IPacket {
                 case CANCEL -> {
                     if (!request.getRequesterUUID().equals(player.getUUID())) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cYou cannot cancel this request"));
+                            "┬ºcYou cannot cancel this request"));
                         return;
                     }
 
                     reqManager.cancelRequest(requestId, player.getUUID());
                     reqManager.save(player.server);
 
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request cancelled"));
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬º7Request cancelled"));
 
                     // Notify target if online
                     ServerPlayer target = player.server.getPlayerList().getPlayer(request.getTargetUUID());
@@ -148,7 +140,7 @@ public class RespondMoneyRequestPacket implements IPacket {
         // Sync bank balance
         BankAccount account = econ.getOrCreateAccount(player.getUUID());
         com.servermanagement.network.ModNetworking.sendToPlayer(
-            new SyncBankAccountPacket(account.getBalance(), account.getRecentTransactions(10)),
+            new SyncBankAccountPacket(account.getBalance(), account.getTransactions()),
             player);
         // Sync requests
         SendMoneyRequestPacket.syncRequestsToPlayer(player, econ);

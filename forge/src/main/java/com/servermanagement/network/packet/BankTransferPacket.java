@@ -5,6 +5,7 @@ import com.servermanagement.features.economy.EconomyManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -12,19 +13,11 @@ import java.util.regex.Pattern;
 /**
  * Packet for transferring money between players
  */
-public class BankTransferPacket implements IPacket {
+public record BankTransferPacket(String targetPlayerName, double amount) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String targetPlayerName;
-    private final double amount;
-    
-    public BankTransferPacket(String targetPlayerName, double amount) {
-        this.targetPlayerName = targetPlayerName;
-        this.amount = amount;
-    }
     
     public BankTransferPacket(FriendlyByteBuf buf) {
-        this.targetPlayerName = buf.readUtf(16);
-        this.amount = buf.readDouble();
+        this(buf.readUtf(16), buf.readDouble());
     }
     
     public void encode(FriendlyByteBuf buf) {
@@ -33,7 +26,7 @@ public class BankTransferPacket implements IPacket {
     }
     
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
+        Supplier<NetworkEvent.Context> context = contextSupplier;
         context.enqueueWork(() -> {
             ServerPlayer sender = context.getSender();
             if (sender == null) {
@@ -43,26 +36,26 @@ public class BankTransferPacket implements IPacket {
             // Input validation - prevent exploits
             if (this.targetPlayerName == null || this.targetPlayerName.trim().isEmpty()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid player name"));
+                    "┬ºcInvalid player name"));
                 return;
             }
             
             // Sanitize player name (prevent injection/exploits)
             if (this.targetPlayerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(this.targetPlayerName).matches()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid player name format"));
+                    "┬ºcInvalid player name format"));
                 return;
             }
             
             if (Double.isNaN(this.amount) || Double.isInfinite(this.amount) || this.amount <= 0) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid transfer amount"));
+                    "┬ºcInvalid transfer amount"));
                 return;
             }
             
             if (this.amount < 0.01 || this.amount > 1000000.0) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cTransfer amount must be between $0.01 and $1,000,000"));
+                    "┬ºcTransfer amount must be between $0.01 and $1,000,000"));
                 return;
             }
             
@@ -70,13 +63,13 @@ public class BankTransferPacket implements IPacket {
             ServerPlayer target = sender.server.getPlayerList().getPlayerByName(targetPlayerName);
             if (target == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cPlayer not found: " + targetPlayerName));
+                    "┬ºcPlayer not found: " + targetPlayerName));
                 return;
             }
             
             if (target.getUUID().equals(sender.getUUID())) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cYou cannot transfer money to yourself"));
+                    "┬ºcYou cannot transfer money to yourself"));
                 return;
             }
             
@@ -86,9 +79,9 @@ public class BankTransferPacket implements IPacket {
             
             if (success) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    String.format("§aTransferred $%.2f to %s", amount, target.getName().getString())));
+                    String.format("┬ºaTransferred $%.2f to %s", amount, target.getName().getString())));
                 target.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    String.format("§aReceived $%.2f from %s", amount, sender.getName().getString())));
+                    String.format("┬ºaReceived $%.2f from %s", amount, sender.getName().getString())));
                 
                 // Sync balances and transactions
                 BankAccount senderAccount = manager.getOrCreateAccount(sender.getUUID());
@@ -97,17 +90,17 @@ public class BankTransferPacket implements IPacket {
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new SyncBankAccountPacket(
                         senderAccount.getBalance(), 
-                        senderAccount.getRecentTransactions(10)
+                        senderAccount.getTransactions()
                     ), sender);
                     
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new SyncBankAccountPacket(
                         targetAccount.getBalance(), 
-                        targetAccount.getRecentTransactions(10)
+                        targetAccount.getTransactions()
                     ), target);
             } else {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cTransfer failed - insufficient funds"));
+                    "┬ºcTransfer failed - insufficient funds"));
             }
         });
         context.setPacketHandled(true);

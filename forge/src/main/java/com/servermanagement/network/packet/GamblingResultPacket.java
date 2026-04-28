@@ -2,27 +2,17 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Packet sent from server to client with gambling result
  */
-public class GamblingResultPacket implements IPacket {
-    private final boolean won;
-    private final double payout;
-    private final String message;
-    
-    public GamblingResultPacket(boolean won, double payout, String message) {
-        this.won = won;
-        this.payout = payout;
-        this.message = message;
-    }
+public record GamblingResultPacket(boolean won, double payout, String message) implements IPacket {
     
     public GamblingResultPacket(FriendlyByteBuf buf) {
-        this.won = buf.readBoolean();
-        this.payout = buf.readDouble();
-        this.message = buf.readUtf(256);
+        this(buf.readBoolean(), buf.readDouble(), buf.readUtf(256));
     }
     
     public void encode(FriendlyByteBuf buf) {

@@ -2,15 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
-public class RequestWorldListPacket implements IPacket {
-
-    public RequestWorldListPacket() {
-    }
+public record RequestWorldListPacket() implements IPacket {
 
     public RequestWorldListPacket(FriendlyByteBuf buf) {
+        this();
     }
 
     @Override

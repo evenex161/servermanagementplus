@@ -21,26 +21,20 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server when a player makes an offer on a NEGOTIABLE listing
  */
-public class CreateOfferPacket implements IPacket {
-    private final String listingId;
-    private final double moneyOffer;
-    private final List<ItemStack> itemOffers;
-    
-    public CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) {
-        this.listingId = listingId;
-        this.moneyOffer = moneyOffer;
-        this.itemOffers = itemOffers;
-    }
-    
+public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) implements IPacket {
+
     public CreateOfferPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.moneyOffer = Math.max(0.0, buf.readDouble()); // Clamp negative values
+        this(buf.readUtf(36), Math.max(0.0, buf.readDouble()), readItemOffers(buf));
+    }
+
+    private static List<ItemStack> readItemOffers(FriendlyByteBuf buf) {
         int itemCount = buf.readInt();
-        if (itemCount < 0 || itemCount > 27) itemCount = 0; // Cap to prevent memory exhaustion
-        this.itemOffers = new ArrayList<>();
+        if (itemCount < 0 || itemCount > 27) itemCount = 0;
+        List<ItemStack> items = new ArrayList<>();
         for (int i = 0; i < itemCount; i++) {
-            this.itemOffers.add(buf.readItem());
+            items.add(buf.readItem());
         }
+        return items;
     }
     
     @Override
@@ -66,22 +60,22 @@ public class CreateOfferPacket implements IPacket {
             
             // Validation
             if (listing == null) {
-                buyer.sendSystemMessage(Component.literal("§cListing not found!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcListing not found!"));
                 return;
             }
             
             if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
-                buyer.sendSystemMessage(Component.literal("§cThis listing is no longer active!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcThis listing is no longer active!"));
                 return;
             }
             
             if (listing.getOfferType() != MineBayListing.OfferType.NEGOTIABLE) {
-                buyer.sendSystemMessage(Component.literal("§cThis listing doesn't accept offers!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcThis listing doesn't accept offers!"));
                 return;
             }
             
             if (listing.getSellerId().equals(buyer.getUUID())) {
-                buyer.sendSystemMessage(Component.literal("§cYou cannot make an offer on your own listing!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcYou cannot make an offer on your own listing!"));
                 return;
             }
             
@@ -89,7 +83,7 @@ public class CreateOfferPacket implements IPacket {
             if (moneyOffer > 0) {
                 double buyerBalance = economyManager.getOrCreateAccount(buyer.getUUID()).getBalance();
                 if (buyerBalance < moneyOffer) {
-                    buyer.sendSystemMessage(Component.literal("§cYou don't have enough money! Need $" + 
+                    buyer.sendSystemMessage(Component.literal("┬ºcYou don't have enough money! Need $" + 
                         String.format("%.2f", moneyOffer) + " but only have $" + 
                         String.format("%.2f", buyerBalance)));
                     return;
@@ -105,7 +99,7 @@ public class CreateOfferPacket implements IPacket {
             
             // Validate that an offer was actually made
             if (moneyOffer <= 0 && serverOfferItems.isEmpty()) {
-                buyer.sendSystemMessage(Component.literal("§cYou must offer money or items!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcYou must offer money or items!"));
                 return;
             }
             
@@ -115,7 +109,7 @@ public class CreateOfferPacket implements IPacket {
                 com.servermanagement.features.economy.BankAccount buyerAccount = 
                     economyManager.getOrCreateAccount(buyer.getUUID());
                 if (!buyerAccount.tryWithdraw(moneyOffer)) {
-                    buyer.sendSystemMessage(Component.literal("§cFailed to escrow money!"));
+                    buyer.sendSystemMessage(Component.literal("┬ºcFailed to escrow money!"));
                     return;
                 }
                 moneyEscrowed = true;
@@ -126,7 +120,7 @@ public class CreateOfferPacket implements IPacket {
             }
             
             // Clear offer items from the menu container (escrow them)
-            // Items are already out of inventory — just clear the container slots
+            // Items are already out of inventory ÔÇö just clear the container slots
             // Wrapped in try-catch to rollback money escrow on failure
             try {
                 if (buyer.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu mineBayMenu2) {
@@ -153,9 +147,9 @@ public class CreateOfferPacket implements IPacket {
                     buyerAccount.deposit(moneyOffer);
                     buyerAccount.addTransaction(new Transaction(
                         TransactionType.MINEBAY_ESCROW_RETURN, moneyOffer,
-                        "Offer failed — money returned"));
+                        "Offer failed ÔÇö money returned"));
                 }
-                buyer.sendSystemMessage(Component.literal("§cFailed to create offer. Your money/items have been returned."));
+                buyer.sendSystemMessage(Component.literal("┬ºcFailed to create offer. Your money/items have been returned."));
                 com.servermanagement.ServerManagementMod.LOGGER.error("Failed to create offer for listing {}", listingId, e);
                 return;
             }
@@ -163,19 +157,19 @@ public class CreateOfferPacket implements IPacket {
             // Notify buyer (action bar)
             String offerSummary = "";
             if (moneyOffer > 0) {
-                offerSummary += "§6$" + String.format("%.2f", moneyOffer);
+                offerSummary += "┬º6$" + String.format("%.2f", moneyOffer);
             }
             if (!serverOfferItems.isEmpty()) {
-                offerSummary += (offerSummary.isEmpty() ? "" : " + ") + "§f" + serverOfferItems.size() + " item(s)";
+                offerSummary += (offerSummary.isEmpty() ? "" : " + ") + "┬ºf" + serverOfferItems.size() + " item(s)";
             }
             buyer.displayClientMessage(Component.literal(
-                "§a§l✓ §r§aOffer submitted: " + offerSummary + " §a(escrowed)"), true);
+                "┬ºa┬ºlÔ£ô ┬ºr┬ºaOffer submitted: " + offerSummary + " ┬ºa(escrowed)"), true);
             
             // Sync buyer's bank account after escrow
             com.servermanagement.features.economy.BankAccount buyerAccountSync = economyManager.getOrCreateAccount(buyer.getUUID());
             com.servermanagement.network.ModNetworking.sendToPlayer(
                 new com.servermanagement.network.packet.SyncBankAccountPacket(
-                    buyerAccountSync.getBalance(), buyerAccountSync.getRecentTransactions(10)),
+                    buyerAccountSync.getBalance(), buyerAccountSync.getTransactions()),
                 buyer
             );
             
@@ -183,7 +177,7 @@ public class CreateOfferPacket implements IPacket {
             ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
             if (seller != null) {
                 seller.displayClientMessage(Component.literal(
-                    "§e[MineBay] §6" + buyer.getName().getString() + " §emade an offer on your §f" + 
+                    "┬ºe[MineBay] ┬º6" + buyer.getName().getString() + " ┬ºemade an offer on your ┬ºf" + 
                     listing.getItemForSale().getHoverName().getString()), true);
             }
         });

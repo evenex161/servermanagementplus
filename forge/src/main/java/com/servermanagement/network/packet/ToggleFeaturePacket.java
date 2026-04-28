@@ -2,24 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
-public class ToggleFeaturePacket implements IPacket {
-    private final String featureId;
-    private final boolean enabled;
-    private final long clientTick;
-
-    public ToggleFeaturePacket(String featureId, boolean enabled, long clientTick) {
-        this.featureId = featureId;
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
+public record ToggleFeaturePacket(String featureId, boolean enabled, long clientTick) implements IPacket {
 
     public ToggleFeaturePacket(FriendlyByteBuf buf) {
-        this.featureId = buf.readUtf(64);
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(64), buf.readBoolean(), buf.readLong());
     }
 
     @Override
@@ -44,17 +34,5 @@ public class ToggleFeaturePacket implements IPacket {
             }
         });
         ctx.get().setPacketHandled(true);
-    }
-
-    public String getFeatureId() {
-        return featureId;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-    
-    public long getClientTick() {
-        return clientTick;
     }
 }

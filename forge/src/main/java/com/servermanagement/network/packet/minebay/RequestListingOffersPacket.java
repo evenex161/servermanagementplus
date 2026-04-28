@@ -16,15 +16,10 @@ import java.util.List;
  * Packet sent from client to server to request offers for a specific listing.
  * Only the listing owner can request this.
  */
-public class RequestListingOffersPacket implements IPacket {
-    private final String listingId;
-
-    public RequestListingOffersPacket(String listingId) {
-        this.listingId = listingId;
-    }
+public record RequestListingOffersPacket(String listingId) implements IPacket {
 
     public RequestListingOffersPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
+        this(buf.readUtf(36));
     }
 
     @Override

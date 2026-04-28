@@ -2,21 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
-public class WMToggleTabIsolationPacket implements IPacket {
-    private final boolean enabled;
-    private final long clientTick;
-
-    public WMToggleTabIsolationPacket(boolean enabled, long clientTick) {
-        this.enabled = enabled;
-        this.clientTick = clientTick;
-    }
+public record WMToggleTabIsolationPacket(boolean enabled, long clientTick) implements IPacket {
 
     public WMToggleTabIsolationPacket(FriendlyByteBuf buf) {
-        this.enabled = buf.readBoolean();
-        this.clientTick = buf.readLong();
+        this(buf.readBoolean(), buf.readLong());
     }
 
     @Override
@@ -34,6 +27,11 @@ public class WMToggleTabIsolationPacket implements IPacket {
                 String actionKey = "tab_isolation";
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
                     com.servermanagement.features.worldmanager.WorldManager.setTabIsolationEnabled(enabled);
+                    // Immediately apply or restore tab isolation
+                    var server = player.getServer();
+                    if (server != null) {
+                        com.servermanagement.features.worldmanager.TabListIsolationHandler.onIsolationToggled(server);
+                    }
                 }
             }
         });

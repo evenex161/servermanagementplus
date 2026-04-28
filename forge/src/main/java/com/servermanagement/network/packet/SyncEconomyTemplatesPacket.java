@@ -11,6 +11,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,23 +20,18 @@ import java.util.function.Supplier;
 /**
  * Server-to-client packet that syncs economy templates and free reward settings
  */
-public class SyncEconomyTemplatesPacket implements IPacket {
-
-    private final List<TemplateData> templates;
-    private final int freeRewardAmount;
-    private final int freeRewardCooldownHours;
-
-    public SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours) {
-        this.templates = templates;
-        this.freeRewardAmount = freeRewardAmount;
-        this.freeRewardCooldownHours = freeRewardCooldownHours;
-    }
+public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount,
+                                          int freeRewardCooldownHours) implements IPacket {
 
     public SyncEconomyTemplatesPacket(FriendlyByteBuf buf) {
+        this(readTemplates(buf), buf.readInt(), buf.readInt());
+    }
+
+    private static List<TemplateData> readTemplates(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        templates = new ArrayList<>(count);
+        List<TemplateData> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            templates.add(new TemplateData(
+            list.add(new TemplateData(
                 buf.readUtf(64),
                 buf.readInt(),
                 buf.readUtf(100),
@@ -45,8 +41,7 @@ public class SyncEconomyTemplatesPacket implements IPacket {
                 buf.readItem()
             ));
         }
-        this.freeRewardAmount = buf.readInt();
-        this.freeRewardCooldownHours = buf.readInt();
+        return list;
     }
 
     @Override

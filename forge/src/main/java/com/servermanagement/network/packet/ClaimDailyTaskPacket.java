@@ -10,21 +10,17 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Packet sent from client to server to claim a daily task reward
  */
-public class ClaimDailyTaskPacket implements IPacket {
-    private final int taskIndex;
-
-    public ClaimDailyTaskPacket(int taskIndex) {
-        this.taskIndex = taskIndex;
-    }
+public record ClaimDailyTaskPacket(int taskIndex) implements IPacket {
 
     public ClaimDailyTaskPacket(FriendlyByteBuf buf) {
-        this.taskIndex = buf.readInt();
+        this(buf.readInt());
     }
 
     @Override
@@ -44,7 +40,7 @@ public class ClaimDailyTaskPacket implements IPacket {
             // Get player tasks and the specific task
             PlayerDailyTasks playerTasks = economyManager.getDailyTasksManager().getPlayerTasks(player.getUUID());
             if (playerTasks == null || taskIndex < 0 || taskIndex >= playerTasks.getTasks().size()) {
-                player.sendSystemMessage(Component.literal("§cInvalid task!"));
+                player.sendSystemMessage(Component.literal("┬ºcInvalid task!"));
                 return;
             }
             
@@ -70,21 +66,21 @@ public class ClaimDailyTaskPacket implements IPacket {
                             BankInventory.ItemSource.DAILY_TASK, 
                             "Daily Task #" + (taskIndex + 1)
                         );
-                        player.sendSystemMessage(Component.literal("§e⚠ Inventory full! Item sent to Bank Inventory."));
+                        player.sendSystemMessage(Component.literal("┬ºeÔÜá Inventory full! Item sent to Bank Inventory."));
                     }
                     
-                    player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " + " + 
+                    player.sendSystemMessage(Component.literal("┬ºaÔ£ô Claimed $" + reward + " + " + 
                         rewardItem.getHoverName().getString() + " x" + rewardItem.getCount() + 
                         " for completing task #" + (taskIndex + 1)));
                 } else {
                     // Send success message (money only)
-                    player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " for completing task #" + (taskIndex + 1)));
+                    player.sendSystemMessage(Component.literal("┬ºaÔ£ô Claimed $" + reward + " for completing task #" + (taskIndex + 1)));
                 }
                 
                 // Save data
                 economyManager.save();
             } else {
-                player.sendSystemMessage(Component.literal("§cTask is not completed or already claimed!"));
+                player.sendSystemMessage(Component.literal("┬ºcTask is not completed or already claimed!"));
             }
         });
         ctx.get().setPacketHandled(true);

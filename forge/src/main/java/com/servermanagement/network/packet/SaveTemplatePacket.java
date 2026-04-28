@@ -9,36 +9,28 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Client-to-server packet for creating or updating a daily task template
  */
-public class SaveTemplatePacket implements IPacket {
-    private final String templateId; // empty for new template
-    private final int taskTypeOrdinal;
-    private final String description;
-    private final int goal;
-    private final int rewardAmount;
-    private final ItemStack rewardItem;
+public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description,
+                                  int goal, int rewardAmount, ItemStack rewardItem) implements IPacket {
+
+    public SaveTemplatePacket {
+        templateId = templateId != null ? templateId : "";
+        rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
+    }
 
     public SaveTemplatePacket(String templateId, TaskType taskType, String description, int goal, int rewardAmount, ItemStack rewardItem) {
-        this.templateId = templateId != null ? templateId : "";
-        this.taskTypeOrdinal = taskType.ordinal();
-        this.description = description;
-        this.goal = goal;
-        this.rewardAmount = rewardAmount;
-        this.rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
+        this(templateId, taskType.ordinal(), description, goal, rewardAmount, rewardItem);
     }
 
     public SaveTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
-        this.taskTypeOrdinal = buf.readInt();
-        this.description = buf.readUtf(100);
-        this.goal = buf.readInt();
-        this.rewardAmount = buf.readInt();
-        this.rewardItem = buf.readItem();
+        this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(),
+             buf.readItem());
     }
 
     @Override
@@ -64,12 +56,16 @@ public class SaveTemplatePacket implements IPacket {
             if (taskTypeOrdinal < 0 || taskTypeOrdinal >= types.length) return;
             TaskType taskType = types[taskTypeOrdinal];
 
+            // Validate bounds on integer fields
+            int safeGoal = Math.max(1, Math.min(goal, 10000));
+            int safeRewardAmount = Math.max(0, Math.min(rewardAmount, 100000));
+
             var economyManager = EconomyManager.getInstance(server);
             DailyTaskTemplateManager templateManager = economyManager.getTemplateManager();
 
             if (templateId.isEmpty()) {
                 // Create new
-                DailyTaskTemplate template = new DailyTaskTemplate(taskType, goal, rewardAmount, rewardItem, description);
+                DailyTaskTemplate template = new DailyTaskTemplate(taskType, safeGoal, safeRewardAmount, rewardItem, description);
                 templateManager.addTemplate(template);
             } else {
                 // Update existing
@@ -77,8 +73,8 @@ public class SaveTemplatePacket implements IPacket {
                 if (existing != null) {
                     existing.setType(taskType);
                     existing.setCustomDescription(description);
-                    existing.setTargetAmount(goal);
-                    existing.setRewardAmount(rewardAmount);
+                    existing.setTargetAmount(safeGoal);
+                    existing.setRewardAmount(safeRewardAmount);
                     existing.setRewardItem(rewardItem);
                 }
             }

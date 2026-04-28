@@ -10,21 +10,15 @@ import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
 /**
- * Client → Server: Saves the edited MOTD text.
+ * Client ÔåÆ Server: Saves the edited MOTD text.
  * Requires admin permissions (OP level 2).
  */
-public class SaveMotdPacket implements IPacket {
+public record SaveMotdPacket(String motdText) implements IPacket {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final int MAX_MOTD_LENGTH = 512;
 
-    private final String motdText;
-
-    public SaveMotdPacket(String motdText) {
-        this.motdText = motdText;
-    }
-
     public SaveMotdPacket(FriendlyByteBuf buf) {
-        this.motdText = buf.readUtf(32767);
+        this(buf.readUtf(MAX_MOTD_LENGTH));
     }
 
     @Override

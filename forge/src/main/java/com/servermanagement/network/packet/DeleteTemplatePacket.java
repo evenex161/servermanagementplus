@@ -5,21 +5,17 @@ import com.servermanagement.features.economy.EconomyManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Client-to-server packet for deleting a daily task template
  */
-public class DeleteTemplatePacket implements IPacket {
-    private final String templateId;
-
-    public DeleteTemplatePacket(String templateId) {
-        this.templateId = templateId;
-    }
+public record DeleteTemplatePacket(String templateId) implements IPacket {
 
     public DeleteTemplatePacket(FriendlyByteBuf buf) {
-        this.templateId = buf.readUtf(64);
+        this(buf.readUtf(64));
     }
 
     @Override

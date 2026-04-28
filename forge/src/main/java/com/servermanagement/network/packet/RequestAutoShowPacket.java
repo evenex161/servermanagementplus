@@ -2,15 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
-public class RequestAutoShowPacket implements IPacket {
-
-    public RequestAutoShowPacket() {
-    }
+public record RequestAutoShowPacket() implements IPacket {
 
     public RequestAutoShowPacket(FriendlyByteBuf buf) {
+        this();
     }
 
     @Override

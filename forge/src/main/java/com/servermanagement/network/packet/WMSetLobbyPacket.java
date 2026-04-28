@@ -3,24 +3,14 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
-public class WMSetLobbyPacket implements IPacket {
-    private final BlockPos pos;
-    private final String dimensionId;
-    private final long clientTick;
-
-    public WMSetLobbyPacket(BlockPos pos, String dimensionId, long clientTick) {
-        this.pos = pos;
-        this.dimensionId = dimensionId;
-        this.clientTick = clientTick;
-    }
+public record WMSetLobbyPacket(BlockPos pos, String dimensionId, long clientTick) implements IPacket {
 
     public WMSetLobbyPacket(FriendlyByteBuf buf) {
-        this.pos = buf.readBlockPos();
-        this.dimensionId = buf.readUtf(256);
-        this.clientTick = buf.readLong();
+        this(buf.readBlockPos(), buf.readUtf(256), buf.readLong());
     }
 
     @Override
@@ -38,7 +28,9 @@ public class WMSetLobbyPacket implements IPacket {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "lobby_" + dimensionId;
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
-                    com.servermanagement.features.worldmanager.WorldManager.setLobbySpawn(pos, dimensionId);
+                    com.servermanagement.features.worldmanager.WorldManager.setLobbySpawn(
+                        pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, dimensionId,
+                        player.getYRot(), player.getXRot());
                 }
             }
         });

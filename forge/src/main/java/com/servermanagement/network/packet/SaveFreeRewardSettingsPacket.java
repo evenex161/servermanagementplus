@@ -6,16 +6,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Client-to-server packet for saving free reward settings
  */
-public class SaveFreeRewardSettingsPacket implements IPacket {
-    private final int rewardAmount;
-    private final int cooldownHours;
-    private final ItemStack rewardItem;
+public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) implements IPacket {
 
     public SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) {
         this.rewardAmount = rewardAmount;
@@ -24,9 +22,7 @@ public class SaveFreeRewardSettingsPacket implements IPacket {
     }
 
     public SaveFreeRewardSettingsPacket(FriendlyByteBuf buf) {
-        this.rewardAmount = buf.readInt();
-        this.cooldownHours = buf.readInt();
-        this.rewardItem = buf.readItem();
+        this(buf.readInt(), buf.readInt(), buf.readItem());
     }
 
     @Override
@@ -49,10 +45,10 @@ public class SaveFreeRewardSettingsPacket implements IPacket {
             DailyTaskTemplateManager templateManager = economyManager.getTemplateManager();
 
             if (rewardAmount > 0) {
-                templateManager.setFreeRewardAmount(rewardAmount);
+                templateManager.setFreeRewardAmount(Math.min(rewardAmount, 100000));
             }
             if (cooldownHours > 0) {
-                templateManager.setFreeRewardCooldownHours(cooldownHours);
+                templateManager.setFreeRewardCooldownHours(Math.min(cooldownHours, 720));
             }
             templateManager.setFreeRewardItem(rewardItem);
             

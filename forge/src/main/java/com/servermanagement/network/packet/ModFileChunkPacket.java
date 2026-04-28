@@ -4,6 +4,7 @@ import com.servermanagement.ServerManagementMod;
 import com.servermanagement.client.OTAUpdateManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
@@ -11,30 +12,22 @@ import java.util.function.Supplier;
  * Packet sent from server to client containing a chunk of the mod JAR file.
  * Uses chunked transfer to avoid packet size limits.
  */
-public class ModFileChunkPacket implements IPacket {
-    private final int chunkIndex;
-    private final int totalChunks;
-    private final byte[] chunkData;
-    private final String fileHash; // Full file hash for verification
+public record ModFileChunkPacket(int chunkIndex, int totalChunks, String fileHash, byte[] chunkData) implements IPacket {
     
     public static final int CHUNK_SIZE = 32768; // 32 KB chunks
     
-    public ModFileChunkPacket(int chunkIndex, int totalChunks, byte[] chunkData, String fileHash) {
-        this.chunkIndex = chunkIndex;
-        this.totalChunks = totalChunks;
-        this.chunkData = chunkData;
-        this.fileHash = fileHash;
-    }
-    
     public ModFileChunkPacket(FriendlyByteBuf buf) {
-        this.chunkIndex = buf.readInt();
-        this.totalChunks = buf.readInt();
-        this.fileHash = buf.readUtf(128);
-        int dataLength = buf.readInt();
-        this.chunkData = new byte[dataLength];
-        buf.readBytes(chunkData);
+        this(buf.readInt(), buf.readInt(), buf.readUtf(128), readChunkBytes(buf));
     }
-    
+
+    private static byte[] readChunkBytes(FriendlyByteBuf buf) {
+        int dataLength = Math.min(buf.readInt(), CHUNK_SIZE + 1024);
+        byte[] data = new byte[dataLength];
+        buf.readBytes(data);
+        return data;
+    }
+
+    @Override
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(chunkIndex);
         buf.writeInt(totalChunks);
@@ -43,8 +36,9 @@ public class ModFileChunkPacket implements IPacket {
         buf.writeBytes(chunkData);
     }
     
+    @Override
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
+        Supplier<NetworkEvent.Context> context = contextSupplier;
         context.enqueueWork(() -> {
             // This runs on the client
             if (context.getSender() == null) {
@@ -60,21 +54,5 @@ public class ModFileChunkPacket implements IPacket {
             }
         });
         context.setPacketHandled(true);
-    }
-    
-    public int getChunkIndex() {
-        return chunkIndex;
-    }
-    
-    public int getTotalChunks() {
-        return totalChunks;
-    }
-    
-    public byte[] getChunkData() {
-        return chunkData;
-    }
-    
-    public String getFileHash() {
-        return fileHash;
     }
 }

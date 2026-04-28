@@ -9,11 +9,11 @@ import java.util.function.Supplier;
  * Client-to-server packet requesting fresh economy statistics.
  * Server responds with SyncEconomyStatsPacket.
  */
-public class RequestEconomyStatsPacket implements IPacket {
+public record RequestEconomyStatsPacket() implements IPacket {
 
-    public RequestEconomyStatsPacket() {}
-
-    public RequestEconomyStatsPacket(FriendlyByteBuf buf) {}
+    public RequestEconomyStatsPacket(FriendlyByteBuf buf) {
+        this();
+    }
 
     @Override
     public void encode(FriendlyByteBuf buf) {}

@@ -18,6 +18,13 @@ import com.servermanagement.network.packet.ModFileRequestPacket;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.PMSpectatePlayerPacket;
 import com.servermanagement.network.packet.PMViewInventoryPacket;
+import com.servermanagement.network.packet.PMKickPlayerPacket;
+import com.servermanagement.network.packet.PMBanPlayerPacket;
+import com.servermanagement.network.packet.PMUnbanPlayerPacket;
+import com.servermanagement.network.packet.PMWhitelistPacket;
+import com.servermanagement.network.packet.PMWhitelistTogglePacket;
+import com.servermanagement.network.packet.PMRequestPlayerListsPacket;
+import com.servermanagement.network.packet.PMSyncPlayerListsPacket;
 import com.servermanagement.network.packet.PlaceGamblingBetPacket;
 import com.servermanagement.network.packet.PlaceGamblingBetWithItemPacket;
 import com.servermanagement.network.packet.RequestAutoShowPacket;
@@ -58,8 +65,8 @@ import com.servermanagement.network.packet.WMToggleTabIsolationPacket;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 
 public class ModNetworking {
@@ -72,14 +79,11 @@ public class ModNetworking {
     }
 
     public static void register() {
-        INSTANCE = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(ServerManagementMod.MOD_ID, "main"),
-            () -> PROTOCOL_VERSION,
-            s -> true,
-            s -> true
-        );
-
-        ServerManagementMod.LOGGER.info("Registering network packets");
+        INSTANCE = ChannelBuilder.named(new ResourceLocation(ServerManagementMod.MOD_ID, "main"))
+            .networkProtocolVersion(1)
+            .clientAcceptedVersions((status, version) -> true)
+            .serverAcceptedVersions((status, version) -> true)
+            .simpleChannel();
         
         // Config packets (bidirectional)
         INSTANCE.registerMessage(id(), ToggleFeaturePacket.class, ToggleFeaturePacket::encode, ToggleFeaturePacket::new, ToggleFeaturePacket::handle);
@@ -109,6 +113,20 @@ public class ModNetworking {
         INSTANCE.registerMessage(id(), PMSpectatePlayerPacket.class, PMSpectatePlayerPacket::encode, PMSpectatePlayerPacket::new, PMSpectatePlayerPacket::handle);
             
         INSTANCE.registerMessage(id(), PMViewInventoryPacket.class, PMViewInventoryPacket::encode, PMViewInventoryPacket::new, PMViewInventoryPacket::handle);
+            
+        INSTANCE.registerMessage(id(), PMKickPlayerPacket.class, PMKickPlayerPacket::encode, PMKickPlayerPacket::new, PMKickPlayerPacket::handle);
+            
+        INSTANCE.registerMessage(id(), PMBanPlayerPacket.class, PMBanPlayerPacket::encode, PMBanPlayerPacket::new, PMBanPlayerPacket::handle);
+            
+        INSTANCE.registerMessage(id(), PMUnbanPlayerPacket.class, PMUnbanPlayerPacket::encode, PMUnbanPlayerPacket::new, PMUnbanPlayerPacket::handle);
+            
+        INSTANCE.registerMessage(id(), PMWhitelistPacket.class, PMWhitelistPacket::encode, PMWhitelistPacket::new, PMWhitelistPacket::handle);
+            
+        INSTANCE.registerMessage(id(), PMRequestPlayerListsPacket.class, PMRequestPlayerListsPacket::encode, PMRequestPlayerListsPacket::new, PMRequestPlayerListsPacket::handle);
+            
+        INSTANCE.registerMessage(id(), PMSyncPlayerListsPacket.class, PMSyncPlayerListsPacket::encode, PMSyncPlayerListsPacket::new, PMSyncPlayerListsPacket::handle);
+            
+        INSTANCE.registerMessage(id(), PMWhitelistTogglePacket.class, PMWhitelistTogglePacket::encode, PMWhitelistTogglePacket::new, PMWhitelistTogglePacket::handle);
             
         // Add more packets for GUI data sync
         INSTANCE.registerMessage(id(), SyncWorldListPacket.class, SyncWorldListPacket::encode, SyncWorldListPacket::new, SyncWorldListPacket::handle);
@@ -226,14 +244,16 @@ public class ModNetworking {
     }
 
     public static void registerClientPackets() {
-        ServerManagementMod.LOGGER.info("Client-side packet handlers ready");
+        ServerManagementMod.LOGGER.debug("Client-side packet handlers ready");
     }
     
     public static void sendToServer(IPacket packet) {
+        com.servermanagement.gui.debug.DebugLogger.logPacketSent(packet);
         INSTANCE.sendToServer(packet);
     }
     
     public static void sendToPlayer(IPacket packet, ServerPlayer player) {
+        com.servermanagement.gui.debug.DebugLogger.logPacketSent(packet);
         INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
     

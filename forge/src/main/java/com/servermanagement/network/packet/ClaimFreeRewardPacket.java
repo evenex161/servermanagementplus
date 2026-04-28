@@ -12,19 +12,17 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Packet sent from client to server to claim the free daily reward
  */
-public class ClaimFreeRewardPacket implements IPacket {
-
-    public ClaimFreeRewardPacket() {
-    }
+public record ClaimFreeRewardPacket() implements IPacket {
 
     public ClaimFreeRewardPacket(FriendlyByteBuf buf) {
-        // No data to read
+        this();
     }
 
     @Override
@@ -78,16 +76,16 @@ public class ClaimFreeRewardPacket implements IPacket {
                             BankInventory.ItemSource.FREE_REWARD, 
                             "Free Daily Reward"
                         );
-                        player.sendSystemMessage(Component.literal("§6[Reward] §eInventory full — item sent to Bank Inventory."));
+                        player.sendSystemMessage(Component.literal("┬º6[Reward] ┬ºeInventory full ÔÇö item sent to Bank Inventory."));
                     }
                     
                     player.displayClientMessage(Component.literal(String.format(
-                        "§a§l✓ §r§aClaimed daily reward: §6$%d §a+ §f%s x%d",
+                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaClaimed daily reward: ┬º6$%d ┬ºa+ ┬ºf%s x%d",
                         reward, rewardItem.getHoverName().getString(), rewardItem.getCount())), true);
                 } else {
                     // Send success message (money only)
                     player.displayClientMessage(Component.literal(String.format(
-                        "§a§l✓ §r§aClaimed daily reward: §6$%d", reward)), true);
+                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaClaimed daily reward: ┬º6$%d", reward)), true);
                 }
                 
                 // Save data
@@ -95,7 +93,7 @@ public class ClaimFreeRewardPacket implements IPacket {
             } else {
                 long timeUntilNext = playerTasks.getTimeUntilFreeReward();
                 String timeStr = PlayerDailyTasks.formatTimeRemaining(timeUntilNext);
-                player.sendSystemMessage(Component.literal("§cFree reward not available. Next reward in: " + timeStr));
+                player.sendSystemMessage(Component.literal("┬ºcFree reward not available. Next reward in: " + timeStr));
             }
         });
         ctx.get().setPacketHandled(true);

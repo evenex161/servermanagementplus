@@ -6,21 +6,17 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Packet sent from client to server to claim an item from bank inventory
  */
-public class ClaimBankItemPacket implements IPacket {
-    private final int itemIndex;
-    
-    public ClaimBankItemPacket(int itemIndex) {
-        this.itemIndex = itemIndex;
-    }
+public record ClaimBankItemPacket(int itemIndex) implements IPacket {
     
     public ClaimBankItemPacket(FriendlyByteBuf buf) {
-        this.itemIndex = buf.readInt();
+        this(buf.readInt());
     }
     
     @Override
@@ -52,11 +48,11 @@ public class ClaimBankItemPacket implements IPacket {
                             com.servermanagement.features.economy.BankInventory.ItemSource.TRANSFER, 
                             "Failed to claim - inventory full");
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§c✗ Inventory is full! Cannot claim item."
+                            "┬ºcÔ£ù Inventory is full! Cannot claim item."
                         ));
                     } else {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§a✓ Claimed: " + item.getHoverName().getString()
+                            "┬ºaÔ£ô Claimed: " + item.getHoverName().getString()
                         ));
                         economyManager.save();
                     }

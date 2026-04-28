@@ -6,17 +6,18 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Packet sent from client to server to cancel listing creation and return held item
  */
-public class CancelListingPacket implements IPacket {
-    
-    public CancelListingPacket() {}
-    
-    public CancelListingPacket(FriendlyByteBuf buf) {}
+public record CancelListingPacket() implements IPacket {
+
+    public CancelListingPacket(FriendlyByteBuf buf) {
+        this();
+    }
     
     @Override
     public void encode(FriendlyByteBuf buf) {
@@ -44,7 +45,7 @@ public class CancelListingPacket implements IPacket {
                     
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "§eItem returned to inventory"
+                            "┬ºeItem returned to inventory"
                         )
                     );
                 }

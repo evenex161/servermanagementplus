@@ -24,30 +24,22 @@ import java.util.Map;
  * Supports two payment modes: BALANCE (0) deducts from bank,
  * ITEMS (1) removes selected inventory items as payment.
  */
-public class PurchaseListingPacket implements IPacket {
-    private final String listingId;
-    private final int paymentMode; // 0=BALANCE, 1=ITEMS
-    private final int[] selectedSlots; // inventory slot indices for ITEMS mode
-    
-    public PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) {
-        this.listingId = listingId;
-        this.paymentMode = paymentMode;
-        this.selectedSlots = selectedSlots;
-    }
-    
+public record PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) implements IPacket {
+
     public PurchaseListingPacket(FriendlyByteBuf buf) {
-        this.listingId = buf.readUtf(36);
-        this.paymentMode = buf.readByte();
+        this(buf.readUtf(36), buf.readByte(), readSlots(buf));
+    }
+
+    private static int[] readSlots(FriendlyByteBuf buf) {
         int slotCount = buf.readVarInt();
-        // Reject invalid slot counts to prevent buffer misalignment
         if (slotCount < 0 || slotCount > 36) {
-            this.selectedSlots = new int[0];
-            return;
+            return new int[0];
         }
-        this.selectedSlots = new int[slotCount];
+        int[] slots = new int[slotCount];
         for (int i = 0; i < slotCount; i++) {
-            this.selectedSlots[i] = buf.readVarInt();
+            slots[i] = buf.readVarInt();
         }
+        return slots;
     }
     
     @Override
@@ -70,7 +62,7 @@ public class PurchaseListingPacket implements IPacket {
             
             // Validate listing ID
             if (this.listingId == null || this.listingId.trim().isEmpty() || this.listingId.length() > 100) {
-                buyer.sendSystemMessage(Component.literal("§cInvalid listing ID!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcInvalid listing ID!"));
                 return;
             }
             
@@ -78,25 +70,25 @@ public class PurchaseListingPacket implements IPacket {
             MineBayListing listing = mineBayManager.getListing(listingId);
             
             if (listing == null) {
-                buyer.sendSystemMessage(Component.literal("§cListing not found!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcListing not found!"));
                 return;
             }
             
             // Check if listing is still active (prevents double-purchase)
             if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
-                buyer.sendSystemMessage(Component.literal("§cThis listing is no longer available!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcThis listing is no longer available!"));
                 return;
             }
             
             // Check if listing is fixed price
             if (listing.getOfferType() != MineBayListing.OfferType.FIXED) {
-                buyer.sendSystemMessage(Component.literal("§cThis listing is negotiable only!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcThis listing is negotiable only!"));
                 return;
             }
             
             // Check if buyer is not the seller
             if (listing.getSellerId().equals(buyer.getUUID())) {
-                buyer.sendSystemMessage(Component.literal("§cYou cannot buy your own listing!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcYou cannot buy your own listing!"));
                 return;
             }
             
@@ -107,7 +99,7 @@ public class PurchaseListingPacket implements IPacket {
             
             // Validate payment mode
             if (this.paymentMode != 0 && this.paymentMode != 1) {
-                buyer.sendSystemMessage(Component.literal("§cInvalid payment mode!"));
+                buyer.sendSystemMessage(Component.literal("┬ºcInvalid payment mode!"));
                 return;
             }
             
@@ -122,13 +114,13 @@ public class PurchaseListingPacket implements IPacket {
                 
                 int count = 0;
                 for (ItemStack stack : buyer.getInventory().items) {
-                    if (ItemStack.isSameItemSameTags(stack, priceItem.getItemStack())) {
+                    if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
                         count += stack.getCount();
                     }
                 }
                 
                 if (count < required) {
-                    buyer.sendSystemMessage(Component.literal("§cInsufficient items! Need " + 
+                    buyer.sendSystemMessage(Component.literal("┬ºcInsufficient items! Need " + 
                         required + "x " + priceItem.getItemStack().getHoverName().getString()));
                     return;
                 }
@@ -142,7 +134,7 @@ public class PurchaseListingPacket implements IPacket {
             if (this.paymentMode == 0) {
                 // BALANCE mode - check bank balance
                 if (totalMoneyPrice > 0 && buyerAccount.getBalance() < totalMoneyPrice) {
-                    buyer.sendSystemMessage(Component.literal("§cInsufficient funds! Need $" + 
+                    buyer.sendSystemMessage(Component.literal("┬ºcInsufficient funds! Need $" + 
                         String.format("%.2f", totalMoneyPrice) + " but you only have $" +
                         String.format("%.2f", buyerAccount.getBalance()) + " in your bank."));
                     return;
@@ -163,7 +155,7 @@ public class PurchaseListingPacket implements IPacket {
                     }
                     
                     if (itemPaymentTotal < totalMoneyPrice) {
-                        buyer.sendSystemMessage(Component.literal("§cSelected items are worth $" + 
+                        buyer.sendSystemMessage(Component.literal("┬ºcSelected items are worth $" + 
                             String.format("%.2f", itemPaymentTotal) + " but you need $" +
                             String.format("%.2f", totalMoneyPrice) + "!"));
                         return;
@@ -219,7 +211,7 @@ public class PurchaseListingPacket implements IPacket {
                 
                 for (int i = 0; i < buyer.getInventory().items.size() && remaining > 0; i++) {
                     ItemStack stack = buyer.getInventory().items.get(i);
-                    if (ItemStack.isSameItemSameTags(stack, priceItem.getItemStack())) {
+                    if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
                         int toRemove = Math.min(remaining, stack.getCount());
                         stack.shrink(toRemove);
                         remaining -= toRemove;
@@ -234,7 +226,7 @@ public class PurchaseListingPacket implements IPacket {
                 // Use overflow inventory instead of dropping on ground
                 com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                     .addItem(buyer.getUUID(), purchasedItem);
-                buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                buyer.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
             }
             
             // 4. Give money to seller (full listing price)
@@ -263,7 +255,7 @@ public class PurchaseListingPacket implements IPacket {
                         if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(seller, stack)) {
                             com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                                 .addItem(listing.getSellerId(), stack);
-                            seller.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                            seller.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
                         }
                     } else {
                         economyManager.getBankInventory(listing.getSellerId())
@@ -283,23 +275,23 @@ public class PurchaseListingPacket implements IPacket {
             if (totalMoneyPrice > 0) {
                 if (this.paymentMode == 0) {
                     buyer.displayClientMessage(Component.literal(
-                        "§a§l✓ §r§aPurchased §f" + purchasedItemName + " §afor §6$" + String.format("%.2f", totalMoneyPrice)), true);
+                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaPurchased ┬ºf" + purchasedItemName + " ┬ºafor ┬º6$" + String.format("%.2f", totalMoneyPrice)), true);
                 } else {
                     double refund = itemPaymentTotal - totalMoneyPrice;
-                    String refundText = refund > 0.01 ? " §7(§a+$" + String.format("%.2f", refund) + " refund§7)" : "";
+                    String refundText = refund > 0.01 ? " ┬º7(┬ºa+$" + String.format("%.2f", refund) + " refund┬º7)" : "";
                     buyer.displayClientMessage(Component.literal(
-                        "§a§l✓ §r§aPurchased §f" + purchasedItemName + " §awith items" + refundText), true);
+                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaPurchased ┬ºf" + purchasedItemName + " ┬ºawith items" + refundText), true);
                 }
             } else {
                 buyer.displayClientMessage(Component.literal(
-                    "§a§l✓ §r§aPurchased §f" + purchasedItemName), true);
+                    "┬ºa┬ºlÔ£ô ┬ºr┬ºaPurchased ┬ºf" + purchasedItemName), true);
             }
             
             // 8. Notification to seller (action bar if online)
             if (seller != null && seller.isAlive()) {
                 seller.displayClientMessage(Component.literal(
-                    "§6§l$ §r§6" + buyer.getName().getString() + " §abought your §f" + purchasedItemName +
-                    (listing.getMoneyPrice() > 0 ? " §afor §6$" + String.format("%.2f", listing.getMoneyPrice()) : "")), true);
+                    "┬º6┬ºl$ ┬ºr┬º6" + buyer.getName().getString() + " ┬ºabought your ┬ºf" + purchasedItemName +
+                    (listing.getMoneyPrice() > 0 ? " ┬ºafor ┬º6$" + String.format("%.2f", listing.getMoneyPrice()) : "")), true);
             }
             
             // 9. Sync updated listings to all players
@@ -309,7 +301,7 @@ public class PurchaseListingPacket implements IPacket {
             com.servermanagement.network.ModNetworking.sendToPlayer(
                 new com.servermanagement.network.packet.SyncBankAccountPacket(
                     buyerAccount.getBalance(), 
-                    buyerAccount.getRecentTransactions(10)
+                    buyerAccount.getTransactions()
                 ),
                 buyer
             );
@@ -318,7 +310,7 @@ public class PurchaseListingPacket implements IPacket {
                 com.servermanagement.network.ModNetworking.sendToPlayer(
                     new com.servermanagement.network.packet.SyncBankAccountPacket(
                         sellerAccount.getBalance(), 
-                        sellerAccount.getRecentTransactions(10)
+                        sellerAccount.getTransactions()
                     ),
                     seller
                 );

@@ -3,21 +3,17 @@ package com.servermanagement.network.packet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
 /**
  * Server-to-client packet that relays console command output
  */
-public class ConsoleResponsePacket implements IPacket {
-    private final String message;
-
-    public ConsoleResponsePacket(String message) {
-        this.message = message;
-    }
+public record ConsoleResponsePacket(String message) implements IPacket {
 
     public ConsoleResponsePacket(FriendlyByteBuf buf) {
-        this.message = buf.readUtf(4096);
+        this(buf.readUtf(4096));
     }
 
     @Override

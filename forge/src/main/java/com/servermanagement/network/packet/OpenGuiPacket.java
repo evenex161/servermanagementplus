@@ -3,28 +3,24 @@ package com.servermanagement.network.packet;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
-public class OpenGuiPacket implements IPacket {
-    private final GuiType guiType;
-    private final String data; // Can hold dimension ID or other data
+public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
 
     public OpenGuiPacket(GuiType guiType) {
-        this.guiType = guiType;
-        this.data = "";
-    }
-    
-    public OpenGuiPacket(GuiType guiType, String data) {
-        this.guiType = guiType;
-        this.data = data;
+        this(guiType, "");
     }
 
     public OpenGuiPacket(FriendlyByteBuf buf) {
+        this(readGuiType(buf), buf.readUtf(256));
+    }
+
+    private static GuiType readGuiType(FriendlyByteBuf buf) {
         int ordinal = buf.readInt();
         GuiType[] values = GuiType.values();
-        this.guiType = (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
-        this.data = buf.readUtf(256);
+        return (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
     }
 
     @Override
@@ -144,7 +140,7 @@ public class OpenGuiPacket implements IPacket {
         boolean endPortalsEnabled = data.areEndPortalsEnabled(dimensionId);
         boolean hasTimer = data.hasActiveTimer(dimensionId);
         int timerSeconds = (int) data.getRemainingTime(dimensionId);
-        boolean chatConnected = !data.isChatIsolationEnabled();
+        boolean chatConnected = data.isDimensionChatConnected(dimensionId);
         String timerPortalType = data.getTimerPortalType(dimensionId);
         
         com.servermanagement.network.ModNetworking.sendToPlayer(
@@ -190,7 +186,7 @@ public class OpenGuiPacket implements IPacket {
         com.servermanagement.network.ModNetworking.sendToPlayer(
             new com.servermanagement.network.packet.SyncBankAccountPacket(
                 account.getBalance(),
-                account.getRecentTransactions(10)
+                account.getTransactions()
             ),
             player
         );

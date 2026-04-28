@@ -2,18 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 
-public class WMTeleportToDimensionPacket implements IPacket {
-    private final String dimensionId;
-
-    public WMTeleportToDimensionPacket(String dimensionId) {
-        this.dimensionId = dimensionId;
-    }
+public record WMTeleportToDimensionPacket(String dimensionId) implements IPacket {
 
     public WMTeleportToDimensionPacket(FriendlyByteBuf buf) {
-        this.dimensionId = buf.readUtf(256);
+        this(buf.readUtf(256));
     }
 
     @Override
@@ -25,7 +21,7 @@ public class WMTeleportToDimensionPacket implements IPacket {
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             var player = ctx.get().getSender();
-            if (player != null) {
+            if (player != null && player.hasPermissions(2)) {
                 com.servermanagement.features.worldmanager.WorldManager.teleportToDimension(player, dimensionId);
             }
         });

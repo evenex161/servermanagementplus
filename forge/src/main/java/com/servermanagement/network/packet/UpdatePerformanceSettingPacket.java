@@ -9,25 +9,13 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Client → Server: updates a single performance setting identified by key.
+ * Client ÔåÆ Server: updates a single performance setting identified by key.
  * Supports both boolean toggles and numeric values (sent as String).
  */
-public class UpdatePerformanceSettingPacket implements IPacket {
-
-    private final String settingKey;
-    private final String value;
-    private final long clientTick;
-
-    public UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) {
-        this.settingKey = settingKey;
-        this.value = value;
-        this.clientTick = clientTick;
-    }
+public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements IPacket {
 
     public UpdatePerformanceSettingPacket(FriendlyByteBuf buf) {
-        this.settingKey = buf.readUtf(128);
-        this.value = buf.readUtf(128);
-        this.clientTick = buf.readLong();
+        this(buf.readUtf(128), buf.readUtf(128), buf.readLong());
     }
 
     @Override

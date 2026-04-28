@@ -2,20 +2,16 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-public class PMViewInventoryPacket implements IPacket {
+public record PMViewInventoryPacket(String playerName) implements IPacket {
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
-    private final String playerName;
-
-    public PMViewInventoryPacket(String playerName) {
-        this.playerName = playerName;
-    }
 
     public PMViewInventoryPacket(FriendlyByteBuf buf) {
-        this.playerName = buf.readUtf(16);
+        this(buf.readUtf(16));
     }
 
     @Override

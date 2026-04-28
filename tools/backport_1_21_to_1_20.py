@@ -18,14 +18,23 @@ RULES = [
     (re.compile(r"ResourceLocation\.parse\("), "new ResourceLocation("),
     (re.compile(r"ResourceLocation\.withDefaultNamespace\(([^)]+)\)"),
      r'new ResourceLocation("minecraft", \1)'),
-    # ItemStack stream codec → buf helpers
-    (re.compile(r"ItemStack\.OPTIONAL_STREAM_CODEC\.encode\(([^,]+),\s*([^)]+)\)"),
+    # ItemStack stream codec → buf helpers (handle optional cast on buf arg)
+    # encode((Cast) buf, stack)  →  buf.writeItem(stack)
+    (re.compile(r"ItemStack\.OPTIONAL_STREAM_CODEC\.encode\(\s*(?:\([^)]*\)\s*)?(\w+)\s*,\s*([^)]+)\)"),
      r"\1.writeItem(\2)"),
-    (re.compile(r"ItemStack\.STREAM_CODEC\.encode\(([^,]+),\s*([^)]+)\)"),
+    (re.compile(r"ItemStack\.STREAM_CODEC\.encode\(\s*(?:\([^)]*\)\s*)?(\w+)\s*,\s*([^)]+)\)"),
      r"\1.writeItem(\2)"),
-    (re.compile(r"ItemStack\.OPTIONAL_STREAM_CODEC\.decode\(([^)]+)\)"),
+    # decode((Cast) buf)  →  buf.readItem()
+    (re.compile(r"ItemStack\.OPTIONAL_STREAM_CODEC\.decode\(\s*(?:\([^)]*\)\s*)?(\w+)\s*\)"),
      r"\1.readItem()"),
-    (re.compile(r"ItemStack\.STREAM_CODEC\.decode\(([^)]+)\)"),
+    (re.compile(r"ItemStack\.STREAM_CODEC\.decode\(\s*(?:\([^)]*\)\s*)?(\w+)\s*\)"),
+     r"\1.readItem()"),
+    # Repair earlier mistranslations from buggy v1 of these rules:
+    #   "(net.minecraft.network.FriendlyByteBuf) buf.writeItem(...)" → "buf.writeItem(...)"
+    #   "(net.minecraft.network.FriendlyByteBuf.readItem() buf)" → "buf.readItem()"
+    (re.compile(r"\((?:net\.minecraft\.network\.)?(?:Registry)?FriendlyByteBuf\)\s*(\w+)\.writeItem\("),
+     r"\1.writeItem("),
+    (re.compile(r"\(net\.minecraft\.network\.(?:Registry)?FriendlyByteBuf\.readItem\(\)\s*(\w+)\)"),
      r"\1.readItem()"),
     # RegistryFriendlyByteBuf → FriendlyByteBuf (1.20.1 has no registry-aware variant)
     (re.compile(r"\bRegistryFriendlyByteBuf\b"), "FriendlyByteBuf"),
@@ -40,14 +49,10 @@ RULES = [
      "import net.minecraftforge.network.NetworkEvent;\nimport java.util.function.Supplier;"),
     (re.compile(r"\bCustomPayloadEvent\.Context\b"), "Supplier<NetworkEvent.Context>"),
     # Inside packet handlers — convert ctx.foo() to ctx.get().foo()
-    # We do a conservative rewrite for the common idioms only:
     (re.compile(r"\bctx\.enqueueWork\("), "ctx.get().enqueueWork("),
     (re.compile(r"\bctx\.setPacketHandled\("), "ctx.get().setPacketHandled("),
     (re.compile(r"\bctx\.getSender\(\)"), "ctx.get().getSender()"),
     (re.compile(r"\bctx\.getDirection\(\)"), "ctx.get().getDirection()"),
-    (re.compile(r"\bctx\.isClientSide\(\)"), "ctx.get().getDirection().getReceptionSide().isClient()"),
-    # ChannelBuilder.named → NetworkRegistry.newSimpleChannel (handled manually for ModNetworking)
-    # Style.parseLegacyStyle — no change needed
 ]
 
 def translate(text: str) -> str:

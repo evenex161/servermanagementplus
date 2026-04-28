@@ -2,24 +2,25 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+import java.util.function.Supplier;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class SyncFeatureStatesPacket implements IPacket {
-    private final Map<String, Boolean> featureStates;
-
-    public SyncFeatureStatesPacket(Map<String, Boolean> featureStates) {
-        this.featureStates = featureStates;
-    }
+public record SyncFeatureStatesPacket(Map<String, Boolean> featureStates) implements IPacket {
 
     public SyncFeatureStatesPacket(FriendlyByteBuf buf) {
+        this(readFeatureStates(buf));
+    }
+
+    private static Map<String, Boolean> readFeatureStates(FriendlyByteBuf buf) {
         int size = buf.readInt();
-        this.featureStates = new HashMap<>();
+        Map<String, Boolean> map = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            featureStates.put(buf.readUtf(64), buf.readBoolean());
+            map.put(buf.readUtf(64), buf.readBoolean());
         }
+        return map;
     }
 
     @Override
@@ -38,9 +39,5 @@ public class SyncFeatureStatesPacket implements IPacket {
             com.servermanagement.features.FeatureManager.syncFeatureStates(featureStates);
         });
         ctx.get().setPacketHandled(true);
-    }
-
-    public Map<String, Boolean> getFeatureStates() {
-        return featureStates;
     }
 }
