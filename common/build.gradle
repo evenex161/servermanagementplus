@@ -1,0 +1,25 @@
+plugins {
+    id 'multiloader-common'
+}
+
+// Common module is a thin platform-abstraction layer with no Minecraft API usage.
+// Only depends on SLF4J (provided transitively by every loader at runtime).
+dependencies {
+    compileOnly 'org.slf4j:slf4j-api:2.0.9'
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+}

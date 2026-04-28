@@ -1,0 +1,38 @@
+[versions]
+# Minecraft
+minecraft = "1.20.1"
+parchment-minecraft = "1.20.1"
+parchment = "2023.09.03"
+neoform = "1.20.1-20230807.182129"
+
+# Loaders & Platforms (NeoForge intentionally omitted on mc/1.20.1)
+forge = "47.4.0"
+fabric-api = "0.92.8+1.20.1"
+fabric-loader = "0.19.2"
+
+# Build Plugins (declared in build.gradle, referenced here for single-source-of-truth)
+fabric-loom = "1.9-SNAPSHOT"
+moddev = "2.0.49-beta"
+
+# Common Libraries
+mixin = "0.8.5"
+mixinextras = "0.3.5"
+jopt-simple = "5.0.4"
+
+[libraries]
+# Forge
+forge = { module = "net.minecraftforge:forge", version.ref = "forge" }
+
+# Fabric
+fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric-api" }
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric-loader" }
+
+# Common
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+mixinextras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixinextras" }
+jopt-simple = { module = "net.sf.jopt-simple:jopt-simple", version.ref = "jopt-simple" }
+
+[plugins]
+fabric-loom = { id = "fabric-loom", version.ref = "fabric-loom" }
+moddev = { id = "net.neoforged.moddev", version.ref = "moddev" }
