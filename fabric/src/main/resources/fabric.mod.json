@@ -1,23 +1,31 @@
 {
-  "schemaVersion": 1,
-  "id": "${mod_id}",
-  "version": "${version}",
-  "name": "${mod_name}",
-  "description": "${description}",
-  "authors": [
-    "${mod_author}"
-  ],
-  "license": "${license}",
-  "environment": "*",
-  "entrypoints": {
-    "main": [
-      "com.servermanagement.fabric.ServerManagementModFabric"
-    ]
-  },
-  "depends": {
-    "fabricloader": ">=${fabric_loader_version}",
-    "fabric-api": "*",
-    "minecraft": "${minecraft_version_range}",
-    "java": ">=${java_version}"
-  }
+    "schemaVersion": 1,
+    "id": "${mod_id}",
+    "version": "${version}",
+    "name": "${mod_name}",
+    "description": "${description}",
+    "authors": [
+        "${mod_author}"
+    ],
+    "contact": {},
+    "license": "${license}",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "com.servermanagement.ServerManagementModFabric"
+        ],
+        "client": [
+            "com.servermanagement.client.ClientSetup"
+        ]
+    },
+    "depends": {
+        "fabricloader": ">=${fabric_loader_version}",
+        "fabric-api": "*",
+        "minecraft": "${minecraft_version}",
+        "java": ">=${java_version}"
+    },
+    "mixins": [
+        "servermanagement.mixins.json"
+    ],
+    "accessWidener": "servermanagement.accesswidener"
 }

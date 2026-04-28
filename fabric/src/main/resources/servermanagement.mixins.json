@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "com.servermanagement.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "EntityChangeDimensionMixin",
+    "NoteBlockMixin",
+    "PlayerAdvancementsMixin",
+    "ResultSlotMixin",
+    "ServerPlayerChangeDimensionMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 0
+  },
+  "minVersion": "0.8"
+}

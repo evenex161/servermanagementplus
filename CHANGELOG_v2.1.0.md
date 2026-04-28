@@ -1,13 +1,14 @@
 # Changelog — ServerManagement+ v2.1.0 (Minecraft 1.20.1)
 
-**Release Date:** April 28, 2026
+**Release Date:** Still in developement
+**Latest Changes:** April 28, 2026
 **Minecraft:** 1.20.1 | **Forge:** 47.4.0 | **Branch:** `mc/1.20.1`
 
 ---
 
 ## Overview
 
-v2.1.0 is the **1.20.1 backport** of the v2.1.0 release shipped on the `mc/1.21.1-forge` branch. It brings the full feature set, GUI polish, networking refactor, and bug-fix work from the 1.21.1 line back to Minecraft 1.20.1 / Forge 47.4.0. NeoForge and Fabric loaders are intentionally **not** included on this branch — Forge 1.20.1 is the sole target — but all multi-loader-derived code improvements (record-based packets, virtual-thread async I/O, tab-isolation heartbeat, GUI scaling pass, etc.) are present.
+v2.1.0 is the **1.20.1 backport** of the v2.1.0 release shipped on the `mc/1.21.1-forge` branch. It brings the full feature set, GUI polish, networking refactor, and bug-fix work from the 1.21.1 line back to Minecraft 1.20.1. NeoForge is intentionally **not** included on this branch — Forge 47.4.0 and Fabric 0.92.8 (loader 0.19.2) on Minecraft 1.20.1 are both shipped as full feature builds. All multi-loader-derived code improvements (record-based packets, virtual-thread async I/O, tab-isolation heartbeat, GUI scaling pass, etc.) are present in both modules.
 
 ---
 
@@ -17,10 +18,10 @@ The repo follows the **jaredlll08/MultiLoader-Template** layout used on the 1.21
 
 - **`buildSrc/`** — Gradle convention plugins
 - **`common/`** — platform-agnostic code (`Constants`, `Services`, `IPlatformHelper`)
-- **`forge/`** — full Forge 1.20.1 implementation (single shipped target)
-- **`fabric/`** — present for parity with 1.21.1 layout, not maintained on this branch
+- **`forge/`** — full Forge 1.20.1 implementation (254 files)
+- **`fabric/`** — full Fabric 1.20.1 implementation (254 files), built jar `ServerManagement+-fabric-1.20.1-2.1.0-mc1.20.1.jar` (~852 KB).
 
-Old single-module `src/main/` removed; everything now lives under `forge/src/main/`.
+Old single-module `src/main/` removed; everything now lives under `forge/src/main/` and `fabric/src/main/`.
 
 ---
 
@@ -81,10 +82,11 @@ Old single-module `src/main/` removed; everything now lives under `forge/src/mai
 
 ## Migration Notes (vs. v2.0.x on `mc/1.20.1-forge`)
 
-- Source layout moved from `src/main/java/…` to `forge/src/main/java/…`.
-- Output jar artifact renamed: `ServerManagement-forge-1.20.1-2.1.0-mc1.20.1.jar`.
+- Source layout moved from `src/main/java/…` to `forge/src/main/java/…` (and `fabric/src/main/java/…`).
+- Output jar artifacts: `ServerManagement-forge-1.20.1-2.1.0-mc1.20.1.jar` and `ServerManagement+-fabric-1.20.1-2.1.0-mc1.20.1.jar`.
 - The `mc/1.20.1-forge` branch was renamed to `mc/1.20.1`. Tag `pre-v2.1.0-backport` marks the pre-backport state for rollback.
-- NeoForge support removed from this branch; if you need NeoForge or Fabric on Minecraft 1.21.1, use `mc/1.21.1-forge`.
+- NeoForge support removed from this branch; if you need NeoForge on Minecraft 1.21.1, use `mc/1.21.1-forge`.
+- Fabric 1.20.1 ships the full feature set on par with Forge. Networking uses the legacy `ServerPlayNetworking` / `ClientPlayNetworking` API (1.20.1 predates `CustomPacketPayload` / `PayloadTypeRegistry`). An access widener exposes `AbstractContainerScreen` / `Screen` fields needed by the GUI debug overlay and `MineStacksScreen`.
 
 ---
 

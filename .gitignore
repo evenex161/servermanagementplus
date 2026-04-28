@@ -26,5 +26,15 @@ forge-server 1.20.1/
 forge-server 1.21.1/
 neoforge-server 1.21.1/
 
+# Per-loader run dirs (loom/forgegradle game runs)
+forge/runs/
+fabric/runs/
+neoforge/runs/
+
+# Build / diagnostic logs
+build-errors.txt
+build-forge.txt
+build-all.txt
+
 # OS artifacts
 .DS_Store
