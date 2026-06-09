@@ -66,6 +66,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAvailable(freeRewardAvailable);
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAmount(freeRewardAmount);
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
+            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
         });
         ctx.get().setPacketHandled(true);
     }

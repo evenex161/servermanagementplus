@@ -6,7 +6,7 @@ import com.servermanagement.network.PacketTimestampTracker;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 /**
- * Client ÔåÆ Server: updates a single performance setting identified by key.
+ * Client → Server: updates a single performance setting identified by key.
  * Supports both boolean toggles and numeric values (sent as String).
  */
 public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements com.servermanagement.network.IPacket {

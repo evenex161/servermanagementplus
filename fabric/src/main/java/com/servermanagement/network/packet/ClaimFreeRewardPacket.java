@@ -74,24 +74,28 @@ public record ClaimFreeRewardPacket() implements com.servermanagement.network.IP
                             BankInventory.ItemSource.FREE_REWARD, 
                             "Free Daily Reward"
                         );
-                        player.sendSystemMessage(Component.literal("┬º6[Reward] ┬ºeInventory full ÔÇö item sent to Bank Inventory."));
+                        player.sendSystemMessage(Component.literal("§6[Reward] §eInventory full — item sent to Bank Inventory."));
                     }
                     
                     player.displayClientMessage(Component.literal(String.format(
-                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaClaimed daily reward: ┬º6$%d ┬ºa+ ┬ºf%s x%d",
+                        "§a§l✓ §r§aClaimed daily reward: §6$%d §a+ §f%s x%d",
                         reward, rewardItem.getHoverName().getString(), rewardItem.getCount())), true);
                 } else {
                     // Send success message (money only)
                     player.displayClientMessage(Component.literal(String.format(
-                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaClaimed daily reward: ┬º6$%d", reward)), true);
+                        "§a§l✓ §r§aClaimed daily reward: §6$%d", reward)), true);
                 }
                 
                 // Save data
                 economyManager.save();
+
+                // Push fresh state to client so the open Daily Tasks GUI
+                // updates the free-reward button and cooldown immediately.
+                com.servermanagement.features.economy.DailyTaskProgressListener.pushSyncDailyTasks(player);
             } else {
                 long timeUntilNext = playerTasks.getTimeUntilFreeReward();
                 String timeStr = PlayerDailyTasks.formatTimeRemaining(timeUntilNext);
-                player.sendSystemMessage(Component.literal("┬ºcFree reward not available. Next reward in: " + timeStr));
+                player.sendSystemMessage(Component.literal("§cFree reward not available. Next reward in: " + timeStr));
             }
 
 }

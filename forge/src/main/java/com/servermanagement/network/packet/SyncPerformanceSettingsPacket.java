@@ -6,7 +6,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Server ÔåÆ Client: syncs all performance settings so the GUI can display current values.
+ * Server → Client: syncs all performance settings so the GUI can display current values.
  */
 public record SyncPerformanceSettingsPacket(
         boolean featureEnabled,

@@ -68,7 +68,7 @@ public class GlobalSettingsScreen extends ScalableContainerScreen<GlobalSettings
         // Back to Dashboard button
         int btnW = (this.imageWidth - 30) / 2;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("ÔåÉ Dashboard"),
+            Component.literal("← Dashboard"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
             .bounds(centerX + 10, centerY + this.imageHeight - 38, btnW, 26)
             .style(ModernButton.ButtonStyle.SECONDARY)

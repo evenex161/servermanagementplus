@@ -43,7 +43,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     // Edit state
     private MineBayListing listingBeingEdited = null;
     private boolean isEditMode = false;
-    // Screen state the user was on when they pressed "Edit" ÔÇö Back from
+    // Screen state the user was on when they pressed "Edit" — Back from
     // CREATE_STEP2 in edit mode returns here instead of going to CREATE_STEP1
     // (which would re-prompt for the item to sell).
     private ScreenState editOriginState = ScreenState.BROWSE;
@@ -238,7 +238,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         if (scrollOffset > 0) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 50, navY, 90, 18,
-                Component.literal("ÔùÇ Previous"),
+                Component.literal("◀ Previous"),
                 button -> {
                     scrollOffset--;
                     this.rebuildWidgets();
@@ -250,7 +250,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         if (scrollOffset + LISTINGS_PER_PAGE < listings.size()) {
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 140, navY, 90, 18,
-                Component.literal("Next ÔûÂ"),
+                Component.literal("Next ▶"),
                 button -> {
                     scrollOffset++;
                     this.rebuildWidgets();
@@ -326,7 +326,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 // Clear edit mode when going back
                 isEditMode = false;
@@ -378,12 +378,12 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         int formY = centerY + 76; // Below title + underline + spacing
         int formRight = centerX + this.imageWidth - 15;
         
-        // Back button ÔÇö in edit mode, return to where the player came from
+        // Back button — in edit mode, return to where the player came from
         // (with a discard-changes confirmation if anything was modified). In
         // create mode, fall back to CREATE_STEP1 as before.
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 if (isEditMode) {
                     if (hasUnsavedEdits()) {
@@ -537,7 +537,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Cancel button - returns item
         this.addRenderableWidget(new ModernButton(
             centerX + 150, buttonY, 120, 30,
-            Component.literal("Ô£ù Cancel"),
+            Component.literal("✗ Cancel"),
             button -> {
                 boolean wasEditMode = isEditMode;
                 // Clear edit mode when canceling
@@ -559,7 +559,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         ));
         
         // Confirm button - creates listing (or updates if editing)
-        String confirmText = isEditMode ? "Ô£ô Update Listing" : "Ô£ô Create Listing";
+        String confirmText = isEditMode ? "✓ Update Listing" : "✓ Create Listing";
         this.addRenderableWidget(new ModernButton(
             centerX + 280, buttonY, 140, 30,
             Component.literal(confirmText),
@@ -880,7 +880,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 selectedListingForOffer = null;
                 switchState(ScreenState.BROWSE);
@@ -959,7 +959,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Back button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 selectedListingForDetails = null;
                 switchState(ScreenState.BROWSE);
@@ -1056,7 +1056,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Confirm button (destructive action)
         this.addRenderableWidget(new ModernButton(
             dialogX + 30, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("Ô£ô Yes, Delete"),
+            Component.literal("✓ Yes, Delete"),
             button -> confirmDelete(),
             ModernButton.ButtonStyle.DANGER
         ));
@@ -1064,7 +1064,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Cancel button
         this.addRenderableWidget(new ModernButton(
             dialogX + dialogWidth - 190, dialogY + dialogHeight - 50, 160, 30,
-            Component.literal("Ô£ù Cancel"),
+            Component.literal("✗ Cancel"),
             button -> cancelDelete(),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -1202,7 +1202,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Back button (always available, even while loading)
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 5, 100, 20,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> {
                 selectedListingForOffers = null;
                 cachedOffers.clear();
@@ -1233,7 +1233,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         if (offerScrollOffset > 0) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 50, navY, 90, 18,
-                Component.literal("ÔùÇ Previous"),
+                Component.literal("◀ Previous"),
                 button -> { offerScrollOffset--; this.rebuildWidgets(); },
                 ModernButton.ButtonStyle.SECONDARY
             ));
@@ -1241,7 +1241,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         if (offerScrollOffset + OFFERS_PER_PAGE < cachedOffers.size()) {
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 140, navY, 90, 18,
-                Component.literal("Next ÔûÂ"),
+                Component.literal("Next ▶"),
                 button -> { offerScrollOffset++; this.rebuildWidgets(); },
                 ModernButton.ButtonStyle.SECONDARY
             ));
@@ -1255,7 +1255,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 130, cardY + 10, 100, 20,
-                Component.literal("Ô£ô Accept"),
+                Component.literal("✓ Accept"),
                 button -> {
                     ModNetworking.sendToServer(
                         new com.servermanagement.network.packet.minebay.AcceptOfferPacket(
@@ -1270,7 +1270,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 130, cardY + 35, 100, 20,
-                Component.literal("Ô£ù Reject"),
+                Component.literal("✗ Reject"),
                 button -> {
                     ModNetworking.sendToServer(
                         new com.servermanagement.network.packet.minebay.RejectOfferPacket(
@@ -1341,7 +1341,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             guiGraphics.fill(cardX + 1, cardY + 1, cardRight - 1, cardY + 71, 0xFF1E1E1E);
             
             // Buyer name
-            guiGraphics.drawString(this.font, Component.literal("From: ┬ºe" + offer.getBuyerName()),
+            guiGraphics.drawString(this.font, Component.literal("From: §e" + offer.getBuyerName()),
                 cardX + 8, cardY + 5, 0xFFFFFF, true);
             
             // Money offer
@@ -1412,7 +1412,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             return;
         }
         
-        // Send offer packet ÔÇö items will be taken from inventory by server
+        // Send offer packet — items will be taken from inventory by server
         com.servermanagement.network.ModNetworking.sendToServer(
             new com.servermanagement.network.packet.minebay.CreateOfferPacket(
                 selectedListingForOffer.getListingId(),
@@ -1541,16 +1541,16 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         
         // Main background with border
         guiGraphics.fill(centerX - 2, centerY - 2, centerX + this.imageWidth + 2, centerY + this.imageHeight + 2, 0xFF000000);
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xE0101010);
+        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xA0101010);
         
         // Header bar (with subtle bottom border)
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 46, 0xE0202020);
+        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 46, 0xA0202020);
         guiGraphics.fill(centerX, centerY + 45, centerX + this.imageWidth, centerY + 46, 0xFF333333);
         
         // Content area - constrained bounds (extends to just above inventory separator at Y=218)
         int contentAreaHeight = menu.isInventoryVisible() ? 170 : (this.imageHeight - 60);
         guiGraphics.fill(centerX + 10, centerY + 46, centerX + this.imageWidth - 10, 
-            centerY + 46 + contentAreaHeight, 0xE01A1A1A);
+            centerY + 46 + contentAreaHeight, 0xA01A1A1A);
         
         // Inventory area background (only when inventory is visible)
         if (menu.isInventoryVisible() && this.imageWidth > 420) {
@@ -1558,7 +1558,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             // Tight fit: inventory slots at Y=230 (3 rows * 18 = 54) + 4px gap + hotbar (18) = Y=306 + 4px padding
             int invBottom = centerY + 230 + 54 + 4 + 18 + 4;
             guiGraphics.fill(centerX + invMargin, centerY + 220, centerX + this.imageWidth - invMargin, 
-                invBottom, 0xE0202020);
+                invBottom, 0xA0202020);
             
             // Inventory border
             guiGraphics.fill(centerX + invMargin - 2, centerY + 218, centerX + this.imageWidth - invMargin + 2, centerY + 220, 0xFF555555);
@@ -1876,7 +1876,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         int slotX = centerX + this.menu.getOfferingSlotX();
         int slotY = centerY + this.menu.getOfferingSlotY();
         
-        // Draw a visual drop zone frame around the slot area ÔÇö wide enough to contain text
+        // Draw a visual drop zone frame around the slot area — wide enough to contain text
         int zoneW = Math.min(this.imageWidth - 40, this.imageWidth - 30);
         int zoneX = centerX + (this.imageWidth - zoneW) / 2;
         int zoneY = centerY + 68;
@@ -2141,7 +2141,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         
         // Warning at bottom of card
         guiGraphics.drawString(this.font, 
-            Component.literal("ÔÜá Item cannot be retrieved until sold or cancelled."),
+            Component.literal("⚠ Item cannot be retrieved until sold or cancelled."),
             infoX, centerY + 166, 0xFF5555, true);
     }
     
@@ -2284,7 +2284,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // Price section header
         infoY += 20;
         guiGraphics.drawString(this.font, 
-            Component.literal("ÔÇö Price ÔÇö"),
+            Component.literal("— Price —"),
             itemX, infoY, 0xFFD700, true);
         
         // Money price
@@ -2428,7 +2428,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             0xFFFF5555); // Red border right
         
         // Draw title
-        Component titleText = Component.literal("ÔÜá Delete Listing?");
+        Component titleText = Component.literal("⚠ Delete Listing?");
         int titleWidth = this.font.width(titleText);
         guiGraphics.drawString(this.font, titleText,
             dialogX + (dialogWidth - titleWidth) / 2,
@@ -2666,7 +2666,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         // scale; widgets/slots receive design-space coords because the base
         // class inverts them inside its own mouseClicked. But this override
         // is dispatched FIRST with raw screen-pixel coords, so any custom
-        // hit-tests below must operate in design space too ÔÇö otherwise at
+        // hit-tests below must operate in design space too — otherwise at
         // non-1.0 GUI scales (Auto / Scale 4 / Scale 5 on small windows)
         // the price-item slots and BUY_CONFIRM payment grid stop responding.
         double designMouseX = inverseMouseX(mouseX);

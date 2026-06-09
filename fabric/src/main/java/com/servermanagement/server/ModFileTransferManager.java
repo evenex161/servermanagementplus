@@ -190,7 +190,7 @@ public class ModFileTransferManager {
                 
                 // Abort early if player disconnected (avoid wasting I/O and bandwidth)
                 if (session.player.hasDisconnected()) {
-                    ServerManagementMod.LOGGER.info("Aborting transfer ÔÇö player {} disconnected",
+                    ServerManagementMod.LOGGER.info("Aborting transfer — player {} disconnected",
                         session.player.getName().getString());
                     return;
                 }

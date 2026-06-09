@@ -143,7 +143,7 @@ public class HelpCommandIntegration {
     }
 
     /**
-     * /help ÔÇö List all commands the player has access to, sorted alphabetically.
+     * /help — List all commands the player has access to, sorted alphabetically.
      * SM commands show descriptions; admin commands are tagged [Admin].
      * Vanilla/other mod commands appear without description.
      */
@@ -183,7 +183,7 @@ public class HelpCommandIntegration {
     }
 
     /**
-     * /help <command> ÔÇö Show detailed subcommand help for SM commands,
+     * /help <command> — Show detailed subcommand help for SM commands,
      * or fall back to vanilla Brigadier usage for other commands.
      * Admin subcommands are only shown when the player has OP level 2+.
      */
@@ -204,7 +204,7 @@ public class HelpCommandIntegration {
             return showDetailedHelp(source, rootCmd, entries);
         }
 
-        // Not an SM command ÔÇö fall back to vanilla Brigadier usage
+        // Not an SM command — fall back to vanilla Brigadier usage
         return showVanillaHelp(source, commandName, dispatcher);
     }
 

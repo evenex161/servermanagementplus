@@ -36,7 +36,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
             // Validate game option
             if (this.gameOption == null || this.gameOption.length() > 50) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid game option"));
+                    "§cInvalid game option"));
                 return;
             }
             
@@ -49,7 +49,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                 // Validate item
                 if (bettingItem == null || bettingItem.isEmpty()) {
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "┬ºcNo betting item found"));
+                        "§cNo betting item found"));
                     return;
                 }
                 
@@ -59,7 +59,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                         .getBasePrice(bettingItem) * bettingItem.getCount();
                     if (marketValue < GamblingManager.MIN_BET) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcThis item cannot be used for gambling (value: $" + 
+                            "§cThis item cannot be used for gambling (value: $" + 
                             String.format("%.2f", marketValue) + ", min: $" + 
                             String.format("%.0f", GamblingManager.MIN_BET) + ")"));
                         return;
@@ -74,7 +74,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                     game = createGame(this.gameType, this.gameOption);
                 } catch (Exception e) {
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "┬ºcInvalid game parameters"));
+                        "§cInvalid game parameters"));
                     return;
                 }
                 
@@ -168,7 +168,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                 }
             } else {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid gambling menu state"));
+                    "§cInvalid gambling menu state"));
             }
         });
         ctx.get().setPacketHandled(true);

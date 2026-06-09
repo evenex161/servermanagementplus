@@ -102,11 +102,11 @@ public class TimerTickHandler {
         String portalDesc = WorldManager.getPortalDescription(dimensionId, portalType);
         String dimName = WorldManager.getDimensionName(dimensionId);
         String actionWord = enablePortals ? "open" : "closed";
-        String colorCode = enablePortals ? "┬ºa" : "┬ºc";
+        String colorCode = enablePortals ? "§a" : "§c";
         
         // Always mention the dimension so players in other worlds aren't
         // misled into thinking their own portals just changed state.
-        Component message = Component.literal(colorCode + "Ô£ö " + portalDesc + " in " + dimName + " are now " + actionWord + "!");
+        Component message = Component.literal(colorCode + "✔ " + portalDesc + " in " + dimName + " are now " + actionWord + "!");
         Component title = Component.literal(colorCode + portalDesc);
         Component subtitle = Component.literal((enablePortals ? "are now open in " : "are now closed in ") + dimName);
         
@@ -151,39 +151,39 @@ public class TimerTickHandler {
         // mistakenly think their own dimension's portals are being toggled.
         String subtitleBase = portalDesc + " in " + dimName + " " + actionWord;
         
-        // 60 second warning ÔÇö chat heads-up so the announcement reaches players
+        // 60 second warning — chat heads-up so the announcement reaches players
         // who don't have title text on screen.
         if (remainingTime == 60 && !announced60s.contains(dimensionId)) {
-            warning = Component.literal("┬ºeÔÜá " + portalDesc + " in " + dimName + " " + actionWord + " in 1 minute");
-            titleText = Component.literal("┬ºe1 Minute");
+            warning = Component.literal("§e⚠ " + portalDesc + " in " + dimName + " " + actionWord + " in 1 minute");
+            titleText = Component.literal("§e1 Minute");
             subtitleText = Component.literal(subtitleBase + " soon");
             playSound = true;
             announced60s.add(dimensionId);
         }
-        // 30 second warning ÔÇö title + sound only (no chat to reduce spam)
+        // 30 second warning — title + sound only (no chat to reduce spam)
         else if (remainingTime == 30 && !announced30s.contains(dimensionId)) {
-            titleText = Component.literal("┬º630 Seconds");
+            titleText = Component.literal("§630 Seconds");
             subtitleText = Component.literal(subtitleBase + " soon");
             playSound = true;
             announced30s.add(dimensionId);
         }
-        // 10 second warning ÔÇö title + sound only
+        // 10 second warning — title + sound only
         else if (remainingTime == 10 && !announced10s.contains(dimensionId)) {
-            titleText = Component.literal("┬ºc10 Seconds");
+            titleText = Component.literal("§c10 Seconds");
             subtitleText = Component.literal(portalDesc + " in " + dimName);
             playSound = true;
             announced10s.add(dimensionId);
         }
-        // 5 second countdown ÔÇö title + sound only
+        // 5 second countdown — title + sound only
         else if (remainingTime == 5 && !announced5s.contains(dimensionId)) {
-            titleText = Component.literal("┬º45");
+            titleText = Component.literal("§45");
             subtitleText = Component.literal(subtitleBase + " soon!");
             playSound = true;
             announced5s.add(dimensionId);
         }
-        // Final countdown (4, 3, 2, 1) ÔÇö title + sound only
+        // Final countdown (4, 3, 2, 1) — title + sound only
         else if (remainingTime <= 4 && remainingTime >= 1) {
-            titleText = Component.literal("┬º4" + remainingTime);
+            titleText = Component.literal("§4" + remainingTime);
             subtitleText = Component.literal(portalDesc + " in " + dimName);
             playSound = true;
         }

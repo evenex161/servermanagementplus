@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MarginHistoryTracker {
     private static MarginHistoryTracker instance;
     
-    // Item ID ÔåÆ list of margin entries (capped per item)
+    // Item ID → list of margin entries (capped per item)
     private final ConcurrentHashMap<String, List<MarginEntry>> marginHistory = new ConcurrentHashMap<>();
     
     // Per-item averages cache (recalculated periodically)

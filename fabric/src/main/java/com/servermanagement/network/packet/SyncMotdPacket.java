@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.client.ClientPacketHandler;
 import net.minecraft.network.FriendlyByteBuf;
 /**
- * Server ÔåÆ Client: Syncs the current MOTD text before opening the editor.
+ * Server → Client: Syncs the current MOTD text before opening the editor.
  */
 public record SyncMotdPacket(String motdText) implements com.servermanagement.network.IPacket {
     public static final net.minecraft.resources.ResourceLocation ID = new net.minecraft.resources.ResourceLocation("servermanagement", "sync_motd_packet");

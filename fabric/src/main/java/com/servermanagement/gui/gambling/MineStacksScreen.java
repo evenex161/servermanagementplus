@@ -388,7 +388,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -422,7 +422,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         // Back button - moved to avoid overlap with title
         this.addRenderableWidget(new ModernButton(
             centerX + 5, centerY + 30, 60, 18,
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> switchMode(GameMode.MENU),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -453,7 +453,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
     private boolean validateBet() {
         if (useMoney) {
             if (betAmountBox == null || betAmountBox.getValue().isEmpty()) {
-                lastResult = "┬ºcEnter a bet amount!";
+                lastResult = "§cEnter a bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -461,19 +461,19 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             try {
                 double amount = Double.parseDouble(betAmountBox.getValue());
                 if (amount < 10.0) {
-                    lastResult = "┬ºcMinimum bet is $10";
+                    lastResult = "§cMinimum bet is $10";
                     resultShowTime = System.currentTimeMillis();
                     return false;
                 }
             } catch (NumberFormatException e) {
-                lastResult = "┬ºcInvalid bet amount!";
+                lastResult = "§cInvalid bet amount!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
         } else {
             ItemStack bettingItem = menu.getBettingItem();
             if (bettingItem.isEmpty()) {
-                lastResult = "┬ºcPlace an item in the slot!";
+                lastResult = "§cPlace an item in the slot!";
                 resultShowTime = System.currentTimeMillis();
                 return false;
             }
@@ -512,7 +512,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         }
         
         // Show pending message
-        lastResult = "┬ºePlacing bet...";
+        lastResult = "§ePlacing bet...";
         resultShowTime = System.currentTimeMillis();
     }
     
@@ -535,7 +535,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
     private void showPendingResult() {
         if (!hasPendingResult) return;
         
-        lastResult = pendingResultWon ? "┬ºa" + pendingResultMessage : "┬ºc" + pendingResultMessage;
+        lastResult = pendingResultWon ? "§a" + pendingResultMessage : "§c" + pendingResultMessage;
         lastResultWon = pendingResultWon;
         resultShowTime = System.currentTimeMillis();
         
@@ -675,10 +675,10 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.fill(centerX - 2, centerY - 2, centerX + this.imageWidth + 2, 
             centerY + this.imageHeight + 2, 0xFF000000);
         guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, 
-            centerY + this.imageHeight, 0xE0101010);
+            centerY + this.imageHeight, 0xA0101010);
         
         // Header bar + separator
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 28, 0xE0202020);
+        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 28, 0xA0202020);
         guiGraphics.fill(centerX, centerY + 28, centerX + this.imageWidth, centerY + 29, 0xFF333333);
     }
     
@@ -1014,7 +1014,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         
         // Draw tension text
         guiGraphics.drawCenteredString(this.font,
-            Component.literal("┬º6Rolling..."),
+            Component.literal("§6Rolling..."),
             animX, animY - 40, 0xFFD700);
         
         // Cache locally to avoid null between check and switch
@@ -1102,7 +1102,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
+        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1289,7 +1289,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         int reelHeight = 60;
         int reelSpacing = 10;
         
-        String[] symbols = {"┬ºcÔÖÑ", "┬ºbÔÖª", "┬º6Ôÿà", "┬ºa7", "┬ºeÔÿÇ"};
+        String[] symbols = {"§c♥", "§b♦", "§6★", "§a7", "§e☀"};
         
         for (int i = 0; i < 3; i++) {
             int reelX = x - (reelWidth + reelSpacing) + i * (reelWidth + reelSpacing);
@@ -1462,7 +1462,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
      * Render the item being dragged by the cursor
      */
     private void renderFloatingItem(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // Get the carried item (item being dragged) ÔÇö cache locally
+        // Get the carried item (item being dragged) — cache locally
         ItemStack carriedStack = this.menu.getCarried();
         if (carriedStack != null && !carriedStack.isEmpty()) {
             // Render the item centered on the cursor

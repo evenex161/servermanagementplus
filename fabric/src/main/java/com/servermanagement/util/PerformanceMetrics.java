@@ -172,9 +172,9 @@ public class PerformanceMetrics {
         
         // Tick timings
         if (!tickTimings.isEmpty()) {
-            sb.append("\nSystem Tick Timings (avg ┬Ás):\n");
+            sb.append("\nSystem Tick Timings (avg µs):\n");
             tickTimings.forEach((system, stats) -> {
-                sb.append(String.format("  %s: %.2f ┬Ás (%.2f ms/sec @ 20 TPS)\n", 
+                sb.append(String.format("  %s: %.2f µs (%.2f ms/sec @ 20 TPS)\n", 
                     system, stats.getAverageMicros(), stats.getAverageMicros() * 20 / 1000.0));
             });
         }

@@ -42,7 +42,7 @@ public class EntityActivationRangeHandler {
         double rangeSq = (double) activationRange * activationRange;
 
         if (nearestDistSq > rangeSq) {
-            // Entity is outside activation range ÔÇö only tick every 4th tick
+            // Entity is outside activation range — only tick every 4th tick
             long tickCount = entity.level().getGameTime();
             if (tickCount % 4 != 0) {
                 ServerPerformanceManager.getInstance().addEntitiesThrottled(1);

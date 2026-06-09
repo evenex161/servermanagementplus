@@ -61,7 +61,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
             
             // Validate listing ID
             if (this.listingId == null || this.listingId.trim().isEmpty() || this.listingId.length() > 100) {
-                buyer.sendSystemMessage(Component.literal("┬ºcInvalid listing ID!"));
+                buyer.sendSystemMessage(Component.literal("§cInvalid listing ID!"));
                 return;
             }
             
@@ -69,25 +69,25 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
             MineBayListing listing = mineBayManager.getListing(listingId);
             
             if (listing == null) {
-                buyer.sendSystemMessage(Component.literal("┬ºcListing not found!"));
+                buyer.sendSystemMessage(Component.literal("§cListing not found!"));
                 return;
             }
             
             // Check if listing is still active (prevents double-purchase)
             if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
-                buyer.sendSystemMessage(Component.literal("┬ºcThis listing is no longer available!"));
+                buyer.sendSystemMessage(Component.literal("§cThis listing is no longer available!"));
                 return;
             }
             
             // Check if listing is fixed price
             if (listing.getOfferType() != MineBayListing.OfferType.FIXED) {
-                buyer.sendSystemMessage(Component.literal("┬ºcThis listing is negotiable only!"));
+                buyer.sendSystemMessage(Component.literal("§cThis listing is negotiable only!"));
                 return;
             }
             
             // Check if buyer is not the seller
             if (listing.getSellerId().equals(buyer.getUUID())) {
-                buyer.sendSystemMessage(Component.literal("┬ºcYou cannot buy your own listing!"));
+                buyer.sendSystemMessage(Component.literal("§cYou cannot buy your own listing!"));
                 return;
             }
             
@@ -98,7 +98,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
             
             // Validate payment mode
             if (this.paymentMode != 0 && this.paymentMode != 1) {
-                buyer.sendSystemMessage(Component.literal("┬ºcInvalid payment mode!"));
+                buyer.sendSystemMessage(Component.literal("§cInvalid payment mode!"));
                 return;
             }
             
@@ -119,7 +119,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                 }
                 
                 if (count < required) {
-                    buyer.sendSystemMessage(Component.literal("┬ºcInsufficient items! Need " + 
+                    buyer.sendSystemMessage(Component.literal("§cInsufficient items! Need " + 
                         required + "x " + priceItem.getItemStack().getHoverName().getString()));
                     return;
                 }
@@ -133,7 +133,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
             if (this.paymentMode == 0) {
                 // BALANCE mode - check bank balance
                 if (totalMoneyPrice > 0 && buyerAccount.getBalance() < totalMoneyPrice) {
-                    buyer.sendSystemMessage(Component.literal("┬ºcInsufficient funds! Need $" + 
+                    buyer.sendSystemMessage(Component.literal("§cInsufficient funds! Need $" + 
                         String.format("%.2f", totalMoneyPrice) + " but you only have $" +
                         String.format("%.2f", buyerAccount.getBalance()) + " in your bank."));
                     return;
@@ -154,7 +154,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                     }
                     
                     if (itemPaymentTotal < totalMoneyPrice) {
-                        buyer.sendSystemMessage(Component.literal("┬ºcSelected items are worth $" + 
+                        buyer.sendSystemMessage(Component.literal("§cSelected items are worth $" + 
                             String.format("%.2f", itemPaymentTotal) + " but you need $" +
                             String.format("%.2f", totalMoneyPrice) + "!"));
                         return;
@@ -225,7 +225,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                 // Use overflow inventory instead of dropping on ground
                 com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                     .addItem(buyer.getUUID(), purchasedItem);
-                buyer.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
+                buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
             }
             
             // 4. Give money to seller (full listing price)
@@ -254,7 +254,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                         if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(seller, stack)) {
                             com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                                 .addItem(listing.getSellerId(), stack);
-                            seller.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
+                            seller.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
                         }
                     } else {
                         economyManager.getBankInventory(listing.getSellerId())
@@ -274,23 +274,23 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
             if (totalMoneyPrice > 0) {
                 if (this.paymentMode == 0) {
                     buyer.displayClientMessage(Component.literal(
-                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaPurchased ┬ºf" + purchasedItemName + " ┬ºafor ┬º6$" + String.format("%.2f", totalMoneyPrice)), true);
+                        "§a§l✓ §r§aPurchased §f" + purchasedItemName + " §afor §6$" + String.format("%.2f", totalMoneyPrice)), true);
                 } else {
                     double refund = itemPaymentTotal - totalMoneyPrice;
-                    String refundText = refund > 0.01 ? " ┬º7(┬ºa+$" + String.format("%.2f", refund) + " refund┬º7)" : "";
+                    String refundText = refund > 0.01 ? " §7(§a+$" + String.format("%.2f", refund) + " refund§7)" : "";
                     buyer.displayClientMessage(Component.literal(
-                        "┬ºa┬ºlÔ£ô ┬ºr┬ºaPurchased ┬ºf" + purchasedItemName + " ┬ºawith items" + refundText), true);
+                        "§a§l✓ §r§aPurchased §f" + purchasedItemName + " §awith items" + refundText), true);
                 }
             } else {
                 buyer.displayClientMessage(Component.literal(
-                    "┬ºa┬ºlÔ£ô ┬ºr┬ºaPurchased ┬ºf" + purchasedItemName), true);
+                    "§a§l✓ §r§aPurchased §f" + purchasedItemName), true);
             }
             
             // 8. Notification to seller (action bar if online)
             if (seller != null && seller.isAlive()) {
                 seller.displayClientMessage(Component.literal(
-                    "┬º6┬ºl$ ┬ºr┬º6" + buyer.getName().getString() + " ┬ºabought your ┬ºf" + purchasedItemName +
-                    (listing.getMoneyPrice() > 0 ? " ┬ºafor ┬º6$" + String.format("%.2f", listing.getMoneyPrice()) : "")), true);
+                    "§6§l$ §r§6" + buyer.getName().getString() + " §abought your §f" + purchasedItemName +
+                    (listing.getMoneyPrice() > 0 ? " §afor §6$" + String.format("%.2f", listing.getMoneyPrice()) : "")), true);
             }
             
             // 9. Sync updated listings to all players

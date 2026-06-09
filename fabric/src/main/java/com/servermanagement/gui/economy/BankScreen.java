@@ -74,12 +74,12 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
         int x0 = (this.width - this.imageWidth) / 2;
         int y0 = (this.height - this.imageHeight) / 2;
 
-        // ÔöÇÔöÇ Row 1: Header buttons ÔöÇÔöÇ
+        // ── Row 1: Header buttons ──
         // Dashboard (admin only)
         if (this.minecraft != null && this.minecraft.player != null && this.minecraft.player.hasPermissions(2)) {
             this.addRenderableWidget(new ModernButton(
                 x0 + 5, y0 + 5, 90, 18,
-                Component.literal("ÔåÉ Dashboard"),
+                Component.literal("← Dashboard"),
                 b -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD)),
                 ModernButton.ButtonStyle.SECONDARY
             ));
@@ -93,7 +93,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
             ModernButton.ButtonStyle.DANGER
         ));
 
-        // ÔöÇÔöÇ Row 2: Quick-nav buttons ÔöÇÔöÇ
+        // ── Row 2: Quick-nav buttons ──
         int navY = y0 + 28;
         this.addRenderableWidget(new ModernButton(
             x0 + 5, navY, 85, 18,
@@ -120,7 +120,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
             ModernButton.ButtonStyle.PRIMARY
         ));
 
-        // ÔöÇÔöÇ Row 3: Tab bar ÔöÇÔöÇ
+        // ── Row 3: Tab bar ──
         int tabY = y0 + 52;
         int tabW = (this.imageWidth - 20) / 3;
         this.addRenderableWidget(new ModernButton(
@@ -136,7 +136,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
             currentTab == Tab.TRANSFER ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
         ));
 
-        // Requests tab ÔÇö show count badge if there are incoming
+        // Requests tab — show count badge if there are incoming
         List<ClientMoneyRequestData.RequestEntry> incoming = ClientMoneyRequestData.getIncomingRequests();
         int pendingCount = 0;
         for (ClientMoneyRequestData.RequestEntry r : incoming) {
@@ -152,7 +152,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
             reqStyle
         ));
 
-        // ÔöÇÔöÇ Content area (below tab bar) ÔöÇÔöÇ
+        // ── Content area (below tab bar) ──
         int contentY = tabY + 26;
 
         switch (currentTab) {
@@ -162,9 +162,9 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
         }
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
     //  ACCOUNT TAB
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
 
     private void initAccountTab(int x0, int y0, int contentY) {
         // Pagination buttons at bottom
@@ -172,7 +172,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
 
         ModernButton prev = new ModernButton(
             x0 + 10, bottomY, 80, 20,
-            Component.literal("ÔåÉ Previous"),
+            Component.literal("← Previous"),
             b -> { if (txnPage > 0) { txnPage--; this.rebuildWidgets(); } },
             ModernButton.ButtonStyle.SECONDARY
         );
@@ -180,7 +180,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
 
         ModernButton next = new ModernButton(
             x0 + this.imageWidth - 90, bottomY, 80, 20,
-            Component.literal("Next ÔåÆ"),
+            Component.literal("Next →"),
             b -> { if (txnPage < txnMaxPages - 1) { txnPage++; this.rebuildWidgets(); } },
             ModernButton.ButtonStyle.SECONDARY
         );
@@ -197,9 +197,9 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
         if (txnPage >= txnMaxPages) txnPage = Math.max(0, txnMaxPages - 1);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
     //  TRANSFER TAB
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
 
     private void initTransferTab(int x0, int y0, int contentY) {
         int fieldX = x0 + 15;
@@ -255,9 +255,9 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
         }
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
     //  REQUESTS TAB
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
 
     private void initRequestsTab(int x0, int y0, int contentY) {
         // Sub-tabs: Incoming / Outgoing
@@ -383,7 +383,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
             int bottomY = y0 + this.imageHeight - 28;
             ModernButton prev = new ModernButton(
                 x0 + 10, bottomY, 80, 20,
-                Component.literal("ÔåÉ Prev"),
+                Component.literal("← Prev"),
                 b -> { if (reqPage > 0) { reqPage--; this.rebuildWidgets(); } },
                 ModernButton.ButtonStyle.SECONDARY
             );
@@ -392,7 +392,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
 
             ModernButton next = new ModernButton(
                 x0 + this.imageWidth - 90, bottomY, 80, 20,
-                Component.literal("Next ÔåÆ"),
+                Component.literal("Next →"),
                 b -> { if (reqPage < reqMaxPages - 1) { reqPage++; this.rebuildWidgets(); } },
                 ModernButton.ButtonStyle.SECONDARY
             );
@@ -424,9 +424,9 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
         }
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
     //  STATUS MESSAGE
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
 
     private void setStatusMessage(String message, int color) {
         this.statusMessage = message;
@@ -434,9 +434,9 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
         this.statusTimer = STATUS_MESSAGE_DURATION;
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
     //  RENDERING
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ═══════════════════════════════════════════════════
 
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
@@ -444,19 +444,19 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
         int y0 = (this.height - this.imageHeight) / 2;
 
         // Main background
-        guiGraphics.fill(x0 - 1, y0 - 1, x0 + this.imageWidth + 1, y0 + this.imageHeight + 1, 0xFF000000);
-        guiGraphics.fill(x0, y0, x0 + this.imageWidth, y0 + this.imageHeight, 0xE0101010);
+        guiGraphics.fill(x0 - 1, y0 - 1, x0 + this.imageWidth + 1, y0 + this.imageHeight + 1, 0xC0000000);
+        guiGraphics.fill(x0, y0, x0 + this.imageWidth, y0 + this.imageHeight, 0xA0101010);
 
         // Header bar (rows 1+2)
-        guiGraphics.fill(x0, y0, x0 + this.imageWidth, y0 + 50, 0xE0202020);
+        guiGraphics.fill(x0, y0, x0 + this.imageWidth, y0 + 50, 0xA0202020);
         guiGraphics.fill(x0, y0 + 49, x0 + this.imageWidth, y0 + 50, 0xFF333333);
 
         // Tab bar background
-        guiGraphics.fill(x0, y0 + 50, x0 + this.imageWidth, y0 + 76, 0xE0181818);
+        guiGraphics.fill(x0, y0 + 50, x0 + this.imageWidth, y0 + 76, 0xA0181818);
         guiGraphics.fill(x0, y0 + 75, x0 + this.imageWidth, y0 + 76, 0xFF333333);
 
         // Content background
-        guiGraphics.fill(x0 + 5, y0 + 76, x0 + this.imageWidth - 5, y0 + this.imageHeight - 5, 0xE01A1A1A);
+        guiGraphics.fill(x0 + 5, y0 + 76, x0 + this.imageWidth - 5, y0 + this.imageHeight - 5, 0xA01A1A1A);
     }
 
     @Override

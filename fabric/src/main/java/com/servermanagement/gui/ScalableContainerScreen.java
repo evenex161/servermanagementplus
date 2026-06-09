@@ -14,7 +14,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
  * <p>
  * Subclasses MUST NOT override {@link #render(GuiGraphics, int, int, float)}
  * (it is final). They override {@link #renderContent(GuiGraphics, int, int, float)}
- * instead and write every coordinate in DESIGN SPACE ÔÇö as if the panel were
+ * instead and write every coordinate in DESIGN SPACE — as if the panel were
  * always at its preferred size. {@code leftPos} and {@code topPos} point to the
  * design-space anchor of the panel; they may be negative when the design panel
  * is larger than the workspace.
@@ -34,6 +34,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
     private final int designHeight;
     private float guiScale = 1.0f;
     private boolean suppressBackgroundOnce = false;
+    private boolean blurEnabled = false;
 
     protected ScalableContainerScreen(T menu, Inventory inv, Component title,
                                       int designWidth, int designHeight) {
@@ -66,7 +67,23 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
                 this.width, this.height);
         super.init();
         // super.init() centers leftPos/topPos for the design size, which is
-        // exactly what we want ÔÇö they become the design-space anchor.
+        // exactly what we want — they become the design-space anchor.
+
+        // Activate the world-blur post-effect so the panel reads as glass over
+        // a blurred backdrop. Refcounted; safe to call across screen swaps.
+        if (!blurEnabled) {
+            BlurBackdrop.enable();
+            blurEnabled = true;
+        }
+    }
+
+    @Override
+    public void removed() {
+        if (blurEnabled) {
+            BlurBackdrop.disable();
+            blurEnabled = false;
+        }
+        super.removed();
     }
 
     /** Inverse-transform a real X mouse coord into the screen's design space. */
@@ -85,7 +102,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
      * Fill the entire visible viewport with {@code color}, expressed in
      * design-space coordinates so the rectangle survives the scaled pose.
      * Use this for fullscreen overlays drawn from inside
-     * {@link #renderContent} (e.g. animation dim layers) ÔÇö passing
+     * {@link #renderContent} (e.g. animation dim layers) — passing
      * {@code (0, 0, width, height)} to {@link GuiGraphics#fill} would shrink
      * with the pose and clip incorrectly.
      */
@@ -103,7 +120,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
     @Override
     public final void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         // 1. Render ONLY the dimmed world overlay at full screen size.
-        //    DO NOT call renderBackground() ÔÇö AbstractContainerScreen overrides it
+        //    DO NOT call renderBackground() — AbstractContainerScreen overrides it
         //    to also invoke renderBg(), which would paint an unscaled "ghost" panel
         //    at design-space (leftPos, topPos) before our pose scale is applied.
         if (this.minecraft != null && this.minecraft.level == null) {
@@ -147,7 +164,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
         int y0 = this.topPos;
         int x1 = x0 + designWidth;
         int y1 = y0 + designHeight;
-        // Soft dark frosted fill ÔÇö keeps the blur visible underneath.
+        // Soft dark frosted fill — keeps the blur visible underneath.
         g.fill(x0, y0, x1, y1, 0x80101015);
         // Thin outline for panel definition.
         g.fill(x0, y0, x1, y0 + 1, 0x60FFFFFF);
@@ -159,7 +176,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
     /**
      * Helper for screens that include the player inventory. Paints a slightly
      * darker frosted strip + 1px outline + a hotbar separator + optional
-     * "Inventory" label, framing the 9├ù{rows} grid + hotbar so players can
+     * "Inventory" label, framing the 9×{rows} grid + hotbar so players can
      * tell where the inventory begins.
      *
      * @param g       graphics
@@ -202,7 +219,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
     }
 
     /**
-     * Render the panel content. The pose matrix is already scaled ÔÇö use
+     * Render the panel content. The pose matrix is already scaled — use
      * design-space coordinates for everything (text, widgets, custom panels).
      * <p>
      * Default implementation simply calls {@code super.render(...)} (i.e.

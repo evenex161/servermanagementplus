@@ -39,19 +39,19 @@ public class PlayerManagerSingleton {
     public static void spectatePlayer(ServerPlayer spectator, String targetName) {
         PlayerManagerSingleton instance = getInstance();
         if (instance.server == null) {
-            spectator.sendSystemMessage(Component.literal("┬ºcError: Server not initialized"));
+            spectator.sendSystemMessage(Component.literal("§cError: Server not initialized"));
             return;
         }
         
         ServerPlayer target = instance.server.getPlayerList().getPlayerByName(targetName);
         if (target == null) {
             spectator.sendSystemMessage(Component.literal(
-                String.format("┬ºcPlayer not found: %s", targetName)));
+                String.format("§cPlayer not found: %s", targetName)));
             return;
         }
 
         if (spectator.getUUID().equals(target.getUUID())) {
-            spectator.sendSystemMessage(Component.literal("┬ºcYou cannot spectate yourself!"));
+            spectator.sendSystemMessage(Component.literal("§cYou cannot spectate yourself!"));
             return;
         }
 
@@ -91,7 +91,7 @@ public class PlayerManagerSingleton {
         
         if (stealth) {
             // Same-dimension stealth: body stays at original position, only camera changes.
-            // DON'T use setCamera() on the server ÔÇö it calls absMoveTo() every tick,
+            // DON'T use setCamera() on the server — it calls absMoveTo() every tick,
             // which would drag the body to the target. Instead, send the camera packet
             // directly to the client.
             spectator.connection.send(new ClientboundSetCameraPacket(target));
@@ -117,7 +117,7 @@ public class PlayerManagerSingleton {
         }
         
         spectator.sendSystemMessage(Component.literal(
-            String.format("┬ºaNow spectating %s", targetName)));
+            String.format("§aNow spectating %s", targetName)));
     }
 
     public static void stopSpectate(ServerPlayer player) {
@@ -150,26 +150,26 @@ public class PlayerManagerSingleton {
                 }
             }
             
-            player.sendSystemMessage(Component.literal("┬ºaSpectate mode ended."));
+            player.sendSystemMessage(Component.literal("§aSpectate mode ended."));
         }
     }
 
     public static void viewInventory(ServerPlayer viewer, String targetName) {
         PlayerManagerSingleton instance = getInstance();
         if (instance.server == null) {
-            viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬ºcError: Server not initialized"));
+            viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cError: Server not initialized"));
             return;
         }
         
         ServerPlayer target = instance.server.getPlayerList().getPlayerByName(targetName);
         if (target == null) {
             viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                String.format("┬ºcPlayer not found: %s", targetName)));
+                String.format("§cPlayer not found: %s", targetName)));
             return;
         }
 
         if (viewer.getUUID().equals(target.getUUID())) {
-            viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬ºcYou cannot view your own inventory!"));
+            viewer.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cYou cannot view your own inventory!"));
             return;
         }
 
@@ -212,7 +212,7 @@ public class PlayerManagerSingleton {
             
             ServerPlayer target = instance.server.getPlayerList().getPlayer(data.targetUUID);
             if (target == null) {
-                // Target disconnected ÔÇö restore and stop spectating
+                // Target disconnected — restore and stop spectating
                 spectator.setInvulnerable(false);
                 ServerManagementMod.LOGGER.debug("Set invulnerable=false for {} (target disconnected)", spectator.getName().getString());
                 if (!data.stealthMode) {
@@ -231,7 +231,7 @@ public class PlayerManagerSingleton {
                     spectator.connection.send(new ClientboundSetCameraPacket(spectator));
                     spectator.setCamera(spectator);
                 }
-                spectator.sendSystemMessage(Component.literal("┬ºeSpectate ended: target disconnected."));
+                spectator.sendSystemMessage(Component.literal("§eSpectate ended: target disconnected."));
                 toStop.add(spectatorUUID);
                 continue;
             }
@@ -240,7 +240,7 @@ public class PlayerManagerSingleton {
             if (data.pendingReattachTicks > 0) {
                 data.pendingReattachTicks--;
                 if (data.pendingReattachTicks == 0) {
-                    // Settle period expired ÔÇö lock camera now
+                    // Settle period expired — lock camera now
                     ServerPlayer freshS = instance.server.getPlayerList().getPlayer(spectatorUUID);
                     ServerPlayer freshT = instance.server.getPlayerList().getPlayer(data.targetUUID);
                     if (freshS != null && freshT != null) {
@@ -305,14 +305,14 @@ public class PlayerManagerSingleton {
                 double dz = data.z - target.getZ();
                 double distSq = dx * dx + dz * dz;
                 if (distSq > (double) safeRange * safeRange) {
-                    // Target too far ÔÇö reset camera FIRST for clean exit, then restore state
+                    // Target too far — reset camera FIRST for clean exit, then restore state
                     spectator.connection.send(new ClientboundSetCameraPacket(spectator));
                     spectator.setCamera(spectator);
                     spectator.setInvulnerable(false);
                     ServerManagementMod.LOGGER.debug("Set invulnerable=false for {} (target out of range, {}>{} blocks)", 
                         spectator.getName().getString(), (int) Math.sqrt(distSq), safeRange);
                     spectator.setGameMode(data.gameMode);
-                    spectator.sendSystemMessage(Component.literal("┬ºeSpectate ended: target moved out of range."));
+                    spectator.sendSystemMessage(Component.literal("§eSpectate ended: target moved out of range."));
                     toStop.add(spectatorUUID);
                     continue;
                 }
@@ -324,7 +324,7 @@ public class PlayerManagerSingleton {
             } else {
                 // === NON-STEALTH MODE: body follows target ===
                 
-                // Check if target returned to the spectator's original dimension ÔÇö
+                // Check if target returned to the spectator's original dimension —
                 // if so, transition back to stealth mode (teleport body back, freeze in place)
                 if (target.level().dimension().location().toString().equals(data.dimension)
                         && !spectator.level().dimension().location().toString().equals(data.dimension)) {
@@ -379,20 +379,20 @@ public class PlayerManagerSingleton {
     public static void kickPlayer(ServerPlayer admin, String targetName, String reason) {
         PlayerManagerSingleton instance = getInstance();
         if (instance.server == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcError: Server not initialized"));
+            admin.sendSystemMessage(Component.literal("§cError: Server not initialized"));
             return;
         }
         
         ServerPlayer target = instance.server.getPlayerList().getPlayerByName(targetName);
         if (target == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcPlayer not found or not online: " + targetName));
+            admin.sendSystemMessage(Component.literal("§cPlayer not found or not online: " + targetName));
             return;
         }
         
         String kickMsg = reason.isEmpty() ? "Kicked by " + admin.getName().getString() 
                                            : "Kicked: " + reason;
         target.connection.disconnect(Component.literal(kickMsg));
-        admin.sendSystemMessage(Component.literal("┬ºaKicked " + targetName));
+        admin.sendSystemMessage(Component.literal("§aKicked " + targetName));
         ServerManagementMod.LOGGER.info("{} kicked {} (reason: {})", admin.getName().getString(), targetName, 
             reason.isEmpty() ? "none" : reason);
     }
@@ -402,7 +402,7 @@ public class PlayerManagerSingleton {
     public static void banPlayer(ServerPlayer admin, String targetName, String reason, boolean banIP) {
         PlayerManagerSingleton instance = getInstance();
         if (instance.server == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcError: Server not initialized"));
+            admin.sendSystemMessage(Component.literal("§cError: Server not initialized"));
             return;
         }
         
@@ -424,7 +424,7 @@ public class PlayerManagerSingleton {
         }
         
         if (profile == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcCould not find player profile: " + targetName));
+            admin.sendSystemMessage(Component.literal("§cCould not find player profile: " + targetName));
             return;
         }
         
@@ -440,14 +440,14 @@ public class PlayerManagerSingleton {
             if (ip != null && !ip.isEmpty()) {
                 IpBanListEntry ipBan = new IpBanListEntry(ip, null, admin.getName().getString(), null, banReason);
                 instance.server.getPlayerList().getIpBans().add(ipBan);
-                admin.sendSystemMessage(Component.literal("┬ºaBanned " + targetName + " + IP (" + ip + ")"));
+                admin.sendSystemMessage(Component.literal("§aBanned " + targetName + " + IP (" + ip + ")"));
             } else {
-                admin.sendSystemMessage(Component.literal("┬ºaBanned " + targetName + " (IP ban failed: could not get IP)"));
+                admin.sendSystemMessage(Component.literal("§aBanned " + targetName + " (IP ban failed: could not get IP)"));
             }
         } else if (banIP) {
-            admin.sendSystemMessage(Component.literal("┬ºaBanned " + targetName + " (IP ban skipped: player offline)"));
+            admin.sendSystemMessage(Component.literal("§aBanned " + targetName + " (IP ban skipped: player offline)"));
         } else {
-            admin.sendSystemMessage(Component.literal("┬ºaBanned " + targetName));
+            admin.sendSystemMessage(Component.literal("§aBanned " + targetName));
         }
         
         // Kick if online
@@ -464,7 +464,7 @@ public class PlayerManagerSingleton {
     public static void unbanPlayer(ServerPlayer admin, String targetName) {
         PlayerManagerSingleton instance = getInstance();
         if (instance.server == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcError: Server not initialized"));
+            admin.sendSystemMessage(Component.literal("§cError: Server not initialized"));
             return;
         }
         
@@ -478,7 +478,7 @@ public class PlayerManagerSingleton {
                 com.mojang.authlib.GameProfile profile = opt.get();
                 if (banList.isBanned(profile)) {
                     banList.remove(profile);
-                    admin.sendSystemMessage(Component.literal("┬ºaUnbanned " + targetName));
+                    admin.sendSystemMessage(Component.literal("§aUnbanned " + targetName));
                     ServerManagementMod.LOGGER.info("{} unbanned {}", admin.getName().getString(), targetName);
                     return;
                 }
@@ -489,10 +489,10 @@ public class PlayerManagerSingleton {
         com.mojang.authlib.GameProfile profile = findBannedProfile(instance.server, targetName);
         if (profile != null) {
             banList.remove(profile);
-            admin.sendSystemMessage(Component.literal("┬ºaUnbanned " + targetName));
+            admin.sendSystemMessage(Component.literal("§aUnbanned " + targetName));
             ServerManagementMod.LOGGER.info("{} unbanned {}", admin.getName().getString(), targetName);
         } else {
-            admin.sendSystemMessage(Component.literal("┬ºc" + targetName + " is not banned"));
+            admin.sendSystemMessage(Component.literal("§c" + targetName + " is not banned"));
         }
     }
     
@@ -501,33 +501,33 @@ public class PlayerManagerSingleton {
     public static void addToWhitelist(ServerPlayer admin, String targetName) {
         PlayerManagerSingleton instance = getInstance();
         if (instance.server == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcError: Server not initialized"));
+            admin.sendSystemMessage(Component.literal("§cError: Server not initialized"));
             return;
         }
         
         var cached = instance.server.getProfileCache();
         if (cached == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcProfile cache not available"));
+            admin.sendSystemMessage(Component.literal("§cProfile cache not available"));
             return;
         }
         
         var opt = cached.get(targetName);
         if (opt.isEmpty()) {
-            admin.sendSystemMessage(Component.literal("┬ºcCould not find player profile: " + targetName));
+            admin.sendSystemMessage(Component.literal("§cCould not find player profile: " + targetName));
             return;
         }
         
         com.mojang.authlib.GameProfile profile = opt.get();
         UserWhiteListEntry entry = new UserWhiteListEntry(profile);
         instance.server.getPlayerList().getWhiteList().add(entry);
-        admin.sendSystemMessage(Component.literal("┬ºaAdded " + targetName + " to whitelist"));
+        admin.sendSystemMessage(Component.literal("§aAdded " + targetName + " to whitelist"));
         ServerManagementMod.LOGGER.info("{} added {} to whitelist", admin.getName().getString(), targetName);
     }
     
     public static void removeFromWhitelist(ServerPlayer admin, String targetName) {
         PlayerManagerSingleton instance = getInstance();
         if (instance.server == null) {
-            admin.sendSystemMessage(Component.literal("┬ºcError: Server not initialized"));
+            admin.sendSystemMessage(Component.literal("§cError: Server not initialized"));
             return;
         }
         
@@ -541,14 +541,14 @@ public class PlayerManagerSingleton {
                 com.mojang.authlib.GameProfile profile = opt.get();
                 if (whiteList.isWhiteListed(profile)) {
                     whiteList.remove(profile);
-                    admin.sendSystemMessage(Component.literal("┬ºaRemoved " + targetName + " from whitelist"));
+                    admin.sendSystemMessage(Component.literal("§aRemoved " + targetName + " from whitelist"));
                     ServerManagementMod.LOGGER.info("{} removed {} from whitelist", admin.getName().getString(), targetName);
                     return;
                 }
             }
         }
         
-        admin.sendSystemMessage(Component.literal("┬ºc" + targetName + " is not on the whitelist"));
+        admin.sendSystemMessage(Component.literal("§c" + targetName + " is not on the whitelist"));
     }
     
     // ===== Sync lists to client =====

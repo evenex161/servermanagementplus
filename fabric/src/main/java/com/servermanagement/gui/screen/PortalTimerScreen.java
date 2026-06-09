@@ -44,7 +44,7 @@ public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> 
         super.init();
         // Refresh dimensionId from the cache on every init() in case the
         // SyncWorldDetailPacket arrived after the screen ctor but before the
-        // first render ÔÇö keeps portal-toggle visibility correct.
+        // first render — keeps portal-toggle visibility correct.
         String cachedDim = ClientPacketHandler.getCachedDimensionId();
         if (cachedDim != null && !cachedDim.isEmpty()) {
             this.dimensionId = cachedDim;
@@ -61,17 +61,17 @@ public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> 
         if (showNether && showEnd) {
             this.selectedPortalType = "both";
             this.portalTypeButton = Button.builder(
-                Component.literal("┬ºbPortal Type: Both"),
+                Component.literal("§bPortal Type: Both"),
                 button -> {
                     if ("both".equals(selectedPortalType)) {
                         selectedPortalType = "nether";
-                        button.setMessage(Component.literal("┬ºbPortal Type: Nether"));
+                        button.setMessage(Component.literal("§bPortal Type: Nether"));
                     } else if ("nether".equals(selectedPortalType)) {
                         selectedPortalType = "end";
-                        button.setMessage(Component.literal("┬ºbPortal Type: End"));
+                        button.setMessage(Component.literal("§bPortal Type: End"));
                     } else {
                         selectedPortalType = "both";
-                        button.setMessage(Component.literal("┬ºbPortal Type: Both"));
+                        button.setMessage(Component.literal("§bPortal Type: Both"));
                     }
                 })
                 .bounds(centerX + 30, startY - 10, 240, 20)
@@ -110,7 +110,7 @@ public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> 
         
         // Start button
         this.startButton = Button.builder(
-            Component.literal("┬ºaStart Timer"),
+            Component.literal("§aStart Timer"),
             button -> {
                 try {
                     int hours = Integer.parseInt(this.hoursInput.getValue());
@@ -132,7 +132,7 @@ public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> 
         
         // Stop/Cancel button
         this.stopButton = Button.builder(
-            Component.literal("┬ºcCancel"),
+            Component.literal("§cCancel"),
             button -> {
                 long clientTick = minecraft.player.tickCount;
                 ModNetworking.sendToServer(new WMSetTimerPacket(dimensionId, 0, selectedPortalType, clientTick));
@@ -235,7 +235,7 @@ public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> 
             int seconds = timerSeconds % 60;
             
             String statusLabel = "Current Timer:";
-            String timeDisplay = String.format("┬ºe%d:%02d:%02d", hours, minutes, seconds);
+            String timeDisplay = String.format("§e%d:%02d:%02d", hours, minutes, seconds);
             
             int statusY = this.topPos + 165;
             guiGraphics.drawString(this.font, statusLabel, 

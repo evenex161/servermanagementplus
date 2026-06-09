@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
- * Client ÔåÆ Server: Create a new money request
+ * Client → Server: Create a new money request
  */
 public record SendMoneyRequestPacket(String targetPlayerName, double amount, String message) implements com.servermanagement.network.IPacket {
     public static final net.minecraft.resources.ResourceLocation ID = new net.minecraft.resources.ResourceLocation("servermanagement", "send_money_request_packet");
@@ -43,7 +43,7 @@ public record SendMoneyRequestPacket(String targetPlayerName, double amount, Str
                     || this.targetPlayerName.length() > 16
                     || !PLAYER_NAME_PATTERN.matcher(this.targetPlayerName).matches()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid player name"));
+                    "§cInvalid player name"));
                 return;
             }
 
@@ -51,7 +51,7 @@ public record SendMoneyRequestPacket(String targetPlayerName, double amount, Str
             if (Double.isNaN(this.amount) || Double.isInfinite(this.amount)
                     || this.amount < 0.01 || this.amount > 1000000.0) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcAmount must be between $0.01 and $1,000,000"));
+                    "§cAmount must be between $0.01 and $1,000,000"));
                 return;
             }
 
@@ -65,13 +65,13 @@ public record SendMoneyRequestPacket(String targetPlayerName, double amount, Str
             ServerPlayer target = sender.server.getPlayerList().getPlayerByName(targetPlayerName);
             if (target == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcPlayer not found: " + targetPlayerName));
+                    "§cPlayer not found: " + targetPlayerName));
                 return;
             }
 
             if (target.getUUID().equals(sender.getUUID())) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcYou cannot request money from yourself"));
+                    "§cYou cannot request money from yourself"));
                 return;
             }
 
@@ -83,18 +83,18 @@ public record SendMoneyRequestPacket(String targetPlayerName, double amount, Str
 
             if (request == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcYou have too many pending requests (max 10)"));
+                    "§cYou have too many pending requests (max 10)"));
                 return;
             }
 
             reqManager.save(sender.server);
 
             sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                String.format("┬ºaRequest sent to %s for $%.2f", target.getName().getString(), this.amount)));
+                String.format("§aRequest sent to %s for $%.2f", target.getName().getString(), this.amount)));
 
             // Notify target player
             target.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                String.format("┬ºe%s is requesting $%.2f from you. Open your Bank to respond.",
+                String.format("§e%s is requesting $%.2f from you. Open your Bank to respond.",
                     sender.getName().getString(), this.amount)));
 
             // Sync updated request lists to both players

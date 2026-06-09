@@ -40,12 +40,12 @@ public record RejectOfferPacket(String listingId, String offerId) implements com
             
             // Validation
             if (listing == null) {
-                seller.sendSystemMessage(Component.literal("┬ºcListing not found!"));
+                seller.sendSystemMessage(Component.literal("§cListing not found!"));
                 return;
             }
             
             if (!listing.getSellerId().equals(seller.getUUID())) {
-                seller.sendSystemMessage(Component.literal("┬ºcYou can only reject offers on your own listings!"));
+                seller.sendSystemMessage(Component.literal("§cYou can only reject offers on your own listings!"));
                 return;
             }
             
@@ -59,7 +59,7 @@ public record RejectOfferPacket(String listingId, String offerId) implements com
             }
             
             if (rejectedOffer == null) {
-                seller.sendSystemMessage(Component.literal("┬ºcOffer not found or already processed!"));
+                seller.sendSystemMessage(Component.literal("§cOffer not found or already processed!"));
                 return;
             }
             
@@ -83,10 +83,10 @@ public record RejectOfferPacket(String listingId, String offerId) implements com
                     if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, stack)) {
                         com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                             .addItem(buyer.getUUID(), stack);
-                        buyer.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
+                        buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
                     }
                 } else {
-                    // Buyer is offline ÔÇö store in overflow
+                    // Buyer is offline — store in overflow
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(rejectedOffer.getBuyerId(), stack);
                 }
@@ -98,7 +98,7 @@ public record RejectOfferPacket(String listingId, String offerId) implements com
             
             // Notify seller (action bar)
             seller.displayClientMessage(Component.literal(
-                "┬ºe[MineBay] ┬ºcOffer rejected ┬º7ÔÇö escrowed items/money returned to buyer"), true);
+                "§e[MineBay] §cOffer rejected §7— escrowed items/money returned to buyer"), true);
             
             // Sync bank account if buyer is online
             if (buyer != null) {
@@ -110,8 +110,8 @@ public record RejectOfferPacket(String listingId, String offerId) implements com
                     buyer
                 );
                 buyer.displayClientMessage(Component.literal(
-                    "┬ºe[MineBay] ┬ºc" + seller.getName().getString() + " rejected your offer on ┬ºf" + 
-                    listing.getItemForSale().getHoverName().getString() + " ┬º7ÔÇö escrowed items/money returned"), true);
+                    "§e[MineBay] §c" + seller.getName().getString() + " rejected your offer on §f" + 
+                    listing.getItemForSale().getHoverName().getString() + " §7— escrowed items/money returned"), true);
             }
 
 }

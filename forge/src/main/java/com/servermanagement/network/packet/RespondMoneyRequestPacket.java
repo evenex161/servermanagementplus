@@ -13,7 +13,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Client ÔåÆ Server: Respond to a money request (accept, deny, or cancel)
+ * Client → Server: Respond to a money request (accept, deny, or cancel)
  */
 public record RespondMoneyRequestPacket(UUID requestId, Action action) implements IPacket {
     
@@ -43,16 +43,16 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
 
             if (request == null) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcRequest not found or already processed"));
+                    "§cRequest not found or already processed"));
                 return;
             }
 
             switch (action) {
                 case ACCEPT -> {
-                    // Player is the target ÔÇö they pay the requester
+                    // Player is the target — they pay the requester
                     if (!request.getTargetUUID().equals(player.getUUID())) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcYou cannot accept this request"));
+                            "§cYou cannot accept this request"));
                         return;
                     }
 
@@ -60,7 +60,7 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                     BankAccount payerAccount = econ.getOrCreateAccount(player.getUUID());
                     if (payerAccount.getBalance() < request.getAmount()) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcInsufficient funds to fulfill this request"));
+                            "§cInsufficient funds to fulfill this request"));
                         return;
                     }
 
@@ -68,7 +68,7 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                     boolean success = econ.transfer(player.getUUID(), request.getRequesterUUID(), request.getAmount());
                     if (!success) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcTransfer failed"));
+                            "§cTransfer failed"));
                         return;
                     }
 
@@ -76,13 +76,13 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                     reqManager.save(player.server);
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        String.format("┬ºaPaid $%.2f to fulfill the request", request.getAmount())));
+                        String.format("§aPaid $%.2f to fulfill the request", request.getAmount())));
 
                     // Notify requester if online
                     ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            String.format("┬ºa%s accepted your money request for $%.2f!",
+                            String.format("§a%s accepted your money request for $%.2f!",
                                 player.getName().getString(), request.getAmount())));
                         // Sync both players' bank data + requests
                         syncBankAndRequests(requester, econ);
@@ -92,20 +92,20 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                 case DENY -> {
                     if (!request.getTargetUUID().equals(player.getUUID())) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcYou cannot deny this request"));
+                            "§cYou cannot deny this request"));
                         return;
                     }
 
                     reqManager.denyRequest(requestId, player.getUUID());
                     reqManager.save(player.server);
 
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬º7Request denied"));
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request denied"));
 
                     // Notify requester if online
                     ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            String.format("┬ºc%s denied your request for $%.2f",
+                            String.format("§c%s denied your request for $%.2f",
                                 player.getName().getString(), request.getAmount())));
                         SendMoneyRequestPacket.syncRequestsToPlayer(requester, econ);
                     }
@@ -114,14 +114,14 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                 case CANCEL -> {
                     if (!request.getRequesterUUID().equals(player.getUUID())) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcYou cannot cancel this request"));
+                            "§cYou cannot cancel this request"));
                         return;
                     }
 
                     reqManager.cancelRequest(requestId, player.getUUID());
                     reqManager.save(player.server);
 
-                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬º7Request cancelled"));
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request cancelled"));
 
                     // Notify target if online
                     ServerPlayer target = player.server.getPlayerList().getPlayer(request.getTargetUUID());

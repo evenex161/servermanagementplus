@@ -43,17 +43,17 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
             
             // Validation
             if (listing == null) {
-                seller.sendSystemMessage(Component.literal("┬ºcListing not found!"));
+                seller.sendSystemMessage(Component.literal("§cListing not found!"));
                 return;
             }
             
             if (!listing.getSellerId().equals(seller.getUUID())) {
-                seller.sendSystemMessage(Component.literal("┬ºcYou can only accept offers on your own listings!"));
+                seller.sendSystemMessage(Component.literal("§cYou can only accept offers on your own listings!"));
                 return;
             }
             
             if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
-                seller.sendSystemMessage(Component.literal("┬ºcThis listing is no longer active!"));
+                seller.sendSystemMessage(Component.literal("§cThis listing is no longer active!"));
                 return;
             }
             
@@ -67,11 +67,11 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
             }
             
             if (acceptedOffer == null) {
-                seller.sendSystemMessage(Component.literal("┬ºcOffer not found or already processed!"));
+                seller.sendSystemMessage(Component.literal("§cOffer not found or already processed!"));
                 return;
             }
             
-            // Execute the transaction ÔÇö items and money are already escrowed
+            // Execute the transaction — items and money are already escrowed
             
             // SECURITY: Mark listing as COMPLETED immediately to prevent concurrent accept operations
             listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
@@ -95,7 +95,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
                     // Overflow: add to seller's overflow inventory
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(seller.getUUID(), stack);
-                    seller.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
+                    seller.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
                 }
             }
             
@@ -117,10 +117,10 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
                 if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, purchasedItem)) {
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(buyer.getUUID(), purchasedItem);
-                    buyer.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
+                    buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
                 }
             } else {
-                // Buyer is offline ÔÇö store in overflow
+                // Buyer is offline — store in overflow
                 com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                     .addItem(acceptedOffer.getBuyerId(), purchasedItem);
             }
@@ -157,14 +157,14 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
             
             // Notify both parties (action bar)
             String moneyStr = acceptedOffer.getMoneyOffer() > 0 ? 
-                " for ┬º6$" + String.format("%.2f", acceptedOffer.getMoneyOffer()) : "";
+                " for §6$" + String.format("%.2f", acceptedOffer.getMoneyOffer()) : "";
             seller.displayClientMessage(Component.literal(
-                "┬ºa┬ºlÔ£ô ┬ºr┬ºaOffer accepted! Sold ┬ºf" + purchasedItemName + moneyStr), true);
+                "§a§l✓ §r§aOffer accepted! Sold §f" + purchasedItemName + moneyStr), true);
             
             if (buyer != null) {
                 buyer.displayClientMessage(Component.literal(
-                    "┬ºa┬ºlÔ£ô ┬ºr┬ºaYour offer was accepted! Purchased ┬ºf" + purchasedItemName + 
-                    " ┬ºafrom ┬º6" + seller.getName().getString()), true);
+                    "§a§l✓ §r§aYour offer was accepted! Purchased §f" + purchasedItemName + 
+                    " §afrom §6" + seller.getName().getString()), true);
             }
 
 }
@@ -193,7 +193,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
                 if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, stack)) {
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(buyer.getUUID(), stack);
-                    buyer.sendSystemMessage(Component.literal("┬º6[MineBay] ┬ºeInventory full ÔÇö item stored in overflow. Use ┬ºf/overflow ┬ºeto claim."));
+                    buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
                 }
             } else {
                 com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
@@ -203,7 +203,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
         
         // Notify buyer if online (action bar)
         if (buyer != null) {
-            buyer.displayClientMessage(Component.literal("┬ºe[MineBay] ┬ºcYour offer was auto-rejected ┬º7(listing sold) ÔÇö escrowed items/money returned"), true);
+            buyer.displayClientMessage(Component.literal("§e[MineBay] §cYour offer was auto-rejected §7(listing sold) — escrowed items/money returned"), true);
         }
     }
 }

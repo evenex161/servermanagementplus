@@ -253,7 +253,7 @@ public class TransactionManager {
             bankInventory.addItem(item, source, details);
             
             player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                "┬ºeÔÜá Inventory full! Item sent to Bank Storage. Use /bank to retrieve it."
+                "§e⚠ Inventory full! Item sent to Bank Storage. Use /bank to retrieve it."
             ));
             
             ServerManagementMod.LOGGER.info("Item sent to bank storage for {}: {}", 
@@ -324,7 +324,7 @@ public class TransactionManager {
             
             NbtIo.writeCompressed(rootTag, file);
             
-            // Trim in-memory map to match saved limit ÔÇö prevents unbounded growth
+            // Trim in-memory map to match saved limit — prevents unbounded growth
             if (completedTransactions.size() > 1000) {
                 Set<String> keepIds = sorted.stream()
                     .map(t -> t.transactionId)

@@ -112,7 +112,7 @@ public class MarketPricingEngine {
     public double getBasePrice(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
 
-        // Get static base value ÔÇö prefer recipe-based pricing over flat ItemValuation
+        // Get static base value — prefer recipe-based pricing over flat ItemValuation
         ItemStack singleItem = stack.copyWithCount(1);
         double staticValue;
         RecipeBasedPricing recipePricing = RecipeBasedPricing.getInstance();

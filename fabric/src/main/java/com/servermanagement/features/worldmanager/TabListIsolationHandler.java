@@ -29,7 +29,7 @@ public class TabListIsolationHandler {
     
     // Pending dimension change: use tick counter instead of server.execute()
     // because server.execute() can run in the same tick (during waitUntilNextTick),
-    // which is too early ÔÇö the client hasn't processed vanilla's dimension-change
+    // which is too early — the client hasn't processed vanilla's dimension-change
     // packets yet, causing our PlayerInfoUpdate to be silently dropped.
     private static boolean pendingDimensionUpdate = false;
     private static int dimensionChangeCountdown = 0;
@@ -182,7 +182,7 @@ public class TabListIsolationHandler {
                 }
             }
             
-            // Send UNLIST packet ÔÇö hides from tab overlay WITHOUT removing PlayerInfo.
+            // Send UNLIST packet — hides from tab overlay WITHOUT removing PlayerInfo.
             // Uses UPDATE_LISTED(false) instead of ClientboundPlayerInfoRemovePacket
             // because REMOVE deletes from playerInfoMap, which breaks entity tracking
             // (handleAddEntity rejects players not in playerInfoMap, making models invisible).
@@ -194,7 +194,7 @@ public class TabListIsolationHandler {
                 }
             }
             
-            // Send LIST packet ÔÇö shows in tab overlay
+            // Send LIST packet — shows in tab overlay
             if (!toList.isEmpty()) {
                 player.connection.send(createUpdateListedPacket(server, toList, true));
             }
@@ -213,7 +213,7 @@ public class TabListIsolationHandler {
     ) {
         Set<UUID> visible = new HashSet<>();
         
-        // Only show players from the same dimension ÔÇö pure dimension-based isolation
+        // Only show players from the same dimension — pure dimension-based isolation
         for (ServerPlayer player : dimensionPlayers.getOrDefault(dimension, Collections.emptyList())) {
             visible.add(player.getUUID());
         }
@@ -226,7 +226,7 @@ public class TabListIsolationHandler {
      * The standard Entry(ServerPlayer) constructor hardcodes listed=true, so we
      * manually construct the packet via buffer to control the listed flag.
      * This preserves playerInfoMap entries (unlike REMOVE packets) so entity
-     * tracking continues to work ÔÇö players remain visible as 3D models.
+     * tracking continues to work — players remain visible as 3D models.
      */
     private static ClientboundPlayerInfoUpdatePacket createUpdateListedPacket(
             MinecraftServer server, List<UUID> playerUUIDs, boolean listed) {
@@ -259,7 +259,7 @@ public class TabListIsolationHandler {
             player.connection.send(fullPacket);
         }
         
-        ServerManagementMod.LOGGER.debug("Tab isolation disabled ÔÇö restored full tab list for {} players", allPlayers.size());
+        ServerManagementMod.LOGGER.debug("Tab isolation disabled — restored full tab list for {} players", allPlayers.size());
     }
     
     /**

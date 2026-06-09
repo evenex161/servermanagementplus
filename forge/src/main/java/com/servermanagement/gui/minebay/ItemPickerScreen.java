@@ -223,7 +223,7 @@ public class ItemPickerScreen extends Screen {
         // Instructions at bottom
         int instructY = centerY + guiH - 12;
         guiGraphics.drawString(this.font, 
-            Component.literal("Click an item to select ÔÇó ESC to cancel"),
+            Component.literal("Click an item to select • ESC to cancel"),
             centerX + 5, instructY, 0xAAAAAA, false);
     }
     

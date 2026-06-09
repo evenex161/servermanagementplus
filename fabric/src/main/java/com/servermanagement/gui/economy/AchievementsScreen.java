@@ -58,7 +58,7 @@ public class AchievementsScreen extends ScalableContainerScreen<AchievementsMenu
         // Back to Bank button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 10, 100, 20,
-            Component.literal("ÔåÉ Bank"),
+            Component.literal("← Bank"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.BANK)),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -74,7 +74,7 @@ public class AchievementsScreen extends ScalableContainerScreen<AchievementsMenu
         // Navigation buttons
         prevPageButton = new ModernButton(
             centerX + 20, centerY + this.imageHeight - 30, 80, 20,
-            Component.literal("ÔåÉ Previous"),
+            Component.literal("← Previous"),
             button -> {
                 if (currentPage > 0) {
                     currentPage--;
@@ -86,7 +86,7 @@ public class AchievementsScreen extends ScalableContainerScreen<AchievementsMenu
         
         nextPageButton = new ModernButton(
             centerX + this.imageWidth - 100, centerY + this.imageHeight - 30, 80, 20,
-            Component.literal("Next ÔåÆ"),
+            Component.literal("Next →"),
             button -> {
                 if (currentPage < maxPages - 1) {
                     currentPage++;
@@ -116,10 +116,10 @@ public class AchievementsScreen extends ScalableContainerScreen<AchievementsMenu
         int centerY = (this.height - this.imageHeight) / 2;
         
         // Main dark background
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xE0101010);
+        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xA0101010);
         
         // Header bar
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xE0202020);
+        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xA0202020);
         
         // Background regions computed relative to imageHeight
         int statsTop = centerY + 40;
@@ -128,10 +128,10 @@ public class AchievementsScreen extends ScalableContainerScreen<AchievementsMenu
         int listBottom = centerY + this.imageHeight - 35;
         
         // Stats section background
-        guiGraphics.fill(centerX + 10, statsTop, centerX + this.imageWidth - 10, statsBottom, 0xE01A1A1A);
+        guiGraphics.fill(centerX + 10, statsTop, centerX + this.imageWidth - 10, statsBottom, 0xA01A1A1A);
         
         // Achievements list background
-        guiGraphics.fill(centerX + 10, listTop, centerX + this.imageWidth - 10, listBottom, 0xE01A1A1A);
+        guiGraphics.fill(centerX + 10, listTop, centerX + this.imageWidth - 10, listBottom, 0xA01A1A1A);
     }
     
     @Override

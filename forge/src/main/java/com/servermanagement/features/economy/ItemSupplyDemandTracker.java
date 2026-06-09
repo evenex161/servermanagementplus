@@ -32,16 +32,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * The supply factor influences MarketPricingEngine:
  *   supplyFactor = 1.0 / (1.0 + log10(max(supplyCount / BASELINE, 1)))
- *   Higher supply ÔåÆ lower prices, lower supply ÔåÆ higher prices.
+ *   Higher supply → lower prices, lower supply → higher prices.
  */
 @Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class ItemSupplyDemandTracker {
     private static ItemSupplyDemandTracker instance;
     
-    // Item ID ÔåÆ cumulative supply count
+    // Item ID → cumulative supply count
     private final ConcurrentHashMap<String, Long> supplyMap = new ConcurrentHashMap<>();
     
-    // Baseline supply count ÔÇö items below this have no price reduction
+    // Baseline supply count — items below this have no price reduction
     private static final long SUPPLY_BASELINE = 500;
     
     // Decay factor: supply counts decay over time to prevent runaway deflation
@@ -96,13 +96,13 @@ public class ItemSupplyDemandTracker {
         long supply = supplyMap.getOrDefault(itemId, 0L);
         
         if (supply <= SUPPLY_BASELINE) {
-            // Below baseline ÔÇö scarcity bonus (slight price increase)
+            // Below baseline — scarcity bonus (slight price increase)
             if (supply <= 0) return 1.2; // Very scarce
             double scarcityRatio = (double) supply / SUPPLY_BASELINE;
             return 1.0 + (1.0 - scarcityRatio) * 0.2; // Up to 20% bonus
         }
         
-        // Above baseline ÔÇö supply pressure reduces price
+        // Above baseline — supply pressure reduces price
         double supplyRatio = (double) supply / SUPPLY_BASELINE;
         return 1.0 / (1.0 + Math.log10(supplyRatio));
     }
@@ -249,7 +249,7 @@ public class ItemSupplyDemandTracker {
     }
     
     /**
-     * Periodic save check ÔÇö called from server tick handler.
+     * Periodic save check — called from server tick handler.
      */
     public void tickSave(MinecraftServer server) {
         if (dirty && System.currentTimeMillis() - lastSave > SAVE_INTERVAL_MS) {

@@ -42,10 +42,10 @@ public class LoginNotificationHandler {
             int remaining = overflow.deliverItems(player);
             if (remaining > 0) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºe[MineBay] You have " + remaining + " overflow item(s) that couldn't fit in your inventory. Use /overflow to claim them."));
+                    "§e[MineBay] You have " + remaining + " overflow item(s) that couldn't fit in your inventory. Use /overflow to claim them."));
             } else {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºa[MineBay] Overflow items have been delivered to your inventory!"));
+                    "§a[MineBay] Overflow items have been delivered to your inventory!"));
             }
         }
         
@@ -66,6 +66,12 @@ public class LoginNotificationHandler {
         // Check daily tasks status
         PlayerDailyTasks dailyTasks = economyManager.getDailyTasksManager()
                 .getOrCreatePlayerTasks(player.getUUID());
+
+        // Push initial task snapshot to the joining player so the client cache
+        // is populated BEFORE the player ever opens the Daily Tasks GUI.
+        // Without this, ClientDailyTasksData stays empty until the next
+        // progress event fires SyncDailyTasksPacket, and the GUI shows 0/X.
+        com.servermanagement.features.economy.DailyTaskProgressListener.pushSyncDailyTasks(player);
 
         // Check if free reward is available
         boolean hasFreeReward = dailyTasks.isFreeRewardAvailable();

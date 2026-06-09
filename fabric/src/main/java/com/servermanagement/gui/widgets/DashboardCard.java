@@ -76,7 +76,7 @@ public class DashboardCard extends AbstractWidget {
             this.getY() + 10,
             0xFFFFFF, false);
         
-        // Title and description ÔÇö render via the helper below so any text
+        // Title and description — render via the helper below so any text
         // wider than the card budget is *visually shrunk* (pose scale) rather
         // than truncated. This is bullet-proof against pose-scale interactions
         // with enableScissor (which still doesn't reliably clip when the

@@ -6,7 +6,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Server ÔåÆ Client: Syncs the current MOTD text before opening the editor.
+ * Server → Client: Syncs the current MOTD text before opening the editor.
  */
 public record SyncMotdPacket(String motdText) implements IPacket {
 

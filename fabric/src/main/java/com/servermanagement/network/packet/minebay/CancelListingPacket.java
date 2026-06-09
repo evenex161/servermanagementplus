@@ -42,7 +42,7 @@ public record CancelListingPacket() implements com.servermanagement.network.IPac
                     
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "┬ºeItem returned to inventory"
+                            "§eItem returned to inventory"
                         )
                     );
                 }

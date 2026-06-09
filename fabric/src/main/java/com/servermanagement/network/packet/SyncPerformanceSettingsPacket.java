@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.client.ClientPacketHandler;
 import net.minecraft.network.FriendlyByteBuf;
 /**
- * Server ÔåÆ Client: syncs all performance settings so the GUI can display current values.
+ * Server → Client: syncs all performance settings so the GUI can display current values.
  */
 public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean itemMergingEnabled, boolean mobSpawnLimiterEnabled, boolean entityActivationRangeEnabled, boolean villagerThrottleEnabled, boolean redstoneThrottleEnabled, boolean tpsMonitorEnabled, boolean tpsAutoOptimize, double itemMergeRadius, int itemMergeInterval, int mobCapMultiplier, int monsterActivationRange, int animalActivationRange, int miscActivationRange, int villagerTickInterval, int redstoneUpdatesPerTick, double tpsWarningThreshold, double tpsCriticalThreshold, double currentTps, double averageMspt, boolean autoOptimizeActive, long totalItemsMerged, long totalSpawnsCancelled, long totalEntitiesThrottled, long totalRedstoneThrottled) implements com.servermanagement.network.IPacket {
     public static final net.minecraft.resources.ResourceLocation ID = new net.minecraft.resources.ResourceLocation("servermanagement", "sync_performance_settings_packet");

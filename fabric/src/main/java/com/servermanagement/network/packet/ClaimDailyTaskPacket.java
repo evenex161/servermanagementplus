@@ -38,7 +38,7 @@ public record ClaimDailyTaskPacket(int taskIndex) implements com.servermanagemen
             // Get player tasks and the specific task
             PlayerDailyTasks playerTasks = economyManager.getDailyTasksManager().getPlayerTasks(player.getUUID());
             if (playerTasks == null || taskIndex < 0 || taskIndex >= playerTasks.getTasks().size()) {
-                player.sendSystemMessage(Component.literal("┬ºcInvalid task!"));
+                player.sendSystemMessage(Component.literal("§cInvalid task!"));
                 return;
             }
             
@@ -64,21 +64,25 @@ public record ClaimDailyTaskPacket(int taskIndex) implements com.servermanagemen
                             BankInventory.ItemSource.DAILY_TASK, 
                             "Daily Task #" + (taskIndex + 1)
                         );
-                        player.sendSystemMessage(Component.literal("┬ºeÔÜá Inventory full! Item sent to Bank Inventory."));
+                        player.sendSystemMessage(Component.literal("§e⚠ Inventory full! Item sent to Bank Inventory."));
                     }
                     
-                    player.sendSystemMessage(Component.literal("┬ºaÔ£ô Claimed $" + reward + " + " + 
+                    player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " + " + 
                         rewardItem.getHoverName().getString() + " x" + rewardItem.getCount() + 
                         " for completing task #" + (taskIndex + 1)));
                 } else {
                     // Send success message (money only)
-                    player.sendSystemMessage(Component.literal("┬ºaÔ£ô Claimed $" + reward + " for completing task #" + (taskIndex + 1)));
+                    player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " for completing task #" + (taskIndex + 1)));
                 }
                 
                 // Save data
                 economyManager.save();
+
+                // Push fresh state to client so the open Daily Tasks GUI
+                // re-renders with the claimed flag set on this task.
+                com.servermanagement.features.economy.DailyTaskProgressListener.pushSyncDailyTasks(player);
             } else {
-                player.sendSystemMessage(Component.literal("┬ºcTask is not completed or already claimed!"));
+                player.sendSystemMessage(Component.literal("§cTask is not completed or already claimed!"));
             }
 
 }

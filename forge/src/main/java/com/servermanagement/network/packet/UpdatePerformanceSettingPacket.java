@@ -9,7 +9,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
- * Client ÔåÆ Server: updates a single performance setting identified by key.
+ * Client → Server: updates a single performance setting identified by key.
  * Supports both boolean toggles and numeric values (sent as String).
  */
 public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements IPacket {

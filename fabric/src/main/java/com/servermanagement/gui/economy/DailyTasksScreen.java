@@ -86,7 +86,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         // Back to Bank button for ALL players (removed admin check)
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 10, 100, 20,
-            Component.literal("ÔåÉ Bank"),
+            Component.literal("← Bank"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.BANK)),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -139,7 +139,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         isClaimingFreeReward = true;
         int freeRewardAmount = com.servermanagement.client.ClientDailyTasksData.getFreeRewardAmount();
         celebrationTimer = CELEBRATION_DURATION;
-        celebrationMessage = "┬º6+$" + freeRewardAmount + " Free Reward!";
+        celebrationMessage = "§6+$" + freeRewardAmount + " Free Reward!";
         
         // Mark as unavailable locally for immediate visual feedback
         com.servermanagement.client.ClientDailyTasksData.setFreeRewardAvailable(false);
@@ -162,7 +162,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         isClaiming[taskIndex] = true;
         claimAnimations[taskIndex] = 0f;
         celebrationTimer = CELEBRATION_DURATION;
-        celebrationMessage = "┬º6+$" + task.getReward() + " Claimed!";
+        celebrationMessage = "§6+$" + task.getReward() + " Claimed!";
         
         // Mark as claimed locally for immediate visual feedback
         task.setClaimed(true);
@@ -235,7 +235,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
             (bgAlpha << 24) | 0x101010);
         
         // Header bar
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xE0202020);
+        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xA0202020);
         
         // Task backgrounds with animation
         List<DailyTask> tasks = menu.getTasks();
@@ -251,7 +251,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
             }
             
             guiGraphics.fill(centerX + 10, taskY, centerX + this.imageWidth - 10, 
-                taskY + taskCardHeight, 0xE01A1A1A);
+                taskY + taskCardHeight, 0xA01A1A1A);
         }
         
         // Free reward background with animation
@@ -268,7 +268,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         
         // Free reward box
         guiGraphics.fill(centerX + 10, freeRewardY, centerX + this.imageWidth - 10, 
-            freeRewardY + FREE_REWARD_HEIGHT, 0xE01A1A1A);
+            freeRewardY + FREE_REWARD_HEIGHT, 0xA01A1A1A);
     }
     
     @Override
@@ -456,14 +456,14 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         
         // Status badge
         if (task.isClaimed()) {
-            guiGraphics.drawString(this.font, Component.literal("Ô£ô CLAIMED"),
+            guiGraphics.drawString(this.font, Component.literal("✓ CLAIMED"),
                 x + this.imageWidth - 120, y + 52, 0x888888, false);
         } else if (task.isCompleted()) {
             // Pulsing "COMPLETE" badge
             float pulse = (float) Math.sin(pulseAnimations[index]) * 0.3f + 0.7f;
             int alpha = (int) (pulse * 255);
             int completeColor = (alpha << 24) | 0x55FF55;
-            guiGraphics.drawString(this.font, Component.literal("Ô£ô COMPLETE"),
+            guiGraphics.drawString(this.font, Component.literal("✓ COMPLETE"),
                 x + this.imageWidth - 120, y + 52, completeColor, true);
         } else {
             guiGraphics.drawString(this.font, Component.literal("IN PROGRESS"),
@@ -478,7 +478,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         long timeUntilFree = com.servermanagement.client.ClientDailyTasksData.getTimeUntilFreeReward();
         
         // Title
-        String title = "­ƒÆÄ FREE DAILY REWARD";
+        String title = "💎 FREE DAILY REWARD";
         guiGraphics.drawString(this.font, Component.literal(title),
             centerX + 20, freeRewardY + 8, 0x55FF55, true);
         
@@ -498,7 +498,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
             guiGraphics.drawString(this.font, Component.literal(cooldownText),
                 centerX + 20, freeRewardY + 28, 0x888888, false);
             
-            guiGraphics.drawString(this.font, Component.literal("ÔÅ░ Come back later!"),
+            guiGraphics.drawString(this.font, Component.literal("⏰ Come back later!"),
                 centerX + 20, freeRewardY + 42, 0x666666, false);
         }
     }

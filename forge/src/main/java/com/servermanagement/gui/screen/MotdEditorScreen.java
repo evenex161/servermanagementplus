@@ -99,7 +99,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
     @Override
     protected void init() {
         super.init();
-        // Pull fresh MOTD text from the cache on every init() ÔÇö but only before
+        // Pull fresh MOTD text from the cache on every init() — but only before
         // the user has started editing (originalMotdText == null), so a late
         // SyncMotdPacket triggering refreshOpenScreen() doesn't clobber pending
         // typing.
@@ -776,7 +776,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
         }
 
         if (active[codeIndex]) {
-            // Format is active ÔÇö deactivate it
+            // Format is active — deactivate it
             EditBox target = (activeLineIndex == 2) ? line2Box : line1Box;
 
             String text;
@@ -804,7 +804,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
             target.setFocused(true);
             updateMenuMotd();
         } else {
-            // Format is not active ÔÇö just insert it
+            // Format is not active — just insert it
             insertCode('&', code);
         }
     }
@@ -828,7 +828,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
                 && isFormattingCode(sb.charAt(pos + 1))) {
             if (Character.toLowerCase(sb.charAt(pos + 1)) == Character.toLowerCase(code)) {
                 sb.delete(pos, pos + 2);
-                // don't advance ÔÇö text shifted left
+                // don't advance — text shifted left
             } else {
                 pos += 2;
             }

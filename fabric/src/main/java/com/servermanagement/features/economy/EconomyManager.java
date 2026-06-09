@@ -208,7 +208,7 @@ public class EconomyManager {
         try {
             saveSync();
         } catch (Exception e) {
-            ServerManagementMod.LOGGER.error("Failed to save economy data during shutdown ÔÇö data may be lost", e);
+            ServerManagementMod.LOGGER.error("Failed to save economy data during shutdown — data may be lost", e);
         }
         
         // Clear caches

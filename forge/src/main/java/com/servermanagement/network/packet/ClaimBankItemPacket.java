@@ -48,11 +48,11 @@ public record ClaimBankItemPacket(int itemIndex) implements IPacket {
                             com.servermanagement.features.economy.BankInventory.ItemSource.TRANSFER, 
                             "Failed to claim - inventory full");
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcÔ£ù Inventory is full! Cannot claim item."
+                            "§c✗ Inventory is full! Cannot claim item."
                         ));
                     } else {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºaÔ£ô Claimed: " + item.getHoverName().getString()
+                            "§a✓ Claimed: " + item.getHoverName().getString()
                         ));
                         economyManager.save();
                     }

@@ -221,7 +221,7 @@ public class MoneyRequestManager {
             r.getTimestamp() < cutoffTime
         );
 
-        // Enforce hard cap ÔÇö remove oldest non-pending requests if over limit
+        // Enforce hard cap — remove oldest non-pending requests if over limit
         if (requests.size() > MAX_TOTAL_REQUESTS) {
             requests.sort(java.util.Comparator.comparingLong(MoneyRequest::getTimestamp));
             java.util.Iterator<MoneyRequest> it = requests.iterator();

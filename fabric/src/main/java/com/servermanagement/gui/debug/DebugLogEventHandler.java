@@ -26,7 +26,7 @@ public final class DebugLogEventHandler {
 
     private DebugLogEventHandler() {}
 
-    // ÔöÇÔöÇ Toggle keybind: F3+L ÔöÇÔöÇ
+    // ── Toggle keybind: F3+L ──
 
     public static void onKeyForToggle(Screen screen, int keyCode, int scanCode, int modifiers) {
         // F3+L toggles debug logging (separate from F3+M for overlay)
@@ -39,7 +39,7 @@ public final class DebugLogEventHandler {
         }
     }
 
-    // ÔöÇÔöÇ Screen lifecycle ÔöÇÔöÇ
+    // ── Screen lifecycle ──
 
     public static void onScreenOpen(Screen screen) {
         if (!DebugLogger.isEnabled()) return;
@@ -79,7 +79,7 @@ public final class DebugLogEventHandler {
         lastOpenScreen = null;
     }
 
-    // ÔöÇÔöÇ Mouse events ÔöÇÔöÇ
+    // ── Mouse events ──
 
     public static void onMouseClick(Screen screen, double mouseX, double mouseY, int button) {
         if (!DebugLogger.isEnabled()) return;
@@ -102,7 +102,7 @@ public final class DebugLogEventHandler {
         DebugLogger.logMouseScroll(screen.getClass().getSimpleName(), verticalAmount);
     }
 
-    // ÔöÇÔöÇ Keyboard events ÔöÇÔöÇ
+    // ── Keyboard events ──
 
     public static void onKeyPress(Screen screen, int keyCode, int scanCode, int modifiers) {
         if (!DebugLogger.isEnabled()) return;
@@ -127,7 +127,7 @@ public final class DebugLogEventHandler {
         DebugLogger.logKeyPress(screen.getClass().getSimpleName(), keyCode, keyName);
     }
 
-    // ÔöÇÔöÇ Render event ÔÇö log summary periodically ÔöÇÔöÇ
+    // ── Render event — log summary periodically ──
 
     private static long lastSummaryTime = 0;
 
@@ -144,7 +144,7 @@ public final class DebugLogEventHandler {
         }
     }
 
-    // ÔöÇÔöÇ Helpers ÔöÇÔöÇ
+    // ── Helpers ──
 
     private static boolean isModScreen(Screen screen) {
         return screen != null && screen.getClass().getPackageName().startsWith("com.servermanagement");

@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Server ÔåÆ Client: Sync money requests for display in the Bank GUI
+ * Server → Client: Sync money requests for display in the Bank GUI
  */
 public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> incoming, List<ClientMoneyRequestData.RequestEntry> outgoing) implements com.servermanagement.network.IPacket {
     public static final net.minecraft.resources.ResourceLocation ID = new net.minecraft.resources.ResourceLocation("servermanagement", "sync_money_requests_packet");

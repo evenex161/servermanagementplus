@@ -53,7 +53,7 @@ public final class GuiDebugOverlay {
         int screenW = screen.width;
         int screenH = screen.height;
 
-        // ÔöÇÔöÇ Panel dimensions (for AbstractContainerScreens) ÔöÇÔöÇ
+        // ── Panel dimensions (for AbstractContainerScreens) ──
         int panelX = 0, panelY = 0, panelW = screenW, panelH = screenH;
         if (screen instanceof AbstractContainerScreen<?> acs) {
             panelX = acs.getGuiLeft();
@@ -69,7 +69,7 @@ public final class GuiDebugOverlay {
             guiGraphics.fill(panelX, panelY - 3, panelX + 1, panelY + 4, 0xCCFF00FF);
         }
 
-        // ÔöÇÔöÇ Widget bounding boxes ÔöÇÔöÇ
+        // ── Widget bounding boxes ──
         if (showWidgets) {
             // Access renderables through reflection-free approach: iterate children
             List<? extends Renderable> renderables = getRenderables(screen);
@@ -82,12 +82,12 @@ public final class GuiDebugOverlay {
             }
         }
 
-        // ÔöÇÔöÇ Slot debug (for container screens) ÔöÇÔöÇ
+        // ── Slot debug (for container screens) ──
         if (showSlots && screen instanceof AbstractContainerScreen<?> acs) {
             renderSlotDebug(guiGraphics, acs, mouseX, mouseY, font);
         }
 
-        // ÔöÇÔöÇ Info panel (top-left corner) ÔöÇÔöÇ
+        // ── Info panel (top-left corner) ──
         int infoX = 4;
         int infoY = 4;
         int lineH = 10;
@@ -140,7 +140,7 @@ public final class GuiDebugOverlay {
             guiGraphics.drawString(font, "LOG: Off (F3+L to enable)", infoX, infoY, 0x666666, false);
         }
 
-        // ÔöÇÔöÇ Mouse crosshair ÔöÇÔöÇ
+        // ── Mouse crosshair ──
         guiGraphics.fill(mouseX - 8, mouseY, mouseX + 9, mouseY + 1, 0x80FFFF00);
         guiGraphics.fill(mouseX, mouseY - 8, mouseX + 1, mouseY + 9, 0x80FFFF00);
     }
@@ -214,12 +214,12 @@ public final class GuiDebugOverlay {
     @SuppressWarnings("unchecked")
     private static List<? extends Renderable> getRenderables(Screen screen) {
         try {
-            // Screen.renderables is a protected field ÔÇö access via reflection
+            // Screen.renderables is a protected field — access via reflection
             var field = Screen.class.getDeclaredField("renderables");
             field.setAccessible(true);
             return (List<? extends Renderable>) field.get(screen);
         } catch (NoSuchFieldException e) {
-            // Obfuscated name fallback ÔÇö try common SRG names
+            // Obfuscated name fallback — try common SRG names
             try {
                 for (var f : Screen.class.getDeclaredFields()) {
                     if (List.class.isAssignableFrom(f.getType())) {

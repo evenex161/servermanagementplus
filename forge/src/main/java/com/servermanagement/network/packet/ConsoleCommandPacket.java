@@ -27,7 +27,7 @@ public record ConsoleCommandPacket(String command) implements IPacket {
             if (player != null && player.hasPermissions(2)) {
                 var server = player.getServer();
                 if (server != null) {
-                    // Use the PLAYER's command source stack ÔÇö not the server's.
+                    // Use the PLAYER's command source stack — not the server's.
                     // server.createCommandSourceStack() has permission level 4 (console),
                     // which would let OP2 players run /stop, /op, etc. The player's
                     // source stack respects their actual permission level.

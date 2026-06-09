@@ -1,10 +1,10 @@
-# Server Management Plus
+# ServerManagement+
 
 **The all-in-one server management solution for Minecraft**
 
 **Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+)
 
-Server Management Plus gives you a complete suite of tools to run your server — a full economy with bank accounts, a player marketplace, a casino, daily tasks, world management, and a sleek admin dashboard — all in one mod.
+ServerManagement+ gives you a complete suite of tools to run your server — a full economy with bank accounts, a player marketplace, a casino, daily tasks, world management, and a sleek admin dashboard — all in one mod.
 
 ---
 
@@ -120,9 +120,9 @@ Clickable chat notifications keep players informed without being spammy.
 ---
 
 ### Help Integration
-All Server Management commands are integrated into the vanilla `/help` command.
+All ServerManagement+ commands are integrated into the vanilla `/help` command.
 
-- **`/help`** — Lists all available commands including Server Management ones with descriptions
+- **`/help`** — Lists all available commands including ServerManagement+ ones with descriptions
 - **`/help <command>`** — Detailed usage for any mod command (e.g., `/help bank`)
 - **Admin filtering** — Admin commands tagged with `[Admin]` and hidden from non-ops
 - Works alongside vanilla and other mods' commands
@@ -290,4 +290,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*Server Management Plus v1.0.3-b04 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*
+*ServerManagement+ v1.0.3-b04 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*

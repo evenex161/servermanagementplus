@@ -35,7 +35,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
     private EditBox reasonBox;
     private boolean banWithIP = false;
     
-    // For whitelist add ÔÇö preserve value across rebuilds
+    // For whitelist add — preserve value across rebuilds
     private EditBox whitelistNameBox;
     private String savedWhitelistInput = "";
 
@@ -130,7 +130,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         int halfW = (this.imageWidth - 30) / 2;
         
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("ÔåÉ Dashboard"),
+            Component.literal("← Dashboard"),
             btn -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
             .bounds(x0 + 10, bottomY, halfW, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)
@@ -242,7 +242,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
             int scrollBtnY = contentY + this.imageHeight - 100 - 22;
             if (scrollOffset > 0) {
                 this.addRenderableWidget(new ModernButton.Builder(
-                    Component.literal("Ôû▓ Up"),
+                    Component.literal("▲ Up"),
                     btn -> { scrollOffset = Math.max(0, scrollOffset - maxRows); rebuildUI(); })
                     .bounds(x0 + 15, scrollBtnY, 60, 18)
                     .style(ModernButton.ButtonStyle.SECONDARY)
@@ -250,7 +250,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
             }
             if (scrollOffset + maxRows < entries.size()) {
                 this.addRenderableWidget(new ModernButton.Builder(
-                    Component.literal("Ôû╝ Down"),
+                    Component.literal("▼ Down"),
                     btn -> { scrollOffset = Math.min(maxScroll, scrollOffset + maxRows); rebuildUI(); })
                     .bounds(x0 + this.imageWidth - 75, scrollBtnY, 60, 18)
                     .style(ModernButton.ButtonStyle.SECONDARY)
@@ -264,7 +264,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         
         // Spectate
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("­ƒæü Spectate Player"),
+            Component.literal("👁 Spectate Player"),
             btn -> {
                 ModNetworking.sendToServer(new PMSpectatePlayerPacket(selectedPlayer));
                 this.onClose();
@@ -276,7 +276,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         // View Inventory
         y += 24;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("­ƒôª View Inventory"),
+            Component.literal("📦 View Inventory"),
             btn -> {
                 ModNetworking.sendToServer(new PMViewInventoryPacket(selectedPlayer));
                 this.onClose();
@@ -288,7 +288,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         // Kick
         y += 24;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("­ƒÜ¬ Kick Player"),
+            Component.literal("🚪 Kick Player"),
             btn -> { currentSubView = SubView.KICK_CONFIRM; rebuildUI(); })
             .bounds(x0 + 15, y, btnWidth, 20)
             .style(ModernButton.ButtonStyle.WARNING)
@@ -297,7 +297,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         // Ban
         y += 24;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("­ƒö¿ Ban Player"),
+            Component.literal("🔨 Ban Player"),
             btn -> { banWithIP = false; currentSubView = SubView.BAN_CONFIRM; rebuildUI(); })
             .bounds(x0 + 15, y, btnWidth, 20)
             .style(ModernButton.ButtonStyle.DANGER)
@@ -306,7 +306,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         // Back to list
         y += 30;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("ÔåÉ Back to List"),
+            Component.literal("← Back to List"),
             btn -> { currentSubView = SubView.LIST; selectedPlayer = null; rebuildUI(); })
             .bounds(x0 + 15, y, btnWidth, 20)
             .style(ModernButton.ButtonStyle.SECONDARY)
@@ -359,7 +359,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         // Ban IP toggle button
         y += 38;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal(banWithIP ? "Ô£ô Also Ban IP" : "ÔÿÉ Also Ban IP"),
+            Component.literal(banWithIP ? "✓ Also Ban IP" : "☐ Also Ban IP"),
             btn -> { banWithIP = !banWithIP; rebuildUI(); })
             .bounds(x0 + 15, y, btnWidth, 20)
             .style(banWithIP ? ModernButton.ButtonStyle.WARNING : ModernButton.ButtonStyle.SECONDARY)
@@ -455,7 +455,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
         // Title
         guiGraphics.drawString(this.font, "Player Manager", x0 + 15, y0 + 8, 0xFFD700, true);
         
-        // Subtitle ÔÇö context-dependent
+        // Subtitle — context-dependent
         String subtitle = switch (currentSubView) {
             case LIST -> {
                 List<String> entries = getListEntries();
@@ -513,7 +513,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // Prevent inventory key (E) from closing the screen when an EditBox is focused
-        if (keyCode != 256) { // 256 = Escape ÔÇö always allow closing
+        if (keyCode != 256) { // 256 = Escape — always allow closing
             if ((reasonBox != null && reasonBox.isFocused()) ||
                 (whitelistNameBox != null && whitelistNameBox.isFocused())) {
                 return reasonBox != null && reasonBox.isFocused()

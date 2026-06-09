@@ -5,7 +5,7 @@ import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 
 /**
- * Shim class for Fabric ÔÇö delegates to ServerManagementModFabric.
+ * Shim class for Fabric — delegates to ServerManagementModFabric.
  * Exists so that all references to ServerManagementMod.LOGGER, .getModVersion(), etc. compile unchanged.
  */
 public class ServerManagementMod {

@@ -42,25 +42,25 @@ public class OTAUpdateScreen extends Screen {
         int centerY = this.height / 2;
         
         // Title
-        drawCenteredString(guiGraphics, this.font, "┬º6┬ºlMOD UPDATE REQUIRED", centerX, centerY - 80, 0xFFFFFF);
+        drawCenteredString(guiGraphics, this.font, "§6§lMOD UPDATE REQUIRED", centerX, centerY - 80, 0xFFFFFF);
         
         // Version info
-        drawCenteredString(guiGraphics, this.font, "┬º7Your version: ┬ºc" + clientVersion, centerX, centerY - 60, 0xFFFFFF);
-        drawCenteredString(guiGraphics, this.font, "┬º7Server version: ┬ºa" + serverVersion, centerX, centerY - 45, 0xFFFFFF);
+        drawCenteredString(guiGraphics, this.font, "§7Your version: §c" + clientVersion, centerX, centerY - 60, 0xFFFFFF);
+        drawCenteredString(guiGraphics, this.font, "§7Server version: §a" + serverVersion, centerX, centerY - 45, 0xFFFFFF);
         
         if (updateFailed) {
             // Error state
-            drawCenteredString(guiGraphics, this.font, "┬ºc┬ºlUPDATE FAILED", centerX, centerY - 20, 0xFFFFFF);
-            drawCenteredString(guiGraphics, this.font, "┬º7" + errorMessage, centerX, centerY, 0xFFFFFF);
-            drawCenteredString(guiGraphics, this.font, "┬º7Please update manually or contact server admin", centerX, centerY + 15, 0xFFFFFF);
+            drawCenteredString(guiGraphics, this.font, "§c§lUPDATE FAILED", centerX, centerY - 20, 0xFFFFFF);
+            drawCenteredString(guiGraphics, this.font, "§7" + errorMessage, centerX, centerY, 0xFFFFFF);
+            drawCenteredString(guiGraphics, this.font, "§7Please update manually or contact server admin", centerX, centerY + 15, 0xFFFFFF);
         } else if (updateComplete) {
             // Success state
-            drawCenteredString(guiGraphics, this.font, "┬ºa┬ºlUPDATE COMPLETE", centerX, centerY - 20, 0xFFFFFF);
-            drawCenteredString(guiGraphics, this.font, "┬º7Please restart your game to apply the update", centerX, centerY, 0xFFFFFF);
-            drawCenteredString(guiGraphics, this.font, "┬ºeRestarting is required...", centerX, centerY + 20, 0xFFFFFF);
+            drawCenteredString(guiGraphics, this.font, "§a§lUPDATE COMPLETE", centerX, centerY - 20, 0xFFFFFF);
+            drawCenteredString(guiGraphics, this.font, "§7Please restart your game to apply the update", centerX, centerY, 0xFFFFFF);
+            drawCenteredString(guiGraphics, this.font, "§eRestarting is required...", centerX, centerY + 20, 0xFFFFFF);
         } else {
             // Progress state
-            drawCenteredString(guiGraphics, this.font, "┬ºe" + currentStatus, centerX, centerY - 20, 0xFFFFFF);
+            drawCenteredString(guiGraphics, this.font, "§e" + currentStatus, centerX, centerY - 20, 0xFFFFFF);
             
             // Progress bar background
             int barWidth = 300;
@@ -91,12 +91,12 @@ public class OTAUpdateScreen extends Screen {
             if (totalSize > 0) {
                 long downloadedSize = (long)(totalSize * progress);
                 String sizeText = formatFileSize(downloadedSize) + " / " + formatFileSize(totalSize);
-                drawCenteredString(guiGraphics, this.font, "┬º7" + sizeText, centerX, centerY + 55, 0xFFFFFF);
+                drawCenteredString(guiGraphics, this.font, "§7" + sizeText, centerX, centerY + 55, 0xFFFFFF);
             }
         }
         
         // Warning message
-        drawCenteredString(guiGraphics, this.font, "┬º7┬ºoPlease do not close this window", centerX, centerY + 80, 0xFFFFFF);
+        drawCenteredString(guiGraphics, this.font, "§7§oPlease do not close this window", centerX, centerY + 80, 0xFFFFFF);
         
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }

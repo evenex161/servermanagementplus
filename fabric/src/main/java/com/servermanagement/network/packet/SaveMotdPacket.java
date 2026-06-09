@@ -8,7 +8,7 @@ import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
 /**
- * Client ÔåÆ Server: Saves the edited MOTD text.
+ * Client → Server: Saves the edited MOTD text.
  * Requires admin permissions (OP level 2).
  */
 public record SaveMotdPacket(String motdText) implements com.servermanagement.network.IPacket {

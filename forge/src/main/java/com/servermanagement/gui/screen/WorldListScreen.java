@@ -42,7 +42,7 @@ public class WorldListScreen extends ScalableContainerScreen<WorldListMenu> {
         
         // Back to Dashboard button
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("ÔåÉ Dashboard"),
+            Component.literal("← Dashboard"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
             .bounds(centerX + 10, centerY + this.imageHeight - 35, 100, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)

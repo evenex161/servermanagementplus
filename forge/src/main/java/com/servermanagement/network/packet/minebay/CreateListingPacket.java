@@ -87,7 +87,7 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
                 if (serverItem.isEmpty()) {
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "┬ºcÔ£ù Error: No item was placed for listing"
+                            "§c✗ Error: No item was placed for listing"
                         )
                     );
                     return;
@@ -129,7 +129,7 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
                     player.getInventory().placeItemBackInInventory(serverItem);
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "┬ºcÔ£ù You have reached the maximum number of active listings (" + maxListings + ")"
+                            "§c✗ You have reached the maximum number of active listings (" + maxListings + ")"
                         )
                     );
                     return;
@@ -146,7 +146,7 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
                 // Send success message
                 player.displayClientMessage(
                     net.minecraft.network.chat.Component.literal(
-                        "┬ºa┬ºlÔ£ô ┬ºr┬º6[MineBay] ┬ºaListing created for ┬ºf" + listing.getItemForSale().getHoverName().getString()
+                        "§a§l✓ §r§6[MineBay] §aListing created for §f" + listing.getItemForSale().getHoverName().getString()
                     ), true
                 );
                 

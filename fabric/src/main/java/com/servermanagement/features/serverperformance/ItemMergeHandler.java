@@ -46,7 +46,7 @@ public class ItemMergeHandler {
         );
         List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, worldBounds);
 
-        // Cap the list to avoid O(n┬▓) blowup with massive item accumulations
+        // Cap the list to avoid O(n²) blowup with massive item accumulations
         int maxItems = Math.min(items.size(), 500);
 
         for (int i = 0; i < maxItems; i++) {

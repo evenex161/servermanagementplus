@@ -29,7 +29,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
     private String selectedPortalType = "both"; // "nether", "end", or "both"
     private ModernButton portalTypeButton;
 
-    // Live countdown state ÔÇö anchored at init() from the SyncWorldDetailPacket
+    // Live countdown state — anchored at init() from the SyncWorldDetailPacket
     // snapshot, then decremented locally via the player's tickCount.
     private int syncedTimerSeconds = 0;
     private long syncedAtTick = 0L;
@@ -156,7 +156,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
             this.selectedPortalType = showNether ? "nether" : "end";
         }
         
-        // Timer input ÔÇö locked while a timer is running so the user isn't confused
+        // Timer input — locked while a timer is running so the user isn't confused
         // by the live remaining-seconds value (the live countdown is rendered separately).
         int timerInputX = (showNether && showEnd) ? leftCol + 85 : leftCol;
         int timerInputWidth = (showNether && showEnd) ? 55 : 80;
@@ -172,7 +172,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
         }
         this.addRenderableWidget(this.timerInput);
         
-        // Set Timer button ÔÇö only available when no timer is running.
+        // Set Timer button — only available when no timer is running.
         int btnX = timerInputX + timerInputWidth + 5;
         if (!hasTimer) {
             this.addRenderableWidget(new ModernButton.Builder(
@@ -193,7 +193,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
                 .build());
         }
         
-        // Clear Timer button ÔÇö always available so admins can cancel a running timer.
+        // Clear Timer button — always available so admins can cancel a running timer.
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Clear"),
             button -> {
@@ -209,7 +209,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
         // Back and Close buttons - symmetrical, equal width
         int btnW = (this.imageWidth - 30) / 2;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("ÔåÉ Back"),
+            Component.literal("← Back"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_LIST, "")))
             .bounds(centerX + 10, currentY, btnW, 26)
             .style(ModernButton.ButtonStyle.SECONDARY)
@@ -286,7 +286,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
         guiGraphics.drawString(this.font, "Portal Timer", 
             leftCol, currentY - 12, 0xFFFFFF, true);
 
-        // Live countdown ÔÇö sits between the timer controls (top of currentY,
+        // Live countdown — sits between the timer controls (top of currentY,
         // 22 px tall) and the Back/Close button row (currentY + 40). Updates
         // every render frame from the local tick clock; auto-requests a fresh
         // SyncWorldDetailPacket once the countdown reaches zero so the toggle

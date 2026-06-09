@@ -116,7 +116,7 @@ public class SlimeHeadManager implements Feature {
             player.drop(slimeHead, false);
         }
         
-        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬ºaYou received a Slime Head!"));
+        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§aYou received a Slime Head!"));
     }
     
     /**
@@ -145,7 +145,7 @@ public class SlimeHeadManager implements Feature {
                     if (event.getPlayer() instanceof ServerPlayer player) {
                         if (!player.hasPermissions(2)) {
                             event.setCanceled(true);
-                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("┬ºcSlime Heads cannot be broken!"));
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSlime Heads cannot be broken!"));
                         }
                     }
                 }

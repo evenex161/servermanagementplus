@@ -82,7 +82,7 @@ public class ChatIsolationHandler {
             case "minecraft:the_nether" -> { name = "Nether"; color = ChatFormatting.RED; }
             case "minecraft:the_end" -> { name = "The End"; color = ChatFormatting.LIGHT_PURPLE; }
             default -> {
-                // Custom/modded dimensions ÔÇö derive a readable name
+                // Custom/modded dimensions — derive a readable name
                 String raw = dimensionId.contains(":") ? dimensionId.substring(dimensionId.indexOf(':') + 1) : dimensionId;
                 name = formatDimensionName(raw);
                 color = ChatFormatting.AQUA;

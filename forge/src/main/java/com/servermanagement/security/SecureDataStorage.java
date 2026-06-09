@@ -47,7 +47,7 @@ public class SecureDataStorage {
                         in.nextNull();
                         return Optional.empty();
                     }
-                    // Read as generic object ÔÇö best effort
+                    // Read as generic object — best effort
                     Object value = GSON.getAdapter(Object.class).read(in);
                     return Optional.ofNullable(value);
                 }

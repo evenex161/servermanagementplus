@@ -41,7 +41,7 @@ public final class DebugLogger {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
     private static final DateTimeFormatter FILE_TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-    private static final String SEPARATOR = "ÔòÉ".repeat(100);
+    private static final String SEPARATOR = "═".repeat(100);
     private static final int MAX_QUEUE_SIZE = 10000;
 
     private static volatile boolean enabled = false;
@@ -113,9 +113,9 @@ public final class DebugLogger {
         }
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // GUI / Screen lifecycle
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logScreenOpen(String screenClass, int screenWidth, int screenHeight) {
         screenOpens++;
@@ -138,48 +138,48 @@ public final class DebugLogger {
     }
 
     public static void logScreenResize(String screenClass, int newWidth, int newHeight) {
-        log(Category.GUI, "SCREEN RESIZE: %s ÔåÆ %dx%d", screenClass, newWidth, newHeight);
+        log(Category.GUI, "SCREEN RESIZE: %s → %dx%d", screenClass, newWidth, newHeight);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Network / Packets
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logPacketSent(Object packet) {
         packetsSent++;
         String name = packet.getClass().getSimpleName();
         String details = extractPacketDetails(packet);
-        log(Category.NETWORK, "ÔåÆ SENT: %s%s", name, details);
+        log(Category.NETWORK, "→ SENT: %s%s", name, details);
     }
 
     public static void logPacketReceived(Object packet) {
         packetsReceived++;
         String name = packet.getClass().getSimpleName();
         String details = extractPacketDetails(packet);
-        log(Category.NETWORK, "ÔåÉ RECV: %s%s", name, details);
+        log(Category.NETWORK, "← RECV: %s%s", name, details);
     }
 
     public static void logPacketHandled(String packetName, String result) {
-        log(Category.NETWORK, "  HANDLED: %s ÔåÆ %s", packetName, result);
+        log(Category.NETWORK, "  HANDLED: %s → %s", packetName, result);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // State transitions
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logStateChange(String screen, String field, Object oldValue, Object newValue) {
         stateChanges++;
-        log(Category.STATE, "STATE CHANGE in %s: %s: %s ÔåÆ %s", screen, field, oldValue, newValue);
+        log(Category.STATE, "STATE CHANGE in %s: %s: %s → %s", screen, field, oldValue, newValue);
     }
 
     public static void logTabChange(String screen, String oldTab, String newTab) {
         stateChanges++;
-        log(Category.STATE, "TAB CHANGE in %s: %s ÔåÆ %s", screen, oldTab, newTab);
+        log(Category.STATE, "TAB CHANGE in %s: %s → %s", screen, oldTab, newTab);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Widget interactions
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logWidgetClick(String widgetClass, String label, int x, int y) {
         widgetClicks++;
@@ -187,7 +187,7 @@ public final class DebugLogger {
     }
 
     public static void logToggleChange(String label, boolean newState) {
-        log(Category.WIDGET, "TOGGLE: \"%s\" ÔåÆ %s", label, newState ? "ON" : "OFF");
+        log(Category.WIDGET, "TOGGLE: \"%s\" → %s", label, newState ? "ON" : "OFF");
     }
 
     public static void logEditBoxChange(String fieldName, String newValue) {
@@ -196,40 +196,40 @@ public final class DebugLogger {
 
     public static void logButtonAction(String screen, String buttonLabel, String action) {
         widgetClicks++;
-        log(Category.WIDGET, "BUTTON in %s: \"%s\" ÔåÆ %s", screen, buttonLabel, action);
+        log(Category.WIDGET, "BUTTON in %s: \"%s\" → %s", screen, buttonLabel, action);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Slot / inventory
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logSlotClick(int slotIndex, String slotType, String itemName, int count) {
         log(Category.SLOT, "SLOT CLICK: #%d (%s) item=%s x%d", slotIndex, slotType, itemName, count);
     }
 
     public static void logSlotVisibilityChange(String context, int slotIndex, boolean visible) {
-        log(Category.SLOT, "SLOT VISIBILITY: #%d in %s ÔåÆ %s", slotIndex, context, visible ? "VISIBLE" : "HIDDEN");
+        log(Category.SLOT, "SLOT VISIBILITY: #%d in %s → %s", slotIndex, context, visible ? "VISIBLE" : "HIDDEN");
     }
 
     public static void logInventoryToggle(String screen, boolean visible) {
-        log(Category.SLOT, "INVENTORY TOGGLE in %s ÔåÆ %s", screen, visible ? "SHOWN" : "HIDDEN");
+        log(Category.SLOT, "INVENTORY TOGGLE in %s → %s", screen, visible ? "SHOWN" : "HIDDEN");
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Config / Feature
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logConfigChange(String key, Object oldValue, Object newValue) {
-        log(Category.CONFIG, "CONFIG: %s: %s ÔåÆ %s", key, oldValue, newValue);
+        log(Category.CONFIG, "CONFIG: %s: %s → %s", key, oldValue, newValue);
     }
 
     public static void logFeatureToggle(String featureId, boolean enabled) {
-        log(Category.FEATURE, "FEATURE: %s ÔåÆ %s", featureId, enabled ? "ENABLED" : "DISABLED");
+        log(Category.FEATURE, "FEATURE: %s → %s", featureId, enabled ? "ENABLED" : "DISABLED");
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Input events
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logMouseClick(String screen, int mouseX, int mouseY, int button) {
         log(Category.INPUT, "MOUSE CLICK in %s: (%d, %d) button=%d", screen, mouseX, mouseY, button);
@@ -243,17 +243,17 @@ public final class DebugLogger {
         log(Category.INPUT, "SCROLL in %s: %.1f", screen, scrollDelta);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Cache updates (ClientPacketHandler)
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logCacheUpdate(String cacheGroup, String details) {
         log(Category.CACHE, "CACHE UPDATE [%s]: %s", cacheGroup, details);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Menu / Container
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logMenuOpened(String menuClass, int containerId) {
         log(Category.MENU, "MENU OPENED: %s (id=%d)", menuClass, containerId);
@@ -263,9 +263,9 @@ public final class DebugLogger {
         log(Category.MENU, "MENU CLOSED: %s", menuClass);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Errors
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     public static void logError(String context, Throwable error) {
         log(Category.ERROR, "ERROR in %s: %s: %s", context, error.getClass().getSimpleName(), error.getMessage());
@@ -281,9 +281,9 @@ public final class DebugLogger {
         log(Category.ERROR, "WARNING in %s: %s", context, args.length > 0 ? String.format(message, args) : message);
     }
 
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
     // Internal helpers
-    // ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+    // ════════════════════════════════════════════════════════════
 
     private static void initialize() {
         if (initialized) return;

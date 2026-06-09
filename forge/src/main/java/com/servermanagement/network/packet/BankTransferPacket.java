@@ -35,26 +35,26 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
             // Input validation - prevent exploits
             if (this.targetPlayerName == null || this.targetPlayerName.trim().isEmpty()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid player name"));
+                    "§cInvalid player name"));
                 return;
             }
             
             // Sanitize player name (prevent injection/exploits)
             if (this.targetPlayerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(this.targetPlayerName).matches()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid player name format"));
+                    "§cInvalid player name format"));
                 return;
             }
             
             if (Double.isNaN(this.amount) || Double.isInfinite(this.amount) || this.amount <= 0) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid transfer amount"));
+                    "§cInvalid transfer amount"));
                 return;
             }
             
             if (this.amount < 0.01 || this.amount > 1000000.0) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcTransfer amount must be between $0.01 and $1,000,000"));
+                    "§cTransfer amount must be between $0.01 and $1,000,000"));
                 return;
             }
             
@@ -62,13 +62,13 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
             ServerPlayer target = sender.server.getPlayerList().getPlayerByName(targetPlayerName);
             if (target == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcPlayer not found: " + targetPlayerName));
+                    "§cPlayer not found: " + targetPlayerName));
                 return;
             }
             
             if (target.getUUID().equals(sender.getUUID())) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcYou cannot transfer money to yourself"));
+                    "§cYou cannot transfer money to yourself"));
                 return;
             }
             
@@ -78,9 +78,9 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
             
             if (success) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    String.format("┬ºaTransferred $%.2f to %s", amount, target.getName().getString())));
+                    String.format("§aTransferred $%.2f to %s", amount, target.getName().getString())));
                 target.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    String.format("┬ºaReceived $%.2f from %s", amount, sender.getName().getString())));
+                    String.format("§aReceived $%.2f from %s", amount, sender.getName().getString())));
                 
                 // Sync balances and transactions
                 BankAccount senderAccount = manager.getOrCreateAccount(sender.getUUID());
@@ -99,7 +99,7 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
                     ), target);
             } else {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcTransfer failed - insufficient funds"));
+                    "§cTransfer failed - insufficient funds"));
             }
         });
         ctx.get().setPacketHandled(true);

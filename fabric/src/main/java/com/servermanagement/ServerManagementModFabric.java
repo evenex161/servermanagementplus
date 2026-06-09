@@ -108,7 +108,7 @@ public class ServerManagementModFabric implements ModInitializer {
             LOGGER.info("ServerManagement v{} fully initialized and ready!", getModVersion());
         });
 
-        // Server tick ÔÇö drive subsystems that previously had no wiring on Fabric
+        // Server tick — drive subsystems that previously had no wiring on Fabric
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             com.servermanagement.server.ServerConsoleManager.getInstance().tick();
             try {
@@ -126,7 +126,7 @@ public class ServerManagementModFabric implements ModInitializer {
             } catch (Throwable t) {
                 LOGGER.error("WorldManager tick failed", t);
             }
-            // Bug 2: Portal timers were never ticking on Fabric ÔÇö Forge wired this
+            // Bug 2: Portal timers were never ticking on Fabric — Forge wired this
             // via @SubscribeEvent on TickEvent.ServerTickEvent which has no
             // automatic equivalent here.
             try {
@@ -183,7 +183,7 @@ public class ServerManagementModFabric implements ModInitializer {
                 }
             });
 
-        // Player join ÔÇö initialise tab/chat isolation and player-manager state
+        // Player join — initialise tab/chat isolation and player-manager state
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             net.minecraft.server.level.ServerPlayer p = handler.getPlayer();
             try {
@@ -207,7 +207,7 @@ public class ServerManagementModFabric implements ModInitializer {
             }
         });
 
-        // Player changed dimension ÔÇö re-apply tab list isolation
+        // Player changed dimension — re-apply tab list isolation
         ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, dest) -> {
             try {
                 com.servermanagement.features.worldmanager.TabListIsolationHandler.onPlayerChangedDimension(player);
@@ -219,7 +219,7 @@ public class ServerManagementModFabric implements ModInitializer {
             // Nothing to do here.
         });
 
-        // Chat message ÔÇö apply chat isolation (cancellable via return value)
+        // Chat message — apply chat isolation (cancellable via return value)
         ServerMessageEvents.ALLOW_CHAT_MESSAGE.register((message, sender, params) -> {
             try {
                 return com.servermanagement.features.worldmanager.ChatIsolationHandler
@@ -230,7 +230,7 @@ public class ServerManagementModFabric implements ModInitializer {
             }
         });
 
-        // Right-click block ÔÇö block portal ignition when disabled
+        // Right-click block — block portal ignition when disabled
         UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
             try {
                 return com.servermanagement.features.worldmanager.PortalEventHandler

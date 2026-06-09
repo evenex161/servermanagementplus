@@ -58,7 +58,7 @@ public class AchievementRewardListener {
         // Notify player
         String tierName = tier.getDisplayName();
         player.sendSystemMessage(Component.literal(
-            String.format("┬ºa┬ºlÔ£ô Achievement Reward! ┬ºr┬ºa+$%d ┬º7(%s)", reward, tierName)
+            String.format("§a§l✓ Achievement Reward! §r§a+$%d §7(%s)", reward, tierName)
         ));
 
         ServerManagementMod.LOGGER.info(

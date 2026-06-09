@@ -32,7 +32,7 @@ public final class DebugLogEventHandler {
 
     private DebugLogEventHandler() {}
 
-    // ÔöÇÔöÇ Toggle keybind: F3+L ÔöÇÔöÇ
+    // ── Toggle keybind: F3+L ──
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onKeyForToggle(ScreenEvent.KeyPressed.Pre event) {
@@ -47,7 +47,7 @@ public final class DebugLogEventHandler {
         }
     }
 
-    // ÔöÇÔöÇ Screen lifecycle ÔöÇÔöÇ
+    // ── Screen lifecycle ──
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onScreenOpen(ScreenEvent.Opening event) {
@@ -98,7 +98,7 @@ public final class DebugLogEventHandler {
         lastOpenScreen = null;
     }
 
-    // ÔöÇÔöÇ Mouse events ÔöÇÔöÇ
+    // ── Mouse events ──
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onMouseClick(ScreenEvent.MouseButtonPressed.Post event) {
@@ -126,7 +126,7 @@ public final class DebugLogEventHandler {
         DebugLogger.logMouseScroll(screen.getClass().getSimpleName(), event.getScrollDelta());
     }
 
-    // ÔöÇÔöÇ Keyboard events ÔöÇÔöÇ
+    // ── Keyboard events ──
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onKeyPress(ScreenEvent.KeyPressed.Post event) {
@@ -154,7 +154,7 @@ public final class DebugLogEventHandler {
         DebugLogger.logKeyPress(screen.getClass().getSimpleName(), keyCode, keyName);
     }
 
-    // ÔöÇÔöÇ Render event ÔÇö log summary periodically ÔöÇÔöÇ
+    // ── Render event — log summary periodically ──
 
     private static long lastSummaryTime = 0;
 
@@ -173,7 +173,7 @@ public final class DebugLogEventHandler {
         }
     }
 
-    // ÔöÇÔöÇ Helpers ÔöÇÔöÇ
+    // ── Helpers ──
 
     private static boolean isModScreen(Screen screen) {
         return screen != null && screen.getClass().getPackageName().startsWith("com.servermanagement");

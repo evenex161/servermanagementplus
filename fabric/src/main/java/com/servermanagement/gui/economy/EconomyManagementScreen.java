@@ -84,7 +84,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         // Back to Dashboard button
         this.addRenderableWidget(new ModernButton(
             centerX + 10, centerY + 10, 120, 20,
-            Component.literal("ÔåÉ Dashboard"),
+            Component.literal("← Dashboard"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD)),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -184,7 +184,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             if (scrollOffset > 0) {
                 this.addRenderableWidget(new ModernButton(
                     centerX + this.imageWidth / 2 - 85, scrollY, 80, 22,
-                    Component.literal("Ôû▓ Previous"),
+                    Component.literal("▲ Previous"),
                     button -> { scrollOffset--; this.rebuildWidgets(); },
                     ModernButton.ButtonStyle.SECONDARY
                 ));
@@ -193,7 +193,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             if (scrollOffset + 3 < templates.size()) {
                 this.addRenderableWidget(new ModernButton(
                     centerX + this.imageWidth / 2 + 5, scrollY, 80, 22,
-                    Component.literal("Ôû╝ Next"),
+                    Component.literal("▼ Next"),
                     button -> { scrollOffset++; this.rebuildWidgets(); },
                     ModernButton.ButtonStyle.SECONDARY
                 ));
@@ -211,14 +211,14 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         // Task Type selector
         this.addRenderableWidget(new ModernButton(
             formX, formY, 100, 20,
-            Component.literal("Ôùä Type"),
+            Component.literal("◄ Type"),
             button -> cycleTaskType(-1),
             ModernButton.ButtonStyle.SECONDARY
         ));
         
         this.addRenderableWidget(new ModernButton(
             formX + 110, formY, 100, 20,
-            Component.literal("Type Ôû║"),
+            Component.literal("Type ►"),
             button -> cycleTaskType(1),
             ModernButton.ButtonStyle.SECONDARY
         ));
@@ -298,7 +298,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         // Refresh button
         this.addRenderableWidget(new ModernButton(
             centerX + this.imageWidth - 140, centerY + 88, 120, 20,
-            Component.literal("Ôå╗ Refresh"),
+            Component.literal("↻ Refresh"),
             button -> {
                 ModNetworking.sendToServer(new com.servermanagement.network.packet.RequestEconomyStatsPacket());
             },
@@ -412,7 +412,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         int centerY = (this.height - this.imageHeight) / 2;
         
         // Main background
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xE0101010);
+        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xA0101010);
         
         // Header bar
         guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xFF1A1A2E);
@@ -420,7 +420,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         
         // Tab content area
         guiGraphics.fill(centerX + 10, centerY + 80, centerX + this.imageWidth - 10, 
-            centerY + this.imageHeight - 15, 0xE01A1A1A);
+            centerY + this.imageHeight - 15, 0xA01A1A1A);
         
         if (currentTab == Tab.TASK_TEMPLATES && !editMode) {
             // Render template boxes
@@ -430,12 +430,12 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 
                 // Template background
                 guiGraphics.fill(centerX + 20, yPos, centerX + this.imageWidth - 20, 
-                    yPos + TEMPLATE_HEIGHT, 0xE0252525);
+                    yPos + TEMPLATE_HEIGHT, 0xA0252525);
             }
         } else if (editMode) {
             // Edit form background
             guiGraphics.fill(centerX + 15, centerY + 100, centerX + this.imageWidth - 15, 
-                centerY + this.imageHeight - 100, 0xE0252525);
+                centerY + this.imageHeight - 100, 0xA0252525);
         }
     }
     

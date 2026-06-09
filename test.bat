@@ -77,6 +77,16 @@ set TASK_PREFIX=:%LOADER%
 set SERVER_DIR=%LOADER%\runs\server
 set CLIENT_DIR=%LOADER%\runs\client
 
+REM ForgeGradle 6 names its run tasks "Client"/"Server" (no "run" prefix);
+REM fabric-loom and neoforge moddev use "runClient"/"runServer".
+if /I "%LOADER%"=="forge" (
+    set CLIENT_TASK=Client
+    set SERVER_TASK=Server
+) else (
+    set CLIENT_TASK=runClient
+    set SERVER_TASK=runServer
+)
+
 echo [TEST] MC=%MC_VERSION% loader=%LOADER% mode=%MODE%
 
 if "%MODE%"=="server" goto :server
@@ -90,13 +100,13 @@ exit /b 1
 
 :client
 echo [TEST] Building and launching CLIENT (%LOADER%)...
-call gradlew.bat %TASK_PREFIX%:runClient
+call gradlew.bat %TASK_PREFIX%:%CLIENT_TASK%
 goto :eof
 
 :server
 echo [TEST] Building and launching SERVER (%LOADER%, nogui)...
 call :setup_server
-call gradlew.bat %TASK_PREFIX%:runServer
+call gradlew.bat %TASK_PREFIX%:%SERVER_TASK%
 goto :eof
 
 :both
@@ -111,11 +121,11 @@ call :create_servers_dat "%CLIENT_DIR%\servers.dat"
 echo [TEST] Starting SERVER in background...
 REM --console=plain forces Gradle to forward stdin to the server JVM so you can type
 REM commands like "op Player1", "stop", etc. directly into the server window.
-start "SM+ Test Server" cmd /c "title SM+ Test Server && gradlew.bat %TASK_PREFIX%:runServer --no-daemon --console=plain 2>&1"
+start "SM+ Test Server" cmd /c "title SM+ Test Server && gradlew.bat %TASK_PREFIX%:%SERVER_TASK% --no-daemon --console=plain 2>&1"
 echo [TEST] Waiting 20s for server startup...
 timeout /t 20 /nobreak >nul
 echo [TEST] Starting CLIENT...
-call gradlew.bat %TASK_PREFIX%:runClient --no-daemon
+call gradlew.bat %TASK_PREFIX%:%CLIENT_TASK% --no-daemon
 echo [TEST] Shutting down server...
 call :stop_server
 goto :eof
@@ -162,7 +172,7 @@ if not exist "%CLIENT_DIR%\config" mkdir "%CLIENT_DIR%\config"
 echo [DEBUG] Starting SERVER in background...
 REM --console=plain forces Gradle to forward stdin to the server JVM so you can type
 REM commands like "op Player1", "stop", etc. directly into the server window.
-start "SM+ Debug Server" cmd /c "title SM+ Debug Server && gradlew.bat %TASK_PREFIX%:runServer --no-daemon --console=plain -x compileJava -x processResources -x classes 2>&1"
+start "SM+ Debug Server" cmd /c "title SM+ Debug Server && gradlew.bat %TASK_PREFIX%:%SERVER_TASK% --no-daemon --console=plain -x compileJava -x processResources -x classes 2>&1"
 
 echo [DEBUG] Waiting 25s for server startup...
 echo          (Server logs: %SERVER_DIR%\logs\latest.log)
@@ -186,7 +196,7 @@ echo [DEBUG]   Server: localhost in Multiplayer tab
 echo [DEBUG] ------------------------------------------------
 echo.
 echo [DEBUG] Starting CLIENT 1 (Player1) in background...
-start "SM+ Client 1" cmd /c "title SM+ Client 1 && gradlew.bat %TASK_PREFIX%:runClient --no-daemon -x compileJava -x processResources -x classes -PmcUsername=Player1 2>&1"
+start "SM+ Client 1" cmd /c "title SM+ Client 1 && gradlew.bat %TASK_PREFIX%:%CLIENT_TASK% --no-daemon -x compileJava -x processResources -x classes -PmcUsername=Player1 2>&1"
 
 echo [DEBUG] Waiting 20s for Client 1 to load...
 timeout /t 20 /nobreak >nul
@@ -199,7 +209,7 @@ REM file under modlauncher's transformer cache, which produces FileSystemExcepti
 REM Excluding extra prep tasks reduces the contention window.
 set CLIENT2_EXTRA_EXCLUDES=
 if /I "%LOADER%"=="neoforge" set CLIENT2_EXTRA_EXCLUDES=-x writeMinecraftClasspath -x writeMinecraftClasspathRunClient
-call gradlew.bat %TASK_PREFIX%:runClient --no-daemon -x compileJava -x processResources -x classes %CLIENT2_EXTRA_EXCLUDES% --project-cache-dir=.gradle-c2 -PmcUsername=Player2 -PmcGameDir=%CLIENT2_DIR%
+call gradlew.bat %TASK_PREFIX%:%CLIENT_TASK% --no-daemon -x compileJava -x processResources -x classes %CLIENT2_EXTRA_EXCLUDES% --project-cache-dir=.gradle-c2 -PmcUsername=Player2 -PmcGameDir=%CLIENT2_DIR%
 set BUILDSRC_ALT_BUILD_DIR=
 set CLIENT2_EXTRA_EXCLUDES=
 

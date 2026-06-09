@@ -32,7 +32,7 @@ public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String 
                     var worldData = com.servermanagement.features.worldmanager.WorldManager.getInstance().getData();
                     if (worldData.hasActiveTimer(dimensionId)) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "┬ºcCannot change portal state while a timer is active for this dimension!"));
+                            "§cCannot change portal state while a timer is active for this dimension!"));
                         return;
                     }
 

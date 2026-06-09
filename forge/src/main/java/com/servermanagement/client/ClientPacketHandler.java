@@ -15,7 +15,34 @@ public class ClientPacketHandler {
     private static int cachedTimerSeconds = 0;
     private static boolean cachedChatConnected = false;
     private static String cachedTimerPortalType = "both";
-    
+
+    /**
+     * Re-run init() on the currently open mod screen so it re-reads the cache.
+     * Used by S2C sync packet handlers that may arrive AFTER the vanilla
+     * ClientboundOpenScreen packet — without this, screens display stale
+     * snapshots of the cache from their constructor / initial init().
+     */
+    public static void refreshOpenScreen() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc == null) {
+            return;
+        }
+        net.minecraft.client.gui.screens.Screen screen = mc.screen;
+        if (screen == null) {
+            return;
+        }
+        if (!screen.getClass().getName().startsWith("com.servermanagement")) {
+            return;
+        }
+        try {
+            screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+        } catch (Throwable t) {
+            // Don't take the client down if a screen rebuild misbehaves.
+            com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("ScreenRefresh",
+                    "failed for " + screen.getClass().getSimpleName() + ": " + t.getMessage());
+        }
+    }
+
     // MOTD cache
     private static String cachedMotdText = "";
 

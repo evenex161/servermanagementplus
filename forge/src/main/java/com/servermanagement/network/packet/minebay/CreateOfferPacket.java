@@ -60,22 +60,22 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             
             // Validation
             if (listing == null) {
-                buyer.sendSystemMessage(Component.literal("┬ºcListing not found!"));
+                buyer.sendSystemMessage(Component.literal("§cListing not found!"));
                 return;
             }
             
             if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
-                buyer.sendSystemMessage(Component.literal("┬ºcThis listing is no longer active!"));
+                buyer.sendSystemMessage(Component.literal("§cThis listing is no longer active!"));
                 return;
             }
             
             if (listing.getOfferType() != MineBayListing.OfferType.NEGOTIABLE) {
-                buyer.sendSystemMessage(Component.literal("┬ºcThis listing doesn't accept offers!"));
+                buyer.sendSystemMessage(Component.literal("§cThis listing doesn't accept offers!"));
                 return;
             }
             
             if (listing.getSellerId().equals(buyer.getUUID())) {
-                buyer.sendSystemMessage(Component.literal("┬ºcYou cannot make an offer on your own listing!"));
+                buyer.sendSystemMessage(Component.literal("§cYou cannot make an offer on your own listing!"));
                 return;
             }
             
@@ -83,7 +83,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             if (moneyOffer > 0) {
                 double buyerBalance = economyManager.getOrCreateAccount(buyer.getUUID()).getBalance();
                 if (buyerBalance < moneyOffer) {
-                    buyer.sendSystemMessage(Component.literal("┬ºcYou don't have enough money! Need $" + 
+                    buyer.sendSystemMessage(Component.literal("§cYou don't have enough money! Need $" + 
                         String.format("%.2f", moneyOffer) + " but only have $" + 
                         String.format("%.2f", buyerBalance)));
                     return;
@@ -99,7 +99,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             
             // Validate that an offer was actually made
             if (moneyOffer <= 0 && serverOfferItems.isEmpty()) {
-                buyer.sendSystemMessage(Component.literal("┬ºcYou must offer money or items!"));
+                buyer.sendSystemMessage(Component.literal("§cYou must offer money or items!"));
                 return;
             }
             
@@ -109,7 +109,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
                 com.servermanagement.features.economy.BankAccount buyerAccount = 
                     economyManager.getOrCreateAccount(buyer.getUUID());
                 if (!buyerAccount.tryWithdraw(moneyOffer)) {
-                    buyer.sendSystemMessage(Component.literal("┬ºcFailed to escrow money!"));
+                    buyer.sendSystemMessage(Component.literal("§cFailed to escrow money!"));
                     return;
                 }
                 moneyEscrowed = true;
@@ -120,7 +120,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             }
             
             // Clear offer items from the menu container (escrow them)
-            // Items are already out of inventory ÔÇö just clear the container slots
+            // Items are already out of inventory — just clear the container slots
             // Wrapped in try-catch to rollback money escrow on failure
             try {
                 if (buyer.containerMenu instanceof com.servermanagement.gui.minebay.MineBayMenu mineBayMenu2) {
@@ -147,9 +147,9 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
                     buyerAccount.deposit(moneyOffer);
                     buyerAccount.addTransaction(new Transaction(
                         TransactionType.MINEBAY_ESCROW_RETURN, moneyOffer,
-                        "Offer failed ÔÇö money returned"));
+                        "Offer failed — money returned"));
                 }
-                buyer.sendSystemMessage(Component.literal("┬ºcFailed to create offer. Your money/items have been returned."));
+                buyer.sendSystemMessage(Component.literal("§cFailed to create offer. Your money/items have been returned."));
                 com.servermanagement.ServerManagementMod.LOGGER.error("Failed to create offer for listing {}", listingId, e);
                 return;
             }
@@ -157,13 +157,13 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             // Notify buyer (action bar)
             String offerSummary = "";
             if (moneyOffer > 0) {
-                offerSummary += "┬º6$" + String.format("%.2f", moneyOffer);
+                offerSummary += "§6$" + String.format("%.2f", moneyOffer);
             }
             if (!serverOfferItems.isEmpty()) {
-                offerSummary += (offerSummary.isEmpty() ? "" : " + ") + "┬ºf" + serverOfferItems.size() + " item(s)";
+                offerSummary += (offerSummary.isEmpty() ? "" : " + ") + "§f" + serverOfferItems.size() + " item(s)";
             }
             buyer.displayClientMessage(Component.literal(
-                "┬ºa┬ºlÔ£ô ┬ºr┬ºaOffer submitted: " + offerSummary + " ┬ºa(escrowed)"), true);
+                "§a§l✓ §r§aOffer submitted: " + offerSummary + " §a(escrowed)"), true);
             
             // Sync buyer's bank account after escrow
             com.servermanagement.features.economy.BankAccount buyerAccountSync = economyManager.getOrCreateAccount(buyer.getUUID());
@@ -177,7 +177,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
             if (seller != null) {
                 seller.displayClientMessage(Component.literal(
-                    "┬ºe[MineBay] ┬º6" + buyer.getName().getString() + " ┬ºemade an offer on your ┬ºf" + 
+                    "§e[MineBay] §6" + buyer.getName().getString() + " §emade an offer on your §f" + 
                     listing.getItemForSale().getHoverName().getString()), true);
             }
         });

@@ -52,19 +52,19 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
             // Input validation - prevent exploits
             if (Double.isNaN(this.betAmount) || Double.isInfinite(this.betAmount)) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid bet amount"));
+                    "§cInvalid bet amount"));
                 return;
             }
             
             if (this.betAmount < 10.0 || this.betAmount > 10000.0) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcBet amount must be between $10 and $10,000"));
+                    "§cBet amount must be between $10 and $10,000"));
                 return;
             }
             
             if (this.gameOption == null || this.gameOption.length() > 50) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid game option"));
+                    "§cInvalid game option"));
                 return;
             }
             
@@ -76,7 +76,7 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
                 game = createGame(this.gameType, this.gameOption);
             } catch (Exception e) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "┬ºcInvalid game parameters"));
+                    "§cInvalid game parameters"));
                 return;
             }
             
@@ -132,7 +132,7 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
                     DELAYED_EXECUTOR.schedule(() -> {
                         // Execute on the main server thread for thread safety
                         server.execute(() -> {
-                            // Re-lookup player by UUID ÔÇö original reference may be stale
+                            // Re-lookup player by UUID — original reference may be stale
                             // (player could have disconnected/reconnected during the 3s delay)
                             ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUUID);
                             if (currentPlayer == null) return; // Player disconnected

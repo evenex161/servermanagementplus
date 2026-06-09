@@ -125,7 +125,7 @@ public class ConfigScreen extends ScalableContainerScreen<ConfigMenu> {
         // Bottom buttons - symmetrical
         int btnW = (this.imageWidth - 30) / 2;
         this.addRenderableWidget(new ModernButton.Builder(
-            Component.literal("ÔåÉ Dashboard"),
+            Component.literal("← Dashboard"),
             button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD, "")))
             .bounds(centerX + 10, centerY + this.imageHeight - 35, btnW, 24)
             .style(ModernButton.ButtonStyle.SECONDARY)

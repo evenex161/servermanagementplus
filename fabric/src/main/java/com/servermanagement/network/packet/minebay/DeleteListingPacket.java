@@ -33,13 +33,13 @@ public record DeleteListingPacket(String listingId) implements com.servermanagem
             MineBayListing listing = manager.getListing(listingId);
             
             if (listing == null) {
-                player.sendSystemMessage(Component.literal("┬ºcListing not found!"));
+                player.sendSystemMessage(Component.literal("§cListing not found!"));
                 return;
             }
             
             // Verify ownership
             if (!listing.getSellerId().equals(player.getUUID())) {
-                player.sendSystemMessage(Component.literal("┬ºcYou can only delete your own listings!"));
+                player.sendSystemMessage(Component.literal("§cYou can only delete your own listings!"));
                 return;
             }
             
@@ -58,7 +58,7 @@ public record DeleteListingPacket(String listingId) implements com.servermanagem
             // Sync to all players
             manager.syncListingsToAllPlayers(player.server);
             
-            player.sendSystemMessage(Component.literal("┬ºaListing deleted successfully!"));
+            player.sendSystemMessage(Component.literal("§aListing deleted successfully!"));
 
 }
 }

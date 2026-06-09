@@ -45,7 +45,7 @@ public record CancelListingPacket() implements IPacket {
                     
                     player.sendSystemMessage(
                         net.minecraft.network.chat.Component.literal(
-                            "┬ºeItem returned to inventory"
+                            "§eItem returned to inventory"
                         )
                     );
                 }
