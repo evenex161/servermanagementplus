@@ -138,9 +138,39 @@ public class MigrationManager {
     public static void backupDataFiles(MinecraftServer server) {
         ServerManagementMod.LOGGER.info("Creating backup of all data files...");
         
-        // TODO: Implement backup functionality for critical migrations
-        // This would copy all servermanagement data files to a backup directory
-        
-        ServerManagementMod.LOGGER.info("Backup completed");
+        try {
+            java.io.File serverDir = server.getServerDirectory();
+            java.io.File serverDataDir = new java.io.File(serverDir, "servermanagement");
+            java.io.File configDir = new java.io.File(serverDir, "config/servermanagement");
+            
+            java.io.File backupDir = new java.io.File(serverDir, "serverdata/servermanagement/backups/backup_" + System.currentTimeMillis());
+            
+            if (serverDataDir.exists()) {
+                copyDirectory(serverDataDir, new java.io.File(backupDir, "servermanagement"));
+            }
+            if (configDir.exists()) {
+                copyDirectory(configDir, new java.io.File(backupDir, "config/servermanagement"));
+            }
+            
+            ServerManagementMod.LOGGER.info("Backup completed successfully to: {}", backupDir.getAbsolutePath());
+        } catch (Exception e) {
+            ServerManagementMod.LOGGER.error("Failed to create backup of data files", e);
+        }
+    }
+
+    private static void copyDirectory(java.io.File sourceDir, java.io.File destDir) throws java.io.IOException {
+        if (sourceDir.isDirectory()) {
+            if (!destDir.exists()) {
+                destDir.mkdirs();
+            }
+            String[] children = sourceDir.list();
+            if (children != null) {
+                for (String child : children) {
+                    copyDirectory(new java.io.File(sourceDir, child), new java.io.File(destDir, child));
+                }
+            }
+        } else {
+            java.nio.file.Files.copy(sourceDir.toPath(), destDir.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 }

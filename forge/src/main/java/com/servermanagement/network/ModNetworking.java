@@ -57,6 +57,8 @@ import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
 import com.servermanagement.network.packet.VersionCheckPacket;
 import com.servermanagement.network.packet.WMSetLobbyPacket;
+import com.servermanagement.network.packet.SyncSessionTokenPacket;
+import com.servermanagement.network.packet.AuthenticateSessionPacket;
 import com.servermanagement.network.packet.WMSetTimerPacket;
 import com.servermanagement.network.packet.WMTeleportToDimensionPacket;
 import com.servermanagement.network.packet.WMToggleChatIsolationPacket;
@@ -71,7 +73,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 public class ModNetworking {
     private static final String PROTOCOL_VERSION = "1";
-    private static SimpleChannel INSTANCE;
+    private static WrappedSimpleChannel INSTANCE;
     
     private static int packetId = 0;
     private static int id() {
@@ -79,12 +81,12 @@ public class ModNetworking {
     }
 
     public static void register() {
-        INSTANCE = NetworkRegistry.newSimpleChannel(
+        INSTANCE = new WrappedSimpleChannel(NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ServerManagementMod.MOD_ID, "main"),
             () -> PROTOCOL_VERSION,
             s -> true,
             s -> true
-        );
+        ));
 
         ServerManagementMod.LOGGER.info("Registering network packets");
         
@@ -207,6 +209,11 @@ public class ModNetworking {
         INSTANCE.registerMessage(id(), ModFileChunkPacket.class, ModFileChunkPacket::encode, ModFileChunkPacket::new, ModFileChunkPacket::handle);
         
         INSTANCE.registerMessage(id(), ModFileCompletePacket.class, ModFileCompletePacket::encode, ModFileCompletePacket::new, ModFileCompletePacket::handle);
+
+        // Session validation packets
+        INSTANCE.registerMessage(id(), SyncSessionTokenPacket.class, SyncSessionTokenPacket::encode, SyncSessionTokenPacket::new, SyncSessionTokenPacket::handle);
+        
+        INSTANCE.registerMessage(id(), AuthenticateSessionPacket.class, AuthenticateSessionPacket::encode, AuthenticateSessionPacket::new, AuthenticateSessionPacket::handle);
         
         // Gambling packets
         INSTANCE.registerMessage(id(), PlaceGamblingBetPacket.class, PlaceGamblingBetPacket::encode, PlaceGamblingBetPacket::new, PlaceGamblingBetPacket::handle);
@@ -265,6 +272,71 @@ public class ModNetworking {
     }
     
     public static SimpleChannel getChannel() {
-        return INSTANCE;
+        return INSTANCE.delegate;
+    }
+
+    private static boolean isAdminOnlyPacket(Object pkt) {
+        if (pkt instanceof OpenGuiPacket ogp) {
+            return ogp.guiType().isAdminOnly();
+        }
+        return pkt instanceof ToggleFeaturePacket ||
+               pkt instanceof WMTogglePortalsPacket ||
+               pkt instanceof WMSetTimerPacket ||
+               pkt instanceof WMSetLobbyPacket ||
+               pkt instanceof WMToggleChatIsolationPacket ||
+               pkt instanceof WMToggleTabIsolationPacket ||
+               pkt instanceof WMTeleportToDimensionPacket ||
+               pkt instanceof PMSpectatePlayerPacket ||
+               pkt instanceof PMViewInventoryPacket ||
+               pkt instanceof PMKickPlayerPacket ||
+               pkt instanceof PMBanPlayerPacket ||
+               pkt instanceof PMUnbanPlayerPacket ||
+               pkt instanceof PMWhitelistPacket ||
+               pkt instanceof PMWhitelistTogglePacket ||
+               pkt instanceof PMRequestPlayerListsPacket ||
+               pkt instanceof ConsoleCommandPacket ||
+               pkt instanceof ConsoleSubscribePacket ||
+               pkt instanceof SaveTemplatePacket ||
+               pkt instanceof DeleteTemplatePacket ||
+               pkt instanceof ToggleTemplatePacket ||
+               pkt instanceof SaveFreeRewardSettingsPacket ||
+               pkt instanceof UpdatePerformanceSettingPacket ||
+               pkt instanceof SaveMotdPacket ||
+               pkt instanceof RequestEconomyStatsPacket;
+    }
+
+    public static class WrappedSimpleChannel {
+        private final SimpleChannel delegate;
+        
+        public WrappedSimpleChannel(SimpleChannel delegate) {
+            this.delegate = delegate;
+        }
+        
+        public <MSG> void registerMessage(int index, Class<MSG> messageType, 
+                java.util.function.BiConsumer<MSG, net.minecraft.network.FriendlyByteBuf> encoder, 
+                java.util.function.Function<net.minecraft.network.FriendlyByteBuf, MSG> decoder, 
+                java.util.function.BiConsumer<MSG, java.util.function.Supplier<net.minecraftforge.network.NetworkEvent.Context>> messageConsumer) {
+            delegate.registerMessage(index, messageType, encoder, decoder, (pkt, ctxSupplier) -> {
+                net.minecraftforge.network.NetworkEvent.Context ctx = ctxSupplier.get();
+                ServerPlayer player = ctx.getSender();
+                if (player != null && isAdminOnlyPacket(pkt)) {
+                    if (!player.hasPermissions(2) || !com.servermanagement.security.SessionManager.getInstance().isSessionAuthenticated(player.getUUID())) {
+                        com.mojang.logging.LogUtils.getLogger().warn("Player {} failed session token validation for packet {}", 
+                            player.getName().getString(), pkt.getClass().getSimpleName());
+                        ctx.setPacketHandled(true);
+                        return;
+                    }
+                }
+                messageConsumer.accept(pkt, ctxSupplier);
+            });
+        }
+        
+        public void sendToServer(Object message) {
+            delegate.sendToServer(message);
+        }
+        
+        public <MSG> void send(net.minecraftforge.network.PacketDistributor.PacketTarget target, MSG message) {
+            delegate.send(target, message);
+        }
     }
 }

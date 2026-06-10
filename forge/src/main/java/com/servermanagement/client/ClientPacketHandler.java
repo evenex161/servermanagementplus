@@ -55,6 +55,22 @@ public class ClientPacketHandler {
         return cachedMotdText;
     }
 
+    // Session token cache
+    private static String cachedSessionToken = "";
+
+    public static void handleSessionTokenSync(String token) {
+        cachedSessionToken = token;
+        com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("SessionToken", "token_synced");
+        // Send authentication packet back to server
+        com.servermanagement.network.ModNetworking.sendToServer(
+            new com.servermanagement.network.packet.AuthenticateSessionPacket(token)
+        );
+    }
+
+    public static String getCachedSessionToken() {
+        return cachedSessionToken;
+    }
+
     // Global settings cache
     private static boolean cachedChatIsolationEnabled = false;
     private static boolean cachedTabIsolationEnabled = false;

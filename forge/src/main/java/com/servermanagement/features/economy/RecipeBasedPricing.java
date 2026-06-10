@@ -273,6 +273,7 @@ public class RecipeBasedPricing {
     private void resolveRecipePrices(Map<String, List<RecipeEntry>> recipesByOutput) {
         boolean changed = true;
         int iteration = 0;
+        Map<String, Integer> increaseCounts = new java.util.HashMap<>();
 
         while (changed && iteration < MAX_ITERATIONS) {
             changed = false;
@@ -293,6 +294,14 @@ public class RecipeBasedPricing {
                 if (cheapest < Double.MAX_VALUE) {
                     Double current = recipePrices.get(itemId);
                     if (current == null || Math.abs(current - cheapest) > CONVERGENCE_THRESHOLD) {
+                        // Cycle protection: freeze price if it increases too many times
+                        if (current != null && cheapest > current) {
+                            int count = increaseCounts.getOrDefault(itemId, 0) + 1;
+                            increaseCounts.put(itemId, count);
+                            if (count > 25) {
+                                continue;
+                            }
+                        }
                         recipePrices.put(itemId, cheapest);
                         changed = true;
                     }

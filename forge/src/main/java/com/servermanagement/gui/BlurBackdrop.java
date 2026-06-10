@@ -1,14 +1,17 @@
 package com.servermanagement.gui;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.PostChain;
 import net.minecraft.resources.ResourceLocation;
+import org.joml.Matrix4f;
 import org.slf4j.Logger;
 
 /**
- * Toggles the vanilla {@code shaders/post/blur.json} post-processing chain on
- * the {@code GameRenderer} so the world is rendered blurred behind our scalable
- * GUIs (the 1.20.1 equivalent of MC 1.21+ {@code renderBlurredBackground}).
+ * Toggles the vanilla {@code shaders/post/blur.json} post-processing chain
+ * manually via a managed {@link PostChain} so the world is rendered blurred
+ * behind our scalable GUIs (the 1.20.1 equivalent of MC 1.21+ {@code renderBlurredBackground}).
  *
  * <p>Refcounts callers so opening a second mod screen on top of an already
  * blurred screen keeps the effect alive across the transition.</p>
@@ -21,14 +24,12 @@ public final class BlurBackdrop {
             new ResourceLocation("servermanagement", "shaders/post/blur.json");
 
     private static int activeCount = 0;
+    private static PostChain blurChain;
+    private static int lastWidth = -1;
+    private static int lastHeight = -1;
 
     private BlurBackdrop() {}
 
-    /**
-     * Activate the blur effect (loads it the first time a screen requests it).
-     * Safe to call from screen {@code init()} every frame: only the
-     * leading-edge transition does work.
-     */
     public static void enable() {
         LOGGER.info("[ServerManagement] BlurBackdrop.enable() called. activeCount = {}", activeCount);
         Minecraft mc = Minecraft.getInstance();
@@ -44,16 +45,35 @@ public final class BlurBackdrop {
             LOGGER.info("[ServerManagement] mc.level is null");
             return;
         }
+
         LOGGER.info("[ServerManagement] activeCount before logic: {}", activeCount);
         if (activeCount == 0) {
             try {
-                LOGGER.info("[ServerManagement] Loading blur shader: {}", BLUR_SHADER);
-                mc.gameRenderer.loadEffect(BLUR_SHADER);
-                LOGGER.info("[ServerManagement] Shader loaded successfully!");
+                if (blurChain == null) {
+                    LOGGER.info("[ServerManagement] Loading blur shader: {}", BLUR_SHADER);
+                    blurChain = new PostChain(mc.getTextureManager(), mc.getResourceManager(), mc.getMainRenderTarget(), BLUR_SHADER);
+                    lastWidth = mc.getWindow().getWidth();
+                    lastHeight = mc.getWindow().getHeight();
+                    blurChain.resize(lastWidth, lastHeight);
+                    LOGGER.info("[ServerManagement] Shader loaded successfully!");
+                } else {
+                    int width = mc.getWindow().getWidth();
+                    int height = mc.getWindow().getHeight();
+                    if (width != lastWidth || height != lastHeight) {
+                        lastWidth = width;
+                        lastHeight = height;
+                        blurChain.resize(width, height);
+                    }
+                }
             } catch (Throwable t) {
                 LOGGER.error("[ServerManagement] Failed to load blur shader: {}", BLUR_SHADER, t);
-                // Don't break the GUI if the shader fails to load.
-                activeCount = -1; // mark as failed, never retry this session
+                if (blurChain != null) {
+                    try {
+                        blurChain.close();
+                    } catch (Throwable ignored) {}
+                }
+                blurChain = null;
+                activeCount = -1;
                 return;
             }
         }
@@ -63,31 +83,55 @@ public final class BlurBackdrop {
         LOGGER.info("[ServerManagement] activeCount after logic: {}", activeCount);
     }
 
-    /**
-     * Deactivate the blur effect for one caller. Shuts down the post chain
-     * once the last caller releases it.
-     */
+    public static void processBlur(float partialTick) {
+        if (activeCount <= 0 || blurChain == null) {
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) return;
+
+        int width = mc.getWindow().getWidth();
+        int height = mc.getWindow().getHeight();
+        if (width != lastWidth || height != lastHeight) {
+            lastWidth = width;
+            lastHeight = height;
+            try {
+                blurChain.resize(width, height);
+            } catch (Throwable t) {
+                LOGGER.error("[ServerManagement] Failed to resize blur shader", t);
+                try {
+                    blurChain.close();
+                } catch (Throwable ignored) {}
+                blurChain = null;
+                return;
+            }
+        }
+
+        try {
+            blurChain.process(partialTick);
+            
+            // Construct and force the correct GUI projection matrix (depth range 1000 to 21000)
+            Matrix4f guiProj = new Matrix4f().setOrtho(0.0F, (float)mc.getWindow().getGuiScaledWidth(), (float)mc.getWindow().getGuiScaledHeight(), 0.0F, 1000.0F, 21000.0F);
+            RenderSystem.setProjectionMatrix(guiProj, com.mojang.blaze3d.vertex.VertexSorting.ORTHOGRAPHIC_Z);
+            
+            mc.getMainRenderTarget().bindWrite(false);
+        } catch (Throwable t) {
+            LOGGER.error("[ServerManagement] Failed to process blur shader, resetting chain", t);
+            try {
+                blurChain.close();
+            } catch (Throwable ignored) {}
+            blurChain = null;
+        }
+    }
+
     public static void disable() {
         LOGGER.info("[ServerManagement] BlurBackdrop.disable() called. activeCount = {}", activeCount);
         if (activeCount <= 0) {
             return;
         }
         activeCount--;
-        if (activeCount == 0) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc != null && mc.gameRenderer != null) {
-                try {
-                    LOGGER.info("[ServerManagement] Shutting down blur shader.");
-                    mc.gameRenderer.shutdownEffect();
-                } catch (Throwable ignored) {}
-            }
-        }
-    }
-
-    private static void applyBlurRadius(Minecraft mc, float radius) {
-        // PostChain.passes is private in 1.20.1 and there is no public
-        // setUniform on PostChain. We rely on the radius baked into the
-        // vanilla blur.json post chain.
+        // Keep the blurChain cached in memory for subsequent GUI openings to eliminate compilation stutters.
+        // It remains allocated until game exit or resource reload triggers an error/reset.
     }
 }
 

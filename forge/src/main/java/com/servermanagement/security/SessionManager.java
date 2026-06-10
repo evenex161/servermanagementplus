@@ -94,6 +94,27 @@ public class SessionManager {
     }
 
     /**
+     * Authenticate a session using a client-provided token
+     */
+    public boolean authenticateSession(UUID playerUUID, String token) {
+        PlayerSession session = sessions.get(playerUUID);
+        if (session != null && session.getToken().equals(token) && !session.isExpired()) {
+            session.setAuthenticated(true);
+            session.updateLastActivity();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if a session has been successfully authenticated
+     */
+    public boolean isSessionAuthenticated(UUID playerUUID) {
+        PlayerSession session = sessions.get(playerUUID);
+        return session != null && session.isAuthenticated() && !session.isExpired();
+    }
+
+    /**
      * Represents a player's session
      */
     public static class PlayerSession {
@@ -101,6 +122,7 @@ public class SessionManager {
         private final String token;
         private final long createdAt;
         private long lastActivity;
+        private boolean authenticated = false;
 
         public PlayerSession(UUID playerUUID, String token) {
             this.playerUUID = playerUUID;
@@ -115,6 +137,14 @@ public class SessionManager {
 
         public String getToken() {
             return token;
+        }
+
+        public boolean isAuthenticated() {
+            return authenticated;
+        }
+
+        public void setAuthenticated(boolean authenticated) {
+            this.authenticated = authenticated;
         }
 
         public void updateLastActivity() {

@@ -13,14 +13,10 @@ out vec4 fragColor;
 
 void main() {
     vec4 blurred = vec4(0.0);
-    float totalAlpha = 0.0;
     float totalSamples = 0.0;
     for(float r = -Radius; r <= Radius; r += 1.0) {
-        vec4 sampleValue = texture(DiffuseSampler, texCoord + oneTexel * r * BlurDir);
-
-        totalAlpha = totalAlpha + sampleValue.a;
-        totalSamples = totalSamples + 1.0;
-        blurred = blurred + sampleValue;
+        blurred += texture(DiffuseSampler, texCoord + oneTexel * r * BlurDir);
+        totalSamples += 1.0;
     }
-    fragColor = vec4(blurred.rgb / (Radius * 2.0 + 1.0), totalAlpha);
+    fragColor = blurred / totalSamples;
 }

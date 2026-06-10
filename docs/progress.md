@@ -597,3 +597,15 @@ Result: BUILD SUCCESSFUL. Only pre-existing deprecation notes for
 
 See session_summary.md and CHANGELOG_v2.1.0.md > Phase 2.4. Five user-reported bugs: spectate self-block (forge/neoforge), duplicate spectate chat (3 loaders), WorldDetailScreen instant refresh on portal-timer execution (3 loaders), fabric daily-task event wiring + ResultSlotMixin, DashboardCard truncation via font.plainSubstrByWidth (3 loaders). Compile clean across all loaders.
 
+---
+
+## v2.1.0 1.20.1 Downgrade Compile Verification & Assessment Plan (2026-06-10)
+
+- Fixed a packaging issue in `sourcesJar` task in [multiloader-loader.gradle](file:///c:/VS%20Workspace/Projects/Minecraft%20Mods/Servermanagement-Forge/buildSrc/src/main/groovy/multiloader-loader.gradle) by adding `duplicatesStrategy = DuplicatesStrategy.EXCLUDE`.
+- Ran full compilation and packaging check: `.\gradlew :forge:build :fabric:build` succeeded, producing both Forge and Fabric distribution JARs.
+- Created a comprehensive assessment and roadmap plan ([implementation_plan.md](file:///C:/Users/evene/.gemini/antigravity-ide/brain/a43f0813-ed0c-42b2-a3dd-66fb3f30819a/implementation_plan.md)) detailing four critical outstanding issues:
+  1. Case-sensitive OTA Mod JAR lookup bug.
+  2. Missing cryptographic session token validation on the incoming C2S networking layer (Security).
+  3. Missing auto-backup functionality before config migrations.
+  4. Recipe pricing convergence loop warnings.
+

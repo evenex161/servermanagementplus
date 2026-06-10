@@ -2,7 +2,6 @@ package com.servermanagement.network;
 
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -65,6 +64,8 @@ import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
 import com.servermanagement.network.packet.VersionCheckPacket;
 import com.servermanagement.network.packet.WMSetLobbyPacket;
+import com.servermanagement.network.packet.SyncSessionTokenPacket;
+import com.servermanagement.network.packet.AuthenticateSessionPacket;
 import com.servermanagement.network.packet.WMSetTimerPacket;
 import com.servermanagement.network.packet.WMTeleportToDimensionPacket;
 import com.servermanagement.network.packet.WMToggleChatIsolationPacket;
@@ -142,6 +143,7 @@ public final class ModNetworking {
         ServerPlayNetworking.registerGlobalReceiver(RejectOfferPacket.ID, (server, player, handler, buf, sender) -> { RejectOfferPacket pkt = new RejectOfferPacket(buf); server.execute(() -> pkt.handle(player)); });
         ServerPlayNetworking.registerGlobalReceiver(RequestListingOffersPacket.ID, (server, player, handler, buf, sender) -> { RequestListingOffersPacket pkt = new RequestListingOffersPacket(buf); server.execute(() -> pkt.handle(player)); });
         ServerPlayNetworking.registerGlobalReceiver(HoldItemPacket.ID, (server, player, handler, buf, sender) -> { HoldItemPacket pkt = new HoldItemPacket(buf); server.execute(() -> pkt.handle(player)); });
+        ServerPlayNetworking.registerGlobalReceiver(AuthenticateSessionPacket.ID, (server, player, handler, buf, sender) -> { AuthenticateSessionPacket pkt = new AuthenticateSessionPacket(buf); server.execute(() -> pkt.handle(player)); });
     }
 
     public static void registerClientPackets() {
@@ -170,6 +172,7 @@ public final class ModNetworking {
         ClientPlayNetworking.registerGlobalReceiver(SyncMotdPacket.ID, (client, handler, buf, sender) -> { SyncMotdPacket pkt = new SyncMotdPacket(buf); client.execute(() -> pkt.handle(null)); });
         ClientPlayNetworking.registerGlobalReceiver(SyncMineBayListingsPacket.ID, (client, handler, buf, sender) -> { SyncMineBayListingsPacket pkt = new SyncMineBayListingsPacket(buf); client.execute(() -> pkt.handle(null)); });
         ClientPlayNetworking.registerGlobalReceiver(SyncListingOffersPacket.ID, (client, handler, buf, sender) -> { SyncListingOffersPacket pkt = new SyncListingOffersPacket(buf); client.execute(() -> pkt.handle(null)); });
+        ClientPlayNetworking.registerGlobalReceiver(SyncSessionTokenPacket.ID, (client, handler, buf, sender) -> { SyncSessionTokenPacket pkt = new SyncSessionTokenPacket(buf); client.execute(() -> pkt.handle(null)); });
     }
 
     // ---------------- Send helpers -----------------
@@ -198,6 +201,64 @@ public final class ModNetworking {
         packet.encode(buf);
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             ServerPlayNetworking.send(p, packet.id(), new FriendlyByteBuf(buf.copy()));
+        }
+    }
+
+    private static boolean isAdminChannelId(net.minecraft.resources.ResourceLocation id) {
+        return id.equals(ToggleFeaturePacket.ID) ||
+               id.equals(WMTogglePortalsPacket.ID) ||
+               id.equals(WMSetTimerPacket.ID) ||
+               id.equals(WMSetLobbyPacket.ID) ||
+               id.equals(WMToggleChatIsolationPacket.ID) ||
+               id.equals(WMToggleTabIsolationPacket.ID) ||
+               id.equals(WMTeleportToDimensionPacket.ID) ||
+               id.equals(PMSpectatePlayerPacket.ID) ||
+               id.equals(PMViewInventoryPacket.ID) ||
+               id.equals(PMKickPlayerPacket.ID) ||
+               id.equals(PMBanPlayerPacket.ID) ||
+               id.equals(PMUnbanPlayerPacket.ID) ||
+               id.equals(PMWhitelistPacket.ID) ||
+               id.equals(PMWhitelistTogglePacket.ID) ||
+               id.equals(PMRequestPlayerListsPacket.ID) ||
+               id.equals(ConsoleCommandPacket.ID) ||
+               id.equals(ConsoleSubscribePacket.ID) ||
+               id.equals(SaveTemplatePacket.ID) ||
+               id.equals(DeleteTemplatePacket.ID) ||
+               id.equals(ToggleTemplatePacket.ID) ||
+               id.equals(SaveFreeRewardSettingsPacket.ID) ||
+               id.equals(UpdatePerformanceSettingPacket.ID) ||
+               id.equals(SaveMotdPacket.ID) ||
+               id.equals(RequestEconomyStatsPacket.ID);
+    }
+
+    private static class ServerPlayNetworking {
+        public static void registerGlobalReceiver(net.minecraft.resources.ResourceLocation id,
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.PlayChannelHandler handler) {
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.registerGlobalReceiver(id, (server, player, handler1, buf, sender) -> {
+                if (isAdminChannelId(id)) {
+                    if (!player.hasPermissions(2) || !com.servermanagement.security.SessionManager.getInstance().isSessionAuthenticated(player.getUUID())) {
+                        com.mojang.logging.LogUtils.getLogger().warn("Player {} failed session token validation for channel {}", 
+                            player.getName().getString(), id);
+                        return;
+                    }
+                }
+                if (id.equals(OpenGuiPacket.ID)) {
+                    FriendlyByteBuf dup = new FriendlyByteBuf(buf.duplicate());
+                    OpenGuiPacket pkt = new OpenGuiPacket(dup);
+                    if (pkt.guiType().isAdminOnly()) {
+                        if (!player.hasPermissions(2) || !com.servermanagement.security.SessionManager.getInstance().isSessionAuthenticated(player.getUUID())) {
+                            com.mojang.logging.LogUtils.getLogger().warn("Player {} failed session token validation for admin GUI {}", 
+                                player.getName().getString(), pkt.guiType());
+                            return;
+                        }
+                    }
+                }
+                handler.receive(server, player, handler1, buf, sender);
+            });
+        }
+
+        public static void send(ServerPlayer player, net.minecraft.resources.ResourceLocation id, FriendlyByteBuf buf) {
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, id, buf);
         }
     }
 }

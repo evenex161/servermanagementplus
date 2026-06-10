@@ -36,8 +36,10 @@ public class ModFileTransferManager {
             // Find our mod JAR in the mods folder
             File modsDir = new File("mods");
             if (modsDir.exists() && modsDir.isDirectory()) {
-                File[] files = modsDir.listFiles((dir, name) -> 
-                    (name.startsWith("servermanagement") || name.startsWith("servermanagementplus")) && name.endsWith(".jar"));
+                File[] files = modsDir.listFiles((dir, name) -> {
+                    String lower = name.toLowerCase();
+                    return (lower.startsWith("servermanagement") || lower.startsWith("servermanagementplus")) && lower.endsWith(".jar");
+                });
                 
                 if (files != null && files.length > 0) {
                     // Use the first matching file (or most recent if multiple)

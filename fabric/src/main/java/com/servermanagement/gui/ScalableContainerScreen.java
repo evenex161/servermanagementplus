@@ -125,6 +125,10 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
         //    at design-space (leftPos, topPos) before our pose scale is applied.
         if (this.minecraft != null && this.minecraft.level == null) {
         }
+        if (blurEnabled) {
+            g.flush();
+            BlurBackdrop.processBlur(partialTick);
+        }
         this.renderBackground(g);
 
         // 2. Suppress every further renderBackground call (the one inside
