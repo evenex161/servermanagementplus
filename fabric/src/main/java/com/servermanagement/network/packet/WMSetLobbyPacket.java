@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 public record WMSetLobbyPacket(BlockPos pos, String dimensionId, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMSetLobbyPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_set_lobby_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "w_m_set_lobby_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, WMSetLobbyPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMSetLobbyPacket::new);
@@ -27,7 +27,7 @@ public record WMSetLobbyPacket(BlockPos pos, String dimensionId, long clientTick
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "lobby_" + dimensionId;
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {

@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -65,7 +65,7 @@ public class WorldManager {
         List<String> dimensions = new ArrayList<>();
         if (server != null) {
             for (ServerLevel level : server.getAllLevels()) {
-                dimensions.add(level.dimension().location().toString());
+                dimensions.add(level.dimension().identifier().toString());
             }
         }
         return dimensions;
@@ -197,17 +197,17 @@ public class WorldManager {
             wm.teleportCooldowns.put(player.getUUID(), now);
         }
 
-        MinecraftServer server = player.getServer();
+        MinecraftServer server = com.servermanagement.ServerManagementMod.getServer();
         if (server == null) return;
 
-        ResourceLocation dimLoc = ResourceLocation.tryParse(dimensionId);
+        Identifier dimLoc = Identifier.tryParse(dimensionId);
         if (dimLoc == null) return;
         
         ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION, dimLoc);
         ServerLevel targetLevel = server.getLevel(dimKey);
 
         if (targetLevel != null) {
-            BlockPos spawnPos = targetLevel.getSharedSpawnPos();
+            BlockPos spawnPos = targetLevel.getRespawnData().pos();
             player.teleportTo(targetLevel, spawnPos.getX(), spawnPos.getY(), spawnPos.getZ(), java.util.Set.of(), 0, 0, true);
         }
     }
@@ -224,7 +224,7 @@ public class WorldManager {
         List<com.servermanagement.network.packet.SyncWorldListPacket.WorldInfo> worlds = new ArrayList<>();
         
         for (ServerLevel level : server.getAllLevels()) {
-            String dimId = level.dimension().location().toString();
+            String dimId = level.dimension().identifier().toString();
             String name = getDimensionName(dimId);
             boolean netherEnabled = data.areNetherPortalsEnabled(dimId);
             boolean endEnabled = data.areEndPortalsEnabled(dimId);

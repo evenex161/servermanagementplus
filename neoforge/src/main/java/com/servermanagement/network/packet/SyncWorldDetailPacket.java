@@ -2,14 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
 public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEnabled, boolean endPortalsEnabled, boolean hasTimer, int timerSeconds, boolean chatConnected, String timerPortalType) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncWorldDetailPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_world_detail"));
+    public static final CustomPacketPayload.Type<SyncWorldDetailPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_world_detail"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncWorldDetailPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncWorldDetailPacket::new);
 
     @Override
@@ -39,7 +39,7 @@ public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEna
             );
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.screen instanceof com.servermanagement.gui.screen.WorldDetailScreen wds) {
-                wds.resize(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+                wds.resize(mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
             }
         });
         // packet handled

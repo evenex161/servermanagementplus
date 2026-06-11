@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 public record ToggleAutoShowPacket(boolean autoShow) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ToggleAutoShowPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "toggle_auto_show_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "toggle_auto_show_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ToggleAutoShowPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), ToggleAutoShowPacket::new);

@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<UpdatePerformanceSettingPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "update_performance_setting_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "update_performance_setting_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, UpdatePerformanceSettingPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), UpdatePerformanceSettingPacket::new);
@@ -32,7 +32,7 @@ public record UpdatePerformanceSettingPacket(String settingKey, String value, lo
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player == null || !player.hasPermissions(2)) return;
+            if (player == null || !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) return;
 
             String actionKey = "perf_" + settingKey;
             if (!PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) return;

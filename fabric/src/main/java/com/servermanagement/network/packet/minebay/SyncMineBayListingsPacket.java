@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 public record SyncMineBayListingsPacket(List<MineBayListing> listings) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncMineBayListingsPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_mine_bay_listings_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "sync_mine_bay_listings_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncMineBayListingsPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncMineBayListingsPacket::new);

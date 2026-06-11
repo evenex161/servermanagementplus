@@ -4,7 +4,7 @@ import com.servermanagement.features.minebay.MineBayListing;
 import com.servermanagement.features.minebay.MineBayManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -17,7 +17,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server to delete an existing listing
  */
 public record DeleteListingPacket(String listingId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<DeleteListingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "delete_listing"));
+    public static final CustomPacketPayload.Type<DeleteListingPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "delete_listing"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, DeleteListingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), DeleteListingPacket::new);
 
     @Override
@@ -64,7 +64,7 @@ public record DeleteListingPacket(String listingId) implements CustomPacketPaylo
             manager.removeListing(listingId);
             
             // Sync to all players
-            manager.syncListingsToAllPlayers(player.server);
+            manager.syncListingsToAllPlayers(player.level().getServer());
             
             player.sendSystemMessage(Component.literal("§aListing deleted successfully!"));
         });

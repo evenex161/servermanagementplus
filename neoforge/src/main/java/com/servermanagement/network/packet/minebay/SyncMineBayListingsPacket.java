@@ -5,7 +5,7 @@ import com.servermanagement.features.minebay.PriceItemEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
@@ -19,7 +19,7 @@ import java.util.UUID;
  * Packet sent from server to client to sync active MineBay listings
  */
 public record SyncMineBayListingsPacket(List<MineBayListing> listings) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncMineBayListingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_mine_bay_listings"));
+    public static final CustomPacketPayload.Type<SyncMineBayListingsPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_mine_bay_listings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncMineBayListingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncMineBayListingsPacket::new);
 
     @Override

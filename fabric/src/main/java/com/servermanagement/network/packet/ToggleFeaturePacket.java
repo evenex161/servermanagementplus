@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 public record ToggleFeaturePacket(String featureId, boolean enabled, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ToggleFeaturePacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "toggle_feature_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "toggle_feature_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ToggleFeaturePacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), ToggleFeaturePacket::new);
@@ -27,7 +27,7 @@ public record ToggleFeaturePacket(String featureId, boolean enabled, long client
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             // Handle on server thread
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "toggle_" + featureId;
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {

@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 public record AcceptOfferPacket(String listingId, String offerId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<AcceptOfferPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "accept_offer_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "accept_offer_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, AcceptOfferPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), AcceptOfferPacket::new);
@@ -107,7 +107,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements net
             // 3. Give purchased item to buyer (may be offline)
             ItemStack purchasedItem = listing.getItemForSale().copy();
             String purchasedItemName = purchasedItem.getHoverName().getString();
-            ServerPlayer buyer = seller.server.getPlayerList().getPlayer(acceptedOffer.getBuyerId());
+            ServerPlayer buyer = seller.level().getServer().getPlayerList().getPlayer(acceptedOffer.getBuyerId());
             
             // Record buyer transaction
             BankAccount buyerAccount = economyManager.getOrCreateAccount(acceptedOffer.getBuyerId());
@@ -133,7 +133,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements net
             // 4. Reject all other pending offers on this listing (return their escrowed items/money)
             for (MineBayOffer other : listing.getCounteroffers()) {
                 if (other != acceptedOffer && other.getStatus() == MineBayOffer.OfferStatus.PENDING) {
-                    returnEscrowedOffer(other, seller.server);
+                    returnEscrowedOffer(other, seller.level().getServer());
                     other.setStatus(MineBayOffer.OfferStatus.REJECTED);
                 }
             }
@@ -146,7 +146,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements net
             mineBayManager.removeListing(listingId);
             
             // 7. Sync listings to all players
-            mineBayManager.syncListingsToAllPlayers(seller.server);
+            mineBayManager.syncListingsToAllPlayers(seller.level().getServer());
             
             // 8. Sync bank accounts
             com.servermanagement.network.ModNetworking.sendToPlayer(

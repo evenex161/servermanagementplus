@@ -49,7 +49,7 @@ public class MineBayOffer {
         tag.putInt("DataVersion", DataVersion.CURRENT_VERSION);
         tag.putString("OfferId", offerId);
         tag.putString("ListingId", listingId);
-        tag.putUUID("BuyerId", buyerId);
+        com.servermanagement.util.NbtHelper.putUUID(tag, "BuyerId", buyerId);
         tag.putString("BuyerName", buyerName);
         tag.putDouble("MoneyOffer", moneyOffer);
         tag.putString("Status", status.name());
@@ -58,7 +58,7 @@ public class MineBayOffer {
         // Save item offers
         CompoundTag itemOffersTag = new CompoundTag();
         for (int i = 0; i < itemOffers.size(); i++) {
-            itemOffersTag.put("Item" + i, itemOffers.get(i).saveOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
+            itemOffersTag.put("Item" + i, com.servermanagement.util.NbtHelper.saveItemStack(itemOffers.get(i), com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
         }
         itemOffersTag.putInt("Count", itemOffers.size());
         tag.put("ItemOffers", itemOffersTag);
@@ -69,27 +69,27 @@ public class MineBayOffer {
     // Deserialize from NBT
     public static MineBayOffer fromNBT(CompoundTag tag) {
         // Check data version
-        int dataVersion = tag.getInt("DataVersion");
+        int dataVersion = tag.getIntOr("DataVersion", 0);
         if (dataVersion > DataVersion.CURRENT_VERSION) {
             ServerManagementMod.LOGGER.warn("MineBayOffer data version {} is newer than supported version {}",
                 dataVersion, DataVersion.CURRENT_VERSION);
         }
         
         MineBayOffer offer = new MineBayOffer();
-        offer.offerId = tag.getString("OfferId");
-        offer.listingId = tag.getString("ListingId");
-        offer.buyerId = tag.getUUID("BuyerId");
-        offer.buyerName = tag.getString("BuyerName");
-        offer.moneyOffer = tag.getDouble("MoneyOffer");
-        offer.status = OfferStatus.valueOf(tag.getString("Status"));
-        offer.createdTimestamp = tag.getLong("Created");
+        offer.offerId = tag.getStringOr("OfferId", "");
+        offer.listingId = tag.getStringOr("ListingId", "");
+        offer.buyerId = com.servermanagement.util.NbtHelper.getUUID(tag, "BuyerId");
+        offer.buyerName = tag.getStringOr("BuyerName", "");
+        offer.moneyOffer = tag.getDoubleOr("MoneyOffer", 0.0);
+        offer.status = OfferStatus.valueOf(tag.getStringOr("Status", OfferStatus.PENDING.name()));
+        offer.createdTimestamp = tag.getLongOr("Created", 0L);
         
         // Load item offers
-        CompoundTag itemOffersTag = tag.getCompound("ItemOffers");
-        int itemCount = itemOffersTag.getInt("Count");
+        CompoundTag itemOffersTag = tag.getCompoundOrEmpty("ItemOffers");
+        int itemCount = itemOffersTag.getIntOr("Count", 0);
         offer.itemOffers = new ArrayList<>();
         for (int i = 0; i < itemCount; i++) {
-            offer.itemOffers.add(ItemStack.parseOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess(), itemOffersTag.getCompound("Item" + i)));
+            offer.itemOffers.add(com.servermanagement.util.NbtHelper.loadItemStack(itemOffersTag.getCompoundOrEmpty("Item" + i), com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
         }
         
         return offer;

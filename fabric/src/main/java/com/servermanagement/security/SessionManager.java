@@ -90,7 +90,7 @@ public class SessionManager {
      * Check if player has admin permissions
      */
     public boolean hasAdminPermission(ServerPlayer player) {
-        return player.hasPermissions(2); // Operator level 2+
+        return player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR); // Operator level 2+
     }
 
     /**

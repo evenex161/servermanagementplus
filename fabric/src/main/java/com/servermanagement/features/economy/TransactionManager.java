@@ -348,9 +348,9 @@ public class TransactionManager {
             
             CompoundTag rootTag = NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024));
             
-            ListTag completedTag = rootTag.getList("Completed", Tag.TAG_COMPOUND);
+            ListTag completedTag = rootTag.getListOrEmpty("Completed");
             for (int i = 0; i < completedTag.size(); i++) {
-                Transaction transaction = Transaction.fromNBT(completedTag.getCompound(i));
+                Transaction transaction = Transaction.fromNBT(completedTag.getCompoundOrEmpty(i));
                 completedTransactions.put(transaction.transactionId, transaction);
             }
             
@@ -414,10 +414,10 @@ public class TransactionManager {
             tag.putString("Id", transactionId);
             tag.putString("Type", type.name());
             tag.putString("Status", status.name());
-            if (buyerId != null) tag.putUUID("Buyer", buyerId);
-            if (sellerId != null) tag.putUUID("Seller", sellerId);
+            if (buyerId != null) com.servermanagement.util.NbtHelper.putUUID(tag, "Buyer", buyerId);
+            if (sellerId != null) com.servermanagement.util.NbtHelper.putUUID(tag, "Seller", sellerId);
             if (listingId != null) tag.putString("Listing", listingId);
-            if (item != null) tag.put("Item", item.saveOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
+            if (item != null) tag.put("Item", com.servermanagement.util.NbtHelper.saveItemStack(item, com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
             tag.putDouble("Money", moneyAmount);
             tag.putLong("Created", createdTimestamp);
             tag.putLong("Completed", completedTimestamp);
@@ -426,23 +426,23 @@ public class TransactionManager {
         
         public static Transaction fromNBT(CompoundTag tag) {
             // Check data version
-            int dataVersion = tag.getInt("DataVersion");
+            int dataVersion = tag.getIntOr("DataVersion", 0);
             if (dataVersion > DataVersion.CURRENT_VERSION) {
                 ServerManagementMod.LOGGER.warn("Transaction data version {} is newer than supported version {}",
                     dataVersion, DataVersion.CURRENT_VERSION);
             }
             
-            String id = tag.getString("Id");
-            TransactionType type = TransactionType.valueOf(tag.getString("Type"));
+            String id = tag.getStringOr("Id", "");
+            TransactionType type = TransactionType.valueOf(tag.getStringOr("Type", TransactionType.MONEY_TRANSFER.name()));
             Transaction transaction = new Transaction(id, type);
-            transaction.status = TransactionStatus.valueOf(tag.getString("Status"));
-            if (tag.contains("Buyer")) transaction.buyerId = tag.getUUID("Buyer");
-            if (tag.contains("Seller")) transaction.sellerId = tag.getUUID("Seller");
-            if (tag.contains("Listing")) transaction.listingId = tag.getString("Listing");
-            if (tag.contains("Item")) transaction.item = ItemStack.parseOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess(), tag.getCompound("Item"));
-            transaction.moneyAmount = tag.getDouble("Money");
-            transaction.createdTimestamp = tag.getLong("Created");
-            transaction.completedTimestamp = tag.getLong("Completed");
+            transaction.status = TransactionStatus.valueOf(tag.getStringOr("Status", TransactionStatus.PROCESSING.name()));
+            if (tag.contains("Buyer")) transaction.buyerId = com.servermanagement.util.NbtHelper.getUUID(tag, "Buyer");
+            if (tag.contains("Seller")) transaction.sellerId = com.servermanagement.util.NbtHelper.getUUID(tag, "Seller");
+            if (tag.contains("Listing")) transaction.listingId = tag.getStringOr("Listing", "");
+            if (tag.contains("Item")) transaction.item = com.servermanagement.util.NbtHelper.loadItemStack(tag.getCompoundOrEmpty("Item"), com.servermanagement.ServerManagementModFabric.getServer().registryAccess());
+            transaction.moneyAmount = tag.getDoubleOr("Money", 0.0);
+            transaction.createdTimestamp = tag.getLongOr("Created", 0L);
+            transaction.completedTimestamp = tag.getLongOr("Completed", 0L);
             return transaction;
         }
     }

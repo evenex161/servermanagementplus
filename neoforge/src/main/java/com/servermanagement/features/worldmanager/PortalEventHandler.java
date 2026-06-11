@@ -34,7 +34,7 @@ public class PortalEventHandler {
         }
         
         // Check permissions - ops can always travel
-        if (player.hasPermissions(2)) {
+        if (player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
             return; // OPs bypass portal restrictions
         }
         
@@ -55,7 +55,7 @@ public class PortalEventHandler {
         }
         
         // Get world-specific portal settings
-        String dimensionId = from.location().toString();
+        String dimensionId = from.identifier().toString();
         WorldManager worldManager = WorldManager.getInstance();
         
         if (worldManager == null) {
@@ -123,7 +123,7 @@ public class PortalEventHandler {
         }
         
         // Check permissions
-        if (player.hasPermissions(2)) {
+        if (player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
             return;
         }
         
@@ -133,7 +133,7 @@ public class PortalEventHandler {
         
         // Check if clicking obsidian (potential nether portal frame)
         if (clickedBlock == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
-            String dimensionId = player.level().dimension().location().toString();
+            String dimensionId = player.level().dimension().identifier().toString();
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areNetherPortalsEnabled(dimensionId)) {
@@ -146,7 +146,7 @@ event.setCanceled(true);
         if (item == net.minecraft.world.item.Items.ENDER_EYE && 
             clickedBlock == net.minecraft.world.level.block.Blocks.END_PORTAL_FRAME) {
             
-            String dimensionId = player.level().dimension().location().toString();
+            String dimensionId = player.level().dimension().identifier().toString();
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areEndPortalsEnabled(dimensionId)) {
@@ -170,7 +170,7 @@ event.setCanceled(true);
         }
         
         // Check permissions
-        if (player.hasPermissions(2)) {
+        if (player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
             return;
         }
         
@@ -178,7 +178,7 @@ event.setCanceled(true);
         
         // Prevent direct Nether portal block placement
         if (placedBlock == net.minecraft.world.level.block.Blocks.NETHER_PORTAL) {
-            String dimensionId = player.level().dimension().location().toString();
+            String dimensionId = player.level().dimension().identifier().toString();
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areNetherPortalsEnabled(dimensionId)) {
@@ -189,7 +189,7 @@ event.setCanceled(true);
         
         // Prevent direct End portal block placement
         if (placedBlock == net.minecraft.world.level.block.Blocks.END_PORTAL) {
-            String dimensionId = player.level().dimension().location().toString();
+            String dimensionId = player.level().dimension().identifier().toString();
             WorldManagerData worldData = WorldManager.getInstance().getData();
             
             if (!worldData.areEndPortalsEnabled(dimensionId)) {

@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description, int goal, int rewardAmount, ItemStack rewardItem) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SaveTemplatePacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "save_template_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "save_template_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveTemplatePacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveTemplatePacket::new);
@@ -42,9 +42,9 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player == null || !player.hasPermissions(2)) return;
+            if (player == null || !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) return;
 
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server == null) return;
 
             TaskType[] types = TaskType.values();

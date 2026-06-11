@@ -4,7 +4,7 @@ import com.servermanagement.ServerManagementMod;
 import com.servermanagement.server.ModFileTransferManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +15,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server to request the mod JAR file for OTA update.
  */
 public record ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<ModFileRequestPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "mod_file_request"));
+    public static final CustomPacketPayload.Type<ModFileRequestPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "mod_file_request"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ModFileRequestPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ModFileRequestPacket::new);
 
     @Override

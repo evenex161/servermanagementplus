@@ -5,7 +5,7 @@ import com.servermanagement.config.ModConfig;
 import com.servermanagement.network.PacketTimestampTracker;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +16,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Supports both boolean toggles and numeric values (sent as String).
  */
 public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<UpdatePerformanceSettingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "update_performance_setting"));
+    public static final CustomPacketPayload.Type<UpdatePerformanceSettingPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "update_performance_setting"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, UpdatePerformanceSettingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), UpdatePerformanceSettingPacket::new);
 
     @Override
@@ -36,7 +36,7 @@ public record UpdatePerformanceSettingPacket(String settingKey, String value, lo
         public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
-            if (player == null || !player.hasPermissions(2)) return;
+            if (player == null || !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) return;
 
             String actionKey = "perf_" + settingKey;
             if (!PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) return;

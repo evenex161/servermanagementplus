@@ -277,7 +277,7 @@ public class MineBayMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         super.removed(player);
         
-        if (!player.level().isClientSide) {
+        if (!player.level().isClientSide()) {
             // Return offering item to player if menu is closed AND item should be returned
             if (shouldReturnItem) {
                 ItemStack offeringItem = offeringContainer.getItem(0);

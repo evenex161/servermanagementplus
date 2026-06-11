@@ -37,7 +37,7 @@ public class ClientPacketHandler {
             return;
         }
         try {
-            screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+            screen.init(mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
         } catch (Throwable t) {
             // Don't take the client down if a screen rebuild misbehaves.
             com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("ScreenRefresh",

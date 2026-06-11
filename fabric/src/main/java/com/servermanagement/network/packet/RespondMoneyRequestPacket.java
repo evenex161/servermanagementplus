@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 public record RespondMoneyRequestPacket(UUID requestId, Action action) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RespondMoneyRequestPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "respond_money_request_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "respond_money_request_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, RespondMoneyRequestPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), RespondMoneyRequestPacket::new);
@@ -41,7 +41,7 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             if (player == null) return;
 
-            EconomyManager econ = EconomyManager.getInstance(player.server);
+            EconomyManager econ = EconomyManager.getInstance(player.level().getServer());
             MoneyRequestManager reqManager = econ.getRequestManager();
             MoneyRequest request = reqManager.findRequest(requestId);
 
@@ -77,13 +77,13 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                     }
 
                     reqManager.acceptRequest(requestId, player.getUUID());
-                    reqManager.save(player.server);
+                    reqManager.save(player.level().getServer());
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                         String.format("§aPaid $%.2f to fulfill the request", request.getAmount())));
 
                     // Notify requester if online
-                    ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
+                    ServerPlayer requester = player.level().getServer().getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                             String.format("§a%s accepted your money request for $%.2f!",
@@ -101,12 +101,12 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                     }
 
                     reqManager.denyRequest(requestId, player.getUUID());
-                    reqManager.save(player.server);
+                    reqManager.save(player.level().getServer());
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request denied"));
 
                     // Notify requester if online
-                    ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
+                    ServerPlayer requester = player.level().getServer().getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                             String.format("§c%s denied your request for $%.2f",
@@ -123,12 +123,12 @@ public record RespondMoneyRequestPacket(UUID requestId, Action action) implement
                     }
 
                     reqManager.cancelRequest(requestId, player.getUUID());
-                    reqManager.save(player.server);
+                    reqManager.save(player.level().getServer());
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request cancelled"));
 
                     // Notify target if online
-                    ServerPlayer target = player.server.getPlayerList().getPlayer(request.getTargetUUID());
+                    ServerPlayer target = player.level().getServer().getPlayerList().getPlayer(request.getTargetUUID());
                     if (target != null) {
                         SendMoneyRequestPacket.syncRequestsToPlayer(target, econ);
                     }

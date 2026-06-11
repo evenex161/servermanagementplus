@@ -8,7 +8,7 @@ import com.servermanagement.features.economy.TaskType;
 import com.servermanagement.network.ModNetworking;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
@@ -23,7 +23,7 @@ import java.util.List;
  * Server-to-client packet that syncs economy templates and free reward settings
  */
 public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncEconomyTemplatesPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_economy_templates"));
+    public static final CustomPacketPayload.Type<SyncEconomyTemplatesPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_economy_templates"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncEconomyTemplatesPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncEconomyTemplatesPacket::new);
 
     @Override

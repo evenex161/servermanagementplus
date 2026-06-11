@@ -115,19 +115,28 @@ public class DashboardCard extends AbstractWidget {
             return;
         }
         float scale = (float) maxWidth / (float) w;
-        g.pose().pushPose();
+        g.pose().pushMatrix();
         // Translate to centerX/y, scale X only, translate back.
-        g.pose().translate(centerX, y, 0f);
-        g.pose().scale(scale, 1f, 1f);
-        g.pose().translate(-centerX, -y, 0f);
+        g.pose().translate(centerX, y);
+        g.pose().scale(scale, 1f);
+        g.pose().translate(-centerX, -y);
         g.drawCenteredString(font, text, centerX, y, color);
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
     
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        com.servermanagement.gui.debug.DebugLogger.logWidgetClick("DashboardCard", this.getMessage().getString(), this.getX(), this.getY());
-        this.onPress.onPress();
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        if (this.active && this.visible) {
+            double mouseX = event.x();
+            double mouseY = event.y();
+            if (mouseX >= this.getX() && mouseX < this.getX() + this.width &&
+                mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+                com.servermanagement.gui.debug.DebugLogger.logWidgetClick("DashboardCard", this.getMessage().getString(), this.getX(), this.getY());
+                this.onPress.onPress();
+                return true;
+            }
+        }
+        return false;
     }
     
     @Override

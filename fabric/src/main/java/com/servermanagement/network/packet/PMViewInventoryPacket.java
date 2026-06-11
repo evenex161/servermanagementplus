@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 public record PMViewInventoryPacket(String playerName) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PMViewInventoryPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "p_m_view_inventory_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "p_m_view_inventory_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, PMViewInventoryPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), PMViewInventoryPacket::new);
@@ -27,7 +27,7 @@ public record PMViewInventoryPacket(String playerName) implements net.minecraft.
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 if (playerName == null || playerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(playerName).matches()) {
                     return;
                 }

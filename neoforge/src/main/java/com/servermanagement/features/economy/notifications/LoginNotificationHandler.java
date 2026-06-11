@@ -20,7 +20,7 @@ public class LoginNotificationHandler {
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             // Delay notifications slightly to ensure player is fully loaded
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server == null) return;
             server.execute(() -> {
                 try {
@@ -34,7 +34,7 @@ public class LoginNotificationHandler {
 
     private static void sendLoginNotifications(ServerPlayer player) {
         // Sync market prices to the joining player
-        EconomyManager.getInstance(player.getServer()).syncMarketPrices(player);
+        EconomyManager.getInstance(player.level().getServer()).syncMarketPrices(player);
         
         // Deliver overflow items
         com.servermanagement.features.economy.OverflowInventoryManager overflow = 
@@ -59,7 +59,7 @@ public class LoginNotificationHandler {
         }
 
         // Get economy manager
-        EconomyManager economyManager = EconomyManager.getInstance(player.getServer());
+        EconomyManager economyManager = EconomyManager.getInstance(player.level().getServer());
         if (economyManager == null) {
             return;
         }

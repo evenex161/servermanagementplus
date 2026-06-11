@@ -5,7 +5,7 @@ import com.servermanagement.gui.menu.*;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
 
 public class ModMenuTypes {
@@ -30,7 +30,7 @@ public class ModMenuTypes {
 
     private static <T extends net.minecraft.world.inventory.AbstractContainerMenu> MenuType<T> registerSimple(String name, SimpleMenuFactory<T> factory) {
         MenuType<T> type = new MenuType<>(factory::create, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
-        return Registry.register(BuiltInRegistries.MENU, ResourceLocation.fromNamespaceAndPath(ServerManagementModFabric.MOD_ID, name), type);
+        return Registry.register(BuiltInRegistries.MENU, Identifier.fromNamespaceAndPath(ServerManagementModFabric.MOD_ID, name), type);
     }
 
     private static <T extends net.minecraft.world.inventory.AbstractContainerMenu> MenuType<T> registerExtended(String name, ExtendedMenuFactory<T> factory) {
@@ -38,7 +38,7 @@ public class ModMenuTypes {
             new ExtendedScreenHandlerType<>(factory::create, net.minecraft.network.codec.StreamCodec.of(
                 (buf, data) -> {}, buf -> buf
             ));
-        return Registry.register(BuiltInRegistries.MENU, ResourceLocation.fromNamespaceAndPath(ServerManagementModFabric.MOD_ID, name), type);
+        return Registry.register(BuiltInRegistries.MENU, Identifier.fromNamespaceAndPath(ServerManagementModFabric.MOD_ID, name), type);
     }
 
     @FunctionalInterface

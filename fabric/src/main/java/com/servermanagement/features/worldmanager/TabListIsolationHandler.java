@@ -100,7 +100,7 @@ public class TabListIsolationHandler {
         if (!(player instanceof ServerPlayer joiningPlayer)) return;
         if (!isIsolationActive()) return;
         
-        MinecraftServer server = joiningPlayer.getServer();
+        MinecraftServer server = ServerManagementMod.getServer();
         if (server == null) return;
         
         // Delay execution by 1 tick so vanilla finishes sending the initial player info
@@ -142,7 +142,7 @@ public class TabListIsolationHandler {
         // Group players by dimension (reuse static map)
         dimensionPlayers.values().forEach(List::clear);
         for (ServerPlayer player : allPlayers) {
-            String dimension = player.level().dimension().location().toString();
+            String dimension = player.level().dimension().identifier().toString();
             dimensionPlayers.computeIfAbsent(dimension, k -> new ArrayList<>()).add(player);
         }
         
@@ -154,7 +154,7 @@ public class TabListIsolationHandler {
         
         // Update tab list for each player
         for (ServerPlayer player : allPlayers) {
-            String playerDimension = player.level().dimension().location().toString();
+            String playerDimension = player.level().dimension().identifier().toString();
             Set<UUID> shouldSee = computeVisibleUUIDs(playerDimension, dimensionPlayers);
             
             // KEY FIX: If no previous state exists (first evaluation for this player),

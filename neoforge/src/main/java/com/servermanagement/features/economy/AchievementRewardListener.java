@@ -4,7 +4,7 @@ import com.servermanagement.ServerManagementMod;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.DisplayInfo;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import net.neoforged.bus.api.SubscribeEvent;

@@ -3,7 +3,7 @@ package com.servermanagement.network.packet.minebay;
 import com.servermanagement.features.minebay.MineBayManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +15,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server to cancel listing creation and return held item
  */
 public record CancelListingPacket() implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<CancelListingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "cancel_listing"));
+    public static final CustomPacketPayload.Type<CancelListingPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "cancel_listing"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CancelListingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), CancelListingPacket::new);
 
     @Override

@@ -109,7 +109,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
         if (this.minecraft != null && this.minecraft.level == null) {
             this.renderPanorama(g, partialTick);
         }
-        this.renderBlurredBackground();
+        this.renderBlurredBackground(g);
         this.renderMenuBackground(g);
 
         // 2. Suppress every further renderBackground call (the one inside
@@ -117,12 +117,12 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
         //    renderContent) so renderBg never paints unscaled.
         suppressBackgroundOnce = true;
         try {
-            g.pose().pushPose();
+            g.pose().pushMatrix();
             float cx = this.width * 0.5f;
             float cy = this.height * 0.5f;
-            g.pose().translate(cx, cy, 0f);
-            g.pose().scale(guiScale, guiScale, 1f);
-            g.pose().translate(-cx, -cy, 0f);
+            g.pose().translate(cx, cy);
+            g.pose().scale(guiScale, guiScale);
+            g.pose().translate(-cx, -cy);
 
             // 3. Paint a uniform translucent "frosted panel" backdrop behind
             //    every screen's content. The blurred world stays visible, but
@@ -133,7 +133,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
             int dmy = (int) inverseMouseY(mouseY);
             renderContent(g, dmx, dmy, partialTick);
 
-            g.pose().popPose();
+            g.pose().popMatrix();
         } finally {
             suppressBackgroundOnce = false;
         }
@@ -226,20 +226,27 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return super.mouseClicked(inverseMouseX(mouseX), inverseMouseY(mouseY), button);
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean someBool) {
+        double mx = inverseMouseX(event.x());
+        double my = inverseMouseY(event.y());
+        net.minecraft.client.input.MouseButtonEvent newEvent = new net.minecraft.client.input.MouseButtonEvent(mx, my, event.buttonInfo());
+        return super.mouseClicked(newEvent, someBool);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        return super.mouseReleased(inverseMouseX(mouseX), inverseMouseY(mouseY), button);
+    public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent event) {
+        double mx = inverseMouseX(event.x());
+        double my = inverseMouseY(event.y());
+        net.minecraft.client.input.MouseButtonEvent newEvent = new net.minecraft.client.input.MouseButtonEvent(mx, my, event.buttonInfo());
+        return super.mouseReleased(newEvent);
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button,
-                                double dragX, double dragY) {
-        return super.mouseDragged(inverseMouseX(mouseX), inverseMouseY(mouseY),
-                button, dragX / guiScale, dragY / guiScale);
+    public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent event, double dragX, double dragY) {
+        double mx = inverseMouseX(event.x());
+        double my = inverseMouseY(event.y());
+        net.minecraft.client.input.MouseButtonEvent newEvent = new net.minecraft.client.input.MouseButtonEvent(mx, my, event.buttonInfo());
+        return super.mouseDragged(newEvent, dragX / guiScale, dragY / guiScale);
     }
 
     @Override

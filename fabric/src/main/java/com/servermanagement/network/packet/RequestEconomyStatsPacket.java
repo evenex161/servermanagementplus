@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 public record RequestEconomyStatsPacket() implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RequestEconomyStatsPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "request_economy_stats_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "request_economy_stats_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, RequestEconomyStatsPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), RequestEconomyStatsPacket::new);
@@ -27,8 +27,8 @@ public record RequestEconomyStatsPacket() implements net.minecraft.network.proto
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             if (player == null) return;
             // Only admins can request economy stats
-            if (!player.hasPermissions(2)) return;
-            SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
+            if (!player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) return;
+            SyncEconomyStatsPacket.syncToPlayer(player, player.level().getServer());
 
 }
 }

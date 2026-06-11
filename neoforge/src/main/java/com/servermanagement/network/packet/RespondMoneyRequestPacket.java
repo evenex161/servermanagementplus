@@ -6,7 +6,7 @@ import com.servermanagement.features.economy.MoneyRequest;
 import com.servermanagement.features.economy.MoneyRequestManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,7 +18,7 @@ import java.util.UUID;
  * Client → Server: Respond to a money request (accept, deny, or cancel)
  */
 public record RespondMoneyRequestPacket(UUID requestId, Action action) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<RespondMoneyRequestPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "respond_money_request"));
+    public static final CustomPacketPayload.Type<RespondMoneyRequestPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "respond_money_request"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RespondMoneyRequestPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RespondMoneyRequestPacket::new);
 
     @Override
@@ -44,7 +44,7 @@ context.enqueueWork(() -> {
             ServerPlayer player = (context.player() instanceof ServerPlayer ? (ServerPlayer) context.player() : null);
             if (player == null) return;
 
-            EconomyManager econ = EconomyManager.getInstance(player.server);
+            EconomyManager econ = EconomyManager.getInstance(player.level().getServer());
             MoneyRequestManager reqManager = econ.getRequestManager();
             MoneyRequest request = reqManager.findRequest(requestId);
 
@@ -80,13 +80,13 @@ context.enqueueWork(() -> {
                     }
 
                     reqManager.acceptRequest(requestId, player.getUUID());
-                    reqManager.save(player.server);
+                    reqManager.save(player.level().getServer());
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                         String.format("§aPaid $%.2f to fulfill the request", request.getAmount())));
 
                     // Notify requester if online
-                    ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
+                    ServerPlayer requester = player.level().getServer().getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                             String.format("§a%s accepted your money request for $%.2f!",
@@ -104,12 +104,12 @@ context.enqueueWork(() -> {
                     }
 
                     reqManager.denyRequest(requestId, player.getUUID());
-                    reqManager.save(player.server);
+                    reqManager.save(player.level().getServer());
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request denied"));
 
                     // Notify requester if online
-                    ServerPlayer requester = player.server.getPlayerList().getPlayer(request.getRequesterUUID());
+                    ServerPlayer requester = player.level().getServer().getPlayerList().getPlayer(request.getRequesterUUID());
                     if (requester != null) {
                         requester.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                             String.format("§c%s denied your request for $%.2f",
@@ -126,12 +126,12 @@ context.enqueueWork(() -> {
                     }
 
                     reqManager.cancelRequest(requestId, player.getUUID());
-                    reqManager.save(player.server);
+                    reqManager.save(player.level().getServer());
 
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§7Request cancelled"));
 
                     // Notify target if online
-                    ServerPlayer target = player.server.getPlayerList().getPlayer(request.getTargetUUID());
+                    ServerPlayer target = player.level().getServer().getPlayerList().getPlayer(request.getTargetUUID());
                     if (target != null) {
                         SendMoneyRequestPacket.syncRequestsToPlayer(target, econ);
                     }

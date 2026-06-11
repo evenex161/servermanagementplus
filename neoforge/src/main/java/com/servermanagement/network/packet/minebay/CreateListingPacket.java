@@ -5,7 +5,7 @@ import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.PriceItemEntry;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +19,7 @@ import java.util.List;
  * Packet sent from client to server to create a new MineBay listing
  */
 public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent, MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<CreateListingPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "create_listing"));
+    public static final CustomPacketPayload.Type<CreateListingPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "create_listing"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateListingPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateListingPacket::new);
 
     @Override
@@ -80,7 +80,7 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
                 // Calculate dynamic market pricing on the server
                 com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
                     com.servermanagement.features.economy.MarketPricingEngine.getInstance();
-                pricingEngine.ensureFresh(player.server);
+                pricingEngine.ensureFresh(player.level().getServer());
                 
                 double baseMarketPrice = pricingEngine.getStackPrice(serverItem);
                 double clampedMargin = Math.max(-50.0, Math.min(200.0, marginPercent));
@@ -135,7 +135,7 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
                 );
                 
                 // Sync listings to all online players immediately
-                manager.syncListingsToAllPlayers(player.server);
+                manager.syncListingsToAllPlayers(player.level().getServer());
             }
         });
         // packet handled

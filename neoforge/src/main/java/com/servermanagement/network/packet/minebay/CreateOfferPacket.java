@@ -12,7 +12,7 @@ import com.servermanagement.features.minebay.MineBayOffer;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -24,7 +24,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server when a player makes an offer on a NEGOTIABLE listing
  */
 public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<CreateOfferPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "create_offer"));
+    public static final CustomPacketPayload.Type<CreateOfferPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "create_offer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateOfferPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateOfferPacket::new);
 
     @Override
@@ -170,7 +170,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             );
             
             // Notify seller if online (action bar)
-            ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
+            ServerPlayer seller = buyer.level().getServer().getPlayerList().getPlayer(listing.getSellerId());
             if (seller != null) {
                 seller.displayClientMessage(Component.literal(
                     "§e[MineBay] §6" + buyer.getName().getString() + " §emade an offer on your §f" + 

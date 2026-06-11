@@ -73,10 +73,10 @@ public class SlimeHeadManager implements Feature {
         
         // Create game profile with slime texture
         GameProfile profile = new GameProfile(UUID.randomUUID(), "Slime");
-        profile.getProperties().put("textures", new Property("textures", SLIME_TEXTURE));
+        profile.properties().put("textures", new Property("textures", SLIME_TEXTURE));
         
         // Set profile component
-        head.set(DataComponents.PROFILE, new ResolvableProfile(profile));
+        head.set(DataComponents.PROFILE, ResolvableProfile.createResolved(profile));
         
         // Set custom name
         head.set(DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("§aSlime Head"));
@@ -98,7 +98,7 @@ public class SlimeHeadManager implements Feature {
             return false;
         }
         CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        return customData != null && customData.copyTag().getBoolean(SLIME_HEAD_TAG);
+        return customData != null && customData.copyTag().getBoolean(SLIME_HEAD_TAG).orElse(false);
     }
     
     /**
@@ -139,7 +139,7 @@ public class SlimeHeadManager implements Feature {
                 if (owner != null && owner.name().isPresent() && owner.name().get().equals("Slime")) {
                     // Check if player has permission to break
                     if (player instanceof ServerPlayer sp) {
-                        if (!sp.hasPermissions(2)) {
+                        if (!sp.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)) {
                             // Fabric: block break cancellation handled by return value
                             sp.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSlime Heads cannot be broken!"));
                         }
@@ -175,7 +175,7 @@ public class SlimeHeadManager implements Feature {
             return false;
         }
 
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             level.playSound(null, noteBlockPos, SoundEvents.SLIME_SQUISH,
                 SoundSource.RECORDS, 3.0F, 1.0F);
         }

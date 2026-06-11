@@ -55,7 +55,7 @@ public class TimerTickHandler {
         
         // Process all dimensions with active timers
         for (ServerLevel level : server.getAllLevels()) {
-            String dimensionId = level.dimension().location().toString();
+            String dimensionId = level.dimension().identifier().toString();
             
             if (!worldData.hasActiveTimer(dimensionId)) {
                 continue;
@@ -127,8 +127,8 @@ public class TimerTickHandler {
             // low for close) layered with a decisive anvil land. Both are clearly
             // different from the per-second NOTE_BLOCK_PLING countdown ticks.
             float finalPitch = enablePortals ? 1.2f : 0.8f;
-            player.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.MASTER, 1.0f, finalPitch);
-            player.playNotifySound(SoundEvents.ANVIL_LAND, SoundSource.MASTER, 0.6f, enablePortals ? 1.4f : 0.7f);
+            player.playSound(SoundEvents.PLAYER_LEVELUP, 1.0f, finalPitch);
+            player.playSound(SoundEvents.ANVIL_LAND, 0.6f, enablePortals ? 1.4f : 0.7f);
         }
         
         // Log for ops
@@ -207,8 +207,7 @@ public class TimerTickHandler {
                     player.connection.send(new ClientboundSetSubtitleTextPacket(subtitleText));
                 }
                 if (playSound) {
-                    player.playNotifySound(SoundEvents.NOTE_BLOCK_PLING.value(), 
-                                          SoundSource.MASTER, 1.0f, 1.0f);
+                    player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0f, 1.0f);
                 }
             }
         }

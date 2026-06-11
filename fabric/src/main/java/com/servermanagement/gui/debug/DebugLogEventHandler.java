@@ -30,9 +30,9 @@ public final class DebugLogEventHandler {
 
     public static void onKeyForToggle(Screen screen, int keyCode, int scanCode, int modifiers) {
         // F3+L toggles debug logging (separate from F3+M for overlay)
-        if (keyCode == GLFW.GLFW_KEY_L && Screen.hasControlDown() == false) {
+        if (keyCode == GLFW.GLFW_KEY_L && !new net.minecraft.client.input.KeyEvent(keyCode, scanCode, modifiers).hasControlDown()) {
             // Check if F3 is held
-            long window = Minecraft.getInstance().getWindow().getWindow();
+            long window = Minecraft.getInstance().getWindow().handle();
             if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_F3) == GLFW.GLFW_PRESS) {
                 DebugLogger.toggle();
             }

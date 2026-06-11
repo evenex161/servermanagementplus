@@ -214,7 +214,7 @@ public class HelpCommandIntegration {
      * entirely admin-only and the player has no permission, show an error.
      */
     private static int showDetailedHelp(CommandSourceStack source, String commandName, List<HelpEntry> entries) {
-        boolean isAdmin = source.hasPermission(2);
+        boolean isAdmin = source.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER);
 
         source.sendSuccess(() -> Component.literal(
             "\u00A76=== /" + commandName + " Help ==="), false);

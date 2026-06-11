@@ -23,11 +23,13 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.config.ModConfig.Type;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import com.servermanagement.event.CreativeTabHandler;
+import com.servermanagement.client.ClientSetup;
 
 @Mod(ServerManagementMod.MOD_ID)
 public class ServerManagementMod {
@@ -41,11 +43,23 @@ public class ServerManagementMod {
     }
     
     private static ModConfig config;
+    private static net.minecraft.server.MinecraftServer server;
+
+    public static net.minecraft.server.MinecraftServer getServer() {
+        return server;
+    }
 
     public ServerManagementMod(IEventBus modEventBus) {
         // Register setup handlers
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::clientSetup);
+        
+        // Register event subscribers on the mod event bus
+        modEventBus.register(CreativeTabHandler.class);
+        modEventBus.register(ModNetworking.class);
+        if (FMLEnvironment.getDist().isClient()) {
+            modEventBus.register(ClientSetup.class);
+        }
         
         // Register menu types
         ModMenuTypes.register(modEventBus);
@@ -84,6 +98,7 @@ public class ServerManagementMod {
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
+        server = event.getServer();
         LOGGER.info("ServerManagement v{} starting (Data Version: {})", 
             getModVersion(), com.servermanagement.util.DataVersion.CURRENT_VERSION);
         
@@ -140,6 +155,7 @@ public class ServerManagementMod {
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
         LOGGER.info("ServerManagement shutting down...");
+        server = null;
         
         com.servermanagement.server.ServerConsoleManager.getInstance().shutdown();
         com.servermanagement.features.motd.MotdManager.getInstance().saveAndShutdown();
@@ -162,12 +178,5 @@ public class ServerManagementMod {
             config = new ModConfig();
         }
         return config;
-    }
-
-    @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents {
-        @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event) {
-        }
     }
 }

@@ -145,7 +145,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         int centerY = (this.height - this.imageHeight) / 2;
         
         // Dashboard button (admin only)
-        if (this.minecraft != null && this.minecraft.player != null && this.minecraft.player.hasPermissions(2)) {
+        if (this.minecraft != null && this.minecraft.player != null && this.minecraft.player.canUseGameMasterBlocks()) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 5, centerY + 5, 20, 18,
                 Component.literal("\u2190"),
@@ -803,8 +803,8 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         
         // Save matrix state and apply shake
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(shakeX, shakeY, 0);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) shakeX, (float) shakeY);
         
         // Render custom BG
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
@@ -887,7 +887,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             }
         }
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
         
         animationTime += frameDeltaTicks * 0.05f;
         
@@ -911,7 +911,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
                 String balanceStr = "Balance: " + currencyFormat.format(balance);
                 int balanceColor = balance >= 0 ? 0x55FF55 : 0xFF5555;
                 // Position after admin dashboard button (20+5 = 25px) if admin, else at left edge
-                boolean isAdmin = minecraft.player.hasPermissions(2);
+                boolean isAdmin = minecraft.player.canUseGameMasterBlocks();
                 int balanceX = centerX + (isAdmin ? 30 : 5);
                 guiGraphics.drawString(this.font, Component.literal(balanceStr),
                     balanceX, centerY + 10, balanceColor, true);
@@ -955,13 +955,12 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             }
             
             // Draw with scale and glow
-            guiGraphics.pose().pushPose();
+            guiGraphics.pose().pushMatrix();
             guiGraphics.pose().translate(
-                centerX + this.imageWidth / 2, 
-                centerY + 180, 
-                0
+                (float) (centerX + this.imageWidth / 2), 
+                (float) (centerY + 180)
             );
-            guiGraphics.pose().scale(scale, scale, 1.0f);
+            guiGraphics.pose().scale((float) scale, (float) scale);
             
             // Glow effect for wins
             if (lastResultWon) {
@@ -976,7 +975,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             guiGraphics.drawCenteredString(this.font, Component.literal(lastResult),
                 0, 0, 0xFFFFFFFF);
             
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
         }
         
         // Render tension animation overlay
@@ -1003,8 +1002,8 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         float progress = elapsed / (float)TENSION_DURATION;
         
         // Elevate z-level above all widget text
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(0, 0, 200);
+        guiGraphics.pose().pushMatrix();
+        // guiGraphics.pose().translate(0, 0, 200);
         
         // Dark overlay
         fillScreen(guiGraphics, 0x80000000);
@@ -1036,7 +1035,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             }
         }
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
     }
     
     private void renderCoinFlipTension(GuiGraphics guiGraphics, int x, int y, float progress) {
@@ -1044,9 +1043,9 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.enableScissor(x - 30, y - 30, x + 30, y + 30);
         
         // Spinning coin effect
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x, y, 0);
-        guiGraphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(tensionRotation));
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) x, (float) y);
+        guiGraphics.pose().rotate((float) Math.toRadians(tensionRotation));
         
         // Draw coin as a rectangle that appears to flip
         float scale = Math.abs((float)Math.cos(Math.toRadians(tensionRotation)));
@@ -1057,7 +1056,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.fill(-coinWidth/2, -coinHeight/2, coinWidth/2, coinHeight/2, 0xFFFFD700);
         guiGraphics.fill(-coinWidth/2 + 2, -coinHeight/2 + 2, coinWidth/2 - 2, coinHeight/2 - 2, 0xFFFFA500);
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
         guiGraphics.disableScissor();
         
         // Draw "FLIPPING..." text below (outside scissor)
@@ -1071,9 +1070,9 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.enableScissor(x - 25, y - 25, x + 25, y + 25);
         
         // Tumbling dice effect
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x, y, 0);
-        guiGraphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(tensionRotation));
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) x, (float) y);
+        guiGraphics.pose().rotate((float) Math.toRadians(tensionRotation));
         
         // Draw dice
         int diceSize = 30;
@@ -1088,7 +1087,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             guiGraphics.fill(dotX - 2, dotY - 2, dotX + 2, dotY + 2, 0xFF000000);
         }
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
         guiGraphics.disableScissor();
         
         guiGraphics.drawCenteredString(this.font,
@@ -1141,8 +1140,8 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.enableScissor(x - 45, y - 45, x + 45, y + 45);
         
         // Spinning roulette wheel
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x, y, 0);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) x, (float) y);
         
         // Outer wheel
         int wheelRadius = 35;
@@ -1169,7 +1168,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         // Ball indicator at top
         guiGraphics.fill(-3, -wheelRadius - 5, 3, -wheelRadius + 5, 0xFFFFFFFF);
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
         guiGraphics.disableScissor();
         
         guiGraphics.drawCenteredString(this.font,
@@ -1185,8 +1184,8 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         float progress = elapsed / (float)ENDING_DURATION; // 0.0 to 1.0
         
         // Elevate z-level above all widget text
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(0, 0, 200);
+        guiGraphics.pose().pushMatrix();
+        // guiGraphics.pose().translate(0, 0, 200);
         
         // Dark overlay (slightly lighter than tension)
         fillScreen(guiGraphics, 0x60000000);
@@ -1213,7 +1212,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             }
         }
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
     }
     
     private void renderCoinFlipEnding(GuiGraphics guiGraphics, int x, int y, float progress) {
@@ -1221,12 +1220,12 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.enableScissor(x - 30, y - 30, x + 30, y + 30);
         
         // Coin slowing down and landing flat
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x, y, 0);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) x, (float) y);
         
         // Slow rotation based on progress
         float rotation = tensionRotation * (1.0f - progress);
-        guiGraphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(rotation));
+        guiGraphics.pose().rotate((float) Math.toRadians(rotation));
         
         // Draw coin getting flatter (less 3D effect as it lands)
         float scale = Math.abs((float)Math.cos(Math.toRadians(rotation)));
@@ -1238,7 +1237,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.fill(-coinWidth/2, -coinHeight/2, coinWidth/2, coinHeight/2, 0xFFFFD700);
         guiGraphics.fill(-coinWidth/2 + 2, -coinHeight/2 + 2, coinWidth/2 - 2, coinHeight/2 - 2, 0xFFFFA500);
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
         guiGraphics.disableScissor();
         
         // Fade text (outside scissor)
@@ -1253,12 +1252,12 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.enableScissor(x - 25, y - 25, x + 25, y + 25);
         
         // Dice slowing and landing
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x, y, 0);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) x, (float) y);
         
         // Slow rotation
         float rotation = tensionRotation * (1.0f - progress);
-        guiGraphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(rotation));
+        guiGraphics.pose().rotate((float) Math.toRadians(rotation));
         
         // Draw dice
         int diceSize = 30;
@@ -1274,7 +1273,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
             guiGraphics.fill(dotX - 2, dotY - 2, dotX + 2, dotY + 2, 0xFF000000 | (dotAlpha << 24));
         }
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
         guiGraphics.disableScissor();
         
         int alpha = (int)(255 * (1.0f - progress));
@@ -1331,8 +1330,8 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         guiGraphics.enableScissor(x - 45, y - 45, x + 45, y + 45);
         
         // Wheel slowing, ball settling
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(x, y, 0);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate((float) x, (float) y);
         
         // Slow rotation
         float rotation = tensionRotation * (1.0f - progress * 0.8f); // Slower deceleration
@@ -1365,7 +1364,7 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         int ballY = (int)(Math.sin(Math.toRadians(ballAngle)) * ballRadius);
         guiGraphics.fill(ballX - 3, ballY - 3, ballX + 3, ballY + 3, 0xFFFFFFFF);
         
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
         guiGraphics.disableScissor();
         
         int alpha = (int)(255 * (1.0f - progress));
@@ -1466,28 +1465,31 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
         ItemStack carriedStack = this.menu.getCarried();
         if (carriedStack != null && !carriedStack.isEmpty()) {
             // Render the item centered on the cursor
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(0.0F, 0.0F, 232.0F); // Ensure it's on top
+            guiGraphics.pose().pushMatrix();
+            // guiGraphics.pose().translate(0.0F, 0.0F, 232.0F); // Ensure it's on top
             
             guiGraphics.renderItem(carriedStack, mouseX - 8, mouseY - 8);
             guiGraphics.renderItemDecorations(this.font, carriedStack, mouseX - 8, mouseY - 8);
             
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
         }
     }
     
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
         // Block all mouse interactions during animations
         if (isTensionActive || isEndingAnimation) {
             return true; // Consume the event
         }
         // Let the parent class handle all slot clicks naturally
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
     
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         // Allow ESC key (256) even during ending animation to prevent trapping players
         if (isTensionActive) {
             return true; // Block all keys during tension phase
@@ -1500,17 +1502,17 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
                 if (hasPendingResult) {
                     showPendingResult();
                 }
-                return super.keyPressed(keyCode, scanCode, modifiers);
+                return super.keyPressed(event);
             }
             return true; // Block other keys
         }
         
         // Handle bet amount text box input when not animating
-        if (betAmountBox != null && betAmountBox.isFocused() && betAmountBox.keyPressed(keyCode, scanCode, modifiers)) {
+        if (betAmountBox != null && betAmountBox.isFocused() && betAmountBox.keyPressed(event)) {
             return true;
         }
         
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
     
     @Override
@@ -1536,11 +1538,11 @@ public class MineStacksScreen extends ScalableContainerScreen<MineStacksMenu> {
     }
     
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
         // Check betAmountBox if it's visible and focused
-        if (betAmountBox != null && betAmountBox.isFocused() && betAmountBox.charTyped(codePoint, modifiers)) {
+        if (betAmountBox != null && betAmountBox.isFocused() && betAmountBox.charTyped(event)) {
             return true;
         }
-        return super.charTyped(codePoint, modifiers);
+        return super.charTyped(event);
     }
 }

@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet for executing console commands from the in-game GUI
  */
 public record ConsoleCommandPacket(String command) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<ConsoleCommandPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "console_command"));
+    public static final CustomPacketPayload.Type<ConsoleCommandPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "console_command"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ConsoleCommandPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ConsoleCommandPacket::new);
 
     @Override
@@ -31,8 +31,8 @@ public record ConsoleCommandPacket(String command) implements CustomPacketPayloa
         public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
-            if (player != null && player.hasPermissions(2)) {
-                var server = player.getServer();
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
+                var server = player.level().getServer();
                 if (server != null) {
                     // Use the PLAYER's command source stack — not the server's.
                     // server.createCommandSourceStack() has permission level 4 (console),

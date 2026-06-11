@@ -9,7 +9,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
@@ -35,7 +35,7 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
         out.beginObject();
 
         // Store item registry name
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(src.getItem());
+        Identifier itemId = BuiltInRegistries.ITEM.getKey(src.getItem());
         out.name("item").value(itemId.toString());
 
         // Store count
@@ -88,12 +88,12 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
             return ItemStack.EMPTY;
         }
 
-        ResourceLocation resourceLocation = ResourceLocation.tryParse(itemId);
-        if (resourceLocation == null) {
+        Identifier identifier = Identifier.tryParse(itemId);
+        if (identifier == null) {
             return ItemStack.EMPTY;
         }
 
-        Item item = BuiltInRegistries.ITEM.get(resourceLocation).map(net.minecraft.core.Holder::value).orElse(null);
+        Item item = BuiltInRegistries.ITEM.get(identifier).map(net.minecraft.core.Holder::value).orElse(null);
         if (item == null) {
             return ItemStack.EMPTY;
         }
@@ -103,7 +103,7 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
         // Apply NBT if present
         if (nbtString != null) {
             try {
-                CompoundTag tag = TagParser.parseTag(nbtString);
+                CompoundTag tag = TagParser.parseCompoundFully(nbtString);
                 stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
             } catch (Exception e) {
                 ServerManagementMod.LOGGER.warn("Failed to parse ItemStack NBT: {}", e.getMessage());

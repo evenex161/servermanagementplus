@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public record ClaimDailyTaskPacket(int taskIndex) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ClaimDailyTaskPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_daily_task_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "claim_daily_task_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ClaimDailyTaskPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), ClaimDailyTaskPacket::new);
@@ -37,7 +37,7 @@ public record ClaimDailyTaskPacket(int taskIndex) implements net.minecraft.netwo
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             if (player == null) return;
 
-            EconomyManager economyManager = EconomyManager.getInstance(player.server);
+            EconomyManager economyManager = EconomyManager.getInstance(player.level().getServer());
             if (economyManager == null) return;
 
             // Get player tasks and the specific task

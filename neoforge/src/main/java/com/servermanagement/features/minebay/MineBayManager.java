@@ -1,11 +1,13 @@
 package com.servermanagement.features.minebay;
 
 import com.servermanagement.ServerManagementMod;
+import com.servermanagement.util.NbtHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -255,8 +257,8 @@ public class MineBayManager {
             index = 0;
             for (Map.Entry<UUID, ItemStack> entry : heldItems.entrySet()) {
                 CompoundTag entryTag = new CompoundTag();
-                entryTag.putUUID("PlayerId", entry.getKey());
-                entryTag.put("Item", entry.getValue().saveOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
+                NbtHelper.putUUID(entryTag, "PlayerId", entry.getKey());
+                entryTag.put("Item", NbtHelper.saveItemStack(entry.getValue(), ServerManagementMod.getServer().registryAccess()));
                 heldItemsTag.put("Held" + index, entryTag);
                 index++;
             }
@@ -293,22 +295,22 @@ public class MineBayManager {
             CompoundTag rootTag = NbtIo.readCompressed(listingsFile.toPath(), net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024));
             
             // Load active listings
-            CompoundTag listingsTag = rootTag.getCompound("Listings");
-            int count = listingsTag.getInt("Count");
+            CompoundTag listingsTag = rootTag.getCompound("Listings").orElse(new CompoundTag());
+            int count = listingsTag.getInt("Count").orElse(0);
             activeListings.clear();
             for (int i = 0; i < count; i++) {
-                MineBayListing listing = MineBayListing.fromNBT(listingsTag.getCompound("Listing" + i));
+                MineBayListing listing = MineBayListing.fromNBT(listingsTag.getCompound("Listing" + i).orElse(new CompoundTag()));
                 activeListings.put(listing.getListingId(), listing);
             }
             
             // Load held items
-            CompoundTag heldItemsTag = rootTag.getCompound("HeldItems");
-            int heldCount = heldItemsTag.getInt("Count");
+            CompoundTag heldItemsTag = rootTag.getCompound("HeldItems").orElse(new CompoundTag());
+            int heldCount = heldItemsTag.getInt("Count").orElse(0);
             heldItems.clear();
             for (int i = 0; i < heldCount; i++) {
-                CompoundTag entryTag = heldItemsTag.getCompound("Held" + i);
-                UUID playerId = entryTag.getUUID("PlayerId");
-                ItemStack item = ItemStack.parseOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), entryTag.getCompound("Item"));
+                CompoundTag entryTag = heldItemsTag.getCompound("Held" + i).orElse(new CompoundTag());
+                UUID playerId = NbtHelper.getUUID(entryTag, "PlayerId");
+                ItemStack item = NbtHelper.loadItemStack(entryTag.getCompound("Item").orElse(new CompoundTag()), ServerManagementMod.getServer().registryAccess());
                 heldItems.put(playerId, item);
             }
             

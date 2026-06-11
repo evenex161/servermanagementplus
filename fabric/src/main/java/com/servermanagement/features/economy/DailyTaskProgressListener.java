@@ -4,7 +4,6 @@ import com.servermanagement.ServerManagementMod;
 import com.servermanagement.util.PerformanceMetrics;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 /**

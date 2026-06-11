@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public record ClaimBankItemPacket(int itemIndex) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ClaimBankItemPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_bank_item_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "claim_bank_item_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ClaimBankItemPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), ClaimBankItemPacket::new);
@@ -33,7 +33,7 @@ public record ClaimBankItemPacket(int itemIndex) implements net.minecraft.networ
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             if (player == null) return;
             
-            EconomyManager economyManager = EconomyManager.getInstance(player.server);
+            EconomyManager economyManager = EconomyManager.getInstance(player.level().getServer());
             if (economyManager == null) return;
             
             BankInventory bankInventory = economyManager.getBankInventory(player.getUUID());

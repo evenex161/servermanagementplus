@@ -14,6 +14,17 @@ public class GlobalSettingsMenu extends AbstractContainerMenu {
         super(ModMenuTypes.GLOBAL_SETTINGS_MENU.get(), windowId);
         
         // Read from client-side cache (synced by SyncGlobalSettingsPacket before menu opens)
+        reloadFromClientCache();
+    }
+
+    /**
+     * Re-read toggle state from the client cache. Called from the screen's init()
+     * so that when SyncGlobalSettingsPacket arrives after the menu has already
+     * been constructed (Fabric packet ordering), refreshOpenScreen() picks up
+     * the freshly synced values on the second init() pass instead of showing
+     * stale defaults.
+     */
+    public void reloadFromClientCache() {
         this.chatIsolationEnabled = com.servermanagement.client.ClientPacketHandler.isChatIsolationEnabled();
         this.tabIsolationEnabled = com.servermanagement.client.ClientPacketHandler.isTabIsolationEnabled();
     }

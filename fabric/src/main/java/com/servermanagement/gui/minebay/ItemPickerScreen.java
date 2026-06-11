@@ -217,7 +217,7 @@ public class ItemPickerScreen extends Screen {
         
         // Item tooltip
         if (hoveredItem != null) {
-            guiGraphics.renderTooltip(this.font, hoveredItem.getHoverName(), mouseX, mouseY);
+            guiGraphics.setTooltipForNextFrame(this.font, hoveredItem.getHoverName(), mouseX, mouseY);
         }
         
         // Instructions at bottom
@@ -228,9 +228,9 @@ public class ItemPickerScreen extends Screen {
     }
     
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
         // Check search box first
-        if (this.searchBox.mouseClicked(mouseX, mouseY, button)) {
+        if (this.searchBox.mouseClicked(event, doubleClick)) {
             return true;
         }
         
@@ -252,8 +252,8 @@ public class ItemPickerScreen extends Screen {
             int slotX = gridStartX + col * SLOT_SIZE;
             int slotY = gridStartY + row * SLOT_SIZE;
             
-            if (mouseX >= slotX && mouseX < slotX + SLOT_SIZE && 
-                mouseY >= slotY && mouseY < slotY + SLOT_SIZE) {
+            if (event.x() >= slotX && event.x() < slotX + SLOT_SIZE && 
+                event.y() >= slotY && event.y() < slotY + SLOT_SIZE) {
                 // Item clicked - select it
                 ItemStack selected = filteredItems.get(i).copy();
                 onItemSelected.accept(selected);
@@ -262,7 +262,7 @@ public class ItemPickerScreen extends Screen {
             }
         }
         
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
     
     @Override
@@ -276,26 +276,26 @@ public class ItemPickerScreen extends Screen {
     }
     
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (this.searchBox.keyPressed(keyCode, scanCode, modifiers)) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        if (this.searchBox.keyPressed(event)) {
             return true;
         }
         
         // ESC to close
-        if (keyCode == 256) { // GLFW_KEY_ESCAPE
+        if (event.key() == 256) { // GLFW_KEY_ESCAPE
             this.minecraft.setScreen(parent);
             return true;
         }
         
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
     
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
-        if (this.searchBox.charTyped(codePoint, modifiers)) {
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+        if (this.searchBox.charTyped(event)) {
             return true;
         }
-        return super.charTyped(codePoint, modifiers);
+        return super.charTyped(event);
     }
     
     @Override

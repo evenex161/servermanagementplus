@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 public record BankTransferPacket(String targetPlayerName, double amount) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<BankTransferPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "bank_transfer_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "bank_transfer_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, BankTransferPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), BankTransferPacket::new);
@@ -66,7 +66,7 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
             }
             
             // Get target player
-            ServerPlayer target = sender.server.getPlayerList().getPlayerByName(targetPlayerName);
+            ServerPlayer target = sender.level().getServer().getPlayerList().getPlayerByName(targetPlayerName);
             if (target == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                     "§cPlayer not found: " + targetPlayerName));
@@ -80,7 +80,7 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
             }
             
             // Perform transfer (transfer method only takes 3 parameters)
-            EconomyManager manager = EconomyManager.getInstance(sender.server);
+            EconomyManager manager = EconomyManager.getInstance(sender.level().getServer());
             boolean success = manager.transfer(sender.getUUID(), target.getUUID(), amount);
             
             if (success) {

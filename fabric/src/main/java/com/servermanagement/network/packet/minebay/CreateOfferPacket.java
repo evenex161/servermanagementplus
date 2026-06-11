@@ -19,7 +19,7 @@ import net.minecraft.world.item.ItemStack;
 public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<CreateOfferPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "create_offer_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "create_offer_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateOfferPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateOfferPacket::new);
@@ -176,7 +176,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
             );
             
             // Notify seller if online (action bar)
-            ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
+            ServerPlayer seller = buyer.level().getServer().getPlayerList().getPlayer(listing.getSellerId());
             if (seller != null) {
                 seller.displayClientMessage(Component.literal(
                     "§e[MineBay] §6" + buyer.getName().getString() + " §emade an offer on your §f" + 

@@ -39,7 +39,7 @@ public class WorldManagerEvents {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             var block = event.getLevel().getBlockState(event.getPos()).getBlock();
             String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).toString();
-            String dimensionId = player.level().dimension().location().toString();
+            String dimensionId = player.level().dimension().identifier().toString();
             
             if (blockId.equals("minecraft:nether_portal")) {
                 if (!WorldManager.getInstance().canUseNetherPortal(dimensionId)) {

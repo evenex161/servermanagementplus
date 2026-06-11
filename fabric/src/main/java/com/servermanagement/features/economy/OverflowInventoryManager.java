@@ -110,7 +110,8 @@ public class OverflowInventoryManager {
 
     private static boolean hasInventorySpace(net.minecraft.world.entity.player.Inventory inv, ItemStack stack) {
         int remaining = stack.getCount();
-        for (ItemStack invStack : inv.items) {
+        for (int i = 0; i < 36; i++) {
+            ItemStack invStack = inv.getItem(i);
             if (invStack.isEmpty()) {
                 return true; // Empty slot can fit the stack
             }
@@ -187,12 +188,12 @@ public class OverflowInventoryManager {
                 if (items.isEmpty()) continue;
 
                 CompoundTag playerTag = new CompoundTag();
-                playerTag.putUUID("PlayerId", entry.getKey());
+                com.servermanagement.util.NbtHelper.putUUID(playerTag, "PlayerId", entry.getKey());
 
                 synchronized (items) {
                     CompoundTag itemsTag = new CompoundTag();
                     for (int i = 0; i < items.size(); i++) {
-                        itemsTag.put("Item" + i, items.get(i).saveOptional(
+                        itemsTag.put("Item" + i, com.servermanagement.util.NbtHelper.saveItemStack(items.get(i),
                             server.registryAccess()));
                     }
                     itemsTag.putInt("Count", items.size());
@@ -224,22 +225,22 @@ public class OverflowInventoryManager {
             CompoundTag rootTag = NbtIo.readCompressed(overflowFile.toPath(),
                 net.minecraft.nbt.NbtAccounter.create(10 * 1024 * 1024)); // 10MB limit
 
-            CompoundTag playersTag = rootTag.getCompound("Players");
-            int playerCount = playersTag.getInt("Count");
+            CompoundTag playersTag = rootTag.getCompoundOrEmpty("Players");
+            int playerCount = playersTag.getIntOr("Count", 0);
             overflowItems.clear();
 
             for (int p = 0; p < playerCount; p++) {
-                CompoundTag playerTag = playersTag.getCompound("Player" + p);
-                UUID playerId = playerTag.getUUID("PlayerId");
+                CompoundTag playerTag = playersTag.getCompoundOrEmpty("Player" + p);
+                UUID playerId = com.servermanagement.util.NbtHelper.getUUID(playerTag, "PlayerId");
 
-                CompoundTag itemsTag = playerTag.getCompound("Items");
-                int itemCount = itemsTag.getInt("Count");
+                CompoundTag itemsTag = playerTag.getCompoundOrEmpty("Items");
+                int itemCount = itemsTag.getIntOr("Count", 0);
                 List<ItemStack> items = Collections.synchronizedList(new ArrayList<>());
 
                 for (int i = 0; i < itemCount; i++) {
-                    ItemStack stack = ItemStack.parseOptional(
-                        server.registryAccess(),
-                        itemsTag.getCompound("Item" + i));
+                    ItemStack stack = com.servermanagement.util.NbtHelper.loadItemStack(
+                        itemsTag.getCompoundOrEmpty("Item" + i),
+                        server.registryAccess());
                     if (!stack.isEmpty()) {
                         items.add(stack);
                     }

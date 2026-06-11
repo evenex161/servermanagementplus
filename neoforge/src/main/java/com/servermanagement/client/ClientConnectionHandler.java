@@ -10,7 +10,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 /**
  * Client-side event handler for connection events
  */
-@EventBusSubscriber(modid = ServerManagementMod.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ServerManagementMod.MOD_ID, value = Dist.CLIENT)
 public class ClientConnectionHandler {
     
     @SubscribeEvent

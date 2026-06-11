@@ -13,7 +13,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.UserBanListEntry;
 import net.minecraft.server.players.IpBanListEntry;
 import net.minecraft.server.players.UserWhiteListEntry;
+import net.minecraft.server.players.NameAndId;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameType;
+
 
 import java.util.*;
 
@@ -63,7 +67,7 @@ public class PlayerManagerSingleton {
         // Save spectator's original state
         SpectateData data = new SpectateData(
             spectator.getX(), spectator.getY(), spectator.getZ(),
-            spectator.level().dimension().location().toString(),
+            spectator.level().dimension().identifier().toString(),
             spectator.gameMode.getGameModeForPlayer(),
             target.getUUID(),
             stealth
@@ -99,8 +103,9 @@ public class PlayerManagerSingleton {
                 spectator.getName().getString(), targetName);
         } else {
             
-            spectator.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(), 
+            spectator.teleportTo((ServerLevel) target.level(), target.getX(), target.getY(), target.getZ(), 
                 Set.of(), target.getYRot(), target.getXRot(), true);
+
             
             // Use a multi-tick delay before calling setCamera.
             // After cross-dimension teleport, the client receives a respawn packet
@@ -141,7 +146,7 @@ public class PlayerManagerSingleton {
                 // Teleport back to original position/dimension
                 var dimensionKey = net.minecraft.resources.ResourceKey.create(
                     net.minecraft.core.registries.Registries.DIMENSION,
-                    net.minecraft.resources.ResourceLocation.parse(data.dimension)
+                    net.minecraft.resources.Identifier.parse(data.dimension)
                 );
                 var level = getInstance().server.getLevel(dimensionKey);
                 if (level != null) {
@@ -219,7 +224,7 @@ public class PlayerManagerSingleton {
                     spectator.setCamera(spectator);
                     var dimensionKey = net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.DIMENSION,
-                        net.minecraft.resources.ResourceLocation.parse(data.dimension)
+                        net.minecraft.resources.Identifier.parse(data.dimension)
                     );
                     var level = instance.server.getLevel(dimensionKey);
                     if (level != null) {
@@ -261,10 +266,10 @@ public class PlayerManagerSingleton {
                 
                 // Safety check: if spectator was somehow moved out of their original dimension,
                 // teleport back to saved position
-                if (!spectator.level().dimension().location().toString().equals(data.dimension)) {
+                if (!spectator.level().dimension().identifier().toString().equals(data.dimension)) {
                     var dimKey = net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.DIMENSION,
-                        net.minecraft.resources.ResourceLocation.parse(data.dimension)
+                        net.minecraft.resources.Identifier.parse(data.dimension)
                     );
                     var origLevel = instance.server.getLevel(dimKey);
                     if (origLevel != null) {
@@ -278,20 +283,21 @@ public class PlayerManagerSingleton {
                     // Transition to non-stealth mode: teleport body to target's dimension,
                     // keeping the saved original position for when spectating ends.
                     data.stealthMode = false;
-                    spectator.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(),
+                    spectator.teleportTo((ServerLevel) target.level(), target.getX(), target.getY(), target.getZ(),
                         Set.of(), target.getYRot(), target.getXRot(), true);
                     data.pendingReattachTicks = 10;
                     // Re-broadcast fake game mode so the teleport doesn't reveal spectator status
                     broadcastFakeGameMode(spectator, data.gameMode);
                     ServerManagementMod.LOGGER.debug("Stealth->non-stealth transition: {} following {} to {}",
                         spectator.getName().getString(), target.getName().getString(),
-                        target.level().dimension().location());
+                        target.level().dimension().identifier());
                     continue;
                 }
                 
                 // Freeze position: cancel any movement and reset to saved coords
                 spectator.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-                spectator.absMoveTo(data.x, data.y, data.z, spectator.getYRot(), spectator.getXRot());
+                spectator.absSnapTo(data.x, data.y, data.z, spectator.getYRot(), spectator.getXRot());
+
                 
                 // Check if target is still within entity tracking range.
                 // Entity tracking is based on the server's view distance. The client
@@ -325,14 +331,14 @@ public class PlayerManagerSingleton {
                 
                 // Check if target returned to the spectator's original dimension —
                 // if so, transition back to stealth mode (teleport body back, freeze in place)
-                if (target.level().dimension().location().toString().equals(data.dimension)
-                        && !spectator.level().dimension().location().toString().equals(data.dimension)) {
+                if (target.level().dimension().identifier().toString().equals(data.dimension)
+                        && !spectator.level().dimension().identifier().toString().equals(data.dimension)) {
                     // Target is back in original dimension but spectator body is still elsewhere
                     data.stealthMode = true;
                     spectator.setCamera(spectator);
                     var dimKey = net.minecraft.resources.ResourceKey.create(
                         net.minecraft.core.registries.Registries.DIMENSION,
-                        net.minecraft.resources.ResourceLocation.parse(data.dimension)
+                        net.minecraft.resources.Identifier.parse(data.dimension)
                     );
                     var origLevel = instance.server.getLevel(dimKey);
                     if (origLevel != null) {
@@ -351,9 +357,10 @@ public class PlayerManagerSingleton {
                 if (!spectator.level().dimension().equals(target.level().dimension())) {
                     // Reset camera, teleport to target's dimension, start settle period
                     spectator.setCamera(spectator);
-                    spectator.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(),
+                    spectator.teleportTo((ServerLevel) target.level(), target.getX(), target.getY(), target.getZ(),
                         Set.of(), target.getYRot(), target.getXRot(), true);
                     data.pendingReattachTicks = 10;
+
                 } else {
                     if (spectator.getCamera() != target) {
                         spectator.setCamera(target);
@@ -413,12 +420,11 @@ public class PlayerManagerSingleton {
             profile = target.getGameProfile();
         } else {
             // Try to find from cached profiles
-            var cached = instance.server.getProfileCache();
-            if (cached != null) {
-                var opt = cached.get(targetName);
-                if (opt.isPresent()) {
-                    profile = opt.get();
-                }
+            var resolver = instance.server.services().nameToIdCache();
+            var opt = resolver.get(targetName);
+            if (opt.isPresent()) {
+                var nid = opt.get();
+                profile = new GameProfile(nid.id(), nid.name());
             }
         }
         
@@ -430,8 +436,9 @@ public class PlayerManagerSingleton {
         String banReason = reason.isEmpty() ? "Banned by " + admin.getName().getString() : reason;
         
         // Add to ban list
-        UserBanListEntry banEntry = new UserBanListEntry(profile, null, admin.getName().getString(), null, banReason);
+        UserBanListEntry banEntry = new UserBanListEntry(new NameAndId(profile.id(), profile.name()), null, admin.getName().getString(), null, banReason);
         instance.server.getPlayerList().getBans().add(banEntry);
+
         
         // Also ban IP if requested
         if (banIP && target != null) {
@@ -470,24 +477,22 @@ public class PlayerManagerSingleton {
         var banList = instance.server.getPlayerList().getBans();
         
         // Look up profile from cache
-        var cached = instance.server.getProfileCache();
-        if (cached != null) {
-            var opt = cached.get(targetName);
-            if (opt.isPresent()) {
-                com.mojang.authlib.GameProfile profile = opt.get();
-                if (banList.isBanned(profile)) {
-                    banList.remove(profile);
-                    admin.sendSystemMessage(Component.literal("§aUnbanned " + targetName));
-                    ServerManagementMod.LOGGER.info("{} unbanned {}", admin.getName().getString(), targetName);
-                    return;
-                }
+        var resolver = instance.server.services().nameToIdCache();
+        var opt = resolver.get(targetName);
+        if (opt.isPresent()) {
+            NameAndId nid = opt.get();
+            if (banList.isBanned(nid)) {
+                banList.remove(nid);
+                admin.sendSystemMessage(Component.literal("§aUnbanned " + targetName));
+                ServerManagementMod.LOGGER.info("{} unbanned {}", admin.getName().getString(), targetName);
+                return;
             }
         }
         
         // Fallback: try to find by reading banned-players.json
         com.mojang.authlib.GameProfile profile = findBannedProfile(instance.server, targetName);
         if (profile != null) {
-            banList.remove(profile);
+            banList.remove(new NameAndId(profile.id(), profile.name()));
             admin.sendSystemMessage(Component.literal("§aUnbanned " + targetName));
             ServerManagementMod.LOGGER.info("{} unbanned {}", admin.getName().getString(), targetName);
         } else {
@@ -504,20 +509,15 @@ public class PlayerManagerSingleton {
             return;
         }
         
-        var cached = instance.server.getProfileCache();
-        if (cached == null) {
-            admin.sendSystemMessage(Component.literal("§cProfile cache not available"));
-            return;
-        }
-        
-        var opt = cached.get(targetName);
+        var resolver = instance.server.services().nameToIdCache();
+        var opt = resolver.get(targetName);
         if (opt.isEmpty()) {
             admin.sendSystemMessage(Component.literal("§cCould not find player profile: " + targetName));
             return;
         }
         
-        com.mojang.authlib.GameProfile profile = opt.get();
-        UserWhiteListEntry entry = new UserWhiteListEntry(profile);
+        NameAndId nid = opt.get();
+        UserWhiteListEntry entry = new UserWhiteListEntry(nid);
         instance.server.getPlayerList().getWhiteList().add(entry);
         admin.sendSystemMessage(Component.literal("§aAdded " + targetName + " to whitelist"));
         ServerManagementMod.LOGGER.info("{} added {} to whitelist", admin.getName().getString(), targetName);
@@ -533,17 +533,15 @@ public class PlayerManagerSingleton {
         var whiteList = instance.server.getPlayerList().getWhiteList();
         
         // Look up profile from cache
-        var cached = instance.server.getProfileCache();
-        if (cached != null) {
-            var opt = cached.get(targetName);
-            if (opt.isPresent()) {
-                com.mojang.authlib.GameProfile profile = opt.get();
-                if (whiteList.isWhiteListed(profile)) {
-                    whiteList.remove(profile);
-                    admin.sendSystemMessage(Component.literal("§aRemoved " + targetName + " from whitelist"));
-                    ServerManagementMod.LOGGER.info("{} removed {} from whitelist", admin.getName().getString(), targetName);
-                    return;
-                }
+        var resolver = instance.server.services().nameToIdCache();
+        var opt = resolver.get(targetName);
+        if (opt.isPresent()) {
+            NameAndId nid = opt.get();
+            if (whiteList.isWhiteListed(nid)) {
+                whiteList.remove(nid);
+                admin.sendSystemMessage(Component.literal("§aRemoved " + targetName + " from whitelist"));
+                ServerManagementMod.LOGGER.info("{} removed {} from whitelist", admin.getName().getString(), targetName);
+                return;
             }
         }
         
@@ -618,7 +616,7 @@ public class PlayerManagerSingleton {
      * ClientboundGameEventPacket.CHANGE_GAME_MODE sent by setGameMode().
      */
     private static void broadcastFakeGameMode(ServerPlayer spectator, GameType fakeMode) {
-        MinecraftServer server = spectator.getServer();
+        MinecraftServer server = ServerManagementMod.getServer();
         if (server == null) return;
         
         RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(

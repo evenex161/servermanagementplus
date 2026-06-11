@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 public record WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMToggleChatIsolationPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_chat_isolation_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "w_m_toggle_chat_isolation_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, WMToggleChatIsolationPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMToggleChatIsolationPacket::new);
@@ -26,7 +26,7 @@ public record WMToggleChatIsolationPacket(String dimensionId, boolean enabled, l
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 String actionKey = "chat_isolation_" + dimensionId;
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
                     var worldManager = com.servermanagement.features.worldmanager.WorldManager.getInstance();

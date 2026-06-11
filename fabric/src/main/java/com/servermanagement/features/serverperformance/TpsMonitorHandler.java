@@ -43,7 +43,7 @@ public class TpsMonitorHandler {
 
         // Send to all ops
         for (ServerPlayer player : manager.getServer().getPlayerList().getPlayers()) {
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)) {
                 player.sendSystemMessage(Component.literal(message));
             }
         }

@@ -57,7 +57,7 @@ public abstract class PlayerAdvancementsMixin {
 
             // Re-check on the server queue to avoid ordering edge cases where
             // progress state is not finalized at this exact return point.
-            this.player.server.execute(() -> {
+            this.player.level().getServer().execute(() -> {
                 AdvancementProgress progress = this.getOrStartProgress(advancement);
                 if (!wasDoneBeforeAward && progress != null && progress.isDone()) {
                     AchievementRewardListener.onAdvancementEarned(this.player, advancement);

@@ -49,7 +49,7 @@ if (!ModConfig.SERVER_PERFORMANCE_ENABLED.get()) return;
 
         // Send to all ops
         for (ServerPlayer player : manager.getServer().getPlayerList().getPlayers()) {
-            if (player.hasPermissions(2)) {
+            if (player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 player.sendSystemMessage(Component.literal(message));
             }
         }

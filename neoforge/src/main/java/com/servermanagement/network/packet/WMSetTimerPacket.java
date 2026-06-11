@@ -2,14 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
 public record WMSetTimerPacket(String dimensionId, int seconds, String portalType, long clientTick) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<WMSetTimerPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_set_timer"));
+    public static final CustomPacketPayload.Type<WMSetTimerPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "w_m_set_timer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMSetTimerPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMSetTimerPacket::new);
 
     @Override
@@ -31,7 +31,7 @@ public record WMSetTimerPacket(String dimensionId, int seconds, String portalTyp
         public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             var player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 // Validate seconds to prevent abuse (max 30 days = 2,592,000 seconds)
                 if (seconds < 0 || seconds > 2_592_000) return;
                 

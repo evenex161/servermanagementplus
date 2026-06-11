@@ -6,7 +6,7 @@ import com.servermanagement.ServerManagementMod;
 import com.servermanagement.client.OTAUpdateManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -17,7 +17,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Signals client to verify and install the update.
  */
 public record ModFileCompletePacket(String fileHash, long fileSize, String version, boolean success, String message) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<ModFileCompletePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "mod_file_complete"));
+    public static final CustomPacketPayload.Type<ModFileCompletePacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "mod_file_complete"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ModFileCompletePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ModFileCompletePacket::new);
 
     @Override

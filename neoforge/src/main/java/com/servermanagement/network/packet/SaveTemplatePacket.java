@@ -7,7 +7,7 @@ import com.servermanagement.features.economy.TaskType;
 import com.servermanagement.network.ModNetworking;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +19,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Client-to-server packet for creating or updating a daily task template
  */
 public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description, int goal, int rewardAmount, ItemStack rewardItem) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SaveTemplatePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_template"));
+    public static final CustomPacketPayload.Type<SaveTemplatePacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "save_template"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveTemplatePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveTemplatePacket::new);
 
     @Override
@@ -46,9 +46,9 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
         public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
-            if (player == null || !player.hasPermissions(2)) return;
+            if (player == null || !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) return;
 
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server == null) return;
 
             TaskType[] types = TaskType.values();

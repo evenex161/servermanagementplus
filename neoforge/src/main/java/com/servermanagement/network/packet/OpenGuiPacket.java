@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,7 +10,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
 public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<OpenGuiPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "open_gui"));
+    public static final CustomPacketPayload.Type<OpenGuiPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "open_gui"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, OpenGuiPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), OpenGuiPacket::new);
 
     @Override
@@ -36,7 +36,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
             ServerPlayer player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
             if (player != null) {
                 // Admin GUIs require OP level 2
-                if (guiType.isAdminOnly() && !player.hasPermissions(2)) {
+                if (guiType.isAdminOnly() && !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                     return;
                 }
                 // Open the appropriate GUI
@@ -95,8 +95,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
                         player.openMenu(new com.servermanagement.gui.economy.AchievementsMenuProvider());
                         break;
                     case ECONOMY_MANAGEMENT:
-                        SyncEconomyTemplatesPacket.syncToPlayer(player, player.getServer());
-                        SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
+                        SyncEconomyTemplatesPacket.syncToPlayer(player, player.level().getServer());
+                        SyncEconomyStatsPacket.syncToPlayer(player, player.level().getServer());
                         player.openMenu(new com.servermanagement.gui.economy.EconomyManagementMenuProvider());
                         break;
                     case MINEBAY:
@@ -127,7 +127,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
     
     private void syncWorldList(ServerPlayer player) {
         var worldManager = com.servermanagement.features.worldmanager.WorldManager.getInstance();
-        var worlds = worldManager.buildWorldListForClient(player.getServer());
+        var worlds = worldManager.buildWorldListForClient(player.level().getServer());
         com.servermanagement.network.ModNetworking.sendToPlayer(
             new SyncWorldListPacket(worlds), player
         );
@@ -268,7 +268,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
     }
     
     private void syncBankInventory(ServerPlayer player) {
-        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.server);
+        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.level().getServer());
         var bankInventory = economyManager.getBankInventory(player.getUUID());
         
         com.servermanagement.network.ModNetworking.sendToPlayer(
@@ -278,7 +278,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
     }
 
     private void syncMoneyRequests(ServerPlayer player) {
-        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.server);
+        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.level().getServer());
         SendMoneyRequestPacket.syncRequestsToPlayer(player, economyManager);
     }
 

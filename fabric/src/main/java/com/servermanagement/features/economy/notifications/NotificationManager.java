@@ -30,8 +30,8 @@ public class NotificationManager {
                 .append(Component.literal("[Open Dashboard]")
                         .withStyle(ChatFormatting.GREEN, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/servermanagement dashboard"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/servermanagement dashboard"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to open ServerManagement Dashboard")
                                                 .withStyle(ChatFormatting.YELLOW)))));
         
@@ -78,8 +78,8 @@ public class NotificationManager {
         message.append(Component.literal("[Open Daily Tasks]")
                 .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE, ChatFormatting.BOLD)
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank dailies"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                        .withClickEvent(new ClickEvent.RunCommand("/bank dailies"))
+                        .withHoverEvent(new HoverEvent.ShowText(
                                 Component.literal("Click to view tasks and claim rewards")
                                         .withStyle(ChatFormatting.YELLOW)))));
 
@@ -102,8 +102,8 @@ public class NotificationManager {
                 .append(Component.literal("[Claim Now]")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank dailies"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/bank dailies"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to open Daily Tasks")
                                                 .withStyle(ChatFormatting.YELLOW)))));
         
@@ -140,8 +140,8 @@ public class NotificationManager {
         message.append(Component.literal("[View Tasks]")
                 .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.UNDERLINE)
                 .withStyle(style -> style
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank dailies"))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                        .withClickEvent(new ClickEvent.RunCommand("/bank dailies"))
+                        .withHoverEvent(new HoverEvent.ShowText(
                                 Component.literal("Click to view daily tasks")
                                         .withStyle(ChatFormatting.YELLOW)))));
 
@@ -171,8 +171,8 @@ public class NotificationManager {
                 .append(Component.literal(" [View Balance]")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank balance"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/bank balance"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to view your bank account")
                                                 .withStyle(ChatFormatting.YELLOW)))));
 
@@ -192,8 +192,8 @@ public class NotificationManager {
                 .append(Component.literal("[View Balance]")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank balance"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/bank balance"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to view your bank account")
                                                 .withStyle(ChatFormatting.YELLOW)))));
 
@@ -215,8 +215,8 @@ public class NotificationManager {
                 .append(Component.literal("[View Balance]")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank balance"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/bank balance"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to view your bank account")
                                                 .withStyle(ChatFormatting.YELLOW)))));
 
@@ -238,8 +238,8 @@ public class NotificationManager {
                 .append(Component.literal("[View Balance]")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank balance"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/bank balance"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to view your bank account")
                                                 .withStyle(ChatFormatting.YELLOW)))));
 
@@ -261,8 +261,8 @@ public class NotificationManager {
                 .append(Component.literal("[Claim Reward]")
                         .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank dailies"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/bank dailies"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to claim your reward")
                                                 .withStyle(ChatFormatting.YELLOW)))));
 
@@ -282,8 +282,8 @@ public class NotificationManager {
                 .append(Component.literal("[View Balance]")
                         .withStyle(ChatFormatting.AQUA, ChatFormatting.UNDERLINE)
                         .withStyle(style -> style
-                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/bank balance"))
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, 
+                                .withClickEvent(new ClickEvent.RunCommand("/bank balance"))
+                                .withHoverEvent(new HoverEvent.ShowText(
                                         Component.literal("Click to view your bank account")
                                                 .withStyle(ChatFormatting.YELLOW)))));
 

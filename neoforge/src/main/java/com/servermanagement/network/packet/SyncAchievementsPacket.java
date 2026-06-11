@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -14,7 +14,7 @@ import java.util.Set;
  * Packet to sync achievements from server to client
  */
 public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRewards) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncAchievementsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_achievements"));
+    public static final CustomPacketPayload.Type<SyncAchievementsPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_achievements"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncAchievementsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncAchievementsPacket::new);
 
     @Override

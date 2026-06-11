@@ -6,7 +6,7 @@ import com.servermanagement.features.gambling.GamblingResult;
 import com.servermanagement.features.gambling.games.*;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  * Packet sent from client to server to place a gambling bet
  */
 public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String gameOption) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<PlaceGamblingBetPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "place_gambling_bet"));
+    public static final CustomPacketPayload.Type<PlaceGamblingBetPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "place_gambling_bet"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, PlaceGamblingBetPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), PlaceGamblingBetPacket::new);
 
     @Override

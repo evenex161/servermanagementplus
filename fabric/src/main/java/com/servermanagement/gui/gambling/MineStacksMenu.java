@@ -30,7 +30,7 @@ public class MineStacksMenu extends AbstractContainerMenu {
         // Vanilla ContainerData transmits each slot as a short (16-bit),
         // so a single slot can only hold values up to 32,767.
         // We split the 32-bit cent value across slot 0 (low) and slot 1 (high).
-        if (player != null && !player.level().isClientSide) {
+        if (player != null && !player.level().isClientSide()) {
             double balance = EconomyManager.getInstance().getBalance(player.getUUID());
             setBalanceData(balance);
         }
@@ -171,7 +171,7 @@ public class MineStacksMenu extends AbstractContainerMenu {
         super.removed(player);
         
         // Return betting item to player if menu is closed with an item in the slot
-        if (!player.level().isClientSide) {
+        if (!player.level().isClientSide()) {
             ItemStack bettingItem = bettingContainer.getItem(0);
             if (!bettingItem.isEmpty()) {
                 player.getInventory().placeItemBackInInventory(bettingItem);

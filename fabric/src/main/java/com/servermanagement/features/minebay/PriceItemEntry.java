@@ -80,7 +80,7 @@ public class PriceItemEntry {
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putInt("DataVersion", DataVersion.CURRENT_VERSION);
-        tag.put("Item", itemStack.saveOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
+        tag.put("Item", com.servermanagement.util.NbtHelper.saveItemStack(itemStack, com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
         tag.putInt("Amount", amount);
         tag.putBoolean("UseStacks", useStacks);
         return tag;
@@ -88,16 +88,16 @@ public class PriceItemEntry {
     
     public static PriceItemEntry fromNBT(CompoundTag tag) {
         // Check data version
-        int dataVersion = tag.getInt("DataVersion");
+        int dataVersion = tag.getIntOr("DataVersion", 0);
         if (dataVersion > DataVersion.CURRENT_VERSION) {
             ServerManagementMod.LOGGER.warn("PriceItemEntry data version {} is newer than supported version {}",
                 dataVersion, DataVersion.CURRENT_VERSION);
         }
         
         PriceItemEntry entry = new PriceItemEntry();
-        entry.itemStack = ItemStack.parseOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess(), tag.getCompound("Item"));
-        entry.amount = tag.getInt("Amount");
-        entry.useStacks = tag.getBoolean("UseStacks");
+        entry.itemStack = com.servermanagement.util.NbtHelper.loadItemStack(tag.getCompoundOrEmpty("Item"), com.servermanagement.ServerManagementModFabric.getServer().registryAccess());
+        entry.amount = tag.getIntOr("Amount", 1);
+        entry.useStacks = tag.getBooleanOr("UseStacks", false);
         return entry;
     }
 }

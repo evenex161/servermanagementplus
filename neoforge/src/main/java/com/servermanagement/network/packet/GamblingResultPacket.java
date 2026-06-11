@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from server to client with gambling result
  */
 public record GamblingResultPacket(boolean won, double payout, String message) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<GamblingResultPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "gambling_result"));
+    public static final CustomPacketPayload.Type<GamblingResultPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "gambling_result"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, GamblingResultPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), GamblingResultPacket::new);
 
     @Override

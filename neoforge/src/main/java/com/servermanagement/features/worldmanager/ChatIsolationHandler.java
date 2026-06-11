@@ -32,7 +32,7 @@ public class ChatIsolationHandler {
         }
         
         ServerPlayer sender = event.getPlayer();
-        String senderDimension = sender.level().dimension().location().toString();
+        String senderDimension = sender.level().dimension().identifier().toString();
         
         // Cancel the default global broadcast
         event.setCanceled(true);
@@ -52,8 +52,8 @@ public class ChatIsolationHandler {
         allowedDimensions.addAll(connections);
         
         // Send to all players in allowed dimensions
-        for (ServerPlayer player : sender.server.getPlayerList().getPlayers()) {
-            String playerDimension = player.level().dimension().location().toString();
+        for (ServerPlayer player : sender.level().getServer().getPlayerList().getPlayers()) {
+            String playerDimension = player.level().dimension().identifier().toString();
             
             if (allowedDimensions.contains(playerDimension)) {
                 player.sendSystemMessage(chatMessage);

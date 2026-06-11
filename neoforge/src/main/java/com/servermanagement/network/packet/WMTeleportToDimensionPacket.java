@@ -2,14 +2,14 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
 public record WMTeleportToDimensionPacket(String dimensionId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<WMTeleportToDimensionPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_teleport_to_dimension"));
+    public static final CustomPacketPayload.Type<WMTeleportToDimensionPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "w_m_teleport_to_dimension"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, WMTeleportToDimensionPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMTeleportToDimensionPacket::new);
 
     @Override
@@ -27,7 +27,7 @@ public record WMTeleportToDimensionPacket(String dimensionId) implements CustomP
         public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             var player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 com.servermanagement.features.worldmanager.WorldManager.teleportToDimension(player, dimensionId);
             }
         });

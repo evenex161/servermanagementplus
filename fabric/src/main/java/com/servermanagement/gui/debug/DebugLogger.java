@@ -310,7 +310,7 @@ public final class DebugLogger {
         var mc = net.minecraft.client.Minecraft.getInstance();
         var window = mc.getWindow();
         log(Category.GUI, "System info:");
-        log(Category.GUI, "  MC version: %s", net.minecraft.SharedConstants.getCurrentVersion().getName());
+        log(Category.GUI, "  MC version: %s", net.minecraft.SharedConstants.getCurrentVersion().name());
         log(Category.GUI, "  Window: %dx%d (GUI scale: %.1f)",
                 window.getWidth(), window.getHeight(), window.getGuiScale());
         log(Category.GUI, "  GUI scaled: %dx%d", window.getGuiScaledWidth(), window.getGuiScaledHeight());

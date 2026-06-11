@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.features.motd.MotdManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -17,7 +17,7 @@ import org.slf4j.Logger;
  * Requires admin permissions (OP level 2).
  */
 public record SaveMotdPacket(String motdText) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SaveMotdPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_motd"));
+    public static final CustomPacketPayload.Type<SaveMotdPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "save_motd"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveMotdPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveMotdPacket::new);
 
     @Override
@@ -41,7 +41,7 @@ public record SaveMotdPacket(String motdText) implements CustomPacketPayload {
             if (player == null) {
                 return;
             }
-            if (!player.hasPermissions(2)) {
+            if (!player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 LOGGER.warn("Player {} attempted to change MOTD without permission", player.getName().getString());
                 return;
             }

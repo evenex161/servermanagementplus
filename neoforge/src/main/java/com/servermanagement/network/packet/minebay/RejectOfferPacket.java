@@ -9,7 +9,7 @@ import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.MineBayOffer;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -22,7 +22,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Returns escrowed items and money to the buyer.
  */
 public record RejectOfferPacket(String listingId, String offerId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<RejectOfferPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "reject_offer"));
+    public static final CustomPacketPayload.Type<RejectOfferPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "reject_offer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RejectOfferPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RejectOfferPacket::new);
 
     @Override
@@ -83,7 +83,7 @@ public record RejectOfferPacket(String listingId, String offerId) implements Cus
             }
             
             // Return escrowed items to buyer
-            ServerPlayer buyer = seller.server.getPlayerList().getPlayer(rejectedOffer.getBuyerId());
+            ServerPlayer buyer = seller.level().getServer().getPlayerList().getPlayer(rejectedOffer.getBuyerId());
             for (ItemStack offeredStack : rejectedOffer.getItemOffers()) {
                 if (offeredStack.isEmpty()) continue;
                 ItemStack stack = offeredStack.copy();

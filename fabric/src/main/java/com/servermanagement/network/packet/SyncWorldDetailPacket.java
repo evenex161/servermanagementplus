@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEnabled, boolean endPortalsEnabled, boolean hasTimer, int timerSeconds, boolean chatConnected, String timerPortalType) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncWorldDetailPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_world_detail_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "sync_world_detail_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncWorldDetailPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncWorldDetailPacket::new);
@@ -37,7 +37,7 @@ public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEna
             );
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.screen instanceof com.servermanagement.gui.screen.WorldDetailScreen wds) {
-                wds.resize(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+                wds.resize(mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
             }
 
 }

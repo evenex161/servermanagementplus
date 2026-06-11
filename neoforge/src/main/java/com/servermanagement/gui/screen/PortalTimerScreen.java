@@ -31,8 +31,12 @@ public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> 
         super(menu, playerInventory, title, 300, 240);
         this.imageHeight = 240;
         this.imageWidth = 300;
-        
-        this.dimensionId = ClientPacketHandler.getCachedDimensionId();
+
+        // See WorldDetailScreen: SyncWorldDetailPacket may not be processed by
+        // the time the screen is constructed under Fabric. Default to empty
+        // and refresh lazily in render() to ensure correct portal toggles.
+        String cached = ClientPacketHandler.getCachedDimensionId();
+        this.dimensionId = cached == null ? "" : cached;
     }
     
     @Override
@@ -193,6 +197,17 @@ public class PortalTimerScreen extends ScalableContainerScreen<PortalTimerMenu> 
     
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Late-arrival sync recovery: if the dimension id wasn't available at
+        // construction time, pick it up now and rebuild widgets so the portal
+        // type selector reflects the actual dimension.
+        if (this.dimensionId == null || this.dimensionId.isEmpty()) {
+            String cached = ClientPacketHandler.getCachedDimensionId();
+            if (cached != null && !cached.isEmpty()) {
+                this.dimensionId = cached;
+                this.rebuildWidgets();
+            }
+        }
+
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
         

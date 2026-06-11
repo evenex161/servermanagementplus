@@ -4,7 +4,7 @@ import com.servermanagement.features.economy.DailyTaskTemplateManager;
 import com.servermanagement.features.economy.EconomyManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +16,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Client-to-server packet for saving free reward settings
  */
 public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SaveFreeRewardSettingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_free_reward_settings"));
+    public static final CustomPacketPayload.Type<SaveFreeRewardSettingsPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "save_free_reward_settings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveFreeRewardSettingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveFreeRewardSettingsPacket::new);
 
     @Override
@@ -40,9 +40,9 @@ public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, 
         public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
             ServerPlayer player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
-            if (player == null || !player.hasPermissions(2)) return;
+            if (player == null || !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) return;
 
-            var server = player.getServer();
+            var server = player.level().getServer();
             if (server == null) return;
 
             var economyManager = EconomyManager.getInstance(server);

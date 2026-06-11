@@ -12,7 +12,7 @@ public class LoginNotificationHandler {
 
     public static void onPlayerLogin(net.minecraft.server.level.ServerPlayer player) {
         // Delay notifications slightly to ensure player is fully loaded
-        var server = player.getServer();
+        var server = player.level().getServer();
         if (server == null) return;
         server.execute(() -> {
             try {
@@ -25,7 +25,7 @@ public class LoginNotificationHandler {
 
     private static void sendLoginNotifications(ServerPlayer player) {
         // Sync market prices to the joining player
-        EconomyManager.getInstance(player.getServer()).syncMarketPrices(player);
+        EconomyManager.getInstance(player.level().getServer()).syncMarketPrices(player);
         
         // Deliver overflow items
         com.servermanagement.features.economy.OverflowInventoryManager overflow = 
@@ -43,14 +43,14 @@ public class LoginNotificationHandler {
         
         // Check if player is admin
         boolean isAdmin = SessionManager.getInstance().hasAdminPermission(player);
-
+ 
         // Send admin dashboard notification first if admin
         if (isAdmin) {
             NotificationManager.sendAdminDashboardNotification(player);
         }
-
+ 
         // Get economy manager
-        EconomyManager economyManager = EconomyManager.getInstance(player.getServer());
+        EconomyManager economyManager = EconomyManager.getInstance(player.level().getServer());
         if (economyManager == null) {
             return;
         }

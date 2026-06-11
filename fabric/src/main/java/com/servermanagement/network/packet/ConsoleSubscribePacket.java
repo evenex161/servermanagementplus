@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 public record ConsoleSubscribePacket(boolean subscribe) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ConsoleSubscribePacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "console_subscribe_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "console_subscribe_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ConsoleSubscribePacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), ConsoleSubscribePacket::new);
@@ -26,7 +26,7 @@ public record ConsoleSubscribePacket(boolean subscribe) implements net.minecraft
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 var manager = com.servermanagement.server.ServerConsoleManager.getInstance();
                 if (subscribe) {
                     manager.subscribe(player);

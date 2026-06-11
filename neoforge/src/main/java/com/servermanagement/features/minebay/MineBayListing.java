@@ -68,9 +68,9 @@ public class MineBayListing {
         CompoundTag tag = new CompoundTag();
         tag.putInt("DataVersion", com.servermanagement.util.DataVersion.CURRENT_VERSION);
         tag.putString("ListingId", listingId);
-        tag.putUUID("SellerId", sellerId);
+        com.servermanagement.util.NbtHelper.putUUID(tag, "SellerId", sellerId);
         tag.putString("SellerName", sellerName);
-        tag.put("ItemForSale", itemForSale.saveOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
+        tag.put("ItemForSale", com.servermanagement.util.NbtHelper.saveItemStack(itemForSale, net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess()));
         tag.putDouble("MoneyPrice", moneyPrice);
         tag.putDouble("BaseMarketPrice", baseMarketPrice);
         tag.putDouble("MarginPercent", marginPercent);
@@ -100,7 +100,7 @@ public class MineBayListing {
     // Deserialize from NBT with version checking
     public static MineBayListing fromNBT(CompoundTag tag) {
         // Check data version for future migrations
-        int dataVersion = tag.contains("DataVersion") ? tag.getInt("DataVersion") : 0;
+        int dataVersion = tag.getIntOr("DataVersion", 0);
         if (dataVersion > com.servermanagement.util.DataVersion.CURRENT_VERSION) {
             com.servermanagement.ServerManagementMod.LOGGER.warn(
                 "MineBay listing data version {} is newer than supported version {}",
@@ -108,31 +108,31 @@ public class MineBayListing {
         }
         
         MineBayListing listing = new MineBayListing();
-        listing.listingId = tag.getString("ListingId");
-        listing.sellerId = tag.getUUID("SellerId");
-        listing.sellerName = tag.getString("SellerName");
-        listing.itemForSale = ItemStack.parseOptional(net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess(), tag.getCompound("ItemForSale"));
-        listing.moneyPrice = tag.getDouble("MoneyPrice");
-        listing.baseMarketPrice = tag.contains("BaseMarketPrice") ? tag.getDouble("BaseMarketPrice") : 0.0;
-        listing.marginPercent = tag.contains("MarginPercent") ? tag.getDouble("MarginPercent") : 0.0;
-        listing.offerType = OfferType.valueOf(tag.getString("OfferType"));
-        listing.status = ListingStatus.valueOf(tag.getString("Status"));
-        listing.createdTimestamp = tag.getLong("Created");
+        listing.listingId = tag.getStringOr("ListingId", "");
+        listing.sellerId = com.servermanagement.util.NbtHelper.getUUID(tag, "SellerId");
+        listing.sellerName = tag.getStringOr("SellerName", "");
+        listing.itemForSale = com.servermanagement.util.NbtHelper.loadItemStack(tag.getCompoundOrEmpty("ItemForSale"), net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().registryAccess());
+        listing.moneyPrice = tag.getDoubleOr("MoneyPrice", 0.0);
+        listing.baseMarketPrice = tag.getDoubleOr("BaseMarketPrice", 0.0);
+        listing.marginPercent = tag.getDoubleOr("MarginPercent", 0.0);
+        listing.offerType = OfferType.valueOf(tag.getStringOr("OfferType", OfferType.FIXED.name()));
+        listing.status = ListingStatus.valueOf(tag.getStringOr("Status", ListingStatus.ACTIVE.name()));
+        listing.createdTimestamp = tag.getLongOr("Created", 0L);
         
         // Load price items
-        CompoundTag priceItemsTag = tag.getCompound("PriceItems");
-        int itemCount = priceItemsTag.getInt("Count");
+        CompoundTag priceItemsTag = tag.getCompoundOrEmpty("PriceItems");
+        int itemCount = priceItemsTag.getIntOr("Count", 0);
         listing.priceItems = new ArrayList<>();
         for (int i = 0; i < itemCount && i < MAX_PRICE_ITEMS; i++) {
-            listing.priceItems.add(PriceItemEntry.fromNBT(priceItemsTag.getCompound("Item" + i)));
+            listing.priceItems.add(PriceItemEntry.fromNBT(priceItemsTag.getCompoundOrEmpty("Item" + i)));
         }
         
         // Load counteroffers
-        CompoundTag counteroffersTag = tag.getCompound("Counteroffers");
-        int offerCount = counteroffersTag.getInt("Count");
+        CompoundTag counteroffersTag = tag.getCompoundOrEmpty("Counteroffers");
+        int offerCount = counteroffersTag.getIntOr("Count", 0);
         listing.counteroffers = new ArrayList<>();
         for (int i = 0; i < offerCount; i++) {
-            listing.counteroffers.add(MineBayOffer.fromNBT(counteroffersTag.getCompound("Offer" + i)));
+            listing.counteroffers.add(MineBayOffer.fromNBT(counteroffersTag.getCompoundOrEmpty("Offer" + i)));
         }
         
         return listing;

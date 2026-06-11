@@ -714,13 +714,10 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     }
     
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Convert raw screen-pixel coords to design-space because the screen
-        // is rendered through ScalableContainerScreen's pose scale. Without
-        // this the custom slot hit-tests below silently miss at non-1.0 GUI
-        // scales (Auto / Scale 4 / Scale 5).
-        double designMouseX = inverseMouseX(mouseX);
-        double designMouseY = inverseMouseY(mouseY);
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        // Coords in event are already inverse-scaled by ScalableContainerScreen
+        double designMouseX = event.x();
+        double designMouseY = event.y();
 
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -751,13 +748,13 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             }
         }
         
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
     
     private void handleItemSlotClick(boolean isTemplateEdit) {
         if (this.minecraft != null && this.minecraft.player != null) {
             // Use currently selected hotbar item (since this screen has no inventory slots)
-            ItemStack selectedItem = this.minecraft.player.getInventory().getSelected();
+            ItemStack selectedItem = this.minecraft.player.getInventory().getSelectedItem();
             
             if (!selectedItem.isEmpty()) {
                 // Set the selected hotbar item as the reward item

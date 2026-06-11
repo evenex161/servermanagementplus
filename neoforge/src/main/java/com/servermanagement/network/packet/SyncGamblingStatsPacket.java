@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.client.ClientGamblingData;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from server to client to sync gambling statistics
  */
 public record SyncGamblingStatsPacket(long totalBets, long totalWins, long totalLosses, double totalWagered, double totalWon, double totalLost, double biggestWin, double biggestLoss) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncGamblingStatsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_gambling_stats"));
+    public static final CustomPacketPayload.Type<SyncGamblingStatsPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_gambling_stats"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncGamblingStatsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncGamblingStatsPacket::new);
 
     @Override

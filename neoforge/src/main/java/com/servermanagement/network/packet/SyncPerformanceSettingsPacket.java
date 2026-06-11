@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.client.ClientPacketHandler;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Server → Client: syncs all performance settings so the GUI can display current values.
  */
 public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean itemMergingEnabled, boolean mobSpawnLimiterEnabled, boolean entityActivationRangeEnabled, boolean villagerThrottleEnabled, boolean redstoneThrottleEnabled, boolean tpsMonitorEnabled, boolean tpsAutoOptimize, double itemMergeRadius, int itemMergeInterval, int mobCapMultiplier, int monsterActivationRange, int animalActivationRange, int miscActivationRange, int villagerTickInterval, int redstoneUpdatesPerTick, double tpsWarningThreshold, double tpsCriticalThreshold, double currentTps, double averageMspt, boolean autoOptimizeActive, long totalItemsMerged, long totalSpawnsCancelled, long totalEntitiesThrottled, long totalRedstoneThrottled) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncPerformanceSettingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_performance_settings"));
+    public static final CustomPacketPayload.Type<SyncPerformanceSettingsPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_performance_settings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncPerformanceSettingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncPerformanceSettingsPacket::new);
 
     @Override

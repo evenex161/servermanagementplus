@@ -42,10 +42,10 @@ public class PerformanceSettingsMenu extends AbstractContainerMenu {
 
     public PerformanceSettingsMenu(int windowId, Inventory playerInventory) {
         super(ModMenuTypes.PERFORMANCE_SETTINGS_MENU.get(), windowId);
-        loadFromClientCache();
+        reloadFromClientCache();
     }
 
-    private void loadFromClientCache() {
+    public void reloadFromClientCache() {
         this.featureEnabled = ClientPacketHandler.getPerfFeatureEnabled();
         this.itemMergingEnabled = ClientPacketHandler.getPerfItemMergingEnabled();
         this.mobSpawnLimiterEnabled = ClientPacketHandler.getPerfMobSpawnLimiterEnabled();

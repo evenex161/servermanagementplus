@@ -39,14 +39,28 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
         super(menu, playerInventory, title, 380, 280);
         this.imageHeight = 280;
         this.imageWidth = 380;
-        
-        // Get dimension ID from cached data
-        this.dimensionId = ClientPacketHandler.getCachedDimensionId();
+
+        // Fabric: SyncWorldDetailPacket may not have been processed yet at
+        // construction time because ClientPlayNetworking receivers re-schedule
+        // through client.execute(), which can land after the vanilla
+        // ClientboundOpenScreen handler. Default to empty here and refresh from
+        // the cache lazily in init()/render() once the sync arrives.
+        String cached = ClientPacketHandler.getCachedDimensionId();
+        this.dimensionId = cached == null ? "" : cached;
     }
     
     @Override
     protected void init() {
         super.init();
+
+        // Fabric: re-read dimensionId from the cache on every init() so that
+        // when refreshOpenScreen() re-runs init() after a late SyncWorldDetailPacket,
+        // the title and portal-toggle visibility match the freshly synced dimension.
+        String cached = ClientPacketHandler.getCachedDimensionId();
+        if (cached != null && !cached.isEmpty()) {
+            this.dimensionId = cached;
+        }
+
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
@@ -239,12 +253,26 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
     
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // If the sync packet arrived after construction, pick up the dimension
+        // id now and rebuild widgets so the correct portal toggles appear.
+        if (this.dimensionId == null || this.dimensionId.isEmpty()) {
+            String cached = ClientPacketHandler.getCachedDimensionId();
+            if (cached != null && !cached.isEmpty()) {
+                this.dimensionId = cached;
+                this.rebuildWidgets();
+            }
+        }
+
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBg(guiGraphics, partialTick, mouseX, mouseY);
-        
-        // Title
-        String dimName = this.dimensionId.replace("minecraft:", "");
-        dimName = dimName.substring(0, 1).toUpperCase() + dimName.substring(1).replace("_", " ");
+
+        // Title (guard against empty dimensionId until sync arrives)
+        String dimName = this.dimensionId == null ? "" : this.dimensionId.replace("minecraft:", "");
+        if (dimName.isEmpty()) {
+            dimName = "Loading...";
+        } else {
+            dimName = dimName.substring(0, 1).toUpperCase() + dimName.substring(1).replace("_", " ");
+        }
         guiGraphics.drawString(this.font, dimName, 
             this.leftPos + 15, this.topPos + 8, 0xFFD700, true);
         
@@ -302,7 +330,7 @@ public class WorldDetailScreen extends ScalableContainerScreen<WorldDetailMenu> 
             String text = String.format("Time left: %d:%02d  (%s)",
                     remaining / 60, remaining % 60, typeLabel);
             guiGraphics.drawString(this.font, text, leftCol, currentY + 26, color, true);
-            if (remaining == 0 && !this.refreshRequested) {
+            if (remaining == 0 && !this.refreshRequested && this.dimensionId != null && !this.dimensionId.isEmpty()) {
                 this.refreshRequested = true;
                 ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_DETAIL, this.dimensionId));
             }

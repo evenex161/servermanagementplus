@@ -303,12 +303,12 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
             int msgWidth = this.font.width(celebrationMessage);
             int scale = celebrationTimer > 40 ? 2 : 1;
             
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(centerX + this.imageWidth / 2f, centerY + 40, 0);
-            guiGraphics.pose().scale(scale, scale, 1);
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.pose().translate(centerX + this.imageWidth / 2f, centerY + 40);
+            guiGraphics.pose().scale(scale, scale);
             guiGraphics.drawString(this.font, Component.literal(celebrationMessage),
                 -msgWidth / 2, 0, (alphaInt << 24) | 0xFFD700, true);
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
         }
     }
     

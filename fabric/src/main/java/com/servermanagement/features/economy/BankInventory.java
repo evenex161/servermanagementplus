@@ -79,7 +79,7 @@ public class BankInventory {
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putInt("DataVersion", DataVersion.CURRENT_VERSION);
-        tag.putUUID("PlayerId", playerId);
+        com.servermanagement.util.NbtHelper.putUUID(tag, "PlayerId", playerId);
         
         ListTag itemsTag = new ListTag();
         for (StoredItem storedItem : items) {
@@ -95,18 +95,18 @@ public class BankInventory {
      */
     public static BankInventory fromNBT(CompoundTag tag) {
         // Check data version
-        int dataVersion = tag.getInt("DataVersion");
+        int dataVersion = tag.getIntOr("DataVersion", 0);
         if (dataVersion > DataVersion.CURRENT_VERSION) {
             ServerManagementMod.LOGGER.warn("BankInventory data version {} is newer than supported version {}",
                 dataVersion, DataVersion.CURRENT_VERSION);
         }
         
-        UUID playerId = tag.getUUID("PlayerId");
+        UUID playerId = com.servermanagement.util.NbtHelper.getUUID(tag, "PlayerId");
         BankInventory inventory = new BankInventory(playerId);
         
-        ListTag itemsTag = tag.getList("Items", Tag.TAG_COMPOUND);
+        ListTag itemsTag = tag.getListOrEmpty("Items");
         for (int i = 0; i < itemsTag.size(); i++) {
-            inventory.items.add(StoredItem.fromNBT(itemsTag.getCompound(i)));
+            inventory.items.add(StoredItem.fromNBT(itemsTag.getCompoundOrEmpty(i)));
         }
         
         return inventory;
@@ -169,7 +169,7 @@ public class BankInventory {
         
         public CompoundTag toNBT() {
             CompoundTag tag = new CompoundTag();
-            tag.put("Item", itemStack.saveOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
+            tag.put("Item", com.servermanagement.util.NbtHelper.saveItemStack(itemStack, com.servermanagement.ServerManagementModFabric.getServer().registryAccess()));
             tag.putString("Source", source.name());
             tag.putString("Details", details);
             tag.putLong("Timestamp", timestamp);
@@ -177,10 +177,10 @@ public class BankInventory {
         }
         
         public static StoredItem fromNBT(CompoundTag tag) {
-            ItemStack item = ItemStack.parseOptional(com.servermanagement.ServerManagementModFabric.getServer().registryAccess(), tag.getCompound("Item"));
-            ItemSource source = ItemSource.valueOf(tag.getString("Source"));
-            String details = tag.getString("Details");
-            long timestamp = tag.getLong("Timestamp");
+            ItemStack item = com.servermanagement.util.NbtHelper.loadItemStack(tag.getCompoundOrEmpty("Item"), com.servermanagement.ServerManagementModFabric.getServer().registryAccess());
+            ItemSource source = ItemSource.valueOf(tag.getStringOr("Source", ItemSource.ADMIN_GRANT.name()));
+            String details = tag.getStringOr("Details", "");
+            long timestamp = tag.getLongOr("Timestamp", 0L);
             return new StoredItem(item, source, details, timestamp);
         }
     }

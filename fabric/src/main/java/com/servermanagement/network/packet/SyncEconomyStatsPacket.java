@@ -21,7 +21,7 @@ import java.util.UUID;
 public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCirculation, double averageBalance, double richestBalance, String richestPlayerName, double inflationMultiplier, int activeListings, int totalTemplates, int enabledTemplates, int totalTransactions, int purchaseCount, int saleCount, int gamblingBetCount, int gamblingWinCount, int freeRewardCount, int transferCount, double totalPurchaseVolume, double totalSaleVolume, double totalGamblingWagered, double totalGamblingWon) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncEconomyStatsPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_economy_stats_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "sync_economy_stats_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncEconomyStatsPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncEconomyStatsPacket::new);
@@ -101,11 +101,8 @@ public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCircu
             if (bal > richestBalance) {
                 richestBalance = bal;
                 // Try to resolve player name
-                var profile = server.getProfileCache();
-                if (profile != null) {
-                    var optional = profile.get(entry.getKey());
-                    richestName = optional.map(p -> p.getName()).orElse("Unknown");
-                }
+                var profile = server.services().nameToIdCache().get(entry.getKey());
+                richestName = profile.map(net.minecraft.server.players.NameAndId::name).orElse("Unknown");
             }
 
             // Aggregate transactions (snapshot to avoid ConcurrentModificationException)

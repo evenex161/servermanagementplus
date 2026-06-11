@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 public record ConsoleCommandPacket(String command) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ConsoleCommandPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "console_command_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "console_command_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ConsoleCommandPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), ConsoleCommandPacket::new);
@@ -27,8 +27,8 @@ public record ConsoleCommandPacket(String command) implements net.minecraft.netw
     }
     
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player != null && player.hasPermissions(2)) {
-                var server = player.getServer();
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
+                var server = player.level().getServer();
                 if (server != null) {
                     // Use the PLAYER's command source stack — not the server's.
                     // server.createCommandSourceStack() has permission level 4 (console),

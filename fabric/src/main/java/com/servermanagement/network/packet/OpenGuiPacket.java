@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 public record OpenGuiPacket(GuiType guiType, String data) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<OpenGuiPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "open_gui_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "open_gui_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, OpenGuiPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), OpenGuiPacket::new);
@@ -36,7 +36,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             if (player != null) {
                 // Admin GUIs require OP level 2
-                if (guiType.isAdminOnly() && !player.hasPermissions(2)) {
+                if (guiType.isAdminOnly() && !player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                     return;
                 }
                 // Open the appropriate GUI
@@ -95,8 +95,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
                         player.openMenu(new com.servermanagement.gui.economy.AchievementsMenuProvider());
                         break;
                     case ECONOMY_MANAGEMENT:
-                        SyncEconomyTemplatesPacket.syncToPlayer(player, player.getServer());
-                        SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
+                        SyncEconomyTemplatesPacket.syncToPlayer(player, player.level().getServer());
+                        SyncEconomyStatsPacket.syncToPlayer(player, player.level().getServer());
                         player.openMenu(new com.servermanagement.gui.economy.EconomyManagementMenuProvider());
                         break;
                     case MINEBAY:
@@ -126,7 +126,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
     
     private void syncWorldList(ServerPlayer player) {
         var worldManager = com.servermanagement.features.worldmanager.WorldManager.getInstance();
-        var worlds = worldManager.buildWorldListForClient(player.getServer());
+        var worlds = worldManager.buildWorldListForClient(player.level().getServer());
         com.servermanagement.network.ModNetworking.sendToPlayer(
             new SyncWorldListPacket(worlds), player
         );
@@ -267,7 +267,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
     }
     
     private void syncBankInventory(ServerPlayer player) {
-        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.server);
+        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.level().getServer());
         var bankInventory = economyManager.getBankInventory(player.getUUID());
         
         com.servermanagement.network.ModNetworking.sendToPlayer(
@@ -277,7 +277,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
     }
 
     private void syncMoneyRequests(ServerPlayer player) {
-        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.server);
+        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance(player.level().getServer());
         SendMoneyRequestPacket.syncRequestsToPlayer(player, economyManager);
     }
 

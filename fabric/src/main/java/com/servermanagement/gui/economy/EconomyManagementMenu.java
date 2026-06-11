@@ -21,6 +21,9 @@ public class EconomyManagementMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        return player.hasPermissions(2); // Admin only
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            return serverPlayer.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER);
+        }
+        return player.canUseGameMasterBlocks();
     }
 }

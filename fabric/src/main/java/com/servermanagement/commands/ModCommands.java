@@ -13,9 +13,10 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.level.Level;
 public class ModCommands {
 
@@ -24,7 +25,7 @@ public class ModCommands {
         
         // Main Dashboard GUI commands
         dispatcher.register(Commands.literal("servermanagement")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     // Open main dashboard
@@ -61,7 +62,7 @@ public class ModCommands {
         );
         
         dispatcher.register(Commands.literal("sm")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     // Open main dashboard
@@ -73,7 +74,7 @@ public class ModCommands {
         
         // ServerManagement Settings command
         dispatcher.register(Commands.literal("smconfig")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             // Default: open GUI
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
@@ -98,7 +99,7 @@ public class ModCommands {
             )
             // Config info
             .then(Commands.literal("info")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_OWNER))
                 .executes(context -> {
                     int currentVersion = com.servermanagement.config.ModConfig.CONFIG_VERSION.get();
                     int targetVersion = com.servermanagement.config.ModConfig.CURRENT_CONFIG_VERSION;
@@ -121,7 +122,7 @@ public class ModCommands {
             )
             // Config migration
             .then(Commands.literal("migrate")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_OWNER))
                 .executes(context -> {
                     if (!com.servermanagement.config.ConfigMigration.needsMigration()) {
                         context.getSource().sendSuccess(() -> Component.literal("§aNo migration needed - config is up to date!"), false);
@@ -143,7 +144,7 @@ public class ModCommands {
             )
             // Config validation
             .then(Commands.literal("validate")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_OWNER))
                 .executes(context -> {
                     context.getSource().sendSuccess(() -> Component.literal("§eValidating configuration..."), false);
                     boolean valid = com.servermanagement.config.ConfigValidator.validateAndRepair();
@@ -157,7 +158,7 @@ public class ModCommands {
             )
             // Config reset
             .then(Commands.literal("reset")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_OWNER))
                 .executes(context -> {
                     context.getSource().sendSuccess(() -> Component.literal("§c§lWARNING: This will reset ALL configuration to defaults!"), false);
                     context.getSource().sendSuccess(() -> Component.literal("§eRun '/smconfig reset confirm' to proceed."), false);
@@ -179,7 +180,7 @@ public class ModCommands {
             )
             // Backup cleanup
             .then(Commands.literal("backup")
-                .requires(source -> source.hasPermission(4))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_OWNER))
                 .executes(context -> {
                     context.getSource().sendSuccess(() -> Component.literal("§eCleaning up old config backups..."), false);
                     com.servermanagement.config.ConfigValidator.cleanupOldBackups();
@@ -191,7 +192,7 @@ public class ModCommands {
         
         // WorldManager command (/worldmanager or /wm)
         dispatcher.register(Commands.literal("worldmanager")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     player.openMenu(new com.servermanagement.gui.WorldListMenuProvider());
@@ -201,7 +202,7 @@ public class ModCommands {
         );
         
         dispatcher.register(Commands.literal("wm")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     player.openMenu(new com.servermanagement.gui.WorldListMenuProvider());
@@ -212,7 +213,7 @@ public class ModCommands {
         
         // PlayerManager command (/playermanager or /pm)
         dispatcher.register(Commands.literal("playermanager")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     player.openMenu(new com.servermanagement.gui.PlayerManagerMenuProvider());
@@ -222,7 +223,7 @@ public class ModCommands {
         );
         
         dispatcher.register(Commands.literal("pm")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     player.openMenu(new com.servermanagement.gui.PlayerManagerMenuProvider());
@@ -254,7 +255,7 @@ public class ModCommands {
             }
         }
         dispatcher.register(Commands.literal("spectate")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .then(Commands.argument("player", StringArgumentType.string())
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
@@ -271,7 +272,7 @@ public class ModCommands {
         
         // Stop spectate command
         dispatcher.register(Commands.literal("stopspectate")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     if (PlayerManagerSingleton.isSpectating(player)) {
@@ -287,7 +288,7 @@ public class ModCommands {
         
         // View inventory command
         dispatcher.register(Commands.literal("viewinv")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .then(Commands.argument("player", StringArgumentType.string())
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
@@ -302,14 +303,14 @@ public class ModCommands {
         
         // Nether portals command
         dispatcher.register(Commands.literal("netherportals")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .then(Commands.argument("enabled", BoolArgumentType.bool())
                 .executes(context -> {
                     boolean enabled = BoolArgumentType.getBool(context, "enabled");
                     // Get the dimension the command sender is in
                     String dimensionId = "minecraft:overworld";
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                        dimensionId = player.level().dimension().location().toString();
+                        dimensionId = player.level().dimension().identifier().toString();
                     }
                     // Check timer lock
                     if (WorldManager.getInstance().getData().hasActiveTimer(dimensionId)) {
@@ -329,14 +330,14 @@ public class ModCommands {
         
         // End portals command
         dispatcher.register(Commands.literal("endportals")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .then(Commands.argument("enabled", BoolArgumentType.bool())
                 .executes(context -> {
                     boolean enabled = BoolArgumentType.getBool(context, "enabled");
                     // Get the dimension the command sender is in
                     String dimensionId = "minecraft:overworld";
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                        dimensionId = player.level().dimension().location().toString();
+                        dimensionId = player.level().dimension().identifier().toString();
                     }
                     // Check timer lock
                     if (WorldManager.getInstance().getData().hasActiveTimer(dimensionId)) {
@@ -356,11 +357,11 @@ public class ModCommands {
         
         // Set lobby command
         dispatcher.register(Commands.literal("setlobby")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     WorldManager.setLobbySpawn(player.getX(), player.getY(), player.getZ(),
-                        player.level().dimension().location().toString(), player.getYRot(), player.getXRot());
+                        player.level().dimension().identifier().toString(), player.getYRot(), player.getXRot());
                     context.getSource().sendSuccess(() -> Component.literal("Lobby spawn set to current location"), true);
                 }
                 return 1;
@@ -369,7 +370,7 @@ public class ModCommands {
         
         // Clear lobby command
         dispatcher.register(Commands.literal("clearlobby")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 WorldManager.getInstance().getData().clearLobbySpawn();
                 WorldManager.getInstance().save();
@@ -385,10 +386,10 @@ public class ModCommands {
                     var lobby = WorldManager.getInstance().getData().getLobbySpawn();
                     if (lobby != null) {
                         // Teleport to the lobby's stored coordinates, not the dimension's world spawn
-                        ResourceLocation dimLoc = ResourceLocation.tryParse(lobby.dimension);
+                        Identifier dimLoc = Identifier.tryParse(lobby.dimension);
                         if (dimLoc != null) {
                             ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION, dimLoc);
-                            ServerLevel targetLevel = player.getServer().getLevel(dimKey);
+                            ServerLevel targetLevel = com.servermanagement.ServerManagementMod.getServer().getLevel(dimKey);
                             if (targetLevel != null) {
                                 player.teleportTo(targetLevel, lobby.x, lobby.y, lobby.z, java.util.Set.of(), lobby.yaw, lobby.pitch, true);
                                 context.getSource().sendSuccess(() -> Component.literal("Teleported to lobby"), false);
@@ -408,7 +409,7 @@ public class ModCommands {
         
         // SlimeHead command
         dispatcher.register(Commands.literal("slimehead")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 if (context.getSource().getEntity() instanceof ServerPlayer player) {
                     com.servermanagement.features.slimehead.SlimeHeadManager.giveSlimeHead(player);
@@ -530,7 +531,7 @@ public class ModCommands {
                 )
             )
             .then(Commands.literal("admin")
-                .requires(source -> source.hasPermission(2))
+                .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
                 .then(Commands.literal("set")
                     .then(Commands.argument("player", StringArgumentType.word())
                         .then(Commands.argument("amount", IntegerArgumentType.integer(0))
@@ -1024,7 +1025,7 @@ public class ModCommands {
         
         // Performance metrics command
         dispatcher.register(Commands.literal("smmetrics")
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(context -> {
                 String report = com.servermanagement.util.PerformanceMetrics.getInstance().getReport();
                 context.getSource().sendSuccess(() -> Component.literal(report), false);
@@ -1109,7 +1110,7 @@ public class ModCommands {
      */
     private static void registerPerformanceCommand(CommandDispatcher<net.minecraft.commands.CommandSourceStack> dispatcher, String name) {
         dispatcher.register(Commands.literal(name)
-            .requires(source -> source.hasPermission(2))
+            .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
             .executes(ctx -> executePerformanceStatus(ctx.getSource()))
             .then(Commands.literal("status")
                 .executes(ctx -> executePerformanceStatus(ctx.getSource())))

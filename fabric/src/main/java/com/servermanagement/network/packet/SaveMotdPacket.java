@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 public record SaveMotdPacket(String motdText) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SaveMotdPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "save_motd_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "save_motd_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveMotdPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveMotdPacket::new);
@@ -38,7 +38,7 @@ public record SaveMotdPacket(String motdText) implements net.minecraft.network.p
             if (player == null) {
                 return;
             }
-            if (!player.hasPermissions(2)) {
+            if (!player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 LOGGER.warn("Player {} attempted to change MOTD without permission", player.getName().getString());
                 return;
             }

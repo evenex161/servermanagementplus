@@ -670,8 +670,8 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         if (minecraft == null || minecraft.player == null) return 0.0;
         double total = 0.0;
         for (int slot : selectedPaymentSlots) {
-            if (slot >= 0 && slot < minecraft.player.getInventory().items.size()) {
-                ItemStack stack = minecraft.player.getInventory().items.get(slot);
+            if (slot >= 0 && slot < 36) {
+                ItemStack stack = minecraft.player.getInventory().getItem(slot);
                 if (!stack.isEmpty()) {
                     total += com.servermanagement.client.ClientMarketData.getStackPrice(stack);
                 }
@@ -1571,7 +1571,8 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         if (menu.isInventoryVisible()) {
             if (minecraft != null && minecraft.player != null) {
                 double totalValue = 0.0;
-                for (ItemStack invStack : minecraft.player.getInventory().items) {
+                for (int i = 0; i < 36; i++) {
+                    ItemStack invStack = minecraft.player.getInventory().getItem(i);
                     if (!invStack.isEmpty()) {
                         totalValue += com.servermanagement.client.ClientMarketData.getStackPrice(invStack);
                     }
@@ -1816,10 +1817,10 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
                             ItemStack priceStack = priceItem.getItemStack();
                             
                             // Small item icon
-                            guiGraphics.pose().pushPose();
-                            guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+                            guiGraphics.pose().pushMatrix();
+                            guiGraphics.pose().scale(0.75f, 0.75f);
                             guiGraphics.renderItem(priceStack, (int)(priceX / 0.75f), (int)(priceY / 0.75f));
-                            guiGraphics.pose().popPose();
+                            guiGraphics.pose().popMatrix();
                             
                             String amountText = "x" + priceItem.getAmount() + (priceItem.isUseStacks() ? "s" : "");
                             guiGraphics.drawString(this.font, 
@@ -2127,10 +2128,10 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             for (int i = 0; i < priceItems.length; i++) {
                 if (priceItems[i] != null && !priceItems[i].isEmpty()) {
                     ItemStack pStack = priceItems[i].getItemStack();
-                    guiGraphics.pose().pushPose();
-                    guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+                    guiGraphics.pose().pushMatrix();
+                    guiGraphics.pose().scale(0.75f, 0.75f);
                     guiGraphics.renderItem(pStack, (int)(infoX / 0.75f), (int)(infoY / 0.75f));
-                    guiGraphics.pose().popPose();
+                    guiGraphics.pose().popMatrix();
                     guiGraphics.drawString(this.font, 
                         Component.literal(priceItems[i].getDisplayString()),
                         infoX + 14, infoY + 2, 0xAAFFFF, true);
@@ -2619,8 +2620,8 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
                     guiGraphics.fill(slotX + slotSize - 1, slotY, slotX + slotSize, slotY + slotSize - 1, 0xFF55FF55);
                 }
                 
-                if (slotIdx < inv.items.size()) {
-                    ItemStack stack = inv.items.get(slotIdx);
+                if (slotIdx < 36) {
+                    ItemStack stack = inv.getItem(slotIdx);
                     if (!stack.isEmpty()) {
                         guiGraphics.renderItem(stack, slotX + 1, slotY + 1);
                         guiGraphics.renderItemDecorations(this.font, stack, slotX + 1, slotY + 1);
@@ -2661,14 +2662,18 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     }
     
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
         // The screen is rendered through ScalableContainerScreen's pose-stack
         // scale; widgets/slots receive design-space coords because the base
+        // class inverts them inside its own mouseClicked. But this override
+        double mouseX = event.x();
         // class inverts them inside its own mouseClicked. But this override
         // is dispatched FIRST with raw screen-pixel coords, so any custom
         // hit-tests below must operate in design space too — otherwise at
         // non-1.0 GUI scales (Auto / Scale 4 / Scale 5 on small windows)
         // the price-item slots and BUY_CONFIRM payment grid stop responding.
+        double mouseY = event.y();
+        int button = event.button();
         double designMouseX = inverseMouseX(mouseX);
         double designMouseY = inverseMouseY(mouseY);
 
@@ -2697,10 +2702,9 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
                         designMouseY >= slotY && designMouseY < slotY + slotSize) {
                         int slotIdx = row < 3 ? 9 + (row * 9) + col : col;
                         
-                        // Only toggle if slot has an item with value
                         if (minecraft != null && minecraft.player != null && 
-                            slotIdx < minecraft.player.getInventory().items.size()) {
-                            ItemStack stack = minecraft.player.getInventory().items.get(slotIdx);
+                            slotIdx < 36) {
+                            ItemStack stack = minecraft.player.getInventory().getItem(slotIdx);
                             if (!stack.isEmpty() && com.servermanagement.client.ClientMarketData.getStackPrice(stack) > 0) {
                                 if (selectedPaymentSlots.contains(slotIdx)) {
                                     selectedPaymentSlots.remove(slotIdx);
@@ -2736,7 +2740,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         
         // MAKE_OFFER slots are now handled by the container system (real slots)
         
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
     
     /**
@@ -2811,41 +2815,46 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     }
     
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        int keyCode = event.key();
+        int scanCode = event.scancode();
+        int modifiers = event.modifiers();
         // Check moneyPriceBox if it's visible and focused
-        if (moneyPriceBox != null && moneyPriceBox.isFocused() && moneyPriceBox.keyPressed(keyCode, scanCode, modifiers)) {
+        if (moneyPriceBox != null && moneyPriceBox.isFocused() && moneyPriceBox.keyPressed(event)) {
             return true;
         }
         
         // Check priceAmountBoxes if they're visible and focused
         if (priceAmountBoxes != null) {
             for (EditBox box : priceAmountBoxes) {
-                if (box != null && box.isFocused() && box.keyPressed(keyCode, scanCode, modifiers)) {
+                if (box != null && box.isFocused() && box.keyPressed(event)) {
                     return true;
                 }
             }
         }
         
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
     
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+        char codePoint = (char) event.codepoint();
+        int modifiers = event.modifiers();
         // Check moneyPriceBox if it's visible and focused
-        if (moneyPriceBox != null && moneyPriceBox.isFocused() && moneyPriceBox.charTyped(codePoint, modifiers)) {
+        if (moneyPriceBox != null && moneyPriceBox.isFocused() && moneyPriceBox.charTyped(event)) {
             return true;
         }
         
         // Check priceAmountBoxes if they're visible and focused
         if (priceAmountBoxes != null) {
             for (EditBox box : priceAmountBoxes) {
-                if (box != null && box.isFocused() && box.charTyped(codePoint, modifiers)) {
+                if (box != null && box.isFocused() && box.charTyped(event)) {
                     return true;
                 }
             }
         }
         
-        return super.charTyped(codePoint, modifiers);
+        return super.charTyped(event);
     }
     
     @Override

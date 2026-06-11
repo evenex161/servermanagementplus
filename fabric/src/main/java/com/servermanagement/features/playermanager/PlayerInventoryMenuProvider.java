@@ -103,14 +103,6 @@ public class PlayerInventoryMenuProvider implements MenuProvider {
             }
         }
         
-        @Override
-        public void startOpen(Player player) {
-            // No special behavior needed
-        }
-        
-        @Override
-        public void stopOpen(Player player) {
-            // No special behavior needed
-        }
     }
 }
+

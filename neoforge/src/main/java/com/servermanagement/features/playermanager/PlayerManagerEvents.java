@@ -29,7 +29,7 @@ public class PlayerManagerEvents {
         // italic+gray spectator styling in tab list
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             // Delay by 1 tick so vanilla finishes sending initial player info first
-            player.getServer().execute(() -> PlayerManagerSingleton.onPlayerJoined(player));
+            player.level().getServer().execute(() -> PlayerManagerSingleton.onPlayerJoined(player));
         }
     }
 

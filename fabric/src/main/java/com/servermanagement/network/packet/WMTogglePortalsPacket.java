@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String portalType, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<WMTogglePortalsPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "w_m_toggle_portals_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "w_m_toggle_portals_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, WMTogglePortalsPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), WMTogglePortalsPacket::new);
@@ -27,7 +27,7 @@ public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String 
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            if (player != null && player.hasPermissions(2)) {
+            if (player != null && player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) {
                 // Check if this packet should be processed (timestamp validation)
                 String actionKey = "portal_" + dimensionId + "_" + portalType;
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
@@ -43,9 +43,9 @@ public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String 
                     com.servermanagement.features.worldmanager.WorldManager.setPortalsByType(dimensionId, portalType, enabled);
 
                     // Broadcast the change to all players
-                    if (player.getServer() != null) {
+                    if (player.level().getServer() != null) {
                         com.servermanagement.features.worldmanager.WorldManager.broadcastPortalChange(
-                            player.getServer(), dimensionId, portalType, enabled);
+                            player.level().getServer(), dimensionId, portalType, enabled);
                     }
                 }
             }

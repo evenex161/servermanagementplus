@@ -3,7 +3,7 @@ package com.servermanagement.network.packet;
 import com.servermanagement.gui.gambling.MineStacksMenu;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -14,7 +14,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet to sync MineStacks betting slot state from client to server
  */
 public record SyncBettingSlotStatePacket(boolean bettingSlotActive) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncBettingSlotStatePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_betting_slot_state"));
+    public static final CustomPacketPayload.Type<SyncBettingSlotStatePacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_betting_slot_state"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncBettingSlotStatePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncBettingSlotStatePacket::new);
 
     @Override

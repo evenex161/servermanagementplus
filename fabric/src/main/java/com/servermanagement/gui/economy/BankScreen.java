@@ -76,7 +76,7 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
 
         // ── Row 1: Header buttons ──
         // Dashboard (admin only)
-        if (this.minecraft != null && this.minecraft.player != null && this.minecraft.player.hasPermissions(2)) {
+        if (this.minecraft != null && this.minecraft.player != null && this.minecraft.player.canUseGameMasterBlocks()) {
             this.addRenderableWidget(new ModernButton(
                 x0 + 5, y0 + 5, 90, 18,
                 Component.literal("← Dashboard"),
@@ -672,26 +672,26 @@ public class BankScreen extends ScalableContainerScreen<BankMenu> {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent keyEvent) {
         // If any EditBox is focused, prevent keybinds
         if (isAnyFieldFocused()) {
-            if (getFocusedField() != null && getFocusedField().keyPressed(keyCode, scanCode, modifiers)) {
+            if (getFocusedField() != null && getFocusedField().keyPressed(keyEvent)) {
                 return true;
             }
             return true; // block keybinds like E
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(keyEvent);
     }
 
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent charEvent) {
         if (isAnyFieldFocused()) {
             EditBox focused = getFocusedField();
-            if (focused != null && focused.charTyped(codePoint, modifiers)) {
+            if (focused != null && focused.charTyped(charEvent)) {
                 return true;
             }
         }
-        return super.charTyped(codePoint, modifiers);
+        return super.charTyped(charEvent);
     }
 
     private boolean isAnyFieldFocused() {

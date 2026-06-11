@@ -139,7 +139,8 @@ public class ConsoleScreen extends ScalableContainerScreen<ConsoleMenu> {
     }
     
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        int keyCode = event.key();
         // When command input is focused, handle text input specially
         if (this.commandInput.isFocused()) {
             // Enter key sends command
@@ -153,18 +154,18 @@ public class ConsoleScreen extends ScalableContainerScreen<ConsoleMenu> {
                 return true;
             }
             // Let the EditBox handle all other keys (prevents keybind activation)
-            return this.commandInput.keyPressed(keyCode, scanCode, modifiers);
+            return this.commandInput.keyPressed(event);
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
     
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
         // When command input is focused, all typed characters go to the input box
         if (this.commandInput.isFocused()) {
-            return this.commandInput.charTyped(codePoint, modifiers);
+            return this.commandInput.charTyped(event);
         }
-        return super.charTyped(codePoint, modifiers);
+        return super.charTyped(event);
     }
     
     @Override

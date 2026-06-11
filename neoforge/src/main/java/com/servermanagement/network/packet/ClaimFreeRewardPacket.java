@@ -9,7 +9,7 @@ import com.servermanagement.features.economy.Transaction;
 import com.servermanagement.features.economy.TransactionType;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +22,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Packet sent from client to server to claim the free daily reward
  */
 public record ClaimFreeRewardPacket() implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<ClaimFreeRewardPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "claim_free_reward"));
+    public static final CustomPacketPayload.Type<ClaimFreeRewardPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "claim_free_reward"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, ClaimFreeRewardPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), ClaimFreeRewardPacket::new);
 
     @Override
@@ -42,7 +42,7 @@ public record ClaimFreeRewardPacket() implements CustomPacketPayload {
             ServerPlayer player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
             if (player == null) return;
 
-            EconomyManager economyManager = EconomyManager.getInstance(player.server);
+            EconomyManager economyManager = EconomyManager.getInstance(player.level().getServer());
             if (economyManager == null) return;
 
             PlayerDailyTasks playerTasks = economyManager.getDailyTasksManager()

@@ -44,7 +44,7 @@ public class RedstoneThrottleHandler {
         }
 
         // Track and limit updates per world
-        String worldKey = serverLevel.dimension().location().toString();
+        String worldKey = serverLevel.dimension().identifier().toString();
         AtomicInteger counter = updatesPerWorld.computeIfAbsent(worldKey, k -> new AtomicInteger(0));
 
         int limit = ModConfig.REDSTONE_UPDATES_PER_TICK.get();

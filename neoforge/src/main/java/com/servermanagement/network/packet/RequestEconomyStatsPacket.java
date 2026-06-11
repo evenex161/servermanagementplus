@@ -2,7 +2,7 @@ package com.servermanagement.network.packet;
 
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Server responds with SyncEconomyStatsPacket.
  */
 public record RequestEconomyStatsPacket() implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<RequestEconomyStatsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "request_economy_stats"));
+    public static final CustomPacketPayload.Type<RequestEconomyStatsPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "request_economy_stats"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RequestEconomyStatsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RequestEconomyStatsPacket::new);
 
     @Override
@@ -31,8 +31,8 @@ public record RequestEconomyStatsPacket() implements CustomPacketPayload {
             ServerPlayer player = ((context.player() instanceof net.minecraft.server.level.ServerPlayer) ? (net.minecraft.server.level.ServerPlayer) context.player() : null);
             if (player == null) return;
             // Only admins can request economy stats
-            if (!player.hasPermissions(2)) return;
-            SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
+            if (!player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_MODERATOR)) return;
+            SyncEconomyStatsPacket.syncToPlayer(player, player.level().getServer());
         });
         // packet handled
     }

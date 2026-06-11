@@ -23,7 +23,7 @@ import java.util.Map;
 public record PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<PurchaseListingPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "purchase_listing_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "purchase_listing_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, PurchaseListingPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), PurchaseListingPacket::new);
@@ -116,7 +116,8 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                 requiredItems.put(priceItem, required);
                 
                 int count = 0;
-                for (ItemStack stack : buyer.getInventory().items) {
+                for (int i = 0; i < 36; i++) {
+                    ItemStack stack = buyer.getInventory().getItem(i);
                     if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
                         count += stack.getCount();
                     }
@@ -147,11 +148,11 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                 if (totalMoneyPrice > 0) {
                     java.util.Set<Integer> validatedSlots = new java.util.HashSet<>();
                     for (int slot : this.selectedSlots) {
-                        if (slot < 0 || slot >= buyer.getInventory().items.size()) continue;
+                        if (slot < 0 || slot >= 36) continue;
                         if (validatedSlots.contains(slot)) continue; // ignore duplicates
                         validatedSlots.add(slot);
                         
-                        ItemStack stack = buyer.getInventory().items.get(slot);
+                        ItemStack stack = buyer.getInventory().getItem(slot);
                         if (!stack.isEmpty()) {
                             itemPaymentTotal += pricingEngine.getStackPrice(stack);
                         }
@@ -185,10 +186,10 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                     // ITEMS mode: remove selected items, refund excess to balance
                     java.util.Set<Integer> processedSlots = new java.util.HashSet<>();
                     for (int slot : this.selectedSlots) {
-                        if (slot < 0 || slot >= buyer.getInventory().items.size()) continue;
+                        if (slot < 0 || slot >= 36) continue;
                         if (processedSlots.contains(slot)) continue;
                         processedSlots.add(slot);
-                        buyer.getInventory().items.set(slot, ItemStack.EMPTY);
+                        buyer.getInventory().setItem(slot, ItemStack.EMPTY);
                     }
                     
                     buyerAccount.addTransaction(new Transaction(
@@ -212,8 +213,8 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
                 PriceItemEntry priceItem = entry.getKey();
                 int remaining = entry.getValue();
                 
-                for (int i = 0; i < buyer.getInventory().items.size() && remaining > 0; i++) {
-                    ItemStack stack = buyer.getInventory().items.get(i);
+                for (int i = 0; i < 36 && remaining > 0; i++) {
+                    ItemStack stack = buyer.getInventory().getItem(i);
                     if (ItemStack.isSameItemSameComponents(stack, priceItem.getItemStack())) {
                         int toRemove = Math.min(remaining, stack.getCount());
                         stack.shrink(toRemove);
@@ -243,7 +244,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
             }
             
             // 5. Give price items to seller
-            ServerPlayer seller = buyer.server.getPlayerList().getPlayer(listing.getSellerId());
+            ServerPlayer seller = buyer.level().getServer().getPlayerList().getPlayer(listing.getSellerId());
             for (PriceItemEntry priceItem : priceItems) {
                 ItemStack itemToGive = priceItem.getItemStack().copy();
                 int amount = priceItem.isUseStacks() ? 
@@ -298,7 +299,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
             }
             
             // 9. Sync updated listings to all players
-            mineBayManager.syncListingsToAllPlayers(buyer.server);
+            mineBayManager.syncListingsToAllPlayers(buyer.level().getServer());
             
             // 10. Sync updated balances
             com.servermanagement.network.ModNetworking.sendToPlayer(

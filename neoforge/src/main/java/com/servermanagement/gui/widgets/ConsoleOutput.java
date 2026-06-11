@@ -126,7 +126,7 @@ public class ConsoleOutput extends AbstractWidget {
             // Shift+scroll = horizontal scroll
             boolean shiftHeld = net.minecraft.client.Minecraft.getInstance().getWindow() != null &&
                 org.lwjgl.glfw.GLFW.glfwGetKey(
-                    net.minecraft.client.Minecraft.getInstance().getWindow().getWindow(),
+                    net.minecraft.client.Minecraft.getInstance().getWindow().handle(),
                     org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_SHIFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
             
             if (shiftHeld) {

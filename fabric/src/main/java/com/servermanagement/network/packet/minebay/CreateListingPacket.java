@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, double marginPercent, MineBayListing.OfferType offerType, List<PriceItemEntry> priceItems) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<CreateListingPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "create_listing_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "create_listing_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, CreateListingPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), CreateListingPacket::new);
@@ -97,7 +97,7 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
                 // Calculate dynamic market pricing on the server
                 com.servermanagement.features.economy.MarketPricingEngine pricingEngine = 
                     com.servermanagement.features.economy.MarketPricingEngine.getInstance();
-                pricingEngine.ensureFresh(player.server);
+                pricingEngine.ensureFresh(player.level().getServer());
                 
                 double baseMarketPrice = pricingEngine.getStackPrice(serverItem);
                 double clampedMargin = Math.max(-50.0, Math.min(200.0, marginPercent));
@@ -152,7 +152,7 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
                 );
                 
                 // Sync listings to all online players immediately
-                manager.syncListingsToAllPlayers(player.server);
+                manager.syncListingsToAllPlayers(player.level().getServer());
             }
 
 }

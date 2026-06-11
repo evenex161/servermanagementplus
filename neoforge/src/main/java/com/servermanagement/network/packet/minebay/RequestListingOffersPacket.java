@@ -5,7 +5,7 @@ import com.servermanagement.features.minebay.MineBayManager;
 import com.servermanagement.features.minebay.MineBayOffer;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +19,7 @@ import java.util.List;
  * Only the listing owner can request this.
  */
 public record RequestListingOffersPacket(String listingId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<RequestListingOffersPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "request_listing_offers"));
+    public static final CustomPacketPayload.Type<RequestListingOffersPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "request_listing_offers"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, RequestListingOffersPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), RequestListingOffersPacket::new);
 
     @Override

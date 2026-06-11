@@ -24,7 +24,7 @@ public class ChatIsolationHandler {
             return true; // allow normal processing
         }
         
-        String senderDimension = sender.level().dimension().location().toString();
+        String senderDimension = sender.level().dimension().identifier().toString();
         
         // Build the chat message with dimension prefix
         MutableComponent dimPrefix = getDimensionPrefix(senderDimension);
@@ -41,8 +41,8 @@ public class ChatIsolationHandler {
         allowedDimensions.addAll(connections);
         
         // Send to all players in allowed dimensions
-        for (ServerPlayer player : sender.server.getPlayerList().getPlayers()) {
-            String playerDimension = player.level().dimension().location().toString();
+        for (ServerPlayer player : ServerManagementMod.getServer().getPlayerList().getPlayers()) {
+            String playerDimension = player.level().dimension().identifier().toString();
             
             if (allowedDimensions.contains(playerDimension)) {
                 player.sendSystemMessage(chatMessage);

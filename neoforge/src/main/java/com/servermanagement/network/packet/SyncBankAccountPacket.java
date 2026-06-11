@@ -4,7 +4,7 @@ import com.servermanagement.features.economy.Transaction;
 import com.servermanagement.features.economy.TransactionType;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -17,7 +17,7 @@ import java.util.UUID;
  * Packet to sync bank account data from server to client
  */
 public record SyncBankAccountPacket(double balance, List<Transaction> recentTransactions) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncBankAccountPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_bank_account"));
+    public static final CustomPacketPayload.Type<SyncBankAccountPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_bank_account"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncBankAccountPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncBankAccountPacket::new);
 
     @Override

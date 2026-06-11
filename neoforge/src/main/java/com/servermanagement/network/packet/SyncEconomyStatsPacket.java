@@ -10,7 +10,7 @@ import com.servermanagement.features.economy.Transaction;
 import com.servermanagement.features.minebay.MineBayManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
@@ -25,7 +25,7 @@ import java.util.UUID;
  * Used by the Economy Management screen's Statistics tab.
  */
 public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCirculation, double averageBalance, double richestBalance, String richestPlayerName, double inflationMultiplier, int activeListings, int totalTemplates, int enabledTemplates, int totalTransactions, int purchaseCount, int saleCount, int gamblingBetCount, int gamblingWinCount, int freeRewardCount, int transferCount, double totalPurchaseVolume, double totalSaleVolume, double totalGamblingWagered, double totalGamblingWon) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SyncEconomyStatsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_economy_stats"));
+    public static final CustomPacketPayload.Type<SyncEconomyStatsPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "sync_economy_stats"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncEconomyStatsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncEconomyStatsPacket::new);
 
     @Override
@@ -106,11 +106,8 @@ public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCircu
             if (bal > richestBalance) {
                 richestBalance = bal;
                 // Try to resolve player name
-                var profile = server.getProfileCache();
-                if (profile != null) {
-                    var optional = profile.get(entry.getKey());
-                    richestName = optional.map(p -> p.getName()).orElse("Unknown");
-                }
+                var profile = server.services().nameToIdCache().get(entry.getKey());
+                richestName = profile.map(net.minecraft.server.players.NameAndId::name).orElse("Unknown");
             }
 
             // Aggregate transactions (snapshot to avoid ConcurrentModificationException)

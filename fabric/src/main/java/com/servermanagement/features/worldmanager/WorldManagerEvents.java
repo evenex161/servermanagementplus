@@ -27,7 +27,7 @@ public class WorldManagerEvents {
         // Block portal usage if portals are disabled
         var block = level.getBlockState(pos).getBlock();
         String blockId = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block).toString();
-        String dimensionId = player.level().dimension().location().toString();
+        String dimensionId = player.level().dimension().identifier().toString();
         
         if (blockId.equals("minecraft:nether_portal")) {
             if (!WorldManager.getInstance().canUseNetherPortal(dimensionId)) {

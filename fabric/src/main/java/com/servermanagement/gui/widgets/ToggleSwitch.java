@@ -62,10 +62,20 @@ public class ToggleSwitch extends AbstractWidget {
     }
     
     @Override
-    public void onClick(double mouseX, double mouseY) {
-        this.toggled = !this.toggled;
-        com.servermanagement.gui.debug.DebugLogger.logToggleChange(this.getMessage().getString(), this.toggled);
-        this.onToggle.onToggle(this.toggled);
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        if (this.active && this.visible) {
+            double mouseX = event.x();
+            double mouseY = event.y();
+            if (mouseX >= this.getX() && mouseX < this.getX() + this.width &&
+                mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+                this.playDownSound(net.minecraft.client.Minecraft.getInstance().getSoundManager());
+                this.toggled = !this.toggled;
+                com.servermanagement.gui.debug.DebugLogger.logToggleChange(this.getMessage().getString(), this.toggled);
+                this.onToggle.onToggle(this.toggled);
+                return true;
+            }
+        }
+        return false;
     }
     
     @Override

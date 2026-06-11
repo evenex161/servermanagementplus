@@ -399,7 +399,7 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
                 if (connection != null) {
                     String selfName = mc.player != null ? mc.player.getName().getString() : "";
                     for (PlayerInfo info : connection.getOnlinePlayers()) {
-                        String name = info.getProfile().getName();
+                        String name = info.getProfile().name();
                         // Filter out the admin's own player
                         if (!name.equals(selfName)) {
                             names.add(name);
@@ -511,17 +511,17 @@ public class PlayerManagerScreen extends ScalableContainerScreen<PlayerManagerMe
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
         // Prevent inventory key (E) from closing the screen when an EditBox is focused
-        if (keyCode != 256) { // 256 = Escape — always allow closing
+        if (event.key() != 256) { // 256 = Escape — always allow closing
             if ((reasonBox != null && reasonBox.isFocused()) ||
                 (whitelistNameBox != null && whitelistNameBox.isFocused())) {
                 return reasonBox != null && reasonBox.isFocused()
-                    ? reasonBox.keyPressed(keyCode, scanCode, modifiers)
-                    : whitelistNameBox.keyPressed(keyCode, scanCode, modifiers);
+                    ? reasonBox.keyPressed(event)
+                    : whitelistNameBox.keyPressed(event);
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override

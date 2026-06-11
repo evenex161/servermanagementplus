@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 public record DeleteListingPacket(String listingId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<DeleteListingPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "delete_listing_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "delete_listing_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, DeleteListingPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), DeleteListingPacket::new);
@@ -61,7 +61,7 @@ public record DeleteListingPacket(String listingId) implements net.minecraft.net
             manager.removeListing(listingId);
             
             // Sync to all players
-            manager.syncListingsToAllPlayers(player.server);
+            manager.syncListingsToAllPlayers(player.level().getServer());
             
             player.sendSystemMessage(Component.literal("§aListing deleted successfully!"));
 

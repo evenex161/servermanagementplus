@@ -8,7 +8,7 @@ import com.servermanagement.features.economy.MoneyRequest;
 import com.servermanagement.features.economy.MoneyRequestManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * Client → Server: Create a new money request
  */
 public record SendMoneyRequestPacket(String targetPlayerName, double amount, String message) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SendMoneyRequestPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "send_money_request"));
+    public static final CustomPacketPayload.Type<SendMoneyRequestPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "send_money_request"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SendMoneyRequestPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SendMoneyRequestPacket::new);
 
     @Override
@@ -70,7 +70,7 @@ context.enqueueWork(() -> {
             }
 
             // Find target player (must be online)
-            ServerPlayer target = sender.server.getPlayerList().getPlayerByName(targetPlayerName);
+            ServerPlayer target = sender.level().getServer().getPlayerList().getPlayerByName(targetPlayerName);
             if (target == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                     "§cPlayer not found: " + targetPlayerName));
@@ -84,7 +84,7 @@ context.enqueueWork(() -> {
             }
 
             // Create the request
-            EconomyManager econ = EconomyManager.getInstance(sender.server);
+            EconomyManager econ = EconomyManager.getInstance(sender.level().getServer());
             MoneyRequestManager reqManager = econ.getRequestManager();
             MoneyRequest request = reqManager.createRequest(
                 sender.getUUID(), target.getUUID(), this.amount, safeMessage);
@@ -95,7 +95,7 @@ context.enqueueWork(() -> {
                 return;
             }
 
-            reqManager.save(sender.server);
+            reqManager.save(sender.level().getServer());
 
             sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                 String.format("§aRequest sent to %s for $%.2f", target.getName().getString(), this.amount)));
@@ -139,10 +139,10 @@ context.enqueueWork(() -> {
     }
 
     private static String getPlayerName(ServerPlayer context, java.util.UUID uuid) {
-        ServerPlayer p = context.server.getPlayerList().getPlayer(uuid);
+        ServerPlayer p = context.level().getServer().getPlayerList().getPlayer(uuid);
         if (p != null) return p.getName().getString();
         // Fallback: try usercache
-        var profile = context.server.getProfileCache().get(uuid);
-        return profile.map(com.mojang.authlib.GameProfile::getName).orElse("Unknown");
+        var profile = context.level().getServer().services().nameToIdCache().get(uuid);
+        return profile.map(net.minecraft.server.players.NameAndId::name).orElse("Unknown");
     }
 }

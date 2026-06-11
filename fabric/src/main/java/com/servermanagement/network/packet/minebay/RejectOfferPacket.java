@@ -18,7 +18,7 @@ import net.minecraft.world.item.ItemStack;
 public record RejectOfferPacket(String listingId, String offerId) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RejectOfferPacket> TYPE = 
-        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "reject_offer_packet"));
+        new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.Identifier.fromNamespaceAndPath("servermanagement", "reject_offer_packet"));
 
     public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, RejectOfferPacket> STREAM_CODEC = 
         net.minecraft.network.codec.StreamCodec.of((buf, pkt) -> pkt.encode(buf), RejectOfferPacket::new);
@@ -80,7 +80,7 @@ public record RejectOfferPacket(String listingId, String offerId) implements net
             }
             
             // Return escrowed items to buyer
-            ServerPlayer buyer = seller.server.getPlayerList().getPlayer(rejectedOffer.getBuyerId());
+            ServerPlayer buyer = seller.level().getServer().getPlayerList().getPlayer(rejectedOffer.getBuyerId());
             for (ItemStack offeredStack : rejectedOffer.getItemOffers()) {
                 if (offeredStack.isEmpty()) continue;
                 ItemStack stack = offeredStack.copy();

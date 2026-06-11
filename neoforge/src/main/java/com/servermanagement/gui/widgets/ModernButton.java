@@ -47,11 +47,7 @@ public class ModernButton extends Button {
     }
     
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        if (!this.visible) {
-            return;
-        }
-        
+    protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         boolean hovered = this.isHoveredOrFocused();
         int color = hovered ? style.hoverColor : style.baseColor;
         
@@ -89,7 +85,7 @@ public class ModernButton extends Button {
         guiGraphics.fill(this.getX(), this.getY(), this.getX() + 1, this.getY() + this.height, borderColor);
         // Right border
         guiGraphics.fill(this.getX() + this.width - 1, this.getY(), this.getX() + this.width, this.getY() + this.height, borderColor);
-        
+
         // Render text centered
         int textColor = this.active ? style.textColor : 0x808080;
         guiGraphics.drawCenteredString(

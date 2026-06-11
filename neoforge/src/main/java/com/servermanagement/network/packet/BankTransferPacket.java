@@ -4,7 +4,7 @@ import com.servermanagement.features.economy.BankAccount;
 import com.servermanagement.features.economy.EconomyManager;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * Packet for transferring money between players
  */
 public record BankTransferPacket(String targetPlayerName, double amount) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<BankTransferPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "bank_transfer"));
+    public static final CustomPacketPayload.Type<BankTransferPacket> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("servermanagement", "bank_transfer"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, BankTransferPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), BankTransferPacket::new);
 
     @Override
@@ -68,7 +68,7 @@ context.enqueueWork(() -> {
             }
             
             // Get target player
-            ServerPlayer target = sender.server.getPlayerList().getPlayerByName(targetPlayerName);
+            ServerPlayer target = sender.level().getServer().getPlayerList().getPlayerByName(targetPlayerName);
             if (target == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                     "§cPlayer not found: " + targetPlayerName));
@@ -82,7 +82,7 @@ context.enqueueWork(() -> {
             }
             
             // Perform transfer (transfer method only takes 3 parameters)
-            EconomyManager manager = EconomyManager.getInstance(sender.server);
+            EconomyManager manager = EconomyManager.getInstance(sender.level().getServer());
             boolean success = manager.transfer(sender.getUUID(), target.getUUID(), amount);
             
             if (success) {

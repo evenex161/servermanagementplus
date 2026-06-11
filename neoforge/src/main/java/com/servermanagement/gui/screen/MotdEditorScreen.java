@@ -538,7 +538,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
         for (int i = 0; i < FORMAT_NAMES.length; i++) {
             int bx = fmtStartX + i * fmtBtnSpacing;
             if (mouseX >= bx && mouseX < bx + fmtBtnW && mouseY >= fmtY && mouseY < fmtY + 18) {
-                guiGraphics.renderTooltip(this.font, Component.literal("&" + FORMAT_CODES[i] + " - " + FORMAT_NAMES[i]), mouseX, mouseY);
+                guiGraphics.setComponentTooltipForNextFrame(this.font, java.util.List.<Component>of(Component.literal("&" + FORMAT_CODES[i] + " - " + FORMAT_NAMES[i])), mouseX, mouseY);
             }
         }
 
@@ -579,8 +579,8 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
      */
     private void renderConfirmDialog(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         // Push pose to render above all other widgets
-        guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(0, 0, 200);
+        guiGraphics.pose().pushMatrix();
+        guiGraphics.pose().translate(0, 0);
 
         // Semi-transparent overlay
         guiGraphics.fill(0, 0, this.width, this.height, 0x80000000);
@@ -627,7 +627,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
         String discardText = "Discard & Exit";
         guiGraphics.drawString(this.font, discardText, discardX + (btnW - this.font.width(discardText)) / 2, btnY + 6, 0xFFFFFF, true);
 
-        guiGraphics.pose().popPose();
+        guiGraphics.pose().popMatrix();
     }
 
     /**
@@ -1026,7 +1026,8 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        int keyCode = event.key();
         // Handle confirmation dialog input first
         if (showingConfirmDialog) {
             if (keyCode == 256) { // Escape dismisses the dialog
@@ -1046,30 +1047,33 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
         // When an edit box is focused, route keys directly to it
         // instead of through AbstractContainerScreen which would close on 'E'
         if (this.line1Box != null && this.line1Box.isFocused()) {
-            return this.line1Box.keyPressed(keyCode, scanCode, modifiers) || true;
+            return this.line1Box.keyPressed(event) || true;
         }
         if (this.line2Box != null && this.line2Box.isFocused()) {
-            return this.line2Box.keyPressed(keyCode, scanCode, modifiers) || true;
+            return this.line2Box.keyPressed(event) || true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char codePoint, int modifiers) {
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
         if (showingConfirmDialog) {
             return true; // Consume all chars while dialog is showing
         }
         if (this.line1Box != null && this.line1Box.isFocused()) {
-            return this.line1Box.charTyped(codePoint, modifiers);
+            return this.line1Box.charTyped(event);
         }
         if (this.line2Box != null && this.line2Box.isFocused()) {
-            return this.line2Box.charTyped(codePoint, modifiers);
+            return this.line2Box.charTyped(event);
         }
-        return super.charTyped(codePoint, modifiers);
+        return super.charTyped(event);
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x();
+        double mouseY = event.y();
+        int button = event.button();
         if (showingConfirmDialog) {
             // Convert raw screen-pixel coords to design-space because the
             // screen is rendered through ScalableContainerScreen's pose
@@ -1111,7 +1115,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
             // Consume click anywhere else on the overlay
             return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
@@ -1162,14 +1166,23 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
 
             // Tooltip on hover
             if (hovered) {
-                guiGraphics.renderTooltip(net.minecraft.client.Minecraft.getInstance().font,
-                        Component.literal(colorName), mouseX, mouseY);
+                guiGraphics.setComponentTooltipForNextFrame(net.minecraft.client.Minecraft.getInstance().font,
+                        java.util.List.<Component>of(Component.literal(colorName)), mouseX, mouseY);
             }
         }
 
         @Override
-        public void onClick(double mouseX, double mouseY) {
-            this.onPress.run();
+        public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+            if (this.active && this.visible) {
+                double mouseX = event.x();
+                double mouseY = event.y();
+                if (mouseX >= this.getX() && mouseX < this.getX() + this.width &&
+                    mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+                    this.onPress.run();
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override
