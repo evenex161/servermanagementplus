@@ -1,0 +1,110 @@
+
+[Meta]
+	#Config version for auto-migration. DO NOT EDIT MANUALLY!
+	#Range: > 0
+	configVersion = 1
+
+["World Manager"]
+	#Enable World Manager features
+	worldManagerEnabled = true
+	#Enable Nether portal toggle
+	netherPortalsEnabled = true
+	#Enable End portal toggle
+	endPortalsEnabled = true
+	#Enable world timers
+	worldTimersEnabled = true
+	#Enable chat isolation per world
+	chatIsolationEnabled = true
+	#Enable tab list isolation per world
+	tabIsolationEnabled = true
+	#Cooldown in seconds between world teleports
+	#Range: 0 ~ 300
+	teleportCooldown = 5
+
+["Player Manager"]
+	#Enable Player Manager features
+	playerManagerEnabled = true
+	#Enable spectate command
+	spectateEnabled = true
+	#Enable view inventory command
+	viewInventoryEnabled = true
+	#Enable slime heads feature
+	slimeHeadsEnabled = true
+
+[Economy]
+	#Starting balance for new players
+	#Range: 0.0 ~ 1000000.0
+	startingBalance = 1000.0
+	#Enable AES-256-GCM encryption for economy data
+	encryptedStorage = true
+	#Maximum number of transactions stored per player
+	#Range: 10 ~ 10000
+	transactionHistoryLimit = 100
+	#Maximum number of active MineBay listings per player
+	#Range: 1 ~ 100
+	maxListingsPerPlayer = 10
+
+["Server Performance"]
+	#Enable the Server Performance optimization system
+	serverPerformanceEnabled = true
+
+	["Server Performance"."Item Merging"]
+		#Merge nearby dropped item entities of the same type to reduce entity count
+		itemMergingEnabled = true
+		#Radius in blocks to search for mergeable items (default: 3.0)
+		#Range: 1.0 ~ 10.0
+		itemMergeRadius = 3.0
+		#How often to run item merging, in ticks (20 = once per second)
+		#Range: 10 ~ 200
+		itemMergeInterval = 40
+
+	["Server Performance"."Mob Spawn Limiter"]
+		#Enable mob spawn rate limiting to reduce entity count
+		mobSpawnLimiterEnabled = false
+		#Mob cap multiplier as percentage of vanilla (100 = vanilla, 50 = half, 25 = quarter)
+		#Range: 10 ~ 100
+		mobCapMultiplier = 75
+
+	["Server Performance"."Entity Activation Range"]
+		#Only fully tick entities within a certain range of players. Distant entities tick at reduced frequency.
+		entityActivationRangeEnabled = false
+		#Range in blocks for full monster AI ticking (default: 32)
+		#Range: 8 ~ 128
+		monsterActivationRange = 32
+		#Range in blocks for full animal AI ticking (default: 16)
+		#Range: 8 ~ 128
+		animalActivationRange = 16
+		#Range in blocks for full misc entity ticking (default: 8)
+		#Range: 4 ~ 64
+		miscActivationRange = 8
+
+	["Server Performance"."Villager Throttle"]
+		#Reduce villager AI tick frequency to improve performance in villages
+		villagerThrottleEnabled = false
+		#Only run full villager AI every N ticks (vanilla = 1, recommended: 3-4)
+		#Range: 1 ~ 10
+		villagerTickInterval = 3
+
+	["Server Performance"."Redstone Throttle"]
+		#Limit the number of redstone updates per tick to prevent lag machines
+		redstoneThrottleEnabled = false
+		#Maximum redstone neighbor updates per tick per world (default: 1000)
+		#Range: 100 ~ 100000
+		redstoneUpdatesPerTick = 1000
+
+	["Server Performance"."TPS Monitor"]
+		#Enable real-time TPS monitoring with warnings and auto-optimization
+		tpsMonitorEnabled = true
+		#TPS below this value triggers a warning to admins (default: 18.0)
+		#Range: 5.0 ~ 20.0
+		tpsWarningThreshold = 18.0
+		#TPS below this value triggers critical alerts (default: 15.0)
+		#Range: 5.0 ~ 20.0
+		tpsCriticalThreshold = 15.0
+		#Automatically enable more aggressive optimizations when TPS drops below critical threshold
+		tpsAutoOptimize = false
+
+[MOTD]
+	#Enable the MOTD Editor feature
+	motdEnabled = true
+

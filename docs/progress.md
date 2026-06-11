@@ -609,3 +609,13 @@ See session_summary.md and CHANGELOG_v2.1.0.md > Phase 2.4. Five user-reported b
   3. Missing auto-backup functionality before config migrations.
   4. Recipe pricing convergence loop warnings.
 
+---
+
+## Mod JAR Checking & Directory Clean Up (2026-06-11)
+
+- Checked the case-insensitive mod JAR lookup pattern in `ModFileTransferManager` for Forge and Fabric, confirming it matches new MultiLoader build names (e.g. `ServerManagement+-forge-1.20.1-2.1.0.jar`) case-insensitively.
+- Verified that `CurseForgeUpdateChecker` splits and parses semantic versions correctly from the file names.
+- Cleaned up the repository by verifying that the duplicate `src.bak/` directory is completely removed.
+- Updated [GEMINI.md](file:///c:/VS%20Workspace/Projects/Minecraft Mods/Servermanagement-Forge/GEMINI.md) to move runtime loader verification tasks to a dedicated v2.x.x todo list.
+
+
