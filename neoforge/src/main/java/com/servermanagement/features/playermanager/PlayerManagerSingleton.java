@@ -100,7 +100,7 @@ public class PlayerManagerSingleton {
         } else {
             
             spectator.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(), 
-                target.getYRot(), target.getXRot());
+                Set.of(), target.getYRot(), target.getXRot(), true);
             
             // Use a multi-tick delay before calling setCamera.
             // After cross-dimension teleport, the client receives a respawn packet
@@ -145,7 +145,7 @@ public class PlayerManagerSingleton {
                 );
                 var level = getInstance().server.getLevel(dimensionKey);
                 if (level != null) {
-                    player.teleportTo(level, data.x, data.y, data.z, player.getYRot(), player.getXRot());
+                    player.teleportTo(level, data.x, data.y, data.z, Set.of(), player.getYRot(), player.getXRot(), true);
                 }
             }
             
@@ -218,7 +218,7 @@ public class PlayerManagerSingleton {
                     );
                     var level = instance.server.getLevel(dimensionKey);
                     if (level != null) {
-                        spectator.teleportTo(level, data.x, data.y, data.z, spectator.getYRot(), spectator.getXRot());
+                        spectator.teleportTo(level, data.x, data.y, data.z, java.util.Set.of(), spectator.getYRot(), spectator.getXRot(), true);
                     }
                 } else {
                     spectator.setGameMode(data.gameMode);
@@ -263,7 +263,7 @@ public class PlayerManagerSingleton {
                     );
                     var origLevel = instance.server.getLevel(dimKey);
                     if (origLevel != null) {
-                        spectator.teleportTo(origLevel, data.x, data.y, data.z, spectator.getYRot(), spectator.getXRot());
+                        spectator.teleportTo(origLevel, data.x, data.y, data.z, Set.of(), spectator.getYRot(), spectator.getXRot(), true);
                     }
                 }
                 
@@ -274,7 +274,7 @@ public class PlayerManagerSingleton {
                     // keeping the saved original position for when spectating ends.
                     data.stealthMode = false;
                     spectator.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(),
-                        target.getYRot(), target.getXRot());
+                        Set.of(), target.getYRot(), target.getXRot(), true);
                     data.pendingReattachTicks = 10;
                     // Re-broadcast fake game mode so the teleport doesn't reveal spectator status
                     broadcastFakeGameMode(spectator, data.gameMode);
@@ -331,7 +331,7 @@ public class PlayerManagerSingleton {
                     );
                     var origLevel = instance.server.getLevel(dimKey);
                     if (origLevel != null) {
-                        spectator.teleportTo(origLevel, data.x, data.y, data.z, spectator.getYRot(), spectator.getXRot());
+                        spectator.teleportTo(origLevel, data.x, data.y, data.z, Set.of(), spectator.getYRot(), spectator.getXRot(), true);
                     }
                     // Re-broadcast fake game mode after dimension change
                     broadcastFakeGameMode(spectator, data.gameMode);
@@ -347,7 +347,7 @@ public class PlayerManagerSingleton {
                     // Reset camera, teleport to target's dimension, start settle period
                     spectator.setCamera(spectator);
                     spectator.teleportTo(target.serverLevel(), target.getX(), target.getY(), target.getZ(),
-                        target.getYRot(), target.getXRot());
+                        Set.of(), target.getYRot(), target.getXRot(), true);
                     data.pendingReattachTicks = 10;
                 } else {
                     if (spectator.getCamera() != target) {

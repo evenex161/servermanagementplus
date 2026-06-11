@@ -5,7 +5,7 @@ import com.servermanagement.features.worldmanager.PortalEventHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.level.portal.TeleportTransition;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,18 +17,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * happens and may be cancelled. Fabric only exposes
  * {@code ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD}, which is
  * post-travel and forces an ugly teleport-back. Inject at the head of
- * {@link Entity#changeDimension(DimensionTransition)} and short-circuit
+ * {@code Entity#changeDimension(TeleportTransition)} and short-circuit
  * before the player actually moves when {@link PortalEventHandler} says no.
  */
 @Mixin(Entity.class)
 public abstract class EntityChangeDimensionMixin {
 
     @Inject(
-            method = "changeDimension(Lnet/minecraft/world/level/portal/DimensionTransition;)Lnet/minecraft/world/entity/Entity;",
+            method = "changeDimension(Lnet/minecraft/world/level/portal/TeleportTransition;)Lnet/minecraft/world/entity/Entity;",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void servermanagement$blockPortalTravel(DimensionTransition transition,
+    private void servermanagement$blockPortalTravel(TeleportTransition transition,
                                                     CallbackInfoReturnable<Entity> cir) {
         Entity self = (Entity) (Object) this;
         if (!(self instanceof ServerPlayer)) {

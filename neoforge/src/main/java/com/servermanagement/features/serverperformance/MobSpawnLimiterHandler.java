@@ -3,7 +3,7 @@ package com.servermanagement.features.serverperformance;
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -21,8 +21,8 @@ public class MobSpawnLimiterHandler {
         if (!ModConfig.MOB_SPAWN_LIMITER_ENABLED.get()) return;
 
         // Only limit natural spawns, not spawners/commands/etc.
-        MobSpawnType spawnType = event.getSpawnType();
-        if (spawnType != MobSpawnType.NATURAL && spawnType != MobSpawnType.CHUNK_GENERATION) return;
+        EntitySpawnReason spawnReason = event.getSpawnType();
+        if (spawnReason != EntitySpawnReason.NATURAL && spawnReason != EntitySpawnReason.CHUNK_GENERATION) return;
 
         ServerPerformanceManager manager = ServerPerformanceManager.getInstance();
         if (!manager.isInitialized()) return;

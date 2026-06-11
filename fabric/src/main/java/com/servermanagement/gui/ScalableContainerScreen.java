@@ -109,7 +109,7 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
         if (this.minecraft != null && this.minecraft.level == null) {
             this.renderPanorama(g, partialTick);
         }
-        this.renderBlurredBackground(partialTick);
+        this.renderBlurredBackground();
         this.renderMenuBackground(g);
 
         // 2. Suppress every further renderBackground call (the one inside

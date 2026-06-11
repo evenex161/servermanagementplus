@@ -1,0 +1,6 @@
+name: '${mod_name}'
+version: '${version}'
+main: com.servermanagement.paper.ServerManagementPaperPlugin
+api-version: '1.21'
+author: '${mod_author}'
+description: '${description}'

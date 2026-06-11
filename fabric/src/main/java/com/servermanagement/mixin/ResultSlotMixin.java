@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Forge fires {@link net.minecraftforge.event.entity.player.PlayerEvent.ItemCraftedEvent}
+ * Forge previously fired `net.minecraftforge.event.entity.player.PlayerEvent.ItemCraftedEvent`
  * whenever a player removes an item from a crafting result slot. Fabric API has
  * no equivalent event, so {@code DailyTaskProgressListener.onItemCrafted} would
  * never be invoked and CRAFT_ITEMS daily tasks could not progress.

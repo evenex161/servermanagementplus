@@ -41,8 +41,8 @@ public class ItemMergeHandler {
         // Get world border bounds as AABB
         net.minecraft.world.level.border.WorldBorder wb = level.getWorldBorder();
         AABB worldBounds = new AABB(
-            wb.getMinX(), level.getMinBuildHeight(), wb.getMinZ(),
-            wb.getMaxX(), level.getMaxBuildHeight(), wb.getMaxZ()
+            wb.getMinX(), level.getMinY(), wb.getMinZ(),
+            wb.getMaxX(), level.getMaxY(), wb.getMaxZ()
         );
         List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, worldBounds);
 

@@ -399,7 +399,7 @@ public class ModCommands {
                             ResourceKey<Level> dimKey = ResourceKey.create(Registries.DIMENSION, dimLoc);
                             ServerLevel targetLevel = player.getServer().getLevel(dimKey);
                             if (targetLevel != null) {
-                                player.teleportTo(targetLevel, lobby.x, lobby.y, lobby.z, lobby.yaw, lobby.pitch);
+                                player.teleportTo(targetLevel, lobby.x, lobby.y, lobby.z, java.util.Set.of(), lobby.yaw, lobby.pitch, true);
                                 context.getSource().sendSuccess(() -> Component.literal("Teleported to lobby"), false);
                             } else {
                                 context.getSource().sendFailure(Component.literal("Lobby dimension not found"));

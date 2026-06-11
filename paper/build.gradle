@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+}
+
+version = rootProject.version
+group = rootProject.group
+
+base {
+    archivesName = "${mod_id}-paper-${minecraft_version}"
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version)
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'PaperMC'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+}
+
+configurations {
+    commonJava {
+        canBeResolved = true
+    }
+}
+
+dependencies {
+    commonJava project(path: ':common', configuration: 'commonJava')
+    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+}
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn(configurations.commonJava)
+    source(configurations.commonJava)
+}
+
+processResources {
+    var expandProps = [
+        'version': project.version,
+        'group': project.group,
+        'mod_name': mod_name,
+        'mod_author': mod_author,
+        'mod_id': mod_id,
+        'description': project.description,
+        'minecraft_version': minecraft_version
+    ]
+    filesMatching(['paper-plugin.yml']) {
+        expand expandProps
+    }
+    inputs.properties(expandProps)
+}

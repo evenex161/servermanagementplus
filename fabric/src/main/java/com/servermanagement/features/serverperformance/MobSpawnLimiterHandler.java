@@ -3,7 +3,7 @@ package com.servermanagement.features.serverperformance;
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 // Fabric: return false to cancel spawn
 public class MobSpawnLimiterHandler {
 
@@ -13,8 +13,8 @@ public class MobSpawnLimiterHandler {
     public static boolean onMobSpawnCheck(net.minecraft.world.entity.Mob mob) {
         if (!ModConfig.SERVER_PERFORMANCE_ENABLED.get()) return true;
         if (!ModConfig.MOB_SPAWN_LIMITER_ENABLED.get()) return true;
-        MobSpawnType spawnType = null;
-        if (spawnType != MobSpawnType.NATURAL && spawnType != MobSpawnType.CHUNK_GENERATION) return true;
+        EntitySpawnReason spawnReason = null;
+        if (spawnReason != EntitySpawnReason.NATURAL && spawnReason != EntitySpawnReason.CHUNK_GENERATION) return true;
         ServerPerformanceManager manager = ServerPerformanceManager.getInstance();
         if (!manager.isInitialized()) return true;
         // Reset counter each tick

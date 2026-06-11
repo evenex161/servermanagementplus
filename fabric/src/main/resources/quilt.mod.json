@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "${group}",
+    "id": "${mod_id}",
+    "version": "${version}",
+    "metadata": {
+      "name": "${mod_name}",
+      "description": "${description}",
+      "contributors": {
+        "${mod_author}": "Owner"
+      },
+      "license": "${license}"
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "init": [
+        "com.servermanagement.ServerManagementModFabric"
+      ],
+      "client_init": [
+        "com.servermanagement.client.ClientSetup"
+      ]
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "versions": ">=0.19.0"
+      },
+      {
+        "id": "quilted_fabric_api",
+        "versions": "*"
+      },
+      {
+        "id": "minecraft",
+        "versions": ">=${minecraft_version}"
+      }
+    ]
+  }
+}

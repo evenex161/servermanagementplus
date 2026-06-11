@@ -208,7 +208,7 @@ public class WorldManager {
 
         if (targetLevel != null) {
             BlockPos spawnPos = targetLevel.getSharedSpawnPos();
-            player.teleportTo(targetLevel, spawnPos.getX(), spawnPos.getY(), spawnPos.getZ(), 0, 0);
+            player.teleportTo(targetLevel, spawnPos.getX(), spawnPos.getY(), spawnPos.getZ(), java.util.Set.of(), 0, 0, true);
         }
     }
 

@@ -139,9 +139,9 @@ public class SlimeHeadManager implements Feature {
                 if (owner != null && owner.name().isPresent() && owner.name().get().equals("Slime")) {
                     // Check if player has permission to break
                     if (player instanceof ServerPlayer sp) {
-                        if (!player.hasPermissions(2)) {
+                        if (!sp.hasPermissions(2)) {
                             // Fabric: block break cancellation handled by return value
-                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSlime Heads cannot be broken!"));
+                            sp.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cSlime Heads cannot be broken!"));
                         }
                     }
                 }

@@ -2,6 +2,7 @@ package com.servermanagement.features.economy;
 
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.features.gambling.ItemValuation;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
@@ -58,6 +59,19 @@ public class RecipeBasedPricing {
     private static final int MAX_ITERATIONS = 100;
     /** Price difference threshold for convergence detection */
     private static final double CONVERGENCE_THRESHOLD = 0.001;
+
+    private static final net.minecraft.util.context.ContextMap EMPTY_CONTEXT = 
+        new net.minecraft.util.context.ContextMap.Builder().create(
+            new net.minecraft.util.context.ContextKeySet.Builder().build()
+        );
+
+    private static ItemStack getResultItem(Recipe<?> recipe) {
+        List<net.minecraft.world.item.crafting.display.RecipeDisplay> displays = recipe.display();
+        if (displays.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        return displays.get(0).result().resolveForFirstStack(EMPTY_CONTEXT);
+    }
 
     private RecipeBasedPricing() {
     }
@@ -183,16 +197,17 @@ public class RecipeBasedPricing {
     @SuppressWarnings("unchecked")
     private <I extends net.minecraft.world.item.crafting.RecipeInput, T extends Recipe<I>> void collectFromType(
             RecipeManager mgr, RecipeType<T> type,
-            net.minecraft.core.RegistryAccess registryAccess,
+            HolderLookup.Provider registryAccess,
             double markup, List<RecipeEntry> result) {
         try {
-            for (RecipeHolder<T> holder : mgr.getAllRecipesFor(type)) {
+            for (RecipeHolder<?> holder : mgr.getRecipes()) {
+                if (holder.value().getType() != type) continue;
                 try {
                     Recipe<?> recipe = holder.value();
-                    ItemStack output = recipe.getResultItem(registryAccess);
+                    ItemStack output = getResultItem(recipe);
                     if (output.isEmpty()) continue;
 
-                    var ingredients = recipe.getIngredients();
+                    var ingredients = recipe.placementInfo().ingredients();
                     List<Ingredient> nonEmpty = new ArrayList<>();
                     for (Ingredient ing : ingredients) {
                         if (ing != null && !ing.isEmpty()) {
@@ -213,16 +228,17 @@ public class RecipeBasedPricing {
     }
 
     private void collectSmithingRecipes(RecipeManager mgr,
-            net.minecraft.core.RegistryAccess registryAccess, List<RecipeEntry> result) {
+            HolderLookup.Provider registryAccess, List<RecipeEntry> result) {
         try {
-            for (RecipeHolder<SmithingRecipe> holder : mgr.getAllRecipesFor(RecipeType.SMITHING)) {
+            for (RecipeHolder<?> holder : mgr.getRecipes()) {
+                if (holder.value().getType() != RecipeType.SMITHING) continue;
                 try {
-                    SmithingRecipe recipe = holder.value();
-                    ItemStack output = recipe.getResultItem(registryAccess);
+                    SmithingRecipe recipe = (SmithingRecipe) holder.value();
+                    ItemStack output = getResultItem(recipe);
                     if (output.isEmpty()) continue;
 
                     // Try standard getIngredients() first
-                    var ingredients = recipe.getIngredients();
+                    var ingredients = recipe.placementInfo().ingredients();
                     List<Ingredient> nonEmpty = new ArrayList<>();
                     for (Ingredient ing : ingredients) {
                         if (ing != null && !ing.isEmpty()) {
@@ -321,18 +337,11 @@ public class RecipeBasedPricing {
      * For a tag-based ingredient with multiple matching items, returns the cheapest option.
      */
     private double cheapestMatchingPrice(Ingredient ingredient) {
-        ItemStack[] options = ingredient.getItems();
-        if (options.length == 0) return DEFAULT_PRICE;
-
-        double cheapest = Double.MAX_VALUE;
-        for (ItemStack option : options) {
-            String id = BuiltInRegistries.ITEM.getKey(option.getItem()).toString();
-            double price = lookupCurrentPrice(id);
-            if (price < cheapest) {
-                cheapest = price;
-            }
-        }
-        return cheapest == Double.MAX_VALUE ? DEFAULT_PRICE : cheapest;
+        return ingredient.items()
+            .map(holder -> BuiltInRegistries.ITEM.getKey(holder.value()).toString())
+            .mapToDouble(this::lookupCurrentPrice)
+            .min()
+            .orElse(DEFAULT_PRICE);
     }
 
     /**

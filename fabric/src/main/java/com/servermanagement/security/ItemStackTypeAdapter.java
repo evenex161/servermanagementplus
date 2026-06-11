@@ -93,7 +93,7 @@ public class ItemStackTypeAdapter extends TypeAdapter<ItemStack> {
             return ItemStack.EMPTY;
         }
 
-        Item item = BuiltInRegistries.ITEM.get(resourceLocation);
+        Item item = BuiltInRegistries.ITEM.get(resourceLocation).map(net.minecraft.core.Holder::value).orElse(null);
         if (item == null) {
             return ItemStack.EMPTY;
         }
