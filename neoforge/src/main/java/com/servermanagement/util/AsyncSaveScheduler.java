@@ -17,6 +17,9 @@ public class AsyncSaveScheduler {
     private final ExecutorService saveExecutor;
     private final ConcurrentHashMap<String, SaveTask> pendingSaves;
     private final long debounceMs;
+    private final Thread shutdownHook;
+    private volatile boolean isShutdown = false;
+    private static final java.util.concurrent.atomic.AtomicInteger poolCounter = new java.util.concurrent.atomic.AtomicInteger(0);
     
     public AsyncSaveScheduler(int threadPoolSize, long debounceMs) {
         this.delayScheduler = Executors.newScheduledThreadPool(
@@ -30,6 +33,20 @@ public class AsyncSaveScheduler {
         this.saveExecutor = Executors.newVirtualThreadPerTaskExecutor();
         this.pendingSaves = new ConcurrentHashMap<>();
         this.debounceMs = debounceMs;
+        
+        int id = poolCounter.incrementAndGet();
+        this.shutdownHook = new Thread(() -> {
+            try {
+                this.flushAll();
+            } catch (Exception e) {
+                // Ignore during shutdown
+            }
+        }, "ServerManagement-SaveShutdownHook-" + id);
+        try {
+            Runtime.getRuntime().addShutdownHook(this.shutdownHook);
+        } catch (IllegalStateException e) {
+            // Already shutting down
+        }
     }
     
     /**
@@ -96,6 +113,15 @@ public class AsyncSaveScheduler {
      * Shutdown the scheduler gracefully
      */
     public void shutdown() {
+        if (isShutdown) return;
+        isShutdown = true;
+        
+        try {
+            Runtime.getRuntime().removeShutdownHook(shutdownHook);
+        } catch (IllegalStateException e) {
+            // Already shutting down
+        }
+        
         flushAll();
         delayScheduler.shutdown();
         saveExecutor.close();

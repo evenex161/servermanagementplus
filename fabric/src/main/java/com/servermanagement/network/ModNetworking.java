@@ -12,57 +12,93 @@ import net.minecraft.server.level.ServerPlayer;
 
 public class ModNetworking {
 
+    private static final java.util.Map<net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<?>, net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload>> CODECS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.Map<net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<?>, java.util.function.BiConsumer<net.minecraft.network.protocol.common.custom.CustomPacketPayload, net.minecraft.server.level.ServerPlayer>> HANDLERS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, ? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> getC2SCodec(net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<?> type) {
+        return CODECS.get(type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static java.util.function.BiConsumer<net.minecraft.network.protocol.common.custom.CustomPacketPayload, net.minecraft.server.level.ServerPlayer> getC2SHandler(net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<?> type) {
+        return (java.util.function.BiConsumer<net.minecraft.network.protocol.common.custom.CustomPacketPayload, net.minecraft.server.level.ServerPlayer>) (Object) HANDLERS.get(type);
+    }
+
+    private static <T extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> void registerC2S(
+            net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<T> type, 
+            net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, T> codec, 
+            java.util.function.BiConsumer<T, net.minecraft.server.level.ServerPlayer> handler) {
+        
+        CODECS.put(type, codec);
+        HANDLERS.put(type, (pkt, player) -> handler.accept((T) pkt, player));
+        
+        PayloadTypeRegistry.playC2S().register(type, codec);
+        ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> {
+            net.minecraft.server.level.ServerPlayer player = context.player();
+            if (player != null) {
+                com.servermanagement.ServerManagementMod.LOGGER.warn("SECURITY ALERT: Rejected unwrapped packet {} from {}", type.id(), player.getName().getString());
+            }
+        });
+    }
+
     public static void registerServerPackets() {
         // Register payload types for server-bound packets
-        PayloadTypeRegistry.playC2S().register(ToggleFeaturePacket.TYPE, ToggleFeaturePacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ToggleAutoShowPacket.TYPE, ToggleAutoShowPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(RequestAutoShowPacket.TYPE, RequestAutoShowPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(WMTogglePortalsPacket.TYPE, WMTogglePortalsPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(WMSetTimerPacket.TYPE, WMSetTimerPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(WMSetLobbyPacket.TYPE, WMSetLobbyPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(WMToggleChatIsolationPacket.TYPE, WMToggleChatIsolationPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(WMToggleTabIsolationPacket.TYPE, WMToggleTabIsolationPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(WMTeleportToDimensionPacket.TYPE, WMTeleportToDimensionPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMSpectatePlayerPacket.TYPE, PMSpectatePlayerPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMViewInventoryPacket.TYPE, PMViewInventoryPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMKickPlayerPacket.TYPE, PMKickPlayerPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMBanPlayerPacket.TYPE, PMBanPlayerPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMUnbanPlayerPacket.TYPE, PMUnbanPlayerPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMWhitelistPacket.TYPE, PMWhitelistPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMWhitelistTogglePacket.TYPE, PMWhitelistTogglePacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PMRequestPlayerListsPacket.TYPE, PMRequestPlayerListsPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(RequestWorldListPacket.TYPE, RequestWorldListPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ConsoleCommandPacket.TYPE, ConsoleCommandPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ConsoleSubscribePacket.TYPE, ConsoleSubscribePacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(SaveTemplatePacket.TYPE, SaveTemplatePacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(DeleteTemplatePacket.TYPE, DeleteTemplatePacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ToggleTemplatePacket.TYPE, ToggleTemplatePacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(SaveFreeRewardSettingsPacket.TYPE, SaveFreeRewardSettingsPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(BankTransferPacket.TYPE, BankTransferPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ClaimBankItemPacket.TYPE, ClaimBankItemPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ClaimDailyTaskPacket.TYPE, ClaimDailyTaskPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ClaimFreeRewardPacket.TYPE, ClaimFreeRewardPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(RequestEconomyStatsPacket.TYPE, RequestEconomyStatsPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(SendMoneyRequestPacket.TYPE, SendMoneyRequestPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(RespondMoneyRequestPacket.TYPE, RespondMoneyRequestPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PlaceGamblingBetPacket.TYPE, PlaceGamblingBetPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PlaceGamblingBetWithItemPacket.TYPE, PlaceGamblingBetWithItemPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(ModFileRequestPacket.TYPE, ModFileRequestPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(UpdatePerformanceSettingPacket.TYPE, UpdatePerformanceSettingPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(SaveMotdPacket.TYPE, SaveMotdPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(SyncBettingSlotStatePacket.TYPE, SyncBettingSlotStatePacket.STREAM_CODEC);
+        registerC2S(ToggleFeaturePacket.TYPE, ToggleFeaturePacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ToggleAutoShowPacket.TYPE, ToggleAutoShowPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(RequestAutoShowPacket.TYPE, RequestAutoShowPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(WMTogglePortalsPacket.TYPE, WMTogglePortalsPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(WMSetTimerPacket.TYPE, WMSetTimerPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(WMSetLobbyPacket.TYPE, WMSetLobbyPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(WMToggleChatIsolationPacket.TYPE, WMToggleChatIsolationPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(WMToggleTabIsolationPacket.TYPE, WMToggleTabIsolationPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(WMTeleportToDimensionPacket.TYPE, WMTeleportToDimensionPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMSpectatePlayerPacket.TYPE, PMSpectatePlayerPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMViewInventoryPacket.TYPE, PMViewInventoryPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMKickPlayerPacket.TYPE, PMKickPlayerPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMBanPlayerPacket.TYPE, PMBanPlayerPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMUnbanPlayerPacket.TYPE, PMUnbanPlayerPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMWhitelistPacket.TYPE, PMWhitelistPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMWhitelistTogglePacket.TYPE, PMWhitelistTogglePacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PMRequestPlayerListsPacket.TYPE, PMRequestPlayerListsPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(RequestWorldListPacket.TYPE, RequestWorldListPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ConsoleCommandPacket.TYPE, ConsoleCommandPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ConsoleSubscribePacket.TYPE, ConsoleSubscribePacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(SaveTemplatePacket.TYPE, SaveTemplatePacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(DeleteTemplatePacket.TYPE, DeleteTemplatePacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ToggleTemplatePacket.TYPE, ToggleTemplatePacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(SaveFreeRewardSettingsPacket.TYPE, SaveFreeRewardSettingsPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(BankTransferPacket.TYPE, BankTransferPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ClaimBankItemPacket.TYPE, ClaimBankItemPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ClaimDailyTaskPacket.TYPE, ClaimDailyTaskPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ClaimFreeRewardPacket.TYPE, ClaimFreeRewardPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(RequestEconomyStatsPacket.TYPE, RequestEconomyStatsPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(SendMoneyRequestPacket.TYPE, SendMoneyRequestPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(RespondMoneyRequestPacket.TYPE, RespondMoneyRequestPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PlaceGamblingBetPacket.TYPE, PlaceGamblingBetPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PlaceGamblingBetWithItemPacket.TYPE, PlaceGamblingBetWithItemPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(ModFileRequestPacket.TYPE, ModFileRequestPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(UpdatePerformanceSettingPacket.TYPE, UpdatePerformanceSettingPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(SaveMotdPacket.TYPE, SaveMotdPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(SyncBettingSlotStatePacket.TYPE, SyncBettingSlotStatePacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
 
         // MineBay server-bound
-        PayloadTypeRegistry.playC2S().register(CreateListingPacket.TYPE, CreateListingPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(PurchaseListingPacket.TYPE, PurchaseListingPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(CancelListingPacket.TYPE, CancelListingPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(DeleteListingPacket.TYPE, DeleteListingPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(CreateOfferPacket.TYPE, CreateOfferPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(AcceptOfferPacket.TYPE, AcceptOfferPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(RejectOfferPacket.TYPE, RejectOfferPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(RequestListingOffersPacket.TYPE, RequestListingOffersPacket.STREAM_CODEC);
-        PayloadTypeRegistry.playC2S().register(HoldItemPacket.TYPE, HoldItemPacket.STREAM_CODEC);
+        registerC2S(CreateListingPacket.TYPE, CreateListingPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(PurchaseListingPacket.TYPE, PurchaseListingPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(CancelListingPacket.TYPE, CancelListingPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(DeleteListingPacket.TYPE, DeleteListingPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(CreateOfferPacket.TYPE, CreateOfferPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(AcceptOfferPacket.TYPE, AcceptOfferPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(RejectOfferPacket.TYPE, RejectOfferPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(RequestListingOffersPacket.TYPE, RequestListingOffersPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+        registerC2S(HoldItemPacket.TYPE, HoldItemPacket.STREAM_CODEC, (payload, player) -> payload.handle(player));
+
+        // Register Secure Packet Wrapper
+        PayloadTypeRegistry.playC2S().register(com.servermanagement.network.packet.SecurePacketWrapper.TYPE, com.servermanagement.network.packet.SecurePacketWrapper.STREAM_CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(com.servermanagement.network.packet.SecurePacketWrapper.TYPE, (payload, context) -> {
+            net.minecraft.server.level.ServerPlayer player = context.player();
+            context.server().execute(() -> payload.handle(player));
+        });
 
         // Register payload types for client-bound packets
         PayloadTypeRegistry.playS2C().register(SyncAutoShowPacket.TYPE, SyncAutoShowPacket.STREAM_CODEC);
@@ -90,57 +126,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playS2C().register(SyncMotdPacket.TYPE, SyncMotdPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncMineBayListingsPacket.TYPE, SyncMineBayListingsPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncListingOffersPacket.TYPE, SyncListingOffersPacket.STREAM_CODEC);
-
-        // Register server-side handlers
-        ServerPlayNetworking.registerGlobalReceiver(ToggleFeaturePacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ToggleAutoShowPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(RequestAutoShowPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(WMTogglePortalsPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(WMSetTimerPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(WMSetLobbyPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(WMToggleChatIsolationPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(WMToggleTabIsolationPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(WMTeleportToDimensionPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMSpectatePlayerPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMViewInventoryPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMKickPlayerPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMBanPlayerPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMUnbanPlayerPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMWhitelistPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMWhitelistTogglePacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PMRequestPlayerListsPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(RequestWorldListPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(OpenGuiPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ConsoleCommandPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ConsoleSubscribePacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(SaveTemplatePacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(DeleteTemplatePacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ToggleTemplatePacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(SaveFreeRewardSettingsPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(BankTransferPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ClaimBankItemPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ClaimDailyTaskPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ClaimFreeRewardPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(RequestEconomyStatsPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(SendMoneyRequestPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(RespondMoneyRequestPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PlaceGamblingBetPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PlaceGamblingBetWithItemPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(ModFileRequestPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(UpdatePerformanceSettingPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(SaveMotdPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(SyncBettingSlotStatePacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-
-        // MineBay server-bound handlers
-        ServerPlayNetworking.registerGlobalReceiver(CreateListingPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(PurchaseListingPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(CancelListingPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(DeleteListingPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(CreateOfferPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(AcceptOfferPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(RejectOfferPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(RequestListingOffersPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
-        ServerPlayNetworking.registerGlobalReceiver(HoldItemPacket.TYPE, (payload, context) -> { var p = context.player(); context.server().execute(() -> payload.handle(p)); });
+        PayloadTypeRegistry.playS2C().register(SyncSessionTokenPacket.TYPE, SyncSessionTokenPacket.STREAM_CODEC);
     }
 
     public static void registerClientPackets() {
@@ -170,10 +156,16 @@ public class ModNetworking {
         ClientPlayNetworking.registerGlobalReceiver(SyncMotdPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncMineBayListingsPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncListingOffersPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
+        ClientPlayNetworking.registerGlobalReceiver(SyncSessionTokenPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
     }
 
     public static void sendToServer(CustomPacketPayload payload) {
-        ClientPlayNetworking.send(payload);
+        if (payload instanceof com.servermanagement.network.packet.SecurePacketWrapper || payload.type().id().getPath().contains("session_token")) {
+            ClientPlayNetworking.send(payload);
+        } else {
+            String token = com.servermanagement.client.ClientSessionRegistry.getSessionToken();
+            ClientPlayNetworking.send(new com.servermanagement.network.packet.SecurePacketWrapper(payload, token));
+        }
     }
 
     public static void sendToPlayer(ServerPlayer player, CustomPacketPayload payload) {

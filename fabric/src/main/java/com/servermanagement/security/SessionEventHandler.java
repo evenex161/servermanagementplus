@@ -13,8 +13,11 @@ public class SessionEventHandler {
         // Create session for player
         SessionManager.PlayerSession session = SessionManager.getInstance().createSession(player);
         
-        // TODO: Send session token to client via packet
-        // For now, sessions are server-side only for admin operations
+        // Send session token to client via packet
+        com.servermanagement.network.ModNetworking.sendToPlayer(
+            player, 
+            new com.servermanagement.network.packet.SyncSessionTokenPacket(session.getToken())
+        );
     }
 
     public static void onPlayerLogout(net.minecraft.server.level.ServerPlayer player) {

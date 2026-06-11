@@ -18,6 +18,36 @@ public class PacketTimestampTracker {
     // Map of PlayerUUID -> ActionKey -> LastProcessedTick
     private static final Map<UUID, Map<String, Long>> playerActionTimestamps = new ConcurrentHashMap<>();
     
+    // Rate Limiting maps
+    private static final Map<UUID, Long> lastSecondMap = new ConcurrentHashMap<>();
+    private static final Map<UUID, Integer> packetCountMap = new ConcurrentHashMap<>();
+    private static final int MAX_PACKETS_PER_SECOND = 20;
+
+    /**
+     * Checks if a player has exceeded the packet rate limit.
+     */
+    public static boolean checkRateLimit(ServerPlayer player) {
+        UUID uuid = player.getUUID();
+        long now = System.currentTimeMillis() / 1000;
+        
+        long lastSec = lastSecondMap.getOrDefault(uuid, 0L);
+        if (now != lastSec) {
+            lastSecondMap.put(uuid, now);
+            packetCountMap.put(uuid, 1);
+            return true;
+        }
+        
+        int count = packetCountMap.getOrDefault(uuid, 0) + 1;
+        if (count > MAX_PACKETS_PER_SECOND) {
+            LOGGER.warn("SECURITY ALERT: Player {} exceeded packet rate limit ({} > {}/sec). Discarding packet.", 
+                player.getName().getString(), count, MAX_PACKETS_PER_SECOND);
+            return false;
+        }
+        
+        packetCountMap.put(uuid, count);
+        return true;
+    }
+
     /**
      * Checks if a packet should be processed based on its timestamp.
      * Returns true if this packet is newer than the last processed one (or is the first).
@@ -55,6 +85,8 @@ public class PacketTimestampTracker {
      */
     public static void clearPlayer(UUID playerUUID) {
         playerActionTimestamps.remove(playerUUID);
+        lastSecondMap.remove(playerUUID);
+        packetCountMap.remove(playerUUID);
     }
     
     /**
@@ -62,6 +94,8 @@ public class PacketTimestampTracker {
      */
     public static void clearAll() {
         playerActionTimestamps.clear();
+        lastSecondMap.clear();
+        packetCountMap.clear();
         LOGGER.debug("Cleared all packet timestamps");
     }
 }

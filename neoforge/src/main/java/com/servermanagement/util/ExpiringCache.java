@@ -16,13 +16,13 @@ public class ExpiringCache<K, V> {
     private final int maxSize;
     
     public ExpiringCache(int maxSize, long expirationMs) {
-        // LinkedHashMap with access-order for LRU; synchronized for thread safety
-        this.cache = Collections.synchronizedMap(new LinkedHashMap<K, CacheEntry<V>>(maxSize, 0.75f, true) {
+        // Plain LinkedHashMap with access-order for LRU
+        this.cache = new LinkedHashMap<K, CacheEntry<V>>(maxSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, CacheEntry<V>> eldest) {
                 return size() > maxSize;
             }
-        });
+        };
         this.expirationMs = expirationMs;
         this.maxSize = maxSize;
     }
@@ -51,53 +51,63 @@ public class ExpiringCache<K, V> {
     }
     
     /**
-     * Put value in cache (LRU eviction is automatic via LinkedHashMap)
+     * Put value in cache
      */
     public void put(K key, V value) {
-        cache.put(key, new CacheEntry<>(value, expirationMs));
+        synchronized (cache) {
+            cache.put(key, new CacheEntry<>(value, expirationMs));
+        }
     }
     
     /**
      * Invalidate specific key
      */
     public void invalidate(K key) {
-        cache.remove(key);
+        synchronized (cache) {
+            cache.remove(key);
+        }
     }
     
     /**
      * Clear all entries
      */
     public void clear() {
-        cache.clear();
+        synchronized (cache) {
+            cache.clear();
+        }
     }
     
     /**
      * Get cache size
      */
     public int size() {
-        return cache.size();
+        synchronized (cache) {
+            return cache.size();
+        }
     }
     
     /**
      * Remove expired entries
      */
     public void cleanupExpired() {
-        cache.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        synchronized (cache) {
+            cache.entrySet().removeIf(entry -> entry.getValue().isExpired());
+        }
     }
     
     private static class CacheEntry<V> {
         final V value;
-        final long expirationTime;
+        final long ttlMs;
         long lastAccess;
         
         CacheEntry(V value, long ttlMs) {
             this.value = value;
+            this.ttlMs = ttlMs;
             this.lastAccess = System.currentTimeMillis();
-            this.expirationTime = this.lastAccess + ttlMs;
         }
         
         boolean isExpired() {
-            return System.currentTimeMillis() > expirationTime;
+            return System.currentTimeMillis() - lastAccess > ttlMs;
         }
         
         void updateAccess() {
