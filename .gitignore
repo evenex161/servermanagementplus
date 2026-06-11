@@ -130,6 +130,7 @@ buildSrc/build-c2/tmp/jar/MANIFEST.MF
 
 # Mod context & workflow documentation (kept local only)
 CLAUDE.md
+GEMINI.md
 GUI_TEST_CHECKLIST.md
 implementation_plan_fixing_blur_shader.md
 session_summary.md
