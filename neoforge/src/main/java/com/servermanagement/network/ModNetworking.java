@@ -26,6 +26,7 @@ public class ModNetworking {
         return (java.util.function.BiConsumer<net.minecraft.network.protocol.common.custom.CustomPacketPayload, net.neoforged.neoforge.network.handling.IPayloadContext>) (Object) HANDLERS.get(type);
     }
 
+    @SuppressWarnings("unchecked")
     private static <T extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> void registerC2S(PayloadRegistrar registrar, net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<T> type, net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, T> codec, java.util.function.BiConsumer<T, net.neoforged.neoforge.network.handling.IPayloadContext> handler) {
         CODECS.put(type, codec);
         HANDLERS.put(type, (pkt, ctx) -> handler.accept((T) pkt, ctx));

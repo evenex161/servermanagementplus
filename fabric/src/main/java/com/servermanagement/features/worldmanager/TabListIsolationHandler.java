@@ -228,6 +228,7 @@ public class TabListIsolationHandler {
      * This preserves playerInfoMap entries (unlike REMOVE packets) so entity
      * tracking continues to work — players remain visible as 3D models.
      */
+    @SuppressWarnings("deprecation")
     private static ClientboundPlayerInfoUpdatePacket createUpdateListedPacket(
             MinecraftServer server, List<UUID> playerUUIDs, boolean listed) {
         RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(

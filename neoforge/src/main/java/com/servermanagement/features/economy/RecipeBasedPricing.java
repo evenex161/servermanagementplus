@@ -336,6 +336,7 @@ public class RecipeBasedPricing {
     /**
      * For a tag-based ingredient with multiple matching items, returns the cheapest option.
      */
+    @SuppressWarnings("deprecation")
     private double cheapestMatchingPrice(Ingredient ingredient) {
         return ingredient.items()
             .map(holder -> BuiltInRegistries.ITEM.getKey(holder.value()).toString())

@@ -607,6 +607,7 @@ public class PlayerManagerSingleton {
      * The spectator's own client already knows its real game mode via
      * ClientboundGameEventPacket.CHANGE_GAME_MODE sent by setGameMode().
      */
+    @SuppressWarnings("deprecation")
     private static void broadcastFakeGameMode(ServerPlayer spectator, GameType fakeMode) {
         MinecraftServer server = spectator.level().getServer();
         if (server == null) return;
@@ -637,6 +638,7 @@ public class PlayerManagerSingleton {
      * mode packets for all active spectators so the joining player's tab list
      * shows the original game mode instead of SPECTATOR (italic+gray).
      */
+    @SuppressWarnings("deprecation")
     public static void onPlayerJoined(ServerPlayer joiningPlayer) {
         PlayerManagerSingleton instance = getInstance();
         

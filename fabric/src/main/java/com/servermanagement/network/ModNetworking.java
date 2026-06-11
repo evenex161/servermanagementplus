@@ -24,6 +24,7 @@ public class ModNetworking {
         return (java.util.function.BiConsumer<net.minecraft.network.protocol.common.custom.CustomPacketPayload, net.minecraft.server.level.ServerPlayer>) (Object) HANDLERS.get(type);
     }
 
+    @SuppressWarnings("unchecked")
     private static <T extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> void registerC2S(
             net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<T> type, 
             net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, T> codec, 

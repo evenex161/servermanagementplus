@@ -214,7 +214,7 @@ public class CurseForgeUpdateChecker {
         
         try {
             String apiUrl = String.format(CURSEFORGE_API, PROJECT_ID);
-            URL url = new URL(apiUrl);
+            URL url = java.net.URI.create(apiUrl).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("x-api-key", API_KEY);
