@@ -1,149 +1,90 @@
-# Gradle build artifacts
+# Gradle
 .gradle/
+.gradle-c2/
 build/
+build-c2/
 out/
 classes/
 
-# Java/IDE outputs
-bin/
+# Eclipse
+.settings/
+.metadata
 .classpath
 .project
-.settings/
+bin/
+
+# IntelliJ
 .idea/
 *.iml
 *.ipr
 *.iws
 
-# VS Code local settings
+# Editor lock files
+.LCK*~
+*~
+
+# VS Code
 .vscode/
 
-# Runtime/server folders
+# Internal instruction files (local dev only)
+.github/
+
+# Dev scripts & tools
+test.bat
+GUI_TEST_CHECKLIST.md
+tools/
+CLAUDE.md
+GEMINI.md
+
+# Minecraft runtime
 run/
 run-data/
+run-client2/
+runs/
 logs/
 forge-server/
 forge-server 1.20.1/
 forge-server 1.21.1/
 neoforge-server 1.21.1/
 
-# Per-loader run dirs (loom/forgegradle game runs)
-forge/runs/
-fabric/runs/
-neoforge/runs/
+# Old source backup (MultiLoader migration)
+src.bak/
 
-# Build / diagnostic logs
-build-errors.txt
-build-forge.txt
-build-all.txt
-
-# OS artifacts
-.DS_Store
-.gradle-c2/8.11/gc.properties
-.gradle-c2/8.11/checksums/checksums.lock
-.gradle-c2/8.11/checksums/md5-checksums.bin
-.gradle-c2/8.11/checksums/sha1-checksums.bin
-.gradle-c2/8.11/executionHistory/executionHistory.bin
-.gradle-c2/8.11/executionHistory/executionHistory.lock
-.gradle-c2/8.11/fileChanges/last-build.bin
-.gradle-c2/8.11/fileHashes/fileHashes.bin
-.gradle-c2/8.11/fileHashes/fileHashes.lock
-.gradle-c2/8.11/fileHashes/resourceHashesCache.bin
-.gradle-c2/buildOutputCleanup/buildOutputCleanup.lock
-.gradle-c2/buildOutputCleanup/cache.properties
-.gradle-c2/buildOutputCleanup/outputFiles.bin
-.gradle-c2/noVersion/buildLogic.lock
-.gradle-c2/vcs-1/gc.properties
-CHANGELOG_v2.1.0_1.21.1_curseforge.md
-tools/fix_mojibake.py
-tools/lower_alpha.ps1
-tools/__pycache__/fix_mojibake.cpython-310.pyc
-test.bat
-fabric/fabric/runs/client2/options.txt
-fabric/fabric/runs/client2/servers.dat
-fabric/fabric/runs/client2/servers.dat_old
-fabric/fabric/runs/client2/config/servermanagement.json
-fabric/fabric/runs/client2/config/fabric/indigo-renderer.properties
-fabric/fabric/runs/client2/data/fabricDefaultResourcePacks.dat
-buildSrc/build-c2/groovy-dsl-plugins/output/adapter-src/MultiloaderCommonPlugin.java
-buildSrc/build-c2/groovy-dsl-plugins/output/adapter-src/MultiloaderLoaderPlugin.java
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure1.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure2.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure11.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure11$_closure13.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure11$_closure13$_closure15.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure11$_closure14.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure12.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure12$_closure16.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure12$_closure17.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure3$_closure12$_closure18.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure4.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure4$_closure19.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure4$_closure20.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure5.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure5$_closure21.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure5$_closure21$_closure22.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure6.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure6$_closure23.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure6$_closure23$_closure25.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure6$_closure24.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure7.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure7$_closure26.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure8.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure8$_closure27.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure8$_closure27$_closure29.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure8$_closure28.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure8$_closure28$_closure30.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure9.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderCommon$_run_closure10.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure1.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure1$_closure7.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure1$_closure8.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure2.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure2$_closure9.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure2$_closure9$_closure10.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure3.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure4.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure5.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-classes/precompiled_MultiloaderLoader$_run_closure6.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests/multiloader-common/cp_precompiled_MultiloaderCommon.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests/multiloader-common/cp_precompiled_MultiloaderCommon$_run_closure1.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests/multiloader-common/metadata.bin
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests/multiloader-loader/cp_precompiled_MultiloaderLoader.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests/multiloader-loader/cp_precompiled_MultiloaderLoader$_run_closure1.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests/multiloader-loader/metadata.bin
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests-staging/cp_precompiled_MultiloaderCommon.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests-staging/cp_precompiled_MultiloaderCommon$_run_closure1.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests-staging/cp_precompiled_MultiloaderLoader.class
-buildSrc/build-c2/groovy-dsl-plugins/output/plugin-requests-staging/cp_precompiled_MultiloaderLoader$_run_closure1.class
-buildSrc/build-c2/groovy-dsl-plugins/work/metadata/multiloader-common/metadata.bin
-buildSrc/build-c2/groovy-dsl-plugins/work/metadata/multiloader-loader/metadata.bin
-buildSrc/build-c2/libs/buildSrc.jar
-buildSrc/build-c2/pluginDescriptors/multiloader-common.properties
-buildSrc/build-c2/pluginDescriptors/multiloader-loader.properties
-buildSrc/build-c2/resources/main/META-INF/gradle-plugins/multiloader-common.properties
-buildSrc/build-c2/resources/main/META-INF/gradle-plugins/multiloader-loader.properties
-buildSrc/build-c2/tmp/compileJava/previous-compilation-data.bin
-buildSrc/build-c2/tmp/jar/MANIFEST.MF
-
-# Mod context & workflow documentation (kept local only)
-CLAUDE.md
-GEMINI.md
-GUI_TEST_CHECKLIST.md
-implementation_plan_fixing_blur_shader.md
+# Session artifacts
+docs/
 session_summary.md
-CHANGELOG_v2.1.0_1.20.1_curseforge.md
-DESCRIPTION.md
+*.log
+compile.log
+fabric_compile.log
 
+# Mac
+.DS_Store
 
+# Security - Never commit sensitive files!
+curseforge.properties
+*.key
+*.secret
 
-# Editor lock and temporary files
-*.LCK*
-*~
-.*.LCK*
-.LCK*
-buildSrc/build-c2/
-
-
+# Internal development docs (keep CHANGELOG_*)
+CURSEFORGE_PAGE.md
+CONFIG_MIGRATION_GUIDE.md
+CONFIG_SCREEN_FIXES.md
+CRASH_FIX_DOCUMENTATION.md
+CURSEFORGE_INTEGRATION.md
+CURSEFORGE_SECURITY.md
+DASHBOARD_NAVIGATION_FIX.md
+DASHBOARD_SYSTEM.md
+DOCUMENTATION.md
+ECONOMY_FEATURE_PLAN.md
+FORGE_PORT_GUIDE.md
+GUI_REDESIGN_COMPLETE.md
+NETWORK_PROTOCOL_FIX.md
+NOTIFICATION_SYSTEM.md
+OTA_VERSION_COMPATIBILITY.md
+OTA_VERSION_SOLUTION.md
+PHASE_18_BUGFIXES.md
+PORT_COMPLETION_SUMMARY.md
+RECENT_FIXES.md
+RELEASE_NOTES_v1.0.0-release.md
+SECURITY_IMPLEMENTATION.md
+SERIALIZATION_FIX.md
