@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-version = "${mod_version}-mc${minecraft_version}"
+version = "${mod_version}-b${mod_build}"
 group = mod_group_id
 description = mod_description
 
