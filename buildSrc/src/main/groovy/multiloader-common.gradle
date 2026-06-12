@@ -2,6 +2,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
 }
+version = "${mod_version}-b${mod_build}"
 
 base {
     archivesName = "${mod_id}-${project.name}-${minecraft_version}"
