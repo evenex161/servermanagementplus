@@ -1,10 +1,10 @@
-# Server Management Plus
+# ServerManagement+
 
 **The all-in-one server management solution for Minecraft**
 
 **Supported**: Minecraft 1.20.1 (Forge 47.4.0+) | Minecraft 1.21.1 (Forge 52.1.0+, NeoForge 21.1.80+, Fabric 0.116.1+)
 
-Server Management Plus gives you a complete suite of tools to run your server — a full economy with bank accounts, a player marketplace, a casino, daily tasks, world management, and a sleek admin dashboard — all in one mod.
+ServerManagement+ gives you a complete suite of tools to run your server — a full economy with bank accounts, a player marketplace, a casino, daily tasks, world management, and a sleek admin dashboard — all in one mod.
 
 ---
 
@@ -135,9 +135,9 @@ Clickable chat notifications keep players informed without being spammy.
 ---
 
 ### Help Integration
-All Server Management commands are integrated into the vanilla `/help` command.
+All ServerManagement+ commands are integrated into the vanilla `/help` command.
 
-- **`/help`** — Lists all available commands including Server Management ones with descriptions
+- **`/help`** — Lists all available commands including ServerManagement+ ones with descriptions
 - **`/help <command>`** — Detailed usage for any mod command (e.g., `/help bank`)
 - **Admin filtering** — Admin commands tagged with `[Admin]` and hidden from non-ops
 - Works alongside vanilla and other mods' commands
@@ -176,7 +176,7 @@ All sensitive data is encrypted at rest and authenticated in transit.
 
 ## Performance
 
-Server Management Plus is optimized for low-overhead operation, especially in hot paths running every tick or every frame.
+ServerManagement+ is optimized for low-overhead operation, especially in hot paths running every tick or every frame.
 
 - **Stream → loop in tick handlers** — All collection traversals in tick-rate code (tab list isolation, chat isolation, MineBay, money requests) use direct for-loops instead of stream pipelines to eliminate lambda allocation and intermediate object creation
 - **Reused collections in tick handlers** — `TabListIsolationHandler` reuses a static `HashSet<UUID>` across ticks instead of allocating a new one per player per second, drastically reducing GC pressure at scale
@@ -325,4 +325,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*Server Management Plus v2.1.0 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.80+ — Fabric API 0.116.1+*
+*ServerManagement+ v2.1.0 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+ — NeoForge 21.1.80+ — Fabric API 0.116.1+*
