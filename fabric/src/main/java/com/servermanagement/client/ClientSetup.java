@@ -32,9 +32,10 @@ public class ClientSetup implements ClientModInitializer {
         MenuScreens.register(ModMenuTypes.CONSOLE_MENU, ConsoleScreen::new);
         MenuScreens.register(ModMenuTypes.BANK_MENU, com.servermanagement.gui.economy.BankScreen::new);
         MenuScreens.register(ModMenuTypes.DAILY_TASKS_MENU, com.servermanagement.gui.economy.DailyTasksScreen::new);
-        MenuScreens.register(ModMenuTypes.ACHIEVEMENTS_MENU, com.servermanagement.gui.economy.AchievementsScreen::new);
-        MenuScreens.register(ModMenuTypes.ECONOMY_MANAGEMENT_MENU, com.servermanagement.gui.economy.EconomyManagementScreen::new);
-        MenuScreens.register(ModMenuTypes.MINEBAY_MENU, com.servermanagement.gui.minebay.MineBayScreen::new);
+        MenuScreens.register(com.servermanagement.gui.ModMenuTypes.ACHIEVEMENTS_MENU, com.servermanagement.gui.economy.AchievementsScreen::new);
+        MenuScreens.register(com.servermanagement.gui.ModMenuTypes.ECONOMY_MANAGEMENT_MENU, com.servermanagement.gui.economy.EconomyManagementScreen::new);
+        MenuScreens.register(com.servermanagement.gui.ModMenuTypes.MINEBAY_MENU, com.servermanagement.gui.minebay.MineBayScreen::new);
+        MenuScreens.register(com.servermanagement.gui.ModMenuTypes.UPDATER_MENU, com.servermanagement.gui.screen.UpdaterScreen::new);
         MenuScreens.register(ModMenuTypes.MINESTACKS_MENU, com.servermanagement.gui.gambling.MineStacksScreen::new);
         MenuScreens.register(ModMenuTypes.PERFORMANCE_SETTINGS_MENU, PerformanceSettingsScreen::new);
         MenuScreens.register(ModMenuTypes.MOTD_EDITOR_MENU, MotdEditorScreen::new);

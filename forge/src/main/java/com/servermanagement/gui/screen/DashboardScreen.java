@@ -89,13 +89,9 @@ public class DashboardScreen extends ScalableContainerScreen<DashboardMenu> {
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.PERFORMANCE_SETTINGS, ""))
         ));
         
-        // Row 3: 2 cards centered + close button to the right
-        int halfGap = spacing / 2;
-        int twoCardWidth = cardWidth * 2 + spacing;
-        int row3StartX = centerX + (this.imageWidth - twoCardWidth - cardWidth - spacing) / 2;
-        
+        // Row 3: 3 cards matching row 1 and 2
         this.addRenderableWidget(new DashboardCard(
-            row3StartX, row3Y, cardWidth, cardHeight,
+            centerX + 10, row3Y, cardWidth, cardHeight,
             Component.literal("MOTD Editor"),
             "=", "Server Message",
             DashboardCard.CardStyle.BLUE,
@@ -103,11 +99,19 @@ public class DashboardScreen extends ScalableContainerScreen<DashboardMenu> {
         ));
         
         this.addRenderableWidget(new DashboardCard(
-            row3StartX + cardWidth + spacing, row3Y, cardWidth, cardHeight,
+            centerX + cardWidth + 20, row3Y, cardWidth, cardHeight,
             Component.literal("Mod Settings"),
             "+", "Features Config",
             DashboardCard.CardStyle.GRAY,
             () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.CONFIG, ""))
+        ));
+        
+        this.addRenderableWidget(new DashboardCard(
+            centerX + cardWidth * 2 + 30, row3Y, cardWidth, cardHeight,
+            Component.literal("Server Updater"),
+            "!", "Update Server",
+            DashboardCard.CardStyle.RED,
+            () -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.UPDATER, ""))
         ));
         
         // Close button - inside panel, at bottom center

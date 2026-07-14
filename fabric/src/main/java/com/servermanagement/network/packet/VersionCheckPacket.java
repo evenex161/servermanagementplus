@@ -66,15 +66,8 @@ public record VersionCheckPacket(String serverModVersion, int serverDataVersion,
                 // Notify client and offer to download update
                 if (player == null) {
                     // We're on the client side
-                    OTAUpdateManager.handleVersionMismatch(
-                        clientOTAVersion.getDisplayVersion(), 
-                        serverOTAVersion.getDisplayVersion(),
-                        serverDataVersion,
-                        serverModJarName,
-                        serverModJarHash,
-                        serverModJarSize,
-                        serverMinecraftVersion,
-                        serverModLoader
+                    net.minecraft.client.Minecraft.getInstance().getConnection().getConnection().disconnect(
+                        Component.literal("ServerManagement+ is outdated! Please restart your game to trigger the automatic update.")
                     );
                 } else {
                     ServerManagementMod.LOGGER.error("player was not null on client! This shouldn't happen.");

@@ -63,6 +63,9 @@ import com.servermanagement.network.packet.ToggleFeaturePacket;
 import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
 import com.servermanagement.network.packet.VersionCheckPacket;
+import com.servermanagement.network.packet.CheckForUpdatesPacket;
+import com.servermanagement.network.packet.StartServerUpdatePacket;
+import com.servermanagement.network.packet.SyncUpdateInfoPacket;
 import com.servermanagement.network.packet.WMSetLobbyPacket;
 import com.servermanagement.network.packet.SyncSessionTokenPacket;
 import com.servermanagement.network.packet.AuthenticateSessionPacket;
@@ -144,6 +147,8 @@ public final class ModNetworking {
         ServerPlayNetworking.registerGlobalReceiver(RequestListingOffersPacket.ID, (server, player, handler, buf, sender) -> { RequestListingOffersPacket pkt = new RequestListingOffersPacket(buf); server.execute(() -> pkt.handle(player)); });
         ServerPlayNetworking.registerGlobalReceiver(HoldItemPacket.ID, (server, player, handler, buf, sender) -> { HoldItemPacket pkt = new HoldItemPacket(buf); server.execute(() -> pkt.handle(player)); });
         ServerPlayNetworking.registerGlobalReceiver(AuthenticateSessionPacket.ID, (server, player, handler, buf, sender) -> { AuthenticateSessionPacket pkt = new AuthenticateSessionPacket(buf); server.execute(() -> pkt.handle(player)); });
+        ServerPlayNetworking.registerGlobalReceiver(CheckForUpdatesPacket.ID, (server, player, handler, buf, sender) -> { CheckForUpdatesPacket pkt = new CheckForUpdatesPacket(buf); server.execute(() -> pkt.handle(player)); });
+        ServerPlayNetworking.registerGlobalReceiver(StartServerUpdatePacket.ID, (server, player, handler, buf, sender) -> { StartServerUpdatePacket pkt = new StartServerUpdatePacket(buf); server.execute(() -> pkt.handle(player)); });
     }
 
     public static void registerClientPackets() {
@@ -173,6 +178,7 @@ public final class ModNetworking {
         ClientPlayNetworking.registerGlobalReceiver(SyncMineBayListingsPacket.ID, (client, handler, buf, sender) -> { SyncMineBayListingsPacket pkt = new SyncMineBayListingsPacket(buf); client.execute(() -> pkt.handle(null)); });
         ClientPlayNetworking.registerGlobalReceiver(SyncListingOffersPacket.ID, (client, handler, buf, sender) -> { SyncListingOffersPacket pkt = new SyncListingOffersPacket(buf); client.execute(() -> pkt.handle(null)); });
         ClientPlayNetworking.registerGlobalReceiver(SyncSessionTokenPacket.ID, (client, handler, buf, sender) -> { SyncSessionTokenPacket pkt = new SyncSessionTokenPacket(buf); client.execute(() -> pkt.handle(null)); });
+        ClientPlayNetworking.registerGlobalReceiver(SyncUpdateInfoPacket.ID, (client, handler, buf, sender) -> { SyncUpdateInfoPacket pkt = new SyncUpdateInfoPacket(buf); client.execute(() -> com.servermanagement.client.ClientUpdateManager.receiveUpdateInfo(pkt)); });
     }
 
     // ---------------- Send helpers -----------------
@@ -228,6 +234,8 @@ public final class ModNetworking {
                id.equals(SaveFreeRewardSettingsPacket.ID) ||
                id.equals(UpdatePerformanceSettingPacket.ID) ||
                id.equals(SaveMotdPacket.ID) ||
+               id.equals(CheckForUpdatesPacket.ID) ||
+               id.equals(StartServerUpdatePacket.ID) ||
                id.equals(RequestEconomyStatsPacket.ID);
     }
 

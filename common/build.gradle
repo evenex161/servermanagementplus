@@ -6,6 +6,7 @@ plugins {
 // Only depends on SLF4J (provided transitively by every loader at runtime).
 dependencies {
     compileOnly 'org.slf4j:slf4j-api:2.0.9'
+    compileOnly 'com.google.code.gson:gson:2.10.1'
 }
 
 configurations {
@@ -23,3 +24,5 @@ artifacts {
     commonJava sourceSets.main.java.sourceDirectories.singleFile
     commonResources sourceSets.main.resources.sourceDirectories.singleFile
 }
+
+

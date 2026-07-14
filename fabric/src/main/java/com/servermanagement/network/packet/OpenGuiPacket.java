@@ -115,6 +115,9 @@ public record OpenGuiPacket(GuiType guiType, String data) implements com.serverm
                         syncMotd(player);
                         player.openMenu(new com.servermanagement.gui.MotdEditorMenuProvider());
                         break;
+                    case UPDATER:
+                        player.openMenu(new com.servermanagement.gui.provider.UpdaterMenuProvider());
+                        break;
                 }
             }
 
@@ -293,7 +296,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements com.serverm
         MINEBAY,
         MINESTACKS,
         PERFORMANCE_SETTINGS,
-        MOTD_EDITOR;
+        MOTD_EDITOR,
+        UPDATER;
 
         public boolean isAdminOnly() {
             return switch (this) {

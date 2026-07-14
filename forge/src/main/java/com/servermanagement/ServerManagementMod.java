@@ -92,6 +92,9 @@ public class ServerManagementMod {
     public void onServerStarting(ServerStartingEvent event) {
         LOGGER.info("ServerManagement v{} starting (Data Version: {})", 
             getModVersion(), com.servermanagement.util.DataVersion.CURRENT_VERSION);
+            
+        // Generate Smart Start Scripts if needed
+        com.servermanagement.updater.StartScriptGenerator.generateIfNeeded();
         
         // Initialize encryption system FIRST (before loading any data)
         try {

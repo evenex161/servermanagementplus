@@ -55,6 +55,9 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<com.servermanagement.gui.minebay.MineBayMenu>> MINEBAY_MENU =
         MENUS.register("minebay_menu", () -> IForgeMenuType.create((windowId, inv, data) -> new com.servermanagement.gui.minebay.MineBayMenu(windowId, inv)));
 
+    public static final RegistryObject<MenuType<com.servermanagement.gui.UpdaterMenu>> UPDATER_MENU =
+        MENUS.register("updater_menu", () -> IForgeMenuType.create((windowId, inv, data) -> new com.servermanagement.gui.UpdaterMenu(windowId, inv)));
+
     public static final RegistryObject<MenuType<com.servermanagement.gui.gambling.MineStacksMenu>> MINESTACKS_MENU =
         MENUS.register("minestacks_menu", () -> IForgeMenuType.create((windowId, inv, data) -> new com.servermanagement.gui.gambling.MineStacksMenu(windowId, inv)));
 

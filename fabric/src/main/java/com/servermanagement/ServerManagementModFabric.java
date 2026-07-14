@@ -64,11 +64,17 @@ public class ServerManagementModFabric implements ModInitializer {
         // Register features
         FeatureRegistry.registerFeatures();
 
+        // Register updater hooks
+        com.servermanagement.fabric.FabricUpdateHooks.register();
+
         // Server starting
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             currentServer = server;
             LOGGER.info("ServerManagement v{} starting (Data Version: {})",
                     getModVersion(), com.servermanagement.util.DataVersion.CURRENT_VERSION);
+
+            // Generate Smart Start Scripts if needed
+            com.servermanagement.updater.StartScriptGenerator.generateIfNeeded();
 
             try {
                 File serverDir = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toFile();

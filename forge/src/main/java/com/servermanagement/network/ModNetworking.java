@@ -56,6 +56,9 @@ import com.servermanagement.network.packet.ToggleFeaturePacket;
 import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
 import com.servermanagement.network.packet.VersionCheckPacket;
+import com.servermanagement.network.packet.CheckForUpdatesPacket;
+import com.servermanagement.network.packet.StartServerUpdatePacket;
+import com.servermanagement.network.packet.SyncUpdateInfoPacket;
 import com.servermanagement.network.packet.WMSetLobbyPacket;
 import com.servermanagement.network.packet.SyncSessionTokenPacket;
 import com.servermanagement.network.packet.AuthenticateSessionPacket;
@@ -209,6 +212,12 @@ public class ModNetworking {
         INSTANCE.registerMessage(id(), ModFileChunkPacket.class, ModFileChunkPacket::encode, ModFileChunkPacket::new, ModFileChunkPacket::handle);
         
         INSTANCE.registerMessage(id(), ModFileCompletePacket.class, ModFileCompletePacket::encode, ModFileCompletePacket::new, ModFileCompletePacket::handle);
+        
+        INSTANCE.registerMessage(id(), CheckForUpdatesPacket.class, CheckForUpdatesPacket::encode, CheckForUpdatesPacket::new, CheckForUpdatesPacket::handle);
+        
+        INSTANCE.registerMessage(id(), StartServerUpdatePacket.class, StartServerUpdatePacket::encode, StartServerUpdatePacket::new, StartServerUpdatePacket::handle);
+        
+        INSTANCE.registerMessage(id(), SyncUpdateInfoPacket.class, SyncUpdateInfoPacket::encode, SyncUpdateInfoPacket::new, SyncUpdateInfoPacket::handle);
 
         // Session validation packets
         INSTANCE.registerMessage(id(), SyncSessionTokenPacket.class, SyncSessionTokenPacket::encode, SyncSessionTokenPacket::new, SyncSessionTokenPacket::handle);
@@ -302,6 +311,8 @@ public class ModNetworking {
                pkt instanceof SaveFreeRewardSettingsPacket ||
                pkt instanceof UpdatePerformanceSettingPacket ||
                pkt instanceof SaveMotdPacket ||
+               pkt instanceof CheckForUpdatesPacket ||
+               pkt instanceof StartServerUpdatePacket ||
                pkt instanceof RequestEconomyStatsPacket;
     }
 

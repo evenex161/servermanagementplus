@@ -34,10 +34,19 @@ tasks.named('compileJava', JavaCompile) {
     source(configurations.commonJava)
 }
 
+project.evaluationDependsOn(':updater')
+
 processResources {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(configurations.commonResources)
     from(configurations.commonResources)
+    
+    def updaterJar = project(':updater').tasks.named('jar')
+    dependsOn updaterJar
+    from(updaterJar.flatMap { it.archiveFile }) {
+        into 'assets/servermanagement/'
+        rename { 'updater.jar' }
+    }
 }
 
 tasks.named('javadoc', Javadoc).configure {

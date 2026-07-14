@@ -77,6 +77,44 @@ public class ModCommands {
                 }
                 return 1;
             })
+            .then(Commands.literal("update")
+                .then(Commands.literal("gui")
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                            // Send sync packet first
+                            var info = com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate;
+                            if (info != null) {
+                                com.servermanagement.network.ModNetworking.sendToPlayer(
+                                    new com.servermanagement.network.packet.SyncUpdateInfoPacket(
+                                        true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate()
+                                    ), player
+                                );
+                            } else {
+                                com.servermanagement.network.ModNetworking.sendToPlayer(
+                                    new com.servermanagement.network.packet.SyncUpdateInfoPacket(
+                                        false, "", "", "", ""
+                                    ), player
+                                );
+                            }
+                            player.openMenu(new com.servermanagement.gui.provider.UpdaterMenuProvider());
+                        }
+                        return 1;
+                    })
+                )
+                .then(Commands.literal("skip")
+                    .executes(context -> {
+                        var info = com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate;
+                        if (info != null) {
+                            com.servermanagement.updater.UpdatePreferences.skipVersion(info.version());
+                            com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate = null;
+                            context.getSource().sendSuccess(() -> Component.literal("§a[ServerManagement] Update " + info.version() + " has been skipped."), true);
+                        } else {
+                            context.getSource().sendFailure(Component.literal("No pending update to skip."));
+                        }
+                        return 1;
+                    })
+                )
+            )
         );
         
         // ServerManagement Settings command

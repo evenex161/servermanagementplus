@@ -96,7 +96,11 @@ public class OTAUpdateScreen extends Screen {
         }
         
         // Warning message
-        drawCenteredString(guiGraphics, this.font, "§7§oPlease do not close this window", centerX, centerY + 80, 0xFFFFFF);
+        if (!updateFailed && !updateComplete) {
+            drawCenteredString(guiGraphics, this.font, "§7§oPlease do not close this window", centerX, centerY + 80, 0xFFFFFF);
+        } else if (updateFailed) {
+            drawCenteredString(guiGraphics, this.font, "§7§oPress ESC to return to main menu", centerX, centerY + 80, 0xFFFFFF);
+        }
         
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
@@ -124,7 +128,7 @@ public class OTAUpdateScreen extends Screen {
     
     @Override
     public boolean shouldCloseOnEsc() {
-        return false; // Prevent closing with ESC
+        return updateFailed; // Allow closing with ESC if failed
     }
     
     @Override

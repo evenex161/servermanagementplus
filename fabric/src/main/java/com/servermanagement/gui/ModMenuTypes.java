@@ -27,6 +27,7 @@ public class ModMenuTypes {
     public static MenuType<com.servermanagement.gui.gambling.MineStacksMenu> MINESTACKS_MENU;
     public static MenuType<PerformanceSettingsMenu> PERFORMANCE_SETTINGS_MENU;
     public static MenuType<MotdEditorMenu> MOTD_EDITOR_MENU;
+    public static MenuType<com.servermanagement.gui.UpdaterMenu> UPDATER_MENU;
 
     private static <T extends net.minecraft.world.inventory.AbstractContainerMenu> MenuType<T> registerSimple(String name, SimpleMenuFactory<T> factory) {
         MenuType<T> type = new MenuType<>(factory::create, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
@@ -66,5 +67,6 @@ public class ModMenuTypes {
         MINESTACKS_MENU = registerSimple("minestacks_menu", com.servermanagement.gui.gambling.MineStacksMenu::new);
         PERFORMANCE_SETTINGS_MENU = registerSimple("performance_settings_menu", PerformanceSettingsMenu::new);
         MOTD_EDITOR_MENU = registerSimple("motd_editor_menu", MotdEditorMenu::new);
+        UPDATER_MENU = registerSimple("updater_menu", com.servermanagement.gui.UpdaterMenu::new);
     }
 }
