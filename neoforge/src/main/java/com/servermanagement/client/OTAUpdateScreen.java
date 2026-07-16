@@ -30,7 +30,21 @@ public class OTAUpdateScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        // No buttons - force update
+        if (updateComplete) {
+            int centerX = this.width / 2;
+            int centerY = this.height / 2;
+            this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+                Component.literal("Quit Game"),
+                b -> this.minecraft.stop()
+            ).bounds(centerX - 50, centerY + 40, 100, 20).build());
+        } else if (updateFailed) {
+            int centerX = this.width / 2;
+            int centerY = this.height / 2;
+            this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+                Component.literal("Quit Game"),
+                b -> this.minecraft.stop()
+            ).bounds(centerX - 50, centerY + 40, 100, 20).build());
+        }
     }
     
     @Override
@@ -63,7 +77,7 @@ public class OTAUpdateScreen extends Screen {
             drawCenteredString(guiGraphics, this.font, "§e" + currentStatus, centerX, centerY - 20, 0xFFFFFF);
             
             // Progress bar background
-            int barWidth = 300;
+            int barWidth = Math.min(300, this.width - 40);
             int barHeight = 20;
             int barX = centerX - barWidth / 2;
             int barY = centerY + 10;
@@ -96,7 +110,11 @@ public class OTAUpdateScreen extends Screen {
         }
         
         // Warning message
-        drawCenteredString(guiGraphics, this.font, "§7§oPlease do not close this window", centerX, centerY + 80, 0xFFFFFF);
+        if (!updateFailed && !updateComplete) {
+            drawCenteredString(guiGraphics, this.font, "§7§oPlease do not close this window", centerX, centerY + 80, 0xFFFFFF);
+        } else if (updateFailed) {
+            drawCenteredString(guiGraphics, this.font, "§7§oPress ESC to return to main menu", centerX, centerY + 80, 0xFFFFFF);
+        }
         
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
@@ -115,16 +133,38 @@ public class OTAUpdateScreen extends Screen {
         this.updateComplete = true;
         this.progress = 1.0f;
         this.currentStatus = "Update completed successfully!";
+        
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        
+        // Clear existing widgets just in case
+        this.clearWidgets();
+        
+        this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+            Component.literal("Quit Game"),
+            b -> this.minecraft.stop()
+        ).bounds(centerX - 50, centerY + 40, 100, 20).build());
     }
     
     public void setFailed(String errorMessage) {
         this.updateFailed = true;
         this.errorMessage = errorMessage;
+        
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        
+        // Clear existing widgets just in case
+        this.clearWidgets();
+        
+        this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+            Component.literal("Quit Game"),
+            b -> this.minecraft.stop()
+        ).bounds(centerX - 50, centerY + 40, 100, 20).build());
     }
     
     @Override
     public boolean shouldCloseOnEsc() {
-        return false; // Prevent closing with ESC
+        return updateFailed; // Allow closing with ESC if failed
     }
     
     @Override

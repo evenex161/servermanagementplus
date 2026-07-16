@@ -21,14 +21,32 @@ dependencies {
     commonResources project(path: ':common', configuration: 'commonResources')
 }
 
+sourceSets {
+    main {
+        resources {
+            srcDirs += [project(':common').file('src/main/resources')]
+        }
+    }
+}
+
 tasks.named('compileJava', JavaCompile) {
     dependsOn(configurations.commonJava)
     source(configurations.commonJava)
 }
 
+project.evaluationDependsOn(':updater')
+
 processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(configurations.commonResources)
     from(configurations.commonResources)
+    
+    def updaterJar = project(':updater').tasks.named('jar')
+    dependsOn updaterJar
+    from(updaterJar.flatMap { it.archiveFile }) {
+        into 'assets/servermanagement/'
+        rename { 'updater.jar' }
+    }
 }
 
 tasks.named('javadoc', Javadoc).configure {
@@ -37,6 +55,7 @@ tasks.named('javadoc', Javadoc).configure {
 }
 
 tasks.named('sourcesJar', Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(configurations.commonJava)
     from(configurations.commonJava)
     dependsOn(configurations.commonResources)

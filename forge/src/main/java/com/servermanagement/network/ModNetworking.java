@@ -52,6 +52,9 @@ import com.servermanagement.network.packet.SyncPerformanceSettingsPacket;
 import com.servermanagement.network.packet.SyncWorldDetailPacket;
 import com.servermanagement.network.packet.SyncWorldListPacket;
 import com.servermanagement.network.packet.ToggleAutoShowPacket;
+import com.servermanagement.network.packet.CheckForUpdatesPacket;
+import com.servermanagement.network.packet.StartServerUpdatePacket;
+import com.servermanagement.network.packet.SyncUpdateInfoPacket;
 import com.servermanagement.network.packet.ToggleFeaturePacket;
 import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
@@ -86,7 +89,25 @@ public class ModNetworking {
             .simpleChannel();
         
         // Config packets (bidirectional)
-        INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
+                INSTANCE.messageBuilder(CheckForUpdatesPacket.class, id())
+            .encoder(CheckForUpdatesPacket::encode)
+            .decoder(CheckForUpdatesPacket::new)
+            .consumer(CheckForUpdatesPacket::handle)
+            .add();
+
+        INSTANCE.messageBuilder(StartServerUpdatePacket.class, id())
+            .encoder(StartServerUpdatePacket::encode)
+            .decoder(StartServerUpdatePacket::new)
+            .consumer(StartServerUpdatePacket::handle)
+            .add();
+
+        INSTANCE.messageBuilder(SyncUpdateInfoPacket.class, id())
+            .encoder(SyncUpdateInfoPacket::encode)
+            .decoder(SyncUpdateInfoPacket::new)
+            .consumer(SyncUpdateInfoPacket::handle)
+            .add();
+
+INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
             .encoder(ToggleFeaturePacket::encode)
             .decoder(ToggleFeaturePacket::new)
             .consumer(ToggleFeaturePacket::handle)
@@ -556,3 +577,4 @@ public class ModNetworking {
         return INSTANCE;
     }
 }
+

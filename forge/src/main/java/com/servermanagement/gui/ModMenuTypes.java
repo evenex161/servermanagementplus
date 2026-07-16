@@ -64,7 +64,12 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<MotdEditorMenu>> MOTD_EDITOR_MENU =
         MENUS.register("motd_editor_menu", () -> IForgeMenuType.create((windowId, inv, data) -> new MotdEditorMenu(windowId, inv)));
 
+    public static final RegistryObject<MenuType<UpdaterMenu>> UPDATER_MENU =
+        MENUS.register("updater_menu", () -> IForgeMenuType.create((windowId, inv, data) -> new UpdaterMenu(windowId, inv)));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }
 }
+
+

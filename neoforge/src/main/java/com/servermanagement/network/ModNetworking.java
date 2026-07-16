@@ -118,3 +118,4 @@ public class ModNetworking {
         PacketDistributor.sendToAllPlayers(packet);
     }
 }
+

@@ -14,6 +14,8 @@ public class ModNetworking {
 
     public static void registerServerPackets() {
         // Register payload types for server-bound packets
+        PayloadTypeRegistry.playC2S().register(CheckForUpdatesPacket.TYPE, CheckForUpdatesPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(StartServerUpdatePacket.TYPE, StartServerUpdatePacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ToggleFeaturePacket.TYPE, ToggleFeaturePacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ToggleAutoShowPacket.TYPE, ToggleAutoShowPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(RequestAutoShowPacket.TYPE, RequestAutoShowPacket.STREAM_CODEC);
@@ -65,6 +67,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playC2S().register(HoldItemPacket.TYPE, HoldItemPacket.STREAM_CODEC);
 
         // Register payload types for client-bound packets
+        PayloadTypeRegistry.playS2C().register(SyncUpdateInfoPacket.TYPE, SyncUpdateInfoPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncAutoShowPacket.TYPE, SyncAutoShowPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncFeatureStatesPacket.TYPE, SyncFeatureStatesPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(PMSyncPlayerListsPacket.TYPE, PMSyncPlayerListsPacket.STREAM_CODEC);
@@ -92,6 +95,8 @@ public class ModNetworking {
         PayloadTypeRegistry.playS2C().register(SyncListingOffersPacket.TYPE, SyncListingOffersPacket.STREAM_CODEC);
 
         // Register server-side handlers
+        ServerPlayNetworking.registerGlobalReceiver(CheckForUpdatesPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
+        ServerPlayNetworking.registerGlobalReceiver(StartServerUpdatePacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(ToggleFeaturePacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(ToggleAutoShowPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(RequestAutoShowPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
@@ -145,6 +150,7 @@ public class ModNetworking {
 
     public static void registerClientPackets() {
         // Client-side handlers are registered in the client entrypoint
+        ClientPlayNetworking.registerGlobalReceiver(SyncUpdateInfoPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncAutoShowPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncFeatureStatesPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(PMSyncPlayerListsPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
@@ -194,3 +200,4 @@ public class ModNetworking {
         }
     }
 }
+
