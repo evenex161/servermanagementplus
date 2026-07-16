@@ -66,20 +66,6 @@ public class UpdaterMain {
                 log.println("Failed to replace jar after 20 attempts.");
             }
 
-            if (isClient && !java.awt.GraphicsEnvironment.isHeadless()) {
-                if (success) {
-                    javax.swing.JOptionPane.showMessageDialog(null, 
-                        "The update was successfully installed.\nYou can now restart Minecraft!", 
-                        "ServerManagement+ Update", 
-                        javax.swing.JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    javax.swing.JOptionPane.showMessageDialog(null, 
-                        "Failed to replace the mod JAR.\nPlease check the updater_log.txt in your mods folder.", 
-                        "ServerManagement+ Update Error", 
-                        javax.swing.JOptionPane.ERROR_MESSAGE);
-                }
-            }
-
             log.println("Updater finished.");
         } catch (Exception e) {
             e.printStackTrace();

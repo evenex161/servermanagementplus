@@ -119,11 +119,25 @@ public class OTAUpdateScreen extends Screen {
         this.updateComplete = true;
         this.progress = 1.0f;
         this.currentStatus = "Update completed successfully!";
+        
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+            Component.literal("Quit Game"),
+            b -> this.minecraft.stop()
+        ).bounds(centerX - 50, centerY + 40, 100, 20).build());
     }
     
     public void setFailed(String errorMessage) {
         this.updateFailed = true;
         this.errorMessage = errorMessage;
+        
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        this.addRenderableWidget(net.minecraft.client.gui.components.Button.builder(
+            Component.literal("Quit Game"),
+            b -> this.minecraft.stop()
+        ).bounds(centerX - 50, centerY + 40, 100, 20).build());
     }
     
     @Override
