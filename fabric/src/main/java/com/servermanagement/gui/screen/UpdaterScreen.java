@@ -33,7 +33,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
         this.confirmMode = false;
         this.smartStartWarningMode = false;
         this.overrideSelected = false;
-        this.rebuildWidgets();
+        this.refreshWidgets();
     }
 
     @Override
@@ -43,7 +43,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
             this.hasAutoChecked = true;
             ModNetworking.sendToServer(new CheckForUpdatesPacket());
         }
-        rebuildWidgets();
+        refreshWidgets();
     }
 
     @Override
@@ -52,8 +52,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
         this.tickCount++;
     }
 
-    @Override
-    protected void rebuildWidgets() {
+    protected void refreshWidgets() {
         this.clearWidgets();
 
         int cX = this.leftPos;
@@ -69,7 +68,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                 btn -> {
                     this.confirmMode = false;
                     this.smartStartWarningMode = false;
-                    this.rebuildWidgets();
+                    this.refreshWidgets();
                 })
                 .bounds(cX + this.imageWidth / 2 - 110, cY + this.imageHeight - 35, btnWidth, btnHeight)
                 .style(ModernButton.ButtonStyle.SECONDARY)
@@ -91,7 +90,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                     this.overrideSelected = true;
                     this.smartStartWarningMode = false;
                     this.confirmMode = true;
-                    this.rebuildWidgets();
+                    this.refreshWidgets();
                 })
                 .bounds(cX + this.imageWidth / 2 - 120, cY + this.imageHeight - 75, 240, btnHeight)
                 .style(ModernButton.ButtonStyle.PRIMARY)
@@ -103,7 +102,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                     this.overrideSelected = false;
                     this.smartStartWarningMode = false;
                     this.confirmMode = true;
-                    this.rebuildWidgets();
+                    this.refreshWidgets();
                 })
                 .bounds(cX + this.imageWidth / 2 - 120, cY + this.imageHeight - 50, 240, btnHeight)
                 .style(ModernButton.ButtonStyle.SECONDARY)
@@ -113,7 +112,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                 Component.literal("CANCEL"),
                 btn -> {
                     this.smartStartWarningMode = false;
-                    this.rebuildWidgets();
+                    this.refreshWidgets();
                 })
                 .bounds(cX + this.imageWidth / 2 - 50, cY + this.imageHeight - 25, 100, btnHeight)
                 .style(ModernButton.ButtonStyle.SECONDARY)
@@ -125,7 +124,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                     this.currentInfo = null;
                     this.hasAutoChecked = true;
                     ModNetworking.sendToServer(new CheckForUpdatesPacket());
-                    this.rebuildWidgets();
+                    this.refreshWidgets();
                 })
                 .bounds(cX + 10, cY + this.imageHeight - 35, 110, btnHeight)
                 .style(ModernButton.ButtonStyle.PRIMARY)
@@ -147,7 +146,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                         } else {
                             this.confirmMode = true;
                         }
-                        this.rebuildWidgets();
+                        this.refreshWidgets();
                     })
                     .bounds(cX + this.imageWidth / 2 - 110, cY + this.imageHeight - 65, btnWidth, btnHeight)
                     .style(ModernButton.ButtonStyle.SUCCESS)

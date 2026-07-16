@@ -26,26 +26,52 @@ public class UpdateAvailableScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
 
-        this.addRenderableWidget(Button.builder(Component.literal("Update Now"), b -> {
-            OTAUpdateScreen otaScreen = new OTAUpdateScreen(currentVersion, updateInfo.version(), 0);
-            this.minecraft.setScreen(otaScreen);
-            
-            java.nio.file.Path currentJar = net.minecraftforge.fml.ModList.get().getModFileById("servermanagement").getFile().getFilePath();
-            UpdateManager.downloadAndHandoff(updateInfo.downloadUrl(), true, currentJar,
-                (progress, status) -> otaScreen.updateProgress(progress, status),
-                () -> otaScreen.setComplete(),
-                (error) -> otaScreen.setFailed(error)
-            );
-        }).bounds(centerX - 155, centerY + 80, 100, 20).build());
+        int totalBtnWidth = 310;
+        if (this.width < totalBtnWidth + 20) {
+            // Stack vertically
+            this.addRenderableWidget(Button.builder(Component.literal("Update Now"), b -> {
+                OTAUpdateScreen otaScreen = new OTAUpdateScreen(currentVersion, updateInfo.version(), 0);
+                this.minecraft.setScreen(otaScreen);
+                
+                java.nio.file.Path currentJar = net.minecraftforge.fml.ModList.get().getModFileById("servermanagement").getFile().getFilePath();
+                UpdateManager.downloadAndHandoff(updateInfo.downloadUrl(), true, currentJar,
+                    (progress, status) -> otaScreen.updateProgress(progress, status),
+                    () -> otaScreen.setComplete(),
+                    (error) -> otaScreen.setFailed(error)
+                );
+            }).bounds(centerX - 100, centerY + 50, 200, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Update Later"), b -> {
-            this.minecraft.setScreen(this.previousScreen);
-        }).bounds(centerX - 50, centerY + 80, 100, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("Update Later"), b -> {
+                this.minecraft.setScreen(this.previousScreen);
+            }).bounds(centerX - 100, centerY + 75, 200, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("Skip this update"), b -> {
-            UpdatePreferences.skipVersion(updateInfo.version());
-            this.minecraft.setScreen(this.previousScreen);
-        }).bounds(centerX + 55, centerY + 80, 100, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("Skip this update"), b -> {
+                UpdatePreferences.skipVersion(updateInfo.version());
+                this.minecraft.setScreen(this.previousScreen);
+            }).bounds(centerX - 100, centerY + 100, 200, 20).build());
+        } else {
+            // Original horizontal layout
+            this.addRenderableWidget(Button.builder(Component.literal("Update Now"), b -> {
+                OTAUpdateScreen otaScreen = new OTAUpdateScreen(currentVersion, updateInfo.version(), 0);
+                this.minecraft.setScreen(otaScreen);
+                
+                java.nio.file.Path currentJar = net.minecraftforge.fml.ModList.get().getModFileById("servermanagement").getFile().getFilePath();
+                UpdateManager.downloadAndHandoff(updateInfo.downloadUrl(), true, currentJar,
+                    (progress, status) -> otaScreen.updateProgress(progress, status),
+                    () -> otaScreen.setComplete(),
+                    (error) -> otaScreen.setFailed(error)
+                );
+            }).bounds(centerX - 155, centerY + 80, 100, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("Update Later"), b -> {
+                this.minecraft.setScreen(this.previousScreen);
+            }).bounds(centerX - 50, centerY + 80, 100, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("Skip this update"), b -> {
+                UpdatePreferences.skipVersion(updateInfo.version());
+                this.minecraft.setScreen(this.previousScreen);
+            }).bounds(centerX + 55, centerY + 80, 100, 20).build());
+        }
     }
 
     @Override
@@ -62,7 +88,11 @@ public class UpdateAvailableScreen extends Screen {
         // Render basic changelog
         String[] lines = updateInfo.changelog().split("\n");
         int y = centerY - 55;
-        int maxLines = 12;
+        int maxLines = 10;
+        
+        int textStartX = Math.max(10, centerX - 160);
+        int maxTextWidth = this.width - 20;
+        
         for (int i = 0; i < Math.min(lines.length, maxLines); i++) {
             String line = lines[i].trim();
             if (line.isEmpty()) continue;
@@ -72,12 +102,13 @@ public class UpdateAvailableScreen extends Screen {
             if (line.startsWith("* ")) line = "• " + line.substring(2);
             
             if (line.length() > 65) line = line.substring(0, 62) + "...";
-            guiGraphics.drawString(this.font, "§f" + line, centerX - 160, y, 0xFFFFFF, false);
+            
+            guiGraphics.drawString(this.font, "§f" + line, textStartX, y, 0xFFFFFF, false);
             y += 10;
         }
         
         if (lines.length > maxLines) {
-            guiGraphics.drawString(this.font, "§f§o...and more (view on " + updateInfo.source() + ")", centerX - 160, y, 0xFFFFFF, false);
+            guiGraphics.drawString(this.font, "§f§o...and more (view on " + updateInfo.source() + ")", textStartX, y, 0xFFFFFF, false);
         }
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);

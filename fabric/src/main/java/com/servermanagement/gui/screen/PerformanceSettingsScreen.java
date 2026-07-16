@@ -69,11 +69,10 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         // updates the toggles/tunables on the second init() pass instead of
         // showing the stale snapshot latched in the menu constructor.
         this.menu.reloadFromClientCache();
-        rebuildWidgets();
+        refreshWidgets();
     }
 
-    @Override
-    protected void rebuildWidgets() {
+    protected void refreshWidgets() {
         this.clearWidgets();
 
         int cX = this.leftPos;
@@ -85,21 +84,21 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         int tabWidth = (tabTotalWidth - tabGap * 2) / 3;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Toggles"),
-            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "0/Toggles"); currentPage = 0; scrollOffset = 0; rebuildWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "0/Toggles"); currentPage = 0; scrollOffset = 0; refreshWidgets(); })
             .bounds(cX + 10, cY + 42, tabWidth, 20)
             .style(currentPage == 0 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Settings"),
-            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "1/Settings"); currentPage = 1; scrollOffset = 0; rebuildWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "1/Settings"); currentPage = 1; scrollOffset = 0; refreshWidgets(); })
             .bounds(cX + 10 + tabWidth + tabGap, cY + 42, tabWidth, 20)
             .style(currentPage == 1 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Stats"),
-            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "2/Stats"); currentPage = 2; scrollOffset = 0; rebuildWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "2/Stats"); currentPage = 2; scrollOffset = 0; refreshWidgets(); })
             .bounds(cX + 10 + (tabWidth + tabGap) * 2, cY + 42, tabWidth, 20)
             .style(currentPage == 2 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
@@ -236,7 +235,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         String valStr = isDouble ? String.valueOf(newVal) : String.valueOf((int) newVal);
         ModNetworking.sendToServer(new UpdatePerformanceSettingPacket(key, valStr, tick));
         applyLocalMenuUpdate(key, newVal);
-        rebuildWidgets();
+        refreshWidgets();
     }
 
     private void applyLocalMenuUpdate(String key, double val) {
@@ -259,7 +258,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         int maxScroll = getMaxScroll();
         if (maxScroll <= 0) return true;
         scrollOffset = (int) Math.max(0, Math.min(maxScroll, scrollOffset - scrollY * SCROLL_STEP));
-        rebuildWidgets();
+        refreshWidgets();
         return true;
     }
 

@@ -32,7 +32,7 @@ public class ClientSetup implements ClientModInitializer {
 
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
             UpdatePreferences.load();
-            UpdateManager.checkForUpdates("2.0.0", "fabric", "1.20.1")
+            UpdateManager.checkForUpdates("v2.1.1-b1", "fabric", "1.20.1")
                 .thenAccept(optInfo -> optInfo.ifPresent(info -> {
                     if (!UpdatePreferences.isSkipped(info.version())) {
                         pendingUpdate = info;
@@ -46,7 +46,7 @@ public class ClientSetup implements ClientModInitializer {
                 UpdateInfo info = pendingUpdate;
                 pendingUpdate = null;
                 client.tell(() -> {
-                    client.setScreen(new com.servermanagement.client.UpdateAvailableScreen(screen, info, "2.1.0"));
+                    client.setScreen(new com.servermanagement.client.UpdateAvailableScreen(screen, info, "v2.1.1-b1"));
                 });
             }
         });

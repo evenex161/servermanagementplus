@@ -33,4 +33,5 @@ v2.1.1-b1 introduces a completely overhauled, bifurcated updater architecture. I
 - **Log Polish**: Replaced the global `Constants.LOG` with a dedicated `ServerManagementUpdater` logger so updater checks properly log as `[ServerManagementUpdater/INFO]`.
 
 ### General Tweaks
+- **GUI Scaling Fixes**: Fixed `UpdaterScreen` and `PerformanceSettingsScreen` going off-screen upon window resizing. This was caused by overriding `Screen.rebuildWidgets()` in 1.20.1, which bypassed the standard GUI initialization and scaling update matrix.
 - **Standardized Mod Name**: Adjusted the mod name to `ServerManagement+` and aligned the author name across branches.
