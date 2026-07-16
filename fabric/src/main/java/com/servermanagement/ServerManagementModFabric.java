@@ -193,7 +193,7 @@ public class ServerManagementModFabric implements ModInitializer {
             net.minecraft.server.level.ServerPlayer p = handler.getPlayer();
             
             // Enforce mod requirement on the client
-            if (!net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(p, new net.minecraft.resources.ResourceLocation("servermanagement", "main"))) {
+            if (!net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(p, com.servermanagement.network.packet.SyncSessionTokenPacket.ID)) {
                 handler.disconnect(net.minecraft.network.chat.Component.literal("§cThis server requires the ServerManagement+ mod to be installed on your client!"));
                 return;
             }
