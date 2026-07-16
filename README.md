@@ -129,15 +129,17 @@ All ServerManagement+ commands are integrated into the vanilla `/help` command.
 
 ---
 
-### OTA Update System
-Automatic over-the-air mod updates for connected clients.
+### Bifurcated OTA Update & Smart Start System
+Automatic over-the-air mod updates for connected clients and intelligent server update handling.
 
-- Detects client/server version mismatch automatically
-- Downloads the correct JAR, verifies hash integrity, and installs
-- Shows an update progress screen to the player
-- Smart version comparison: semantic versioning first, then build number for same-version patches
+- **Dual-Query Architecture** — Independently queries both Modrinth and CurseForge APIs for the latest releases
+- **Standalone Handoff** — Extracts an embedded `updater.jar` to execute outside the main JVM, permitting safe jar hot-swapping while the server is offline
+- **Graceful Shutdown** — Halts the server process gracefully prior to applying updates to ensure all world data is saved and standard ports are freed
+- **Smart Start Generator** — Dynamically parses existing `run.bat` / `run.sh` scripts in the server root and injects the `-Dservermanagement.smartstart=true` JVM flag, enabling automated reboot loops post-update
+- **Manual Installation Notice (v2.1.1-b1)** — Due to the complete architecture overhaul, v2.1.1-b1 must be installed manually for both the server and client. Subsequent updates will be handled by the new automated system.
+- **Smart version comparison** — Accurate semantic versioning evaluation that considers build numbers for granular patch detection
 - **Multi-version aware** — OTA updates are blocked across different Minecraft versions (e.g., a 1.20.1 client won't receive a 1.21.1 update)
-- **Build number tracking** — Each release uses `v1.0.3-bXX` format to differentiate incremental builds within the same version
+- **Multi-loader aware** — Clients are only served updates matching their active loader (Forge, Fabric, NeoForge)
 
 ---
 
@@ -235,9 +237,12 @@ All economy data, task templates, and player progress persist across server rest
 - **Java** 17+ (MC 1.20.1) or 21+ (MC 1.21.1)
 
 ### Setup
-1. Download the JAR for your Minecraft version:
-   - MC 1.20.1: `servermanagementplus-v1.0.3-b04-mc1.20.1-release.jar`
-   - MC 1.21.1: `servermanagementplus-v1.0.3-b04-mc1.21.1-release.jar`
+1. Download the JAR for your Minecraft version and mod loader:
+   - MC 1.20.1 (Forge): `ServerManagement-forge-1.20.1-2.1.1-b01-mc1.20.1.jar`
+   - MC 1.20.1 (Fabric): `ServerManagement+-fabric-1.20.1-2.1.1-b01-mc1.20.1.jar`
+   - MC 1.21.1 (Forge): `ServerManagement-forge-1.21.1-2.1.0-b01-mc1.21.1.jar`
+   - MC 1.21.1 (NeoForge): `ServerManagement-neoforge-1.21.1-2.1.0-b01-mc1.21.1.jar`
+   - MC 1.21.1 (Fabric): `ServerManagement+-fabric-1.21.1-2.1.0-b01-mc1.21.1.jar`
 2. Place it in your server's `mods/` folder
 3. Start the server — config and data folders generate automatically
 4. Optionally install on clients for full GUI support (server-side only works too)
@@ -290,4 +295,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*ServerManagement+ v1.0.3-b04 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*
+*ServerManagement+ v2.1.1-b1 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*

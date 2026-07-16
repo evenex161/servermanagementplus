@@ -11,7 +11,7 @@ public class FabricUpdateHooks {
     public static void register() {
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
-            UpdateManager.checkUpdateSuccessState("v2.1.1-b1");
+            UpdateManager.checkUpdateSuccessState("2.1.1-b01");
             com.servermanagement.updater.ServerUpdateScheduler.start("fabric");
         });
         
@@ -19,7 +19,7 @@ public class FabricUpdateHooks {
             net.minecraft.server.level.ServerPlayer player = handler.getPlayer();
             if (player.hasPermissions(2)) {
                 if (UpdateManager.justUpdated) {
-                    player.sendSystemMessage(Component.literal("§a[ServerManagement] Successfully updated to version v2.1.1-b1!"));
+                    player.sendSystemMessage(Component.literal("§a[ServerManagement] Successfully updated to version 2.1.1-b01!"));
                     UpdateManager.justUpdated = false;
                 }
                 

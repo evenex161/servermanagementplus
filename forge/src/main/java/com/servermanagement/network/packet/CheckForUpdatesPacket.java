@@ -22,7 +22,7 @@ public record CheckForUpdatesPacket() implements IPacket {
             ServerPlayer player = ctx.get().getSender();
             if (player != null && player.hasPermissions(2)) {
                 // Check for updates asynchronously
-                UpdateManager.checkForUpdates("2.0.0", "forge", "1.20.1").thenAccept(optInfo -> {
+                UpdateManager.checkForUpdates("2.1.1-b01", "forge", "1.20.1").thenAccept(optInfo -> {
                     if (player.hasDisconnected()) return;
                     
                     if (optInfo.isPresent()) {

@@ -1,6 +1,6 @@
 # Changelog — ServerManagement+ v2.1.1-b1 (Minecraft 1.20.1)
 
-**Release Date:** Unreleased (Dev)
+**Release Date:** Jul 16, 2026
 **Latest Changes:** Jul 16, 2026
 **Minecraft:** 1.20.1 | **Forge:** 47.4.0 | **Fabric:** 0.92.8+1.20.1 (loader 0.19.2) | **Branch:** `mc/1.20.1`
 
@@ -15,6 +15,7 @@ v2.1.1-b1 introduces a completely overhauled, bifurcated updater architecture. I
 ## Key Features & Improvements
 
 ### Updater Architecture Overhaul
+- **⚠️ Important Notice**: This specific update (v2.1.1-b1) must be downloaded and installed manually on both the server and the client one last time. Once this version is installed, the new automatic updater will take over seamlessly for all future releases.
 - **Dual-Query Support**: The updater now queries both Modrinth and CurseForge independently for updates.
 - **Standalone Handoff**: Extracts and runs a standalone `updater.jar` that can safely overwrite the mod file while the server is offline.
 - **Graceful Shutdown**: The server gracefully shuts down prior to applying updates, ensuring world data is safely saved and standard ports are freed.

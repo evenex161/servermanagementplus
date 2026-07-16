@@ -94,3 +94,10 @@ SERIALIZATION_FIX.md
 Fabric Updater Test Server/
 Forge Updater Test Server/
 updater_log.txt
+updater_jvm_error.log
+updater_jvm_output.log
+*.flag
+
+# Test files
+Test.java
+Test.class
