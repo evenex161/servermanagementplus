@@ -141,6 +141,12 @@ Automatic over-the-air mod updates for connected clients and intelligent server 
 - **Multi-version aware** — OTA updates are blocked across different Minecraft versions (e.g., a 1.20.1 client won't receive a 1.21.1 update)
 - **Multi-loader aware** — Clients are only served updates matching their active loader (Forge, Fabric, NeoForge)
 
+#### How the Updater Works (For Manual Reviewers)
+To ensure full transparency on how the mod handles updates without triggering false positive security flags:
+1. **API Fetching**: The mod only makes standard GET requests to the official `api.modrinth.com` and `api.curseforge.com` endpoints to check for version numbers.
+2. **Standalone Updater**: To avoid file-lock issues on Windows, the mod extracts an embedded `updater.jar` into the server root. This jar runs in a separate, temporary JVM process whose *only* job is to wait for the main server to exit, copy the newly downloaded mod jar over the old one, and then delete itself.
+3. **Script Modification**: If an admin opts into the Smart Restart feature via the in-game GUI prompt, the mod will read their existing `run.bat` or `run.sh` script, back it up to `run.bat.bak`, and inject a standard `-Dservermanagement.smartstart=true` JVM argument. It **does not** execute arbitrary shell code or download external scripts. All script generation is done locally and requires explicit in-game admin consent.
+
 ---
 
 ### Security
