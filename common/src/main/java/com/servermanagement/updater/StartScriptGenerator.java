@@ -11,7 +11,7 @@ public class StartScriptGenerator {
     
     private static final String DEFAULT_JAVA_CMD = "java -Xmx4G -jar server.jar nogui";
 
-    public static void generateIfNeeded() {
+    public static void cleanupIfNeeded() {
         Path serverRoot = Paths.get("").toAbsolutePath();
         Path batPath = serverRoot.resolve("smart_start.bat");
         Path shPath = serverRoot.resolve("smart_start.sh");
@@ -55,15 +55,6 @@ public class StartScriptGenerator {
                 Files.deleteIfExists(batPath);
                 Files.deleteIfExists(shPath);
             } catch (IOException ignored) {}
-            return;
-        }
-
-        if (!Files.exists(batPath)) {
-            generateBat(serverRoot, batPath);
-        }
-        
-        if (!Files.exists(shPath)) {
-            generateSh(serverRoot, shPath);
         }
     }
 
@@ -71,6 +62,7 @@ public class StartScriptGenerator {
         String[] possibleBatScripts = {"run.bat", "start.bat", "launch.bat", "server_start.bat"};
         String[] possibleShScripts = {"run.sh", "start.sh", "launch.sh", "server_start.sh"};
         
+        boolean batOverridden = false;
         for (String batName : possibleBatScripts) {
             Path script = serverRoot.resolve(batName);
             if (Files.exists(script)) {
@@ -81,10 +73,16 @@ public class StartScriptGenerator {
                 }
                 generateBat(serverRoot, script);
                 Constants.LOG.info("Overrode " + batName + " with smart start script.");
+                batOverridden = true;
                 break;
             }
         }
         
+        if (!batOverridden) {
+            generateBat(serverRoot, serverRoot.resolve("smart_start.bat"));
+        }
+        
+        boolean shOverridden = false;
         for (String shName : possibleShScripts) {
             Path script = serverRoot.resolve(shName);
             if (Files.exists(script)) {
@@ -95,8 +93,13 @@ public class StartScriptGenerator {
                 }
                 generateSh(serverRoot, script);
                 Constants.LOG.info("Overrode " + shName + " with smart start script.");
+                shOverridden = true;
                 break;
             }
+        }
+        
+        if (!shOverridden) {
+            generateSh(serverRoot, serverRoot.resolve("smart_start.sh"));
         }
     }
 

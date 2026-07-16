@@ -73,8 +73,8 @@ public class ServerManagementModFabric implements ModInitializer {
             LOGGER.info("ServerManagement v{} starting (Data Version: {})",
                     getModVersion(), com.servermanagement.util.DataVersion.CURRENT_VERSION);
 
-            // Generate Smart Start Scripts if needed
-            com.servermanagement.updater.StartScriptGenerator.generateIfNeeded();
+            // Start script generator
+            com.servermanagement.updater.StartScriptGenerator.cleanupIfNeeded();
 
             try {
                 File serverDir = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toFile();
