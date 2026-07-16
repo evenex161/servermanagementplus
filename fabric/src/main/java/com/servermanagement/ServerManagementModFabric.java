@@ -191,6 +191,13 @@ public class ServerManagementModFabric implements ModInitializer {
         // Player join — initialise tab/chat isolation and player-manager state
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             net.minecraft.server.level.ServerPlayer p = handler.getPlayer();
+            
+            // Enforce mod requirement on the client
+            if (!net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.canSend(p, new net.minecraft.resources.ResourceLocation("servermanagement", "main"))) {
+                handler.disconnect(net.minecraft.network.chat.Component.literal("§cThis server requires the ServerManagement+ mod to be installed on your client!"));
+                return;
+            }
+            
             try {
                 com.servermanagement.features.worldmanager.TabListIsolationHandler.onPlayerLogin(p);
             } catch (Throwable t) {

@@ -83,8 +83,8 @@ public class ModNetworking {
         INSTANCE = new WrappedSimpleChannel(NetworkRegistry.newSimpleChannel(
             new ResourceLocation(ServerManagementMod.MOD_ID, "main"),
             () -> PROTOCOL_VERSION,
-            s -> true,
-            s -> true
+            s -> PROTOCOL_VERSION.equals(s),
+            s -> PROTOCOL_VERSION.equals(s)
         ));
 
         ServerManagementMod.LOGGER.info("Registering network packets");
