@@ -18,6 +18,8 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
     private boolean smartStartWarningMode = false;
     private boolean overrideSelected = false;
     private SyncUpdateInfoPacket currentInfo = null;
+    private boolean hasAutoChecked = false;
+    private int tickCount = 0;
 
     public UpdaterScreen(UpdaterMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, 300, 220);
@@ -37,7 +39,17 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
     @Override
     protected void init() {
         super.init();
+        if (this.currentInfo == null && !this.hasAutoChecked) {
+            this.hasAutoChecked = true;
+            ModNetworking.sendToServer(new CheckForUpdatesPacket());
+        }
         rebuildWidgets();
+    }
+
+    @Override
+    public void containerTick() {
+        super.containerTick();
+        this.tickCount++;
     }
 
     @Override
@@ -110,7 +122,10 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
             this.addRenderableWidget(new ModernButton.Builder(
                 Component.literal("Check for Updates"),
                 btn -> {
+                    this.currentInfo = null;
+                    this.hasAutoChecked = true;
                     ModNetworking.sendToServer(new CheckForUpdatesPacket());
+                    this.rebuildWidgets();
                 })
                 .bounds(cX + 10, cY + this.imageHeight - 35, 110, btnHeight)
                 .style(ModernButton.ButtonStyle.PRIMARY)
@@ -182,7 +197,13 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
             g.drawCenteredString(this.font, "\u00a77(If you choose manually, you must restart the server yourself)", cX + this.imageWidth / 2, cY + 110, 0xAAAAAA);
         } else {
             if (currentInfo == null) {
-                g.drawCenteredString(this.font, "Checking for updates...", cX + this.imageWidth / 2, cY + 80, 0xAAAAAA);
+                String dots = switch ((this.tickCount / 10) % 4) {
+                    case 0 -> "";
+                    case 1 -> ".";
+                    case 2 -> "..";
+                    default -> "...";
+                };
+                g.drawCenteredString(this.font, "Checking for updates" + dots, cX + this.imageWidth / 2, cY + 80, 0xAAAAAA);
             } else if (!currentInfo.hasUpdate()) {
                 g.drawCenteredString(this.font, "\u00a7aServer is up to date!", cX + this.imageWidth / 2, cY + 80, 0x55FF55);
             } else {
