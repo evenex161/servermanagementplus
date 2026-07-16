@@ -36,6 +36,8 @@ GUI_TEST_CHECKLIST.md
 tools/
 CLAUDE.md
 GEMINI.md
+*_GEMINI.md
+.gemini_branch_state
 description.md
 
 # Minecraft runtime
