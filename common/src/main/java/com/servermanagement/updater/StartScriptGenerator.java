@@ -16,12 +16,104 @@ public class StartScriptGenerator {
         Path batPath = serverRoot.resolve("smart_start.bat");
         Path shPath = serverRoot.resolve("smart_start.sh");
 
+        boolean hasSmartStartIntegrated = false;
+        String[] possibleBatScripts = {"run.bat", "start.bat", "launch.bat", "server_start.bat"};
+        String[] possibleShScripts = {"run.sh", "start.sh", "launch.sh", "server_start.sh"};
+
+        // Check if any existing script already has the smart start flag
+        for (String scriptName : possibleBatScripts) {
+            Path script = serverRoot.resolve(scriptName);
+            if (Files.exists(script)) {
+                try {
+                    String content = Files.readString(script);
+                    if (content.contains("-Dservermanagement.smartstart=true")) {
+                        hasSmartStartIntegrated = true;
+                        break;
+                    }
+                } catch (IOException ignored) {}
+            }
+        }
+        
+        if (!hasSmartStartIntegrated) {
+            for (String scriptName : possibleShScripts) {
+                Path script = serverRoot.resolve(scriptName);
+                if (Files.exists(script)) {
+                    try {
+                        String content = Files.readString(script);
+                        if (content.contains("-Dservermanagement.smartstart=true")) {
+                            hasSmartStartIntegrated = true;
+                            break;
+                        }
+                    } catch (IOException ignored) {}
+                }
+            }
+        }
+
+        if (hasSmartStartIntegrated) {
+            // Clean up standalone smart start scripts if they exist to keep root clean
+            try {
+                Files.deleteIfExists(batPath);
+                Files.deleteIfExists(shPath);
+            } catch (IOException ignored) {}
+            return;
+        }
+
         if (!Files.exists(batPath)) {
             generateBat(serverRoot, batPath);
         }
         
         if (!Files.exists(shPath)) {
             generateSh(serverRoot, shPath);
+        }
+    }
+
+    public static void overrideRunScripts(Path serverRoot) {
+        String[] possibleBatScripts = {"run.bat", "start.bat", "launch.bat", "server_start.bat"};
+        String[] possibleShScripts = {"run.sh", "start.sh", "launch.sh", "server_start.sh"};
+        
+        for (String batName : possibleBatScripts) {
+            Path script = serverRoot.resolve(batName);
+            if (Files.exists(script)) {
+                try {
+                    Files.copy(script, serverRoot.resolve(batName + ".bak"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    Constants.LOG.error("Failed to backup " + batName, e);
+                }
+                generateBat(serverRoot, script);
+                Constants.LOG.info("Overrode " + batName + " with smart start script.");
+                break;
+            }
+        }
+        
+        for (String shName : possibleShScripts) {
+            Path script = serverRoot.resolve(shName);
+            if (Files.exists(script)) {
+                try {
+                    Files.copy(script, serverRoot.resolve(shName + ".bak"), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    Constants.LOG.error("Failed to backup " + shName, e);
+                }
+                generateSh(serverRoot, script);
+                Constants.LOG.info("Overrode " + shName + " with smart start script.");
+                break;
+            }
+        }
+    }
+
+    private static String injectSmartStartFlag(String javaCmd) {
+        if (javaCmd.contains("-Dservermanagement.smartstart=true")) {
+            return javaCmd;
+        }
+        int spaceIdx = javaCmd.indexOf(" ");
+        if (javaCmd.startsWith("\"")) {
+            spaceIdx = javaCmd.indexOf("\" ") + 1;
+            if (spaceIdx == 0) spaceIdx = javaCmd.length();
+        }
+        
+        if (spaceIdx > 0 && spaceIdx < javaCmd.length()) {
+            return javaCmd.substring(0, spaceIdx) + " -Dservermanagement.smartstart=true" + javaCmd.substring(spaceIdx);
+        } else {
+            return javaCmd + " -Dservermanagement.smartstart=true";
         }
     }
 
@@ -55,7 +147,7 @@ public class StartScriptGenerator {
 
     private static void generateBat(Path serverRoot, Path outPath) {
         String[] possibleScripts = {"run.bat", "start.bat", "launch.bat", "server_start.bat"};
-        String javaCmd = findJavaCommand(serverRoot, possibleScripts);
+        String javaCmd = injectSmartStartFlag(findJavaCommand(serverRoot, possibleScripts));
         
         String content = "@echo off\n" +
             "REM ======================================================================\n" +
@@ -94,7 +186,7 @@ public class StartScriptGenerator {
 
     private static void generateSh(Path serverRoot, Path outPath) {
         String[] possibleScripts = {"run.sh", "start.sh", "launch.sh", "server_start.sh"};
-        String javaCmd = findJavaCommand(serverRoot, possibleScripts);
+        String javaCmd = injectSmartStartFlag(findJavaCommand(serverRoot, possibleScripts));
         
         String content = "#!/bin/bash\n" +
             "# ======================================================================\n" +

@@ -27,13 +27,15 @@ public record CheckForUpdatesPacket() implements IPacket {
                     
                     if (optInfo.isPresent()) {
                         var info = optInfo.get();
+                        boolean smartStartActive = Boolean.parseBoolean(System.getProperty("servermanagement.smartstart", "false"));
                         com.servermanagement.network.ModNetworking.sendToPlayer(
-                            new SyncUpdateInfoPacket(true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate()),
+                            new SyncUpdateInfoPacket(true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate(), smartStartActive),
                             player
                         );
                     } else {
+                        boolean smartStartActive = Boolean.parseBoolean(System.getProperty("servermanagement.smartstart", "false"));
                         com.servermanagement.network.ModNetworking.sendToPlayer(
-                            new SyncUpdateInfoPacket(false, "", "", "", ""),
+                            new SyncUpdateInfoPacket(false, "", "", "", "", smartStartActive),
                             player
                         );
                     }

@@ -12,9 +12,6 @@ import com.servermanagement.network.packet.DeleteTemplatePacket;
 import com.servermanagement.network.packet.GamblingResultPacket;
 import com.servermanagement.network.packet.GamblingTensionPacket;
 import com.servermanagement.network.packet.IPacket;
-import com.servermanagement.network.packet.ModFileChunkPacket;
-import com.servermanagement.network.packet.ModFileCompletePacket;
-import com.servermanagement.network.packet.ModFileRequestPacket;
 import com.servermanagement.network.packet.OpenGuiPacket;
 import com.servermanagement.network.packet.PMSpectatePlayerPacket;
 import com.servermanagement.network.packet.PMViewInventoryPacket;
@@ -55,7 +52,6 @@ import com.servermanagement.network.packet.ToggleAutoShowPacket;
 import com.servermanagement.network.packet.ToggleFeaturePacket;
 import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
-import com.servermanagement.network.packet.VersionCheckPacket;
 import com.servermanagement.network.packet.CheckForUpdatesPacket;
 import com.servermanagement.network.packet.StartServerUpdatePacket;
 import com.servermanagement.network.packet.SyncUpdateInfoPacket;
@@ -205,14 +201,6 @@ public class ModNetworking {
         INSTANCE.registerMessage(id(), ClaimBankItemPacket.class, ClaimBankItemPacket::encode, ClaimBankItemPacket::new, ClaimBankItemPacket::handle);
         
         // OTA Update packets
-        INSTANCE.registerMessage(id(), VersionCheckPacket.class, VersionCheckPacket::encode, VersionCheckPacket::new, VersionCheckPacket::handle);
-        
-        INSTANCE.registerMessage(id(), ModFileRequestPacket.class, ModFileRequestPacket::encode, ModFileRequestPacket::new, ModFileRequestPacket::handle);
-        
-        INSTANCE.registerMessage(id(), ModFileChunkPacket.class, ModFileChunkPacket::encode, ModFileChunkPacket::new, ModFileChunkPacket::handle);
-        
-        INSTANCE.registerMessage(id(), ModFileCompletePacket.class, ModFileCompletePacket::encode, ModFileCompletePacket::new, ModFileCompletePacket::handle);
-        
         INSTANCE.registerMessage(id(), CheckForUpdatesPacket.class, CheckForUpdatesPacket::encode, CheckForUpdatesPacket::new, CheckForUpdatesPacket::handle);
         
         INSTANCE.registerMessage(id(), StartServerUpdatePacket.class, StartServerUpdatePacket::encode, StartServerUpdatePacket::new, StartServerUpdatePacket::handle);

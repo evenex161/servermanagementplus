@@ -1,8 +1,8 @@
 # Changelog — ServerManagement+ v2.1.0 (Minecraft 1.20.1)
 
-**Release Date:** Still in developement
-**Latest Changes:** April 28, 2026
-**Minecraft:** 1.20.1 | **Forge:** 47.4.0 | **Branch:** `mc/1.20.1`
+**Release Date:** Jun 10, 2026
+**Latest Changes:** Jun 10, 2026
+**Minecraft:** 1.20.1 | **Forge:** 47.4.0 | **Fabric:** 0.92.8+1.20.1 (loader 0.19.2) | **Branch:** `mc/1.20.1`
 
 ---
 

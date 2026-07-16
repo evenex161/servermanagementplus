@@ -100,7 +100,6 @@ public class ServerManagementModFabric implements ModInitializer {
             com.servermanagement.features.minebay.MineBayManager.getInstance().initialize(server);
             com.servermanagement.features.economy.OverflowInventoryManager.getInstance().initialize(server);
             com.servermanagement.features.gambling.GamblingManager.getInstance().initialize(server);
-            com.servermanagement.server.ModFileTransferManager.initialize();
 
             if (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor")) {
                 com.servermanagement.features.motd.MotdManager.getInstance().initialize(server);

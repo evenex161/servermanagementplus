@@ -6,7 +6,17 @@ import com.servermanagement.network.ModNetworking;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.gui.screens.MenuScreens;
 
+import com.servermanagement.updater.UpdateInfo;
+import com.servermanagement.updater.UpdateManager;
+import com.servermanagement.updater.UpdatePreferences;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.minecraft.client.gui.screens.TitleScreen;
+
 public class ClientSetup implements ClientModInitializer {
+    private static boolean updateChecked = false;
+    private static UpdateInfo pendingUpdate = null;
+
     @Override
     public void onInitializeClient() {
         // Register client-side packet handlers
@@ -19,6 +29,27 @@ public class ClientSetup implements ClientModInitializer {
                 (stack, tooltipType, lines) ->
                         com.servermanagement.client.ClientItemTooltipHandler.onItemTooltip(stack, tooltipType, lines)
         );
+
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
+            UpdatePreferences.load();
+            UpdateManager.checkForUpdates("2.0.0", "fabric", "1.20.1")
+                .thenAccept(optInfo -> optInfo.ifPresent(info -> {
+                    if (!UpdatePreferences.isSkipped(info.version())) {
+                        pendingUpdate = info;
+                    }
+                }));
+        });
+
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (screen instanceof TitleScreen && pendingUpdate != null && !updateChecked) {
+                updateChecked = true;
+                UpdateInfo info = pendingUpdate;
+                pendingUpdate = null;
+                client.tell(() -> {
+                    client.setScreen(new com.servermanagement.client.UpdateAvailableScreen(screen, info, "2.1.0"));
+                });
+            }
+        });
 
         // Register menu screens
         MenuScreens.register(ModMenuTypes.CONFIG_MENU, ConfigScreen::new);

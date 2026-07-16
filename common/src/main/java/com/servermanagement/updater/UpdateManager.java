@@ -17,26 +17,27 @@ import java.util.concurrent.CompletableFuture;
 
 public class UpdateManager {
     public static boolean justUpdated = false;
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("ServerManagementUpdater");
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     public static CompletableFuture<Optional<UpdateInfo>> checkForUpdates(String currentVersion, String loader, String gameVersion) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                Constants.LOG.info("Checking for updates for {} {}...", loader, gameVersion);
+                LOGGER.info("Checking for updates for {} {}...", loader, gameVersion);
                 
                 UpdateInfo modrinthData = queryModrinth(loader, gameVersion);
                 UpdateInfo curseforgeData = queryCurseForge(loader, gameVersion);
                 
                 UpdateInfo best = chooseBest(modrinthData, curseforgeData, currentVersion);
                 if (best == null) {
-                    Constants.LOG.info("No updates found (Current: {}).", currentVersion);
+                    LOGGER.info("No updates found (Current: {}).", currentVersion);
                     return Optional.empty();
                 }
 
-                Constants.LOG.info("Update available: {}", best.version());
+                LOGGER.info("Update available: {}", best.version());
                 return Optional.of(best);
             } catch (Exception e) {
-                Constants.LOG.error("Failed to check for updates", e);
+                LOGGER.error("Failed to check for updates", e);
                 return Optional.empty();
             }
         });
@@ -58,8 +59,20 @@ public class UpdateManager {
             JsonObject newState = new JsonObject();
             newState.addProperty("lastKnownVersion", currentVersion);
             Files.writeString(stateFile, newState.toString());
+            
+            // Clean up flags from previous updates to prevent smart start script from triggering falsely
+            try {
+                Path serverRoot = java.nio.file.Paths.get("");
+                Files.deleteIfExists(serverRoot.resolve("update_in_progress.flag"));
+                Files.deleteIfExists(serverRoot.resolve("update_finished.flag"));
+                
+                // Clean up old OTA configuration file
+                Files.deleteIfExists(serverRoot.resolve("curseforge.properties"));
+            } catch (Exception e) {
+                LOGGER.warn("Failed to clean up update flags", e);
+            }
         } catch (Exception e) {
-            Constants.LOG.error("Failed to check update success state", e);
+            LOGGER.error("Failed to check update success state", e);
         }
     }
 
@@ -70,7 +83,7 @@ public class UpdateManager {
             java.util.function.Consumer<String> onError) {
         CompletableFuture.runAsync(() -> {
             try {
-                Constants.LOG.info("Downloading update from {}...", downloadUrl);
+                LOGGER.info("Downloading update from {}...", downloadUrl);
                 if (progressCallback != null) progressCallback.accept(0.0f, "Connecting...");
                 
                 java.net.URL url = new java.net.URI(downloadUrl).toURL();
@@ -93,7 +106,7 @@ public class UpdateManager {
                     }
                 }
                 
-                Constants.LOG.info("Update downloaded to {}", tempFile);
+                LOGGER.info("Update downloaded to {}", tempFile);
                 if (progressCallback != null) progressCallback.accept(1.0f, "Download complete!");
                 
                 boolean success = executeUpdaterHandoff(tempFile, currentJar, isClient);
@@ -103,7 +116,7 @@ public class UpdateManager {
                     if (onError != null) onError.accept("Dev environment: updater.jar missing.");
                 }
             } catch (Exception e) {
-                Constants.LOG.error("Failed to download update", e);
+                LOGGER.error("Failed to download update", e);
                 if (onError != null) onError.accept(e.getMessage());
             }
         });
@@ -133,7 +146,7 @@ public class UpdateManager {
                 }
             }
         } catch (Exception e) {
-            Constants.LOG.warn("Modrinth query failed", e);
+            LOGGER.warn("Modrinth query failed", e);
         }
         return null;
     }
@@ -169,17 +182,59 @@ public class UpdateManager {
                 }
             }
         } catch (Exception e) {
-            Constants.LOG.warn("CurseForge query failed", e);
+            LOGGER.warn("CurseForge query failed", e);
         }
         return null;
     }
 
     private static UpdateInfo chooseBest(UpdateInfo modrinthData, UpdateInfo curseforgeData, String currentVersion) {
         UpdateInfo best = modrinthData != null ? modrinthData : curseforgeData;
-        if (best != null && !best.version().contains(currentVersion)) {
+        if (best != null && isNewerVersion(best.version(), currentVersion)) {
             return best;
         }
         return null;
+    }
+
+    private static boolean isNewerVersion(String remote, String current) {
+        if (remote == null || current == null || remote.equals(current)) return false;
+        
+        // Normalize "2.1.0b1" to "2.1.0-b1" for consistent splitting
+        String rNorm = remote.replaceAll("([0-9])b([0-9])", "$1-b$2");
+        String cNorm = current.replaceAll("([0-9])b([0-9])", "$1-b$2");
+        
+        String[] rParts = rNorm.split("-");
+        String[] cParts = cNorm.split("-");
+        
+        String[] rNums = rParts[0].split("\\.");
+        String[] cNums = cParts[0].split("\\.");
+        
+        int len = Math.max(rNums.length, cNums.length);
+        for (int i = 0; i < len; i++) {
+            int r = i < rNums.length ? tryParseInt(rNums[i]) : 0;
+            int c = i < cNums.length ? tryParseInt(cNums[i]) : 0;
+            if (r != c) return r > c;
+        }
+        
+        // Base versions match. Full releases (no dash) are newer than pre-releases
+        if (rParts.length == 1 && cParts.length > 1) return true;
+        if (rParts.length > 1 && cParts.length == 1) return false;
+        
+        if (rParts.length > 1 && cParts.length > 1) {
+            int rPre = tryParseInt(rParts[1]);
+            int cPre = tryParseInt(cParts[1]);
+            if (rPre != cPre) return rPre > cPre;
+            return rParts[1].compareTo(cParts[1]) > 0;
+        }
+        
+        return false;
+    }
+
+    private static int tryParseInt(String val) {
+        try {
+            return Integer.parseInt(val.replaceAll("[^0-9]", ""));
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public static boolean executeUpdaterHandoff(Path newJar, Path currentJar, boolean isClient) {
@@ -189,7 +244,7 @@ public class UpdateManager {
             // Extract embedded updater.jar
             try (var in = UpdateManager.class.getResourceAsStream("/assets/servermanagement/updater.jar")) {
                 if (in == null) {
-                    Constants.LOG.warn("Embedded updater.jar not found! This is normal in development environments. Skipping updater handoff.");
+                    LOGGER.warn("Embedded updater.jar not found! This is normal in development environments. Skipping updater handoff.");
                     return false;
                 }
                 Files.copy(in, tempUpdater, StandardCopyOption.REPLACE_EXISTING);
@@ -233,10 +288,10 @@ public class UpdateManager {
             }
 
             pb.start();
-            Constants.LOG.info("Handoff complete, signaling server shutdown.");
+            LOGGER.info("Handoff complete, signaling server shutdown.");
             return true;
         } catch (Exception e) {
-            Constants.LOG.error("Failed to execute updater handoff", e);
+            LOGGER.error("Failed to execute updater handoff", e);
             return false;
         }
     }

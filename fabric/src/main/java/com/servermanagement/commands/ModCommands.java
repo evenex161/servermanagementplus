@@ -75,16 +75,17 @@ public class ModCommands {
                         if (context.getSource().getEntity() instanceof ServerPlayer player) {
                             // Send sync packet first
                             var info = com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate;
+                            boolean smartStartActive = Boolean.parseBoolean(System.getProperty("servermanagement.smartstart", "false"));
                             if (info != null) {
                                 com.servermanagement.network.ModNetworking.sendToPlayer(
                                     new com.servermanagement.network.packet.SyncUpdateInfoPacket(
-                                        true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate()
+                                        true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate(), smartStartActive
                                     ), player
                                 );
                             } else {
                                 com.servermanagement.network.ModNetworking.sendToPlayer(
                                     new com.servermanagement.network.packet.SyncUpdateInfoPacket(
-                                        false, "", "", "", ""
+                                        false, "", "", "", "", smartStartActive
                                     ), player
                                 );
                             }

@@ -125,7 +125,6 @@ public class ServerManagementMod {
         com.servermanagement.features.minebay.MineBayManager.getInstance().initialize(event.getServer());
         com.servermanagement.features.economy.OverflowInventoryManager.getInstance().initialize(event.getServer());
         com.servermanagement.features.gambling.GamblingManager.getInstance().initialize(event.getServer());
-        com.servermanagement.server.ModFileTransferManager.initialize();
         
         if (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor")) {
             com.servermanagement.features.motd.MotdManager.getInstance().initialize(event.getServer());

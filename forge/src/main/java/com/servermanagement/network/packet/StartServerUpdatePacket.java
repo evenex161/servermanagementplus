@@ -11,15 +11,16 @@ import java.nio.file.Path;
 
 import java.util.function.Supplier;
 
-public record StartServerUpdatePacket(String downloadUrl) implements IPacket {
+public record StartServerUpdatePacket(String downloadUrl, boolean overrideScripts) implements IPacket {
     
     public StartServerUpdatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(512));
+        this(buf.readUtf(512), buf.readBoolean());
     }
     
     @Override
     public void encode(FriendlyByteBuf buf) {
         buf.writeUtf(downloadUrl, 512);
+        buf.writeBoolean(overrideScripts);
     }
     
     @Override
@@ -27,6 +28,11 @@ public record StartServerUpdatePacket(String downloadUrl) implements IPacket {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null && player.hasPermissions(2)) {
+                if (overrideScripts) {
+                    java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
+                    com.servermanagement.updater.StartScriptGenerator.overrideRunScripts(serverRoot);
+                }
+                
                 // Kick all players
                 player.server.getPlayerList().getPlayers().forEach(p -> 
                     p.connection.disconnect(Component.literal("Server restarting for OTA update!"))

@@ -9,23 +9,29 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.nio.file.Path;
 import com.servermanagement.network.IPacket;
 
-public record StartServerUpdatePacket(String downloadUrl) implements IPacket {
+public record StartServerUpdatePacket(String downloadUrl, boolean overrideScripts) implements IPacket {
     public static final net.minecraft.resources.ResourceLocation ID = new net.minecraft.resources.ResourceLocation("servermanagement", "start_server_update_packet");
 
     @Override
     public net.minecraft.resources.ResourceLocation id() { return ID; }
     
     public StartServerUpdatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(512));
+        this(buf.readUtf(512), buf.readBoolean());
     }
     
     @Override
     public void encode(FriendlyByteBuf buf) {
         buf.writeUtf(downloadUrl, 512);
+        buf.writeBoolean(overrideScripts);
     }
     
     public void handle(ServerPlayer player) {
         if (player != null && player.hasPermissions(2)) {
+            if (overrideScripts) {
+                java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
+                com.servermanagement.updater.StartScriptGenerator.overrideRunScripts(serverRoot);
+            }
+            
             // Kick all players
             player.server.getPlayerList().getPlayers().forEach(p -> 
                 p.connection.disconnect(Component.literal("Server restarting for OTA update!"))

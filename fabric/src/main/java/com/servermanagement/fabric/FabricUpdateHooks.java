@@ -3,37 +3,12 @@ package com.servermanagement.fabric;
 import com.servermanagement.updater.UpdateInfo;
 import com.servermanagement.updater.UpdateManager;
 import com.servermanagement.updater.UpdatePreferences;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 
 public class FabricUpdateHooks {
-    private static boolean updateChecked = false;
-    private static UpdateInfo pendingUpdate = null;
 
     public static void register() {
-        ClientLifecycleEvents.CLIENT_STARTED.register(client -> {
-            UpdatePreferences.load();
-            UpdateManager.checkForUpdates("2.0.0", "fabric", "1.20.1")
-                .thenAccept(optInfo -> optInfo.ifPresent(info -> {
-                    if (!UpdatePreferences.isSkipped(info.version())) {
-                        pendingUpdate = info;
-                    }
-                }));
-        });
-
-        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            if (screen instanceof TitleScreen && pendingUpdate != null && !updateChecked) {
-                updateChecked = true;
-                UpdateInfo info = pendingUpdate;
-                pendingUpdate = null;
-                client.tell(() -> {
-                    client.setScreen(new com.servermanagement.client.UpdateAvailableScreen(screen, info, "2.1.0"));
-                });
-            }
-        });
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             UpdateManager.checkUpdateSuccessState("2.1.0");

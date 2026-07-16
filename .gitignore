@@ -90,5 +90,6 @@ SECURITY_IMPLEMENTATION.md
 SERIALIZATION_FIX.md
 
 # Updater test artifacts
-Updater Test Server/
+Fabric Updater Test Server/
+Forge Updater Test Server/
 updater_log.txt

@@ -25,15 +25,16 @@ public record CheckForUpdatesPacket() implements IPacket {
             UpdateManager.checkForUpdates("2.0.0", "fabric", "1.20.1").thenAccept(optInfo -> {
                 if (player.hasDisconnected()) return;
                 
+                boolean smartStartActive = Boolean.parseBoolean(System.getProperty("servermanagement.smartstart", "false"));
                 if (optInfo.isPresent()) {
                     var info = optInfo.get();
                     com.servermanagement.network.ModNetworking.sendToPlayer(
-                        new SyncUpdateInfoPacket(true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate()),
+                        new SyncUpdateInfoPacket(true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate(), smartStartActive),
                         player
                     );
                 } else {
                     com.servermanagement.network.ModNetworking.sendToPlayer(
-                        new SyncUpdateInfoPacket(false, "", "", "", ""),
+                        new SyncUpdateInfoPacket(false, "", "", "", "", smartStartActive),
                         player
                     );
                 }
