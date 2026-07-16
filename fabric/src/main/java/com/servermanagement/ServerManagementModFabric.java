@@ -210,6 +210,11 @@ public class ServerManagementModFabric implements ModInitializer {
             } catch (Throwable t) {
                 LOGGER.error("LoginNotificationHandler.onPlayerLogin failed", t);
             }
+            try {
+                com.servermanagement.security.SessionEventHandler.onPlayerLogin(p);
+            } catch (Throwable t) {
+                LOGGER.error("SessionEventHandler login failed", t);
+            }
         });
 
         // Player changed dimension — re-apply tab list isolation
@@ -260,6 +265,11 @@ public class ServerManagementModFabric implements ModInitializer {
                 com.servermanagement.network.PacketTimestampTracker.clearPlayer(p.getUUID());
             } catch (Throwable t) {
                 LOGGER.error("PlayerManagerSingleton leave cleanup failed", t);
+            }
+            try {
+                com.servermanagement.security.SessionEventHandler.onPlayerLogout(p);
+            } catch (Throwable t) {
+                LOGGER.error("SessionEventHandler logout failed", t);
             }
         });
 
