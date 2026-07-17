@@ -15,6 +15,7 @@ dependencies {
     }
     modImplementation libs.fabric.loader
     modImplementation libs.fabric.api
+    implementation libs.zstd.jni
 }
 
 loom {

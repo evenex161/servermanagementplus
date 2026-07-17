@@ -104,3 +104,4 @@ updater_jvm_output.log
 # Test files
 Test.java
 Test.class
+inject_rule.ps1

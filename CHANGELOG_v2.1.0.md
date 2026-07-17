@@ -1,7 +1,6 @@
 # Changelog — ServerManagement+ v2.1.0
 
-**Release Date:** Still in developement
-**Latest Changes:** April 22, 2026
+**Release Date:** April 27, 2026
 **Minecraft:** 1.21.1 | **Forge:** 52.1.0 | **NeoForge:** 21.1.80 | **Fabric API:** 0.116.1+1.21.1 | **Branch:** `mc/1.21.1-forge`
 
 ---
@@ -688,7 +687,9 @@ Three regressions / persistent bugs reported against the Phase 2.4 baseline.
   - When `isEditMode == false`, behaviour is unchanged — Back goes to CREATE_STEP1
   - When `isEditMode == true`, the Back button checks `hasUnsavedEdits()` (compares selectedOfferType, money price box text, margin percent box text, and each of the 3 priceItems[] entries — itemstack identity via ItemStack.isSameItemSameComponents, amount, and useStacks — against the original listingBeingEdited). With no changes, edit state clears and the screen returns to editOriginState (the screen the player was on when they pressed "Edit", typically VIEW_MY_LISTINGS or VIEW_DETAILS). With changes, a new EDIT_DISCARD_CONFIRM modal opens with two buttons — "Discard Changes" (clears edit state and returns to origin) and "Keep Editing" (returns to CREATE_STEP2 with the form values intact)
   - Added editOriginState field captured in editListing(...) (defensively reset to BROWSE if the source was somehow inside the create flow)
-  - New ScreenState.EDIT_DISCARD_CONFIRM, new initEditDiscardConfirm and enderEditDiscardConfirm (yellow-border modal mirroring the delete-confirm style), and corresponding cases in the init() and ender() switches
+  - New ScreenState.EDIT_DISCARD_CONFIRM, new initEditDiscardConfirm and 
+enderEditDiscardConfirm (yellow-border modal mirroring the delete-confirm style), and corresponding cases in the init() and 
+ender() switches
 - **DashboardCard — title and description still cut off at GUI Scale 4 / 5 / Auto (3 loaders)**: Phase 2.4's "wider truncation + 10px margin" was insufficient; the user supplied 5 screenshots showing the card border still painted over the text. Root cause is unchanged (GuiGraphics.enableScissor ignores the parent ScalableContainerScreen pose scale), so the fix doubles down on defensive truncation:
   - Padding raised from 5px to **16px each side** (32px total)
   - .. (two-char) ellipsis replaced with … (single-char) to free another pixel of budget

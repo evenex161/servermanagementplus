@@ -18,3 +18,9 @@
 ## Build System
 - **Mod Menu Registration:** Registered `UPDATER_MENU` consistently across all loaders. Adapted NeoForge menu registration to use `IMenuTypeExtension`.
 - **Standardization:** Renamed the mod to **ServerManagement+** and aligned author names and configuration keys globally.
+
+## Performance Orchestration & Synergy Engine
+- **Phase 1 (Foundation & Architecture):** Added the `zstd-jni` library and implemented `ZstdPacketCompressor` utilizing raw Netty ByteBuffers for zero-copy memory efficiency. Injected compression encoders/decoders directly into the base `Connection` pipeline via `ConnectionMixin`. Built `EnvironmentManager` for precise context detection.
+- **Phase 2 (Server-Side Core):** Added `ChunkPreGenerator` for async pre-generation via a spiral matrix algorithm. Added `MSPTMonitor` to throttle operations if MSPT exceeds 45ms. Built `DynamicWorkloadScaler` to dynamically reduce `SimulationDistance` during lag spikes. Added `ChunkUnloadDelayManager` for 10s lazy unloads.
+- **Phase 3 (Client-Side Engine):** Created `ClientChunkCache` (retains up to 10k unloaded chunks). Implemented `FakeChunkInjector` to feed cached chunks back to the renderer. Built `SmartPacketQueue` to prioritize packets in the player's FOV. Offloaded visibility raycasts to `AsyncOcclusionCuller`.
+- **Phase 4 (Distant Horizons Integration):** Integrated `DistantHorizonsHook` via soft-dependency reflection. Added `TieredRenderingPipeline` to push DH minimum render distance outwards and eliminate Z-fighting.
