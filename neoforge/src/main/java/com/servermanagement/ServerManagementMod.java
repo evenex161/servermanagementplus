@@ -111,13 +111,14 @@ public class ServerManagementMod {
         com.servermanagement.features.minebay.MineBayManager.getInstance().initialize(event.getServer());
         com.servermanagement.features.economy.OverflowInventoryManager.getInstance().initialize(event.getServer());
         com.servermanagement.features.gambling.GamblingManager.getInstance().initialize(event.getServer());
-        com.servermanagement.server.ModFileTransferManager.initialize();
+        com.servermanagement.updater.UpdateManager.checkUpdateSuccessState(getModVersion());
+        com.servermanagement.updater.ServerUpdateScheduler.start("NeoForge", getModVersion());
         
         if (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor")) {
             com.servermanagement.features.motd.MotdManager.getInstance().initialize(event.getServer());
         }
         
-        LOGGER.info("Subsystems initialized: TransactionManager, MineBay, Overflow, MineStacks, OTA" 
+        LOGGER.info("Subsystems initialized: TransactionManager, MineBay, Overflow, MineStacks, Updater" 
             + (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor") ? ", MOTD" : ""));
         
         com.servermanagement.server.ServerConsoleManager.getInstance().initialize(event.getServer());

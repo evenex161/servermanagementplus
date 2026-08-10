@@ -37,4 +37,26 @@ public class ClientConnectionHandler {
             }
         }
     }
+
+    private static boolean updateChecked = false;
+
+    @SubscribeEvent
+    public static void onScreenInit(net.minecraftforge.client.event.ScreenEvent.Init.Post event) {
+        if (event.getScreen() instanceof net.minecraft.client.gui.screens.TitleScreen titleScreen && !updateChecked) {
+            updateChecked = true;
+            com.servermanagement.updater.UpdatePreferences.load();
+            String version = com.servermanagement.ServerManagementMod.getModVersion();
+            com.servermanagement.updater.UpdateManager.checkForUpdates(version, "Forge", "1.21.1").thenAccept(optInfo -> {
+                optInfo.ifPresent(info -> {
+                    if (!com.servermanagement.updater.UpdatePreferences.isSkipped(info.version())) {
+                        Minecraft.getInstance().execute(() -> {
+                            Minecraft.getInstance().setScreen(new UpdateAvailableScreen(
+                                titleScreen, info, version
+                            ));
+                        });
+                    }
+                });
+            });
+        }
+    }
 }

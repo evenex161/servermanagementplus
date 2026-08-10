@@ -20,6 +20,8 @@ public class ModNetworking {
         PayloadRegistrar registrar = event.registrar(ServerManagementMod.MOD_ID).versioned("1");
 
         // Server-bound packets (client → server)
+        registrar.playToServer(CheckForUpdatesPacket.TYPE, CheckForUpdatesPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playToServer(StartServerUpdatePacket.TYPE, StartServerUpdatePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(ToggleFeaturePacket.TYPE, ToggleFeaturePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(ToggleAutoShowPacket.TYPE, ToggleAutoShowPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(RequestAutoShowPacket.TYPE, RequestAutoShowPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
@@ -71,6 +73,7 @@ public class ModNetworking {
         registrar.playToServer(DeleteListingPacket.TYPE, DeleteListingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
 
         // Client-bound packets (server → client)
+        registrar.playToClient(SyncUpdateInfoPacket.TYPE, SyncUpdateInfoPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncAutoShowPacket.TYPE, SyncAutoShowPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncFeatureStatesPacket.TYPE, SyncFeatureStatesPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(PMSyncPlayerListsPacket.TYPE, PMSyncPlayerListsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));

@@ -38,5 +38,27 @@ public class ClientSetup implements ClientModInitializer {
         MenuScreens.register(ModMenuTypes.MINESTACKS_MENU, com.servermanagement.gui.gambling.MineStacksScreen::new);
         MenuScreens.register(ModMenuTypes.PERFORMANCE_SETTINGS_MENU, PerformanceSettingsScreen::new);
         MenuScreens.register(ModMenuTypes.MOTD_EDITOR_MENU, MotdEditorScreen::new);
+        MenuScreens.register(ModMenuTypes.UPDATER_MENU, UpdaterScreen::new);
+
+        net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
+            if (screen instanceof net.minecraft.client.gui.screens.TitleScreen titleScreen && !updateChecked) {
+                updateChecked = true;
+                com.servermanagement.updater.UpdatePreferences.load();
+                String version = com.servermanagement.ServerManagementMod.getModVersion();
+                com.servermanagement.updater.UpdateManager.checkForUpdates(version, "Fabric", "1.21.1").thenAccept(optInfo -> {
+                    optInfo.ifPresent(info -> {
+                        if (!com.servermanagement.updater.UpdatePreferences.isSkipped(info.version())) {
+                            client.execute(() -> {
+                                client.setScreen(new UpdateAvailableScreen(
+                                    titleScreen, info, version
+                                ));
+                            });
+                        }
+                    });
+                });
+            }
+        });
     }
+
+    private static boolean updateChecked = false;
 }

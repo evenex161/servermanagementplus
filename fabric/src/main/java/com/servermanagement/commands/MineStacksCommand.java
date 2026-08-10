@@ -22,6 +22,10 @@ public class MineStacksCommand {
     }
     
     private static int openMineStacksGUI(CommandContext<CommandSourceStack> context) {
+        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal("MineStacks is currently disabled because Economy is disabled!"));
+            return 0;
+        }
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
             // Open GUI using the existing provider
             com.servermanagement.gui.gambling.MineStacksMenuProvider.open(player);

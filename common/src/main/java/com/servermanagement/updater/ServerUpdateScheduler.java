@@ -11,7 +11,10 @@ public class ServerUpdateScheduler {
     
     public static UpdateInfo pendingUpdate = null;
     
-    public static void start(String loader) {
+    private static String lastVersion = "2.1.0-b01";
+    
+    public static void start(String loader, String currentVersion) {
+        lastVersion = currentVersion;
         if (scheduler != null) {
             scheduler.shutdownNow();
         }
@@ -26,19 +29,25 @@ public class ServerUpdateScheduler {
         });
         
         scheduler.scheduleAtFixedRate(() -> {
-            UpdateManager.checkForUpdates("2.1.1-b01", loader, "1.20.1").thenAccept(optInfo -> {
-                optInfo.ifPresent(info -> {
-                    if (!UpdatePreferences.isSkipped(info.version())) {
-                        pendingUpdate = info;
-                    }
+            try {
+                UpdatePreferences.load();
+                UpdateManager.checkForUpdates(currentVersion, loader, "1.21.1").thenAccept(optInfo -> {
+                    optInfo.ifPresent(info -> {
+                        if (!UpdatePreferences.isSkipped(info.version())) {
+                            pendingUpdate = info;
+                            Constants.LOG.info("Automatic update check: New version available for ServerManagement+ ({})!", info.version());
+                        }
+                    });
                 });
-            });
+            } catch (Exception e) {
+                Constants.LOG.warn("Failed to perform automatic update check", e);
+            }
         }, 0, currentIntervalHours, TimeUnit.HOURS);
     }
     
     public static void setInterval(int hours, String loader) {
         currentIntervalHours = hours;
-        start(loader);
+        start(loader, lastVersion);
     }
     
     public static int getInterval() {

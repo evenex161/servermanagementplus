@@ -76,6 +76,10 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
                         player.openMenu(new com.servermanagement.gui.PortalTimerMenuProvider(data));
                         break;
                     case BANK:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Economy features are currently disabled."));
+                            return;
+                        }
                         // Send bank account sync before opening
                         syncBankAccount(player);
                         // Send bank inventory sync
@@ -85,28 +89,46 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
                         player.openMenu(new com.servermanagement.gui.economy.BankMenuProvider());
                         break;
                     case DAILY_TASKS:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Economy features are currently disabled."));
+                            return;
+                        }
                         // Send daily tasks sync before opening
                         syncDailyTasks(player);
                         player.openMenu(new com.servermanagement.gui.economy.DailyTasksMenuProvider());
                         break;
                     case ACHIEVEMENTS:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Economy features are currently disabled."));
+                            return;
+                        }
                         // Send achievements sync before opening
                         syncAchievements(player);
                         player.openMenu(new com.servermanagement.gui.economy.AchievementsMenuProvider());
                         break;
                     case ECONOMY_MANAGEMENT:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Economy features are currently disabled."));
+                            return;
+                        }
                         SyncEconomyTemplatesPacket.syncToPlayer(player, player.getServer());
                         SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
                         player.openMenu(new com.servermanagement.gui.economy.EconomyManagementMenuProvider());
                         break;
                     case MINEBAY:
-                        // Available to all players
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("MineBay is disabled because Economy is disabled."));
+                            return;
+                        }
                         syncBankAccount(player); // Sync balance for price display
                         syncMineBayListings(player);
                         player.openMenu(new com.servermanagement.gui.minebay.MineBayMenuProvider());
                         break;
                     case MINESTACKS:
-                        // Available to all players - gambling system
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("MineStacks is disabled because Economy is disabled."));
+                            return;
+                        }
                         syncBankAccount(player); // Sync balance for display
                         syncGamblingStats(player); // Sync gambling statistics
                         com.servermanagement.gui.gambling.MineStacksMenuProvider.open(player);
@@ -118,6 +140,9 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
                     case MOTD_EDITOR:
                         syncMotd(player);
                         player.openMenu(new com.servermanagement.gui.MotdEditorMenuProvider());
+                        break;
+                    case UPDATER:
+                        player.openMenu(new com.servermanagement.gui.provider.UpdaterMenuProvider());
                         break;
                 }
             }
@@ -297,7 +322,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
         MINEBAY,
         MINESTACKS,
         PERFORMANCE_SETTINGS,
-        MOTD_EDITOR;
+        MOTD_EDITOR,
+        UPDATER;
 
         public boolean isAdminOnly() {
             return switch (this) {

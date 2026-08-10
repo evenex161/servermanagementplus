@@ -58,6 +58,10 @@ public class RecipeBasedPricing {
     private static final int MAX_ITERATIONS = 100;
     /** Price difference threshold for convergence detection */
     private static final double CONVERGENCE_THRESHOLD = 0.001;
+    /** Maximum allowed price increases per item before locking to prevent positive feedback loop divergence */
+    private static final int MAX_PRICE_INCREASES = 15;
+    /** Hard ceiling on any single recipe-derived price to prevent game-breaking economy values */
+    private static final double MAX_RECIPE_PRICE = 1000000.0;
 
     private RecipeBasedPricing() {
     }
@@ -274,6 +278,8 @@ public class RecipeBasedPricing {
     private void resolveRecipePrices(Map<String, List<RecipeEntry>> recipesByOutput) {
         boolean changed = true;
         int iteration = 0;
+        Map<String, Integer> increaseCounts = new HashMap<>();
+        java.util.Set<String> lockedItems = new java.util.HashSet<>();
 
         while (changed && iteration < MAX_ITERATIONS) {
             changed = false;
@@ -281,6 +287,10 @@ public class RecipeBasedPricing {
 
             for (Map.Entry<String, List<RecipeEntry>> entry : recipesByOutput.entrySet()) {
                 String itemId = entry.getKey();
+                if (lockedItems.contains(itemId)) {
+                    continue;
+                }
+
                 List<RecipeEntry> recipes = entry.getValue();
 
                 double cheapest = Double.MAX_VALUE;
@@ -292,8 +302,24 @@ public class RecipeBasedPricing {
                 }
 
                 if (cheapest < Double.MAX_VALUE) {
+                    cheapest = Math.min(MAX_RECIPE_PRICE, cheapest);
+
                     Double current = recipePrices.get(itemId);
                     if (current == null || Math.abs(current - cheapest) > CONVERGENCE_THRESHOLD) {
+                        if (current != null && cheapest > current) {
+                            int inc = increaseCounts.getOrDefault(itemId, 0) + 1;
+                            if (inc > MAX_PRICE_INCREASES) {
+                                ServerManagementMod.LOGGER.debug(
+                                        "Crafting cycle feedback loop detected for item '{}' after {} price increases. Locking price to default ({})",
+                                        itemId, inc, DEFAULT_PRICE);
+                                lockedItems.add(itemId);
+                                recipePrices.put(itemId, DEFAULT_PRICE);
+                                changed = true;
+                                continue;
+                            }
+                            increaseCounts.put(itemId, inc);
+                        }
+
                         recipePrices.put(itemId, cheapest);
                         changed = true;
                     }

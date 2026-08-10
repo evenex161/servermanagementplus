@@ -78,6 +78,27 @@ public class ModCommands {
                 }
                 return 1;
             })
+            .then(Commands.literal("update")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        player.openMenu(new com.servermanagement.gui.provider.UpdaterMenuProvider());
+                    }
+                    return 1;
+                })
+                .then(Commands.literal("skip")
+                    .executes(context -> {
+                        if (com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate != null) {
+                            String skippedVer = com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate.version();
+                            com.servermanagement.updater.UpdatePreferences.skipVersion(skippedVer);
+                            com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate = null;
+                            context.getSource().sendSuccess(() -> Component.literal("§aSkipped update version: " + skippedVer), true);
+                        } else {
+                            context.getSource().sendFailure(Component.literal("No update currently pending to skip."));
+                        }
+                        return 1;
+                    })
+                )
+            )
         );
         
         // ServerManagement Settings command

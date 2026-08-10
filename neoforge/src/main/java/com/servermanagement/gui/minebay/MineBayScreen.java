@@ -29,6 +29,8 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     private int scrollOffset = 0;
     private static final int LISTINGS_PER_PAGE = 4; // Changed from 2 to 4
     private float emptyStateAnimation = 0f; // Animation counter for empty state
+    private EditBox searchBox;
+    private String searchQuery = "";
     
     // For creating new listings
     private EditBox moneyPriceBox;
@@ -212,6 +214,17 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             button -> filterMyListings(),
             myListingsStyle
         ));
+        
+        // Search Box (fixed position in top bar)
+        searchBox = new EditBox(this.font, centerX + 265, centerY + 7, 105, 20, Component.literal("Search"));
+        searchBox.setHint(Component.literal("Search..."));
+        searchBox.setValue(searchQuery);
+        searchBox.setResponder(text -> {
+            this.searchQuery = text;
+            applyFilters();
+            this.rebuildWidgets();
+        });
+        this.addRenderableWidget(searchBox);
         
         // If no listings, show empty state with create button in center
         if (listings.isEmpty()) {
@@ -593,27 +606,36 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         this.rebuildWidgets();
     }
     
-    private void filterMyListings() {
-        if (this.minecraft != null && this.minecraft.player != null) {
-            // Filter to show only player's listings
-            showingMyListings = true;
-            listings = new ArrayList<>();
-            for (MineBayListing listing : allListings) {
-                if (listing.getSellerId().equals(minecraft.player.getUUID())) {
-                    listings.add(listing);
+    private void applyFilters() {
+        listings = new ArrayList<>();
+        String query = searchQuery != null ? searchQuery.toLowerCase(java.util.Locale.ROOT).trim() : "";
+        for (MineBayListing listing : allListings) {
+            if (showingMyListings) {
+                if (minecraft == null || minecraft.player == null || !listing.getSellerId().equals(minecraft.player.getUUID())) {
+                    continue;
                 }
             }
-            scrollOffset = 0;
-            this.rebuildWidgets(); // Use rebuildWidgets instead of init for proper refresh
+            if (!query.isEmpty()) {
+                String itemName = listing.getItemForSale().getHoverName().getString().toLowerCase(java.util.Locale.ROOT);
+                if (!itemName.contains(query)) {
+                    continue;
+                }
+            }
+            listings.add(listing);
         }
+        scrollOffset = 0;
+    }
+    
+    private void filterMyListings() {
+        showingMyListings = true;
+        applyFilters();
+        this.rebuildWidgets();
     }
     
     private void showAllListings() {
-        // Show all listings
         showingMyListings = false;
-        listings = new ArrayList<>(allListings);
-        scrollOffset = 0;
-        this.rebuildWidgets(); // Use rebuildWidgets instead of init for proper refresh
+        applyFilters();
+        this.rebuildWidgets();
     }
     
     private void viewListingDetails(MineBayListing listing) {

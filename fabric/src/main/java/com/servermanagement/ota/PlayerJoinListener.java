@@ -17,7 +17,7 @@ public class PlayerJoinListener {
         
         // Check if OTA system is ready
         if (!ModFileTransferManager.isReady()) {
-            ServerManagementMod.LOGGER.error("OTA system not ready, skipping version check for {}", player.getName().getString());
+            ServerManagementMod.LOGGER.debug("OTA system not ready, skipping version check for {}", player.getName().getString());
             return;
         }
         

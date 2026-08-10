@@ -33,6 +33,7 @@ public class ClientSetup {
             MenuScreens.register(ModMenuTypes.MINESTACKS_MENU.get(), com.servermanagement.gui.gambling.MineStacksScreen::new);
             MenuScreens.register(ModMenuTypes.PERFORMANCE_SETTINGS_MENU.get(), PerformanceSettingsScreen::new);
             MenuScreens.register(ModMenuTypes.MOTD_EDITOR_MENU.get(), MotdEditorScreen::new);
+            MenuScreens.register(ModMenuTypes.UPDATER_MENU.get(), UpdaterScreen::new);
             
             ServerManagementMod.LOGGER.info("Registered GUI screens");
         });

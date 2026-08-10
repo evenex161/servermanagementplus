@@ -94,13 +94,14 @@ public class ServerManagementModFabric implements ModInitializer {
             com.servermanagement.features.minebay.MineBayManager.getInstance().initialize(server);
             com.servermanagement.features.economy.OverflowInventoryManager.getInstance().initialize(server);
             com.servermanagement.features.gambling.GamblingManager.getInstance().initialize(server);
-            com.servermanagement.server.ModFileTransferManager.initialize();
+            com.servermanagement.updater.UpdateManager.checkUpdateSuccessState(getModVersion());
+            com.servermanagement.updater.ServerUpdateScheduler.start("Fabric", getModVersion());
 
             if (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor")) {
                 com.servermanagement.features.motd.MotdManager.getInstance().initialize(server);
             }
 
-            LOGGER.info("Subsystems initialized: TransactionManager, MineBay, Overflow, MineStacks, OTA"
+            LOGGER.info("Subsystems initialized: TransactionManager, MineBay, Overflow, MineStacks, Updater"
                     + (com.servermanagement.features.FeatureManager.isFeatureEnabled("motd_editor") ? ", MOTD" : ""));
 
             com.servermanagement.server.ServerConsoleManager.getInstance().initialize(server);

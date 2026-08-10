@@ -180,7 +180,7 @@ public class ConfigScreen extends ScalableContainerScreen<ConfigMenu> {
             this.leftPos + 15, this.topPos + 8, 0xFFD700, true);
         
         // Subtitle
-        guiGraphics.drawString(this.font, "Enable or disable features", 
+        guiGraphics.drawString(this.font, "Enable/disable features (Double-click row to configure)", 
             this.leftPos + 15, this.topPos + 20, 0xAAAAAA, true);
         
         // Feature labels with descriptions
@@ -207,6 +207,52 @@ public class ConfigScreen extends ScalableContainerScreen<ConfigMenu> {
         // Render widgets on top
         super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
+    }
+
+    private long lastClickTime = 0;
+    private int lastClickedIndex = -1;
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            int startY = this.topPos + 45;
+            int spacing = (this.imageHeight - 45 - 45) / 6;
+            for (int i = 0; i < 6; i++) {
+                int rowY = startY + spacing * i;
+                if (mouseX >= this.leftPos + 5 && mouseX <= this.leftPos + this.imageWidth - 75 &&
+                    mouseY >= rowY && mouseY <= rowY + spacing - 2) {
+                    long currentTime = System.currentTimeMillis();
+                    if (i == lastClickedIndex && (currentTime - lastClickTime) < 400) {
+                        onFeatureDoubleClick(i);
+                        return true;
+                    }
+                    lastClickTime = currentTime;
+                    lastClickedIndex = i;
+                    break;
+                }
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private void onFeatureDoubleClick(int featureIndex) {
+        switch (featureIndex) {
+            case 0:
+                ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.WORLD_LIST, ""));
+                break;
+            case 1:
+                ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.PLAYER_MANAGER, ""));
+                break;
+            case 2:
+                ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.ECONOMY_MANAGEMENT, ""));
+                break;
+            case 4:
+                ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.PERFORMANCE_SETTINGS, ""));
+                break;
+            case 5:
+                ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.MOTD_EDITOR, ""));
+                break;
+        }
     }
 
     @Override

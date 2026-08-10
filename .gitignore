@@ -96,6 +96,7 @@ description.md
 # Updater test artifacts
 Fabric Updater Test Server/
 Forge Updater Test Server/
+Neoforge Test Server/
 updater_log.txt
 updater_jvm_error.log
 updater_jvm_output.log

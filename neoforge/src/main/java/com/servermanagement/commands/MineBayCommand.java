@@ -17,6 +17,10 @@ public class MineBayCommand {
     }
     
     private static int openMineBayGUI(CommandContext<CommandSourceStack> context) {
+        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+            context.getSource().sendFailure(Component.literal("MineBay is currently disabled because Economy is disabled!"));
+            return 0;
+        }
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
             // Sync balance before opening
             var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
