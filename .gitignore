@@ -103,6 +103,7 @@ updater_jvm_output.log
 *.flag
 
 # Test files
-Test.java
-Test.class
+Test*.java
+Test*.class
+*.jar
 inject_rule.ps1

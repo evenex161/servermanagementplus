@@ -214,8 +214,18 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                 // Render changelog (limit to a few lines)
                 g.drawString(this.font, "Changelog:", cX + 20, cY + 105, 0xAAAAAA, false);
                 String[] changelogLines = currentInfo.changelog().split("\n");
+                int maxChangelogWidth = this.imageWidth - 60;
                 for (int i = 0; i < Math.min(3, changelogLines.length); i++) {
-                    g.drawString(this.font, changelogLines[i], cX + 30, cY + 120 + (i * 12), 0xFFFFFF, false);
+                    String line = changelogLines[i];
+                    boolean truncated = false;
+                    while (this.font.width(line + "...") > maxChangelogWidth && line.length() > 3) {
+                        line = line.substring(0, line.length() - 1);
+                        truncated = true;
+                    }
+                    if (truncated) {
+                        line += "...";
+                    }
+                    g.drawString(this.font, line, cX + 30, cY + 120 + (i * 12), 0xFFFFFF, false);
                 }
             }
         }

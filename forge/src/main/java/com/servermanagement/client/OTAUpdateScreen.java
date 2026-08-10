@@ -49,8 +49,7 @@ public class OTAUpdateScreen extends Screen {
     
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Dark background
-        guiGraphics.fillGradient(0, 0, this.width, this.height, 0xFF1a1a1a, 0xFF2d2d2d);
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = this.width / 2;
         int centerY = this.height / 2;
@@ -116,7 +115,6 @@ public class OTAUpdateScreen extends Screen {
             drawCenteredString(guiGraphics, this.font, "§7§oPress ESC to return to main menu", centerX, centerY + 80, 0xFFFFFF);
         }
         
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
     
     private void drawCenteredString(GuiGraphics guiGraphics, net.minecraft.client.gui.Font font, 

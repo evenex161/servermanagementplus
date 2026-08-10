@@ -206,6 +206,11 @@ public class ServerManagementModFabric implements ModInitializer {
             } catch (Throwable t) {
                 LOGGER.error("LoginNotificationHandler.onPlayerLogin failed", t);
             }
+            try {
+                com.servermanagement.ota.PlayerJoinListener.onPlayerJoin(p);
+            } catch (Throwable t) {
+                LOGGER.error("PlayerJoinListener.onPlayerJoin failed", t);
+            }
         });
 
         // Player changed dimension — re-apply tab list isolation
