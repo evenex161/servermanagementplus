@@ -13,8 +13,11 @@ public class ClientItemTooltipHandler {
     public static void onItemTooltip(net.minecraft.world.item.ItemStack stack, net.minecraft.world.item.TooltipFlag context, java.util.List<net.minecraft.network.chat.Component> lines) {
         if (stack.isEmpty()) return;
 
-        // Only show if market data has been synced (inflation > 0 means data received)
+                // Only show if market data has been synced (inflation > 0 means data received)
         if (ClientMarketData.getInflationMultiplier() <= 0) return;
+        
+        // Admin setting check
+        if (!ClientPacketHandler.showMarketValueTooltips()) return;
 
         double basePrice = ClientMarketData.getBasePrice(stack);
         if (basePrice <= 0) return;
@@ -28,3 +31,4 @@ public class ClientItemTooltipHandler {
         }
     }
 }
+

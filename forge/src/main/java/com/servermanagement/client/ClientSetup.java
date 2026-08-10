@@ -14,6 +14,7 @@ public class ClientSetup {
     
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        com.servermanagement.client.ClientConfig.init(net.minecraft.client.Minecraft.getInstance().gameDirectory);
         event.enqueueWork(() -> {
             // Register screens
             MenuScreens.register(ModMenuTypes.CONFIG_MENU.get(), ConfigScreen::new);

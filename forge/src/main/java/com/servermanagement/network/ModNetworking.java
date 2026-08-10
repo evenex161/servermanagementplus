@@ -38,6 +38,8 @@ import com.servermanagement.network.packet.SendMoneyRequestPacket;
 import com.servermanagement.network.packet.SyncAchievementsPacket;
 import com.servermanagement.network.packet.SyncAutoShowPacket;
 import com.servermanagement.network.packet.SyncBankAccountPacket;
+import com.servermanagement.network.packet.SaveEconomySettingsPacket;
+import com.servermanagement.network.packet.SyncEconomySettingsPacket;
 import com.servermanagement.network.packet.SyncBankInventoryPacket;
 import com.servermanagement.network.packet.SyncBettingSlotStatePacket;
 import com.servermanagement.network.packet.SyncDailyTasksPacket;
@@ -314,6 +316,17 @@ INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
             .decoder(SyncBankAccountPacket::new)
             .consumer(SyncBankAccountPacket::handle)
             .add();
+        INSTANCE.messageBuilder(SyncEconomySettingsPacket.class, id())
+            .encoder(SyncEconomySettingsPacket::encode)
+            .decoder(SyncEconomySettingsPacket::new)
+            .consumer(SyncEconomySettingsPacket::handle)
+            .add();
+            
+        INSTANCE.messageBuilder(SaveEconomySettingsPacket.class, id())
+            .encoder(SaveEconomySettingsPacket::encode)
+            .decoder(SaveEconomySettingsPacket::new)
+            .consumer(SaveEconomySettingsPacket::handle)
+            .add();
         
         INSTANCE.messageBuilder(BankTransferPacket.class, id())
             .encoder(BankTransferPacket::encode)
@@ -577,4 +590,5 @@ INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
         return INSTANCE;
     }
 }
+
 

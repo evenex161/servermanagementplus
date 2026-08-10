@@ -83,6 +83,8 @@ public class ModNetworking {
         registrar.playToClient(SyncGlobalSettingsPacket.TYPE, SyncGlobalSettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncEconomyTemplatesPacket.TYPE, SyncEconomyTemplatesPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncBankAccountPacket.TYPE, SyncBankAccountPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playToClient(SyncEconomySettingsPacket.TYPE, SyncEconomySettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playToServer(SaveEconomySettingsPacket.TYPE, SaveEconomySettingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncDailyTasksPacket.TYPE, SyncDailyTasksPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncAchievementsPacket.TYPE, SyncAchievementsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncBankInventoryPacket.TYPE, SyncBankInventoryPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
@@ -121,4 +123,5 @@ public class ModNetworking {
         PacketDistributor.sendToAllPlayers(packet);
     }
 }
+
 

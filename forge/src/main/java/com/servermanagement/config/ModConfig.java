@@ -35,6 +35,11 @@ public class ModConfig {
     public static final IntValue MAX_LISTINGS_PER_PLAYER;
 
     // Server Performance Settings
+        public static ForgeConfigSpec.BooleanValue SHOW_MARKET_VALUE_TOOLTIPS;
+    public static ForgeConfigSpec.BooleanValue MINEBAY_ENABLED;
+    public static ForgeConfigSpec.BooleanValue MINESTACKS_ENABLED;
+    public static ForgeConfigSpec.ConfigValue<String> TRADE_BLACKLIST;
+
     public static final BooleanValue SERVER_PERFORMANCE_ENABLED;
 
     // MOTD Settings
@@ -108,8 +113,24 @@ public class ModConfig {
             .comment("Starting balance for new players")
             .defineInRange("startingBalance", 1000.0, 0.0, 1000000.0);
         ENCRYPTED_STORAGE = BUILDER
-            .comment("Enable AES-256-GCM encryption for economy data")
+                        .comment("Enable AES-256-GCM encryption for economy data")
             .define("encryptedStorage", true);
+            
+        SHOW_MARKET_VALUE_TOOLTIPS = BUILDER
+            .comment("Show market value and stack value in item tooltips")
+            .define("showMarketValueTooltips", true);
+            
+        MINEBAY_ENABLED = BUILDER
+            .comment("Enable the MineBay player market system")
+            .define("minebayEnabled", true);
+            
+        MINESTACKS_ENABLED = BUILDER
+            .comment("Enable the MineStacks gambling system")
+            .define("minestacksEnabled", true);
+            
+        TRADE_BLACKLIST = BUILDER
+            .comment("Comma-separated list of item IDs that cannot be traded on MineBay")
+            .define("tradeBlacklist", "");
         TRANSACTION_HISTORY_LIMIT = BUILDER
             .comment("Maximum number of transactions stored per player")
             .defineInRange("transactionHistoryLimit", 100, 10, 10000);
@@ -264,3 +285,5 @@ public class ModConfig {
         return TELEPORT_COOLDOWN.get();
     }
 }
+
+

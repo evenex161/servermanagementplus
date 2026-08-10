@@ -47,6 +47,10 @@ public class ModConfig {
     // Economy Settings
     public static final DoubleValue STARTING_BALANCE;
     public static final BooleanValue ENCRYPTED_STORAGE;
+    public static final BooleanValue SHOW_MARKET_VALUE_TOOLTIPS;
+    public static final BooleanValue MINEBAY_ENABLED;
+    public static final BooleanValue MINESTACKS_ENABLED;
+    public static final StringValue TRADE_BLACKLIST;
     public static final IntValue TRANSACTION_HISTORY_LIMIT;
     public static final IntValue MAX_LISTINGS_PER_PLAYER;
 
@@ -94,6 +98,10 @@ public class ModConfig {
 
         STARTING_BALANCE = new DoubleValue("economy.startingBalance", 1000.0, 0.0, 1000000.0);
         ENCRYPTED_STORAGE = new BooleanValue("economy.encryptedStorage", true);
+        SHOW_MARKET_VALUE_TOOLTIPS = new BooleanValue("economy.showMarketValueTooltips", true);
+        MINEBAY_ENABLED = new BooleanValue("economy.minebayEnabled", true);
+        MINESTACKS_ENABLED = new BooleanValue("economy.minestacksEnabled", true);
+        TRADE_BLACKLIST = new StringValue("economy.tradeBlacklist", "");
         TRANSACTION_HISTORY_LIMIT = new IntValue("economy.transactionHistoryLimit", 100, 10, 10000);
         MAX_LISTINGS_PER_PLAYER = new IntValue("economy.maxListingsPerPlayer", 10, 1, 100);
 
@@ -254,6 +262,22 @@ public class ModConfig {
         @Override void loadFrom(JsonObject obj) {
             if (obj.has(key) && obj.get(key).isJsonPrimitive()) {
                 value = Math.max(min, Math.min(max, obj.get(key).getAsDouble()));
+            }
+        }
+
+        @Override void saveTo(JsonObject obj) {
+            obj.add(key, new JsonPrimitive(value));
+        }
+    }
+
+    public static class StringValue extends ConfigValue<String> {
+        public StringValue(String key, String defaultValue) {
+            super(key, defaultValue);
+        }
+
+        @Override void loadFrom(JsonObject obj) {
+            if (obj.has(key) && obj.get(key).isJsonPrimitive()) {
+                value = obj.get(key).getAsString();
             }
         }
 

@@ -48,3 +48,4 @@ public class MineBayCommand {
         return 0;
     }
 }
+

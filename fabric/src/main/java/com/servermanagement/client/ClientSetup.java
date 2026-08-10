@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.MenuScreens;
 public class ClientSetup implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        com.servermanagement.client.ClientConfig.init(net.minecraft.client.Minecraft.getInstance().gameDirectory);
         // Register client-side packet handlers
         ModNetworking.registerClientPackets();
 

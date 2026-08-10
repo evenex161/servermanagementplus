@@ -17,6 +17,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playC2S().register(CheckForUpdatesPacket.TYPE, CheckForUpdatesPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(StartServerUpdatePacket.TYPE, StartServerUpdatePacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ToggleFeaturePacket.TYPE, ToggleFeaturePacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(SaveEconomySettingsPacket.TYPE, SaveEconomySettingsPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(ToggleAutoShowPacket.TYPE, ToggleAutoShowPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(RequestAutoShowPacket.TYPE, RequestAutoShowPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(WMTogglePortalsPacket.TYPE, WMTogglePortalsPacket.STREAM_CODEC);
@@ -77,6 +78,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playS2C().register(SyncGlobalSettingsPacket.TYPE, SyncGlobalSettingsPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncEconomyTemplatesPacket.TYPE, SyncEconomyTemplatesPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncBankAccountPacket.TYPE, SyncBankAccountPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(SyncEconomySettingsPacket.TYPE, SyncEconomySettingsPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncBankInventoryPacket.TYPE, SyncBankInventoryPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncDailyTasksPacket.TYPE, SyncDailyTasksPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncAchievementsPacket.TYPE, SyncAchievementsPacket.STREAM_CODEC);
@@ -160,6 +162,7 @@ public class ModNetworking {
         ClientPlayNetworking.registerGlobalReceiver(SyncGlobalSettingsPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncEconomyTemplatesPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncBankAccountPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
+        ClientPlayNetworking.registerGlobalReceiver(SyncEconomySettingsPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncBankInventoryPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncDailyTasksPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncAchievementsPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
@@ -200,4 +203,5 @@ public class ModNetworking {
         }
     }
 }
+
 

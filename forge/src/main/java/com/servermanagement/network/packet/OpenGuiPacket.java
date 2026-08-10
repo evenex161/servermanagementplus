@@ -332,3 +332,4 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
         }
     }
 }
+

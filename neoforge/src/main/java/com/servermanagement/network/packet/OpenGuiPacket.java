@@ -340,3 +340,4 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
         return (ordinal >= 0 && ordinal < values.length) ? values[ordinal] : GuiType.DASHBOARD;
     }
 }
+

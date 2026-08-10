@@ -156,3 +156,4 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
         ctx.setPacketHandled(true);
     }
 }
+

@@ -155,3 +155,4 @@ public record CreateListingPacket(ItemStack itemToSell, double moneyPrice, doubl
         return priceItems;
     }
 }
+

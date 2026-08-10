@@ -333,3 +333,4 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
         }
     }
 }
+

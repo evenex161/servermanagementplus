@@ -6,7 +6,44 @@ import com.servermanagement.network.packet.SyncWorldListPacket;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClientPacketHandler {
+public class ClientPacketHandler {    
+    // Economy Settings state
+    private static boolean showMarketValueTooltips = true;
+    private static String tradeBlacklist = "";
+    private static boolean minebayEnabled = true;
+    private static boolean minestacksEnabled = true;
+    
+    public static boolean minebayEnabled() {
+        return minebayEnabled;
+    }
+    
+    public static void setMinebayEnabled(boolean enabled) {
+        minebayEnabled = enabled;
+    }
+    
+    public static boolean minestacksEnabled() {
+        return minestacksEnabled;
+    }
+    
+    public static void setMinestacksEnabled(boolean enabled) {
+        minestacksEnabled = enabled;
+    }
+    
+    public static boolean showMarketValueTooltips() {
+        return showMarketValueTooltips;
+    }
+    
+    public static void setShowMarketValueTooltips(boolean show) {
+        showMarketValueTooltips = show;
+    }
+    
+    public static String getTradeBlacklist() {
+        return tradeBlacklist;
+    }
+    
+    public static void setTradeBlacklist(String blacklist) {
+        tradeBlacklist = blacklist;
+    }
     private static List<SyncWorldListPacket.WorldInfo> cachedWorldList = new ArrayList<>();
     private static String cachedDimensionId = "";
     private static boolean cachedNetherPortalsEnabled = false;
@@ -295,3 +332,5 @@ public class ClientPacketHandler {
     public static long getPerfTotalEntitiesThrottled() { return perfTotalEntitiesThrottled; }
     public static long getPerfTotalRedstoneThrottled() { return perfTotalRedstoneThrottled; }
 }
+
+

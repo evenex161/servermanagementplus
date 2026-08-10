@@ -247,7 +247,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         ));
         
         // Scroll buttons - below card area (cards end at ~centerY+275)
-        int navY = centerY + 280;
+        int navY = centerY + 295;
         if (scrollOffset > 0) {
             this.addRenderableWidget(new ModernButton(
                 centerX + 50, navY, 90, 18,
@@ -276,7 +276,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
             int listingIndex = i + scrollOffset;
             MineBayListing listing = listings.get(listingIndex);
-            int yPos = centerY + 60 + (i * 55); // Match rendering spacing
+            int yPos = centerY + 75 + (i * 55); // Match rendering spacing
             
             // Check if this is the player's own listing
             boolean isOwnListing = minecraft != null && minecraft.player != null && 
@@ -1765,7 +1765,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
                 int listingIndex = i + scrollOffset;
                 MineBayListing listing = listings.get(listingIndex);
-                int yPos = centerY + 60 + (i * 55);
+                int yPos = centerY + 75 + (i * 55);
                 
                 // Card background with subtle border
                 guiGraphics.fill(centerX + 20, yPos - 1, centerX + this.imageWidth - 20, yPos + 51, 0xFF333333);
@@ -2891,3 +2891,4 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         super.onClose();
     }
 }
+

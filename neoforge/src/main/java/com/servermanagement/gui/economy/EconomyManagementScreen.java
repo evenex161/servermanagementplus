@@ -32,7 +32,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     private enum Tab {
         TASK_TEMPLATES,
         FREE_REWARD,
-        STATISTICS
+        STATISTICS,
+        SETTINGS
     }
     
     private Tab currentTab = Tab.TASK_TEMPLATES;
@@ -97,6 +98,14 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             ModernButton.ButtonStyle.DANGER
         ));
         
+        // Settings button
+        this.addRenderableWidget(new ModernButton(
+            centerX + this.imageWidth - 120, centerY + 10, 25, 20,
+            Component.literal("⚙"),
+            button -> switchTab(Tab.SETTINGS),
+            currentTab == Tab.SETTINGS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
+        ));
+        
         // Tab buttons
         int tabW = (this.imageWidth - 40) / 3;
         this.addRenderableWidget(new ModernButton(
@@ -129,6 +138,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             initFreeRewardTab(centerX, centerY);
         } else if (currentTab == Tab.STATISTICS) {
             initStatisticsTab(centerX, centerY);
+        } else if (currentTab == Tab.SETTINGS) {
+            initSettingsTab(centerX, centerY);
         }
     }
     
@@ -460,6 +471,13 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             renderFreeRewardTab(guiGraphics, centerX, centerY);
         } else if (currentTab == Tab.STATISTICS) {
             renderStatisticsTab(guiGraphics, centerX, centerY);
+        } else if (currentTab == Tab.SETTINGS) {
+            int startY = centerY + 90;
+            int spacing = 35;
+            guiGraphics.drawString(this.font, "Show Market Value Tooltips", centerX + 20, startY + 5, 0xFFFFFF, true);
+            guiGraphics.drawString(this.font, "Enable MineBay", centerX + 20, startY + spacing + 5, 0xFFFFFF, true);
+            guiGraphics.drawString(this.font, "Enable MineStacks", centerX + 20, startY + spacing * 2 + 5, 0xFFFFFF, true);
+            guiGraphics.drawString(this.font, "Trade Blacklist:", centerX + 20, startY + spacing * 3 + 2, 0xAAAAAA, true);
         }
     }
     
@@ -775,5 +793,67 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 }
             }
         }
+    }
+
+    private com.servermanagement.gui.widgets.ToggleSwitch tooltipSwitch;
+    private com.servermanagement.gui.widgets.ToggleSwitch minebaySwitch;
+    private com.servermanagement.gui.widgets.ToggleSwitch minestacksSwitch;
+    private com.servermanagement.gui.widgets.TradeBlacklistEditorWidget blacklistWidget;
+
+    private void initSettingsTab(int centerX, int centerY) {
+        int startY = centerY + 90;
+        int spacing = 35;
+        
+        int rightCol = centerX + this.imageWidth - 70;
+
+        tooltipSwitch = new com.servermanagement.gui.widgets.ToggleSwitch(
+            rightCol, startY,
+            Component.literal("Tooltips"),
+            com.servermanagement.client.ClientPacketHandler.showMarketValueTooltips(),
+            (newState) -> {}
+        );
+        this.addRenderableWidget(tooltipSwitch);
+
+        minebaySwitch = new com.servermanagement.gui.widgets.ToggleSwitch(
+            rightCol, startY + spacing,
+            Component.literal("MineBay"),
+            com.servermanagement.client.ClientPacketHandler.minebayEnabled(),
+            (newState) -> {}
+        );
+        this.addRenderableWidget(minebaySwitch);
+
+        minestacksSwitch = new com.servermanagement.gui.widgets.ToggleSwitch(
+            rightCol, startY + spacing * 2,
+            Component.literal("MineStacks"),
+            com.servermanagement.client.ClientPacketHandler.minestacksEnabled(),
+            (newState) -> {}
+        );
+        this.addRenderableWidget(minestacksSwitch);
+
+        // Initialize TradeBlacklistEditorWidget below the toggles
+        blacklistWidget = new com.servermanagement.gui.widgets.TradeBlacklistEditorWidget(
+            centerX + 20, startY + spacing * 3 + 15, this.imageWidth - 40, 140,
+            com.servermanagement.client.ClientPacketHandler.getTradeBlacklist()
+        );
+        this.addRenderableWidget(blacklistWidget);
+
+        this.addRenderableWidget(new ModernButton(
+            centerX + (this.imageWidth / 2) - 60, centerY + this.imageHeight - 45, 120, 25,
+            Component.literal("Save Settings"),
+            button -> {
+                com.servermanagement.network.ModNetworking.sendToServer(new com.servermanagement.network.packet.SaveEconomySettingsPacket(
+                    tooltipSwitch.isToggled(),
+                    minebaySwitch.isToggled(),
+                    minestacksSwitch.isToggled(),
+                    blacklistWidget.getBlacklistString()
+                ));
+            },
+            ModernButton.ButtonStyle.SUCCESS
+        ));
+    }
+    @Override
+    public void containerTick() {
+        super.containerTick();
+        if (currentTab == Tab.SETTINGS && blacklistWidget != null) blacklistWidget.tick();
     }
 }
