@@ -23,7 +23,11 @@ public class MineStacksCommand {
     
     private static int openMineStacksGUI(CommandContext<CommandSourceStack> context) {
         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal("MineStacks is currently disabled because Economy is disabled!"));
+            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal("MineStacks is disabled because Economy is disabled!"));
+            return 0;
+        }
+        if (!com.servermanagement.config.ModConfig.MINESTACKS_ENABLED.get()) {
+            context.getSource().sendFailure(net.minecraft.network.chat.Component.literal("MineStacks has been disabled by an administrator!"));
             return 0;
         }
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
@@ -34,4 +38,5 @@ public class MineStacksCommand {
         return 0;
     }
 }
+
 

@@ -31,11 +31,11 @@ public class ServerUpdateScheduler {
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 UpdatePreferences.load();
-                UpdateManager.checkForUpdates(currentVersion, loader, "1.21.1").thenAccept(optInfo -> {
+                String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+                UpdateManager.checkForUpdates(currentVersion, loader, mcVersion).thenAccept(optInfo -> {
                     optInfo.ifPresent(info -> {
                         if (!UpdatePreferences.isSkipped(info.version())) {
                             pendingUpdate = info;
-                            Constants.LOG.info("Automatic update check: New version available for ServerManagement+ ({})!", info.version());
                         }
                     });
                 });

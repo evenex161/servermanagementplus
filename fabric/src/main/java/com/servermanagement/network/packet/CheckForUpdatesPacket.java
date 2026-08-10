@@ -23,7 +23,11 @@ public record CheckForUpdatesPacket() implements CustomPacketPayload {
     public void handle(ServerPlayer player) {
         if (player != null && player.hasPermissions(2)) {
             // Check for updates asynchronously
-            UpdateManager.checkForUpdates("2.1.1-b01", "fabric", "1.20.1").thenAccept(optInfo -> {
+            String currentVersion = com.servermanagement.platform.Services.PLATFORM.getModVersion();
+            String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
+            String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+            
+            UpdateManager.checkForUpdates(currentVersion, loader, mcVersion).thenAccept(optInfo -> {
                 if (player.hasDisconnected()) return;
                 
                 boolean smartStartActive = Boolean.parseBoolean(System.getProperty("servermanagement.smartstart", "false"));

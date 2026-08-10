@@ -46,7 +46,9 @@ public class ClientSetup implements ClientModInitializer {
                 updateChecked = true;
                 com.servermanagement.updater.UpdatePreferences.load();
                 String version = com.servermanagement.ServerManagementMod.getModVersion();
-                com.servermanagement.updater.UpdateManager.checkForUpdates(version, "Fabric", "1.21.1").thenAccept(optInfo -> {
+                String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
+                String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+                com.servermanagement.updater.UpdateManager.checkForUpdates(version, loader, mcVersion).thenAccept(optInfo -> {
                     optInfo.ifPresent(info -> {
                         if (!com.servermanagement.updater.UpdatePreferences.isSkipped(info.version())) {
                             client.execute(() -> {

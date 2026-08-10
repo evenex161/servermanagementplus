@@ -17,7 +17,7 @@ public class NotificationManager {
      * Send admin ServerManagement dashboard notification
      */
     public static void sendAdminDashboardNotification(ServerPlayer player) {
-        MutableComponent header = Component.literal("═══════════════════════════════════════")
+        MutableComponent header = Component.literal("══════════════════════════════")
                 .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
         
         MutableComponent title = Component.literal("\n")
@@ -36,7 +36,7 @@ public class NotificationManager {
                                                 .withStyle(ChatFormatting.YELLOW)))));
         
         MutableComponent footer = Component.literal("\n")
-                .append(Component.literal("═══════════════════════════════════════")
+                .append(Component.literal("══════════════════════════════")
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         
         player.sendSystemMessage(header);

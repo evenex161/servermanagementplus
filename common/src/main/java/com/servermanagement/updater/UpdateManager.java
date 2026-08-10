@@ -6,6 +6,8 @@ import com.google.gson.JsonParser;
 import com.servermanagement.Constants;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -125,9 +127,10 @@ public class UpdateManager {
     private static UpdateInfo queryModrinth(String loader, String gameVersion) {
         if (Constants.MODRINTH_PROJECT_ID.equals("YOUR_MODRINTH_ID")) return null;
         try {
-            String url = String.format("https://api.modrinth.com/v2/project/%s/version?loaders=[\"%%22%s%%22\"]&game_versions=[\"%%22%s%%22\"]",
-                    Constants.MODRINTH_PROJECT_ID, loader, gameVersion);
-            url = url.replace("\"%22", "%22").replace("%22\"", "%22");
+            String url = String.format("https://api.modrinth.com/v2/project/%s/version?loaders=%s&game_versions=%s",
+                    Constants.MODRINTH_PROJECT_ID, 
+                    URLEncoder.encode("[\"" + loader.toLowerCase() + "\"]", StandardCharsets.UTF_8),
+                    URLEncoder.encode("[\"" + gameVersion + "\"]", StandardCharsets.UTF_8));
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))

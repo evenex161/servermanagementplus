@@ -194,6 +194,139 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         this.menu.setOfferSlotsVisible(shouldShowOfferSlots);
     }
     
+    private final java.util.List<net.minecraft.client.gui.components.AbstractWidget> dynamicBrowseWidgets = new java.util.ArrayList<>();
+    
+    private void refreshBrowseWidgets() {
+        if (currentState != ScreenState.BROWSE) return;
+        
+        int centerX = (this.width - this.imageWidth) / 2;
+        int centerY = (this.height - this.imageHeight) / 2;
+        
+        for (net.minecraft.client.gui.components.AbstractWidget w : dynamicBrowseWidgets) {
+            this.removeWidget(w);
+        }
+        dynamicBrowseWidgets.clear();
+        
+        if (listings.isEmpty()) {
+            if (allListings.isEmpty()) {
+                net.minecraft.client.gui.components.AbstractWidget btn = new ModernButton(
+                    centerX + (this.imageWidth / 2) - 75, centerY + 170, 150, 30,
+                    Component.literal("+ Create Listing"),
+                    button -> switchState(ScreenState.CREATE_STEP1),
+                    ModernButton.ButtonStyle.SUCCESS
+                );
+                dynamicBrowseWidgets.add(btn);
+                this.addRenderableWidget(btn);
+            }
+            return;
+        }
+        
+        net.minecraft.client.gui.components.AbstractWidget createNewBtn = new ModernButton(
+            centerX + this.imageWidth - 220, centerY + 5, 120, 25,
+            Component.literal("+ Create New"),
+            button -> switchState(ScreenState.CREATE_STEP1),
+            ModernButton.ButtonStyle.SUCCESS
+        );
+        dynamicBrowseWidgets.add(createNewBtn);
+        this.addRenderableWidget(createNewBtn);
+        
+        int navY = centerY + 295;
+        if (scrollOffset > 0) {
+            net.minecraft.client.gui.components.AbstractWidget prevBtn = new ModernButton(
+                centerX + 50, navY, 90, 18,
+                Component.literal("◀ Previous"),
+                button -> {
+                    scrollOffset--;
+                    refreshBrowseWidgets();
+                },
+                ModernButton.ButtonStyle.SECONDARY
+            );
+            dynamicBrowseWidgets.add(prevBtn);
+            this.addRenderableWidget(prevBtn);
+        }
+        
+        if (scrollOffset + LISTINGS_PER_PAGE < listings.size()) {
+            net.minecraft.client.gui.components.AbstractWidget nextBtn = new ModernButton(
+                centerX + this.imageWidth - 140, navY, 90, 18,
+                Component.literal("Next ▶"),
+                button -> {
+                    scrollOffset++;
+                    refreshBrowseWidgets();
+                },
+                ModernButton.ButtonStyle.SECONDARY
+            );
+            dynamicBrowseWidgets.add(nextBtn);
+            this.addRenderableWidget(nextBtn);
+        }
+        
+        for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
+            int listingIndex = i + scrollOffset;
+            MineBayListing listing = listings.get(listingIndex);
+            int yPos = centerY + 75 + (i * 55);
+            
+            boolean isOwnListing = minecraft != null && minecraft.player != null && 
+                listing.getSellerId().equals(minecraft.player.getUUID());
+            
+            if (showingMyListings) {
+                net.minecraft.client.gui.components.AbstractWidget editBtn = new ModernButton(
+                    centerX + this.imageWidth - 130, yPos + 5, 100, 18,
+                    Component.literal("Edit"),
+                    button -> editListing(listing),
+                    ModernButton.ButtonStyle.PRIMARY
+                );
+                dynamicBrowseWidgets.add(editBtn);
+                this.addRenderableWidget(editBtn);
+                
+                net.minecraft.client.gui.components.AbstractWidget delBtn = new ModernButton(
+                    centerX + this.imageWidth - 130, yPos + 27, 100, 18,
+                    Component.literal("Delete"),
+                    button -> deleteListing(listing),
+                    ModernButton.ButtonStyle.DANGER
+                );
+                dynamicBrowseWidgets.add(delBtn);
+                this.addRenderableWidget(delBtn);
+            } else if (!isOwnListing) {
+                if (listing.getOfferType() == MineBayListing.OfferType.FIXED) {
+                    net.minecraft.client.gui.components.AbstractWidget buyBtn = new ModernButton(
+                        centerX + this.imageWidth - 130, yPos + 5, 100, 18,
+                        Component.literal("Buy Now"),
+                        button -> buyListing(listing),
+                        ModernButton.ButtonStyle.SUCCESS
+                    );
+                    dynamicBrowseWidgets.add(buyBtn);
+                    this.addRenderableWidget(buyBtn);
+                } else {
+                    net.minecraft.client.gui.components.AbstractWidget negBtn = new ModernButton(
+                        centerX + this.imageWidth - 130, yPos + 5, 100, 18,
+                        Component.literal("Negotiate"),
+                        button -> negotiateListing(listing),
+                        ModernButton.ButtonStyle.PRIMARY
+                    );
+                    dynamicBrowseWidgets.add(negBtn);
+                    this.addRenderableWidget(negBtn);
+                }
+                
+                net.minecraft.client.gui.components.AbstractWidget detailsBtn = new ModernButton(
+                    centerX + this.imageWidth - 130, yPos + 27, 100, 18,
+                    Component.literal("Details"),
+                    button -> viewListingDetails(listing),
+                    ModernButton.ButtonStyle.SECONDARY
+                );
+                dynamicBrowseWidgets.add(detailsBtn);
+                this.addRenderableWidget(detailsBtn);
+            } else {
+                net.minecraft.client.gui.components.AbstractWidget detailsBtn = new ModernButton(
+                    centerX + this.imageWidth - 130, yPos + 15, 100, 20,
+                    Component.literal("Details"),
+                    button -> viewListingDetails(listing),
+                    ModernButton.ButtonStyle.SECONDARY
+                );
+                dynamicBrowseWidgets.add(detailsBtn);
+                this.addRenderableWidget(detailsBtn);
+            }
+        }
+    }
+    
     private void initBrowseScreen(int centerX, int centerY) {
         // All Listings button (top left, PRIMARY as it's the default/home view)
         ModernButton.ButtonStyle allListingsStyle = showingMyListings ? 
@@ -214,124 +347,24 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             button -> filterMyListings(),
             myListingsStyle
         ));
-        
-        // Search Box (fixed position in top bar)
-        searchBox = new EditBox(this.font, centerX + 265, centerY + 7, 105, 20, Component.literal("Search"));
-        searchBox.setHint(Component.literal("Search..."));
-        searchBox.setValue(searchQuery);
-        searchBox.setResponder(text -> {
-            this.searchQuery = text;
-            applyFilters();
-            this.rebuildWidgets();
-        });
+        // Search Box (left-aligned, below title, visible on both tabs)
+        if (searchBox == null) {
+            searchBox = new EditBox(this.font, centerX + 10, centerY + 48, 250, 20, Component.literal("Search"));
+            searchBox.setHint(Component.literal("Search..."));
+            searchBox.setValue(searchQuery);
+            searchBox.setResponder(text -> {
+                this.searchQuery = text;
+                applyFilters();
+                refreshBrowseWidgets();
+            });
+        } else {
+            searchBox.setX(centerX + 10);
+            searchBox.setY(centerY + 48);
+            searchBox.setWidth(250);
+        }
         this.addRenderableWidget(searchBox);
         
-        // If no listings, show empty state with create button in center
-        if (listings.isEmpty()) {
-            // Create Listing button (centered below empty state text)
-            this.addRenderableWidget(new ModernButton(
-                centerX + (this.imageWidth / 2) - 75, centerY + 170, 150, 30,
-                Component.literal("+ Create Listing"),
-                button -> switchState(ScreenState.CREATE_STEP1),
-                ModernButton.ButtonStyle.SUCCESS
-            ));
-            return; // Don't show scroll buttons
-        }
-        
-        // If there are listings, show create button in top right
-        this.addRenderableWidget(new ModernButton(
-            centerX + this.imageWidth - 220, centerY + 5, 120, 25,
-            Component.literal("+ Create New"),
-            button -> switchState(ScreenState.CREATE_STEP1),
-            ModernButton.ButtonStyle.SUCCESS
-        ));
-        
-        // Scroll buttons - below card area (cards end at ~centerY+275)
-        int navY = centerY + 295;
-        if (scrollOffset > 0) {
-            this.addRenderableWidget(new ModernButton(
-                centerX + 50, navY, 90, 18,
-                Component.literal("◀ Previous"),
-                button -> {
-                    scrollOffset--;
-                    this.rebuildWidgets();
-                },
-                ModernButton.ButtonStyle.SECONDARY
-            ));
-        }
-        
-        if (scrollOffset + LISTINGS_PER_PAGE < listings.size()) {
-            this.addRenderableWidget(new ModernButton(
-                centerX + this.imageWidth - 140, navY, 90, 18,
-                Component.literal("Next ▶"),
-                button -> {
-                    scrollOffset++;
-                    this.rebuildWidgets();
-                },
-                ModernButton.ButtonStyle.SECONDARY
-            ));
-        }
-        
-        // Render listing action buttons
-        for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
-            int listingIndex = i + scrollOffset;
-            MineBayListing listing = listings.get(listingIndex);
-            int yPos = centerY + 75 + (i * 55); // Match rendering spacing
-            
-            // Check if this is the player's own listing
-            boolean isOwnListing = minecraft != null && minecraft.player != null && 
-                listing.getSellerId().equals(minecraft.player.getUUID());
-            
-            if (showingMyListings) {
-                // In "My Listings" view - show Edit and Delete buttons stacked on right side
-                this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 130, yPos + 5, 100, 18,
-                    Component.literal("Edit"),
-                    button -> editListing(listing),
-                    ModernButton.ButtonStyle.PRIMARY
-                ));
-                
-                this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 130, yPos + 27, 100, 18,
-                    Component.literal("Delete"),
-                    button -> deleteListing(listing),
-                    ModernButton.ButtonStyle.DANGER
-                ));
-            } else if (!isOwnListing) {
-                // In "All Listings" view - only show Buy/Negotiate if NOT own listing
-                if (listing.getOfferType() == MineBayListing.OfferType.FIXED) {
-                    this.addRenderableWidget(new ModernButton(
-                        centerX + this.imageWidth - 130, yPos + 5, 100, 18,
-                        Component.literal("Buy Now"),
-                        button -> buyListing(listing),
-                        ModernButton.ButtonStyle.SUCCESS
-                    ));
-                } else {
-                    this.addRenderableWidget(new ModernButton(
-                        centerX + this.imageWidth - 130, yPos + 5, 100, 18,
-                        Component.literal("Negotiate"),
-                        button -> negotiateListing(listing),
-                        ModernButton.ButtonStyle.PRIMARY
-                    ));
-                }
-                
-                // View Details button below action button
-                this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 130, yPos + 27, 100, 18,
-                    Component.literal("Details"),
-                    button -> viewListingDetails(listing),
-                    ModernButton.ButtonStyle.SECONDARY
-                ));
-            } else {
-                // Own listing in All Listings view - show Details only
-                this.addRenderableWidget(new ModernButton(
-                    centerX + this.imageWidth - 130, yPos + 15, 100, 20,
-                    Component.literal("Details"),
-                    button -> viewListingDetails(listing),
-                    ModernButton.ButtonStyle.SECONDARY
-                ));
-            }
-        }
+        refreshBrowseWidgets();
     }
     
     private void initCreateStep1(int centerX, int centerY) {
@@ -368,12 +401,22 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
         int buttonY = contentBottom - 40;
         ItemStack currentOffering = this.menu.getOfferingItem();
         boolean hasItem = !currentOffering.isEmpty();
+        boolean blacklistedTemp = false;
+        
+        if (hasItem) {
+            String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(currentOffering.getItem()).toString();
+            blacklistedTemp = com.servermanagement.client.ClientPacketHandler.getTradeBlacklist().contains(itemId);
+        }
+        
+        final boolean isBlacklisted = blacklistedTemp;
+        
         int btnW = Math.min(350, this.imageWidth - 40);
         
         this.addRenderableWidget(new ModernButton(
             centerX + (this.imageWidth - btnW) / 2, buttonY, btnW, 30,
-            Component.literal(hasItem ? "Next: Set Prices \u2192" : "Place Item"),
+            Component.literal(isBlacklisted ? "Item Blacklisted" : (hasItem ? "Next: Set Prices \u2192" : "Place Item")),
             button -> {
+                if (isBlacklisted) return;
                 ItemStack offeringItem = this.menu.getOfferingItem();
                 if (!offeringItem.isEmpty()) {
                     this.placedItem = offeringItem.copy();
@@ -381,7 +424,7 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
                     switchState(ScreenState.CREATE_STEP2);
                 }
             },
-            hasItem ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY
+            isBlacklisted ? ModernButton.ButtonStyle.DANGER : (hasItem ? ModernButton.ButtonStyle.SUCCESS : ModernButton.ButtonStyle.SECONDARY)
         ));
     }
     
@@ -1753,13 +1796,23 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
             guiGraphics.fill(boxX + 1, boxY + 1, boxX + 23, boxY + 19, 0xFF333333);
             guiGraphics.fill(boxX + 1, boxY + 8, boxX + 23, boxY + 10, 0xFF555555);
             
-            Component noListingsText = Component.literal("No Active Listings");
-            guiGraphics.drawCenteredString(this.font, noListingsText,
-                centerX + (this.imageWidth / 2), centerY + 115, 0xFFFFFF);
-            
-            Component createHintText = Component.literal("Create a listing to start trading!");
-            guiGraphics.drawCenteredString(this.font, createHintText,
-                centerX + (this.imageWidth / 2), centerY + 130, 0xBBBBBB);
+            if (allListings.isEmpty()) {
+                Component noListingsText = Component.literal("No Active Listings");
+                guiGraphics.drawCenteredString(this.font, noListingsText,
+                    centerX + (this.imageWidth / 2), centerY + 115, 0xFFFFFF);
+                
+                Component createHintText = Component.literal("Create a listing to start trading!");
+                guiGraphics.drawCenteredString(this.font, createHintText,
+                    centerX + (this.imageWidth / 2), centerY + 130, 0xBBBBBB);
+            } else {
+                Component noListingsText = Component.literal("No matches found");
+                guiGraphics.drawCenteredString(this.font, noListingsText,
+                    centerX + (this.imageWidth / 2), centerY + 115, 0xFFFFFF);
+                
+                Component createHintText = Component.literal("Try a different search term");
+                guiGraphics.drawCenteredString(this.font, createHintText,
+                    centerX + (this.imageWidth / 2), centerY + 130, 0xBBBBBB);
+            }
         } else {
             // Render listing cards
             for (int i = 0; i < Math.min(LISTINGS_PER_PAGE, listings.size() - scrollOffset); i++) {
@@ -2834,39 +2887,45 @@ public class MineBayScreen extends ScalableContainerScreen<MineBayMenu> {
     
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Check moneyPriceBox if it's visible and focused
-        if (moneyPriceBox != null && moneyPriceBox.isFocused() && moneyPriceBox.keyPressed(keyCode, scanCode, modifiers)) {
-            return true;
-        }
-        
-        // Check priceAmountBoxes if they're visible and focused
-        if (priceAmountBoxes != null) {
-            for (EditBox box : priceAmountBoxes) {
-                if (box != null && box.isFocused() && box.keyPressed(keyCode, scanCode, modifiers)) {
-                    return true;
+        if (keyCode != 256) {
+            if (this.searchBox != null && this.searchBox.isFocused()) {
+                this.searchBox.keyPressed(keyCode, scanCode, modifiers);
+                return true;
+            }
+            if (this.moneyPriceBox != null && this.moneyPriceBox.isFocused()) {
+                this.moneyPriceBox.keyPressed(keyCode, scanCode, modifiers);
+                return true;
+            }
+            if (this.priceAmountBoxes != null) {
+                for (EditBox box : priceAmountBoxes) {
+                    if (box != null && box.isFocused()) {
+                        box.keyPressed(keyCode, scanCode, modifiers);
+                        return true;
+                    }
                 }
             }
         }
-        
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
     
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        // Check moneyPriceBox if it's visible and focused
-        if (moneyPriceBox != null && moneyPriceBox.isFocused() && moneyPriceBox.charTyped(codePoint, modifiers)) {
+        if (this.searchBox != null && this.searchBox.isFocused()) {
+            this.searchBox.charTyped(codePoint, modifiers);
             return true;
         }
-        
-        // Check priceAmountBoxes if they're visible and focused
-        if (priceAmountBoxes != null) {
+        if (this.moneyPriceBox != null && this.moneyPriceBox.isFocused()) {
+            this.moneyPriceBox.charTyped(codePoint, modifiers);
+            return true;
+        }
+        if (this.priceAmountBoxes != null) {
             for (EditBox box : priceAmountBoxes) {
-                if (box != null && box.isFocused() && box.charTyped(codePoint, modifiers)) {
+                if (box != null && box.isFocused()) {
+                    box.charTyped(codePoint, modifiers);
                     return true;
                 }
             }
         }
-        
         return super.charTyped(codePoint, modifiers);
     }
     

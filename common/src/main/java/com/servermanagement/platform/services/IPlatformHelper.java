@@ -23,4 +23,9 @@ public interface IPlatformHelper {
     default String getEnvironmentName() {
         return isDevelopmentEnvironment() ? "development" : "production";
     }
+
+    /**
+     * Gets the version of the mod dynamically.
+     */
+    String getModVersion();
 }

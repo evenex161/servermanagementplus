@@ -28,6 +28,8 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
     private final List<String> blacklistedItems = new ArrayList<>();
     private final Set<Integer> selectedIndices = new HashSet<>();
     
+    private boolean isPendingSearchBoxFocus = false;
+    
     // Autocomplete state
     private final List<Item> autocompleteSuggestions = new ArrayList<>();
     private int selectedSuggestionIndex = -1;
@@ -132,8 +134,20 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
     }
 
     @Override
+    public void setFocused(boolean focused) {
+        super.setFocused(focused);
+        if (!focused) {
+            this.searchBox.setFocused(false);
+        } else if (this.isPendingSearchBoxFocus) {
+            this.searchBox.setFocused(true);
+            this.isPendingSearchBoxFocus = false;
+        }
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.searchBox.mouseClicked(mouseX, mouseY, button)) {
+            this.isPendingSearchBoxFocus = true;
             return true;
         }
         
@@ -143,8 +157,9 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
             for (int i = 0; i < autocompleteSuggestions.size(); i++) {
                 if (mouseX >= this.getX() && mouseX <= this.getX() + this.width &&
                     mouseY >= suggestY && mouseY < suggestY + 16) {
-                    if (button == 0) { // Left click = enter text, wait, user wants click or double click
+                    if (button == 0) { // Left click
                         addBlacklistedItem(autocompleteSuggestions.get(i));
+                        this.isPendingSearchBoxFocus = true;
                         return true;
                     }
                 }
@@ -154,7 +169,7 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
         
         // Clicked blacklisted item list?
         int listY = this.getY() + 25;
-        if (!searchBox.isFocused() && autocompleteSuggestions.isEmpty()) {
+        if (autocompleteSuggestions.isEmpty()) {
             for (int i = 0; i < Math.min(VISIBLE_ITEMS, blacklistedItems.size() - scrollOffset); i++) {
                 int idx = i + scrollOffset;
                 int itemY = listY + i * ITEM_HEIGHT;
@@ -173,10 +188,14 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
                             selectedIndices.clear();
                             selectedIndices.add(idx);
                         }
+                        this.setFocused(true);
+                        this.searchBox.setFocused(false);
                         return true;
                     } else if (button == 1) { // Right click hold
                         holdingIndex = idx;
                         holdTicks = 0;
+                        this.setFocused(true);
+                        this.searchBox.setFocused(false);
                         return true;
                     }
                 }
@@ -229,9 +248,10 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
                 if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < autocompleteSuggestions.size()) {
                     addBlacklistedItem(autocompleteSuggestions.get(selectedSuggestionIndex));
                 }
-                return true;
+            } else {
+                this.searchBox.keyPressed(keyCode, scanCode, modifiers);
             }
-            return this.searchBox.keyPressed(keyCode, scanCode, modifiers);
+            return true;
         }
         
         // Handle DEL key
@@ -271,7 +291,8 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
     
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        if (this.searchBox.charTyped(codePoint, modifiers)) {
+        if (this.searchBox.isFocused()) {
+            this.searchBox.charTyped(codePoint, modifiers);
             return true;
         }
         return super.charTyped(codePoint, modifiers);
@@ -331,6 +352,9 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
         
         // Render autocomplete dropdown on top of everything
         if (this.searchBox.isFocused() && !autocompleteSuggestions.isEmpty()) {
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0, 0, 400); // Push forward in 3D space
+            
             int suggestY = this.getY() + 22;
             guiGraphics.fill(this.getX(), suggestY, this.getX() + this.width, suggestY + (autocompleteSuggestions.size() * 16), 0xFF222222);
             guiGraphics.renderOutline(this.getX(), suggestY, this.width, autocompleteSuggestions.size() * 16, 0xFF555555);
@@ -347,6 +371,8 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
                 String name = Component.translatable(item.getDescriptionId()).getString();
                 guiGraphics.drawString(Minecraft.getInstance().font, name, this.getX() + 22, itemY + 4, 0xFFFFFF, true);
             }
+            
+            guiGraphics.pose().popPose();
         }
     }
 

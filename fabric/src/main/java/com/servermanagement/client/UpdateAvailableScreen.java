@@ -75,9 +75,15 @@ public class UpdateAvailableScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Dark background
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+        // Dark background overlay
         guiGraphics.fillGradient(0, 0, this.width, this.height, 0xFF1a1a1a, 0xFF2d2d2d);
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         
         int centerX = this.width / 2;
         int centerY = this.height / 2;
@@ -110,7 +116,5 @@ public class UpdateAvailableScreen extends Screen {
         if (lines.length > maxLines) {
             guiGraphics.drawString(this.font, "§f§o...and more (view on " + updateInfo.source() + ")", textStartX, y, 0xFFFFFF, false);
         }
-
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 }

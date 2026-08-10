@@ -45,6 +45,7 @@ public class ModConfig {
     public static final BooleanValue SLIME_HEADS_ENABLED;
 
     // Economy Settings
+    public static final BooleanValue ECONOMY_ENABLED;
     public static final DoubleValue STARTING_BALANCE;
     public static final BooleanValue ENCRYPTED_STORAGE;
     public static final BooleanValue SHOW_MARKET_VALUE_TOOLTIPS;
@@ -96,6 +97,7 @@ public class ModConfig {
         VIEW_INVENTORY_ENABLED = new BooleanValue("playerManager.viewInventoryEnabled", true);
         SLIME_HEADS_ENABLED = new BooleanValue("playerManager.slimeHeadsEnabled", true);
 
+        ECONOMY_ENABLED = new BooleanValue("economy.economyEnabled", true);
         STARTING_BALANCE = new DoubleValue("economy.startingBalance", 1000.0, 0.0, 1000000.0);
         ENCRYPTED_STORAGE = new BooleanValue("economy.encryptedStorage", true);
         SHOW_MARKET_VALUE_TOOLTIPS = new BooleanValue("economy.showMarketValueTooltips", true);

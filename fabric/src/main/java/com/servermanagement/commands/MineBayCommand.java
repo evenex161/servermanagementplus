@@ -18,7 +18,11 @@ public class MineBayCommand {
     
     private static int openMineBayGUI(CommandContext<CommandSourceStack> context) {
         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-            context.getSource().sendFailure(Component.literal("MineBay is currently disabled because Economy is disabled!"));
+            context.getSource().sendFailure(Component.literal("MineBay is disabled because Economy is disabled!"));
+            return 0;
+        }
+        if (!com.servermanagement.config.ModConfig.MINEBAY_ENABLED.get()) {
+            context.getSource().sendFailure(Component.literal("MineBay has been disabled by an administrator!"));
             return 0;
         }
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
@@ -48,4 +52,5 @@ public class MineBayCommand {
         return 0;
     }
 }
+
 

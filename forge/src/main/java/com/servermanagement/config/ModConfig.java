@@ -29,6 +29,7 @@ public class ModConfig {
     public static final BooleanValue SLIME_HEADS_ENABLED;
 
     // Economy Settings
+    public static final BooleanValue ECONOMY_ENABLED;
     public static final DoubleValue STARTING_BALANCE;
     public static final BooleanValue ENCRYPTED_STORAGE;
     public static final IntValue TRANSACTION_HISTORY_LIMIT;
@@ -109,6 +110,9 @@ public class ModConfig {
         BUILDER.pop();
 
         BUILDER.push("Economy");
+        ECONOMY_ENABLED = BUILDER
+            .comment("Enable the Economy system (Bank, MineBay, MineStacks)")
+            .define("economyEnabled", true);
         STARTING_BALANCE = BUILDER
             .comment("Starting balance for new players")
             .defineInRange("startingBalance", 1000.0, 0.0, 1000000.0);

@@ -21,7 +21,11 @@ public record CheckForUpdatesPacket() implements IPacket {
             ServerPlayer player = ctx.getSender();
             if (player != null && player.hasPermissions(2)) {
                 // Check for updates asynchronously
-                UpdateManager.checkForUpdates("2.1.1-b01", "forge", "1.21.1").thenAccept(optInfo -> {
+                String currentVersion = com.servermanagement.platform.Services.PLATFORM.getModVersion();
+                String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
+                String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+                
+                UpdateManager.checkForUpdates(currentVersion, loader, mcVersion).thenAccept(optInfo -> {
                     if (player.hasDisconnected()) return;
                     
                     if (optInfo.isPresent()) {

@@ -118,6 +118,10 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                             player.sendSystemMessage(net.minecraft.network.chat.Component.literal("MineBay is disabled because Economy is disabled."));
                             return;
                         }
+                        if (!com.servermanagement.config.ModConfig.MINEBAY_ENABLED.get()) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("MineBay has been disabled by an administrator."));
+                            return;
+                        }
                         syncBankAccount(player); // Sync balance for price display
                         syncMineBayListings(player);
                         player.openMenu(new com.servermanagement.gui.minebay.MineBayMenuProvider());
@@ -125,6 +129,10 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                     case MINESTACKS:
                         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
                             player.sendSystemMessage(net.minecraft.network.chat.Component.literal("MineStacks is disabled because Economy is disabled."));
+                            return;
+                        }
+                        if (!com.servermanagement.config.ModConfig.MINESTACKS_ENABLED.get()) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("MineStacks has been disabled by an administrator."));
                             return;
                         }
                         syncBankAccount(player); // Sync balance for display

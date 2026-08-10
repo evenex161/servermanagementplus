@@ -19,4 +19,9 @@ public class FabricPlatformHelper implements IPlatformHelper {
     public boolean isDevelopmentEnvironment() {
         return FabricLoader.getInstance().isDevelopmentEnvironment();
     }
+
+    @Override
+    public String getModVersion() {
+        return FabricLoader.getInstance().getModContainer("servermanagement").get().getMetadata().getVersion().getFriendlyString();
+    }
 }
