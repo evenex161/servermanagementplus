@@ -107,3 +107,4 @@ Test*.java
 Test*.class
 *.jar
 inject_rule.ps1
+inject*.ps1
