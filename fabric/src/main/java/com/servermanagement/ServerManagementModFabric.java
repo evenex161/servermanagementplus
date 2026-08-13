@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.minecraft.server.MinecraftServer;
 
 public class ServerManagementModFabric implements ModInitializer {
@@ -160,6 +161,8 @@ public class ServerManagementModFabric implements ModInitializer {
                 try {
                     com.servermanagement.features.economy.DailyTaskProgressListener
                         .onBlockBreak(level, player, pos, state);
+                    com.servermanagement.features.economy.DropRateTracker
+                        .onBlockBreak((net.minecraft.server.level.ServerLevel) level, player, pos, state);
                 } catch (Throwable t) {
                     LOGGER.error("DailyTaskProgressListener.onBlockBreak failed", t);
                 }
@@ -273,6 +276,14 @@ public class ServerManagementModFabric implements ModInitializer {
             com.servermanagement.features.economy.OverflowInventoryManager.getInstance().save();
             LOGGER.info("ServerManagement shutdown complete");
             currentServer = null;
+        });
+
+        // Chunk Census events
+        ServerChunkEvents.CHUNK_LOAD.register((level, chunk) -> {
+            com.servermanagement.features.economy.ItemSupplyDemandTracker.getInstance().onChunkLoad(level, chunk);
+        });
+        ServerChunkEvents.CHUNK_UNLOAD.register((level, chunk) -> {
+            com.servermanagement.features.economy.ItemSupplyDemandTracker.getInstance().onChunkUnload(level, chunk);
         });
 
         // Command registration

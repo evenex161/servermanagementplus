@@ -69,6 +69,32 @@ public class ClientMarketData {
     }
 
     /**
+     * Client-side replica of the server's dynamic fallback scarcity pricing.
+     */
+    private static double getDynamicFallbackPrice(net.minecraft.world.item.ItemStack item, String itemId) {
+        double basePrice = DEFAULT_PRICE * (starterMoney / 1000.0);
+        
+        long supply = supplyData.getOrDefault(itemId, 0L);
+        double scarcityMultiplier = Math.max(1.0, 100000.0 / (supply + 1.0));
+        basePrice *= scarcityMultiplier;
+        
+        if (item.has(net.minecraft.core.component.DataComponents.MAX_DAMAGE) || item.getMaxStackSize() == 1) {
+            basePrice *= 10.0;
+        }
+        
+        net.minecraft.world.item.Rarity rarity = item.getOrDefault(net.minecraft.core.component.DataComponents.RARITY, net.minecraft.world.item.Rarity.COMMON);
+        if (rarity == net.minecraft.world.item.Rarity.UNCOMMON) {
+            basePrice *= 5.0;
+        } else if (rarity == net.minecraft.world.item.Rarity.RARE) {
+            basePrice *= 25.0;
+        } else if (rarity == net.minecraft.world.item.Rarity.EPIC) {
+            basePrice *= 100.0;
+        }
+        
+        return basePrice;
+    }
+
+    /**
      * Calculate the market base price for an item using recipe-based pricing,
      * cached inflation multiplier, and supply/demand data.
      * Mirrors MarketPricingEngine.getBasePrice() logic exactly.
@@ -77,13 +103,18 @@ public class ClientMarketData {
         if (stack.isEmpty()) return 0.0;
         net.minecraft.world.item.ItemStack singleItem = stack.copyWithCount(1);
         
-        // Use recipe-based prices if available, otherwise fall back to ItemValuation
+        // Use recipe-based prices if available, otherwise fall back to dynamic scarcity pricing
         String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(singleItem.getItem()).toString();
         double staticValue;
         if (!recipePrices.isEmpty()) {
-            staticValue = recipePrices.getOrDefault(itemId, DEFAULT_PRICE);
+            Double cached = recipePrices.get(itemId);
+            if (cached != null) {
+                staticValue = cached;
+            } else {
+                staticValue = getDynamicFallbackPrice(singleItem, itemId);
+            }
         } else {
-            staticValue = com.servermanagement.features.gambling.ItemValuation.getItemValue(singleItem);
+            staticValue = com.servermanagement.features.gambling.ItemValuation.getItemValue(singleItem) * (starterMoney / 1000.0);
         }
         
         // Apply enchantment bonus

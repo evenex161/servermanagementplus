@@ -11,11 +11,13 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.codec.ByteBufCodecs;
 
 /**
  * Packet to sync daily tasks from server to client
  */
-public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, int freeRewardAmount, long timeUntilFreeReward) implements CustomPacketPayload {
+public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, int freeRewardAmount, long timeUntilFreeReward, List<ItemStack> freeRewardItems) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncDailyTasksPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_daily_tasks"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncDailyTasksPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncDailyTasksPacket::new);
 
@@ -24,7 +26,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
 
 
     public SyncDailyTasksPacket(FriendlyByteBuf buf) {
-        this(decodeTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong());
+        this(decodeTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong(), ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf)buf));
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -43,6 +45,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
         buf.writeBoolean(freeRewardAvailable);
         buf.writeInt(freeRewardAmount);
         buf.writeLong(timeUntilFreeReward);
+        ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf)buf, freeRewardItems);
     }
 
         public void handle(IPayloadContext context) {
@@ -53,6 +56,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAvailable(freeRewardAvailable);
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAmount(freeRewardAmount);
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
+            com.servermanagement.client.ClientDailyTasksData.setFreeRewardItems(freeRewardItems);
         });
         // packet handled
     }

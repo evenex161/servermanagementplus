@@ -7,16 +7,17 @@ import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.codec.ByteBufCodecs;
 import java.util.function.Supplier;
 
 /**
  * Packet to sync daily tasks from server to client
  */
-public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable,
-                                    int freeRewardAmount, long timeUntilFreeReward) implements IPacket {
+public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, int freeRewardAmount, long timeUntilFreeReward, List<ItemStack> freeRewardItems) implements IPacket {
 
     public SyncDailyTasksPacket(FriendlyByteBuf buf) {
-        this(readTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong());
+        this(readTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong(), ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf)buf));
     }
 
     private static List<DailyTask> readTasks(FriendlyByteBuf buf) {
@@ -54,6 +55,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
         buf.writeBoolean(freeRewardAvailable);
         buf.writeInt(freeRewardAmount);
         buf.writeLong(timeUntilFreeReward);
+        ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf)buf, freeRewardItems);
     }
 
     @Override
@@ -65,6 +67,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAvailable(freeRewardAvailable);
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAmount(freeRewardAmount);
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
+            com.servermanagement.client.ClientDailyTasksData.setFreeRewardItems(freeRewardItems);
         });
         ctx.setPacketHandled(true);
     }

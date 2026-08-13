@@ -9,6 +9,9 @@ import net.minecraft.client.gui.screens.MenuScreens;
 public class ClientSetup implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback.EVENT.register((guiGraphics, tickDelta) -> {
+            com.servermanagement.gui.overlay.StatsBarOverlay.render(guiGraphics, tickDelta.getGameTimeDeltaTicks());
+        });
         com.servermanagement.client.ClientConfig.init(net.minecraft.client.Minecraft.getInstance().gameDirectory);
         // Register client-side packet handlers
         ModNetworking.registerClientPackets();

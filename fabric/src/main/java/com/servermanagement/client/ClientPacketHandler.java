@@ -12,6 +12,15 @@ public class ClientPacketHandler {
     private static String tradeBlacklist = "";
     private static boolean minebayEnabled = true;
     private static boolean minestacksEnabled = true;
+    private static double startingBalance = 1000.0;
+    
+    public static double getStartingBalance() {
+        return startingBalance;
+    }
+    
+    public static void setStartingBalance(double balance) {
+        startingBalance = balance;
+    }
     
     public static boolean minebayEnabled() {
         return minebayEnabled;
@@ -172,14 +181,16 @@ public class ClientPacketHandler {
     private static List<SyncEconomyTemplatesPacket.TemplateData> cachedTemplates = new ArrayList<>();
     private static int cachedFreeRewardAmount = 100;
     private static int cachedFreeRewardCooldownHours = 24;
+    private static List<net.minecraft.world.item.ItemStack> cachedFreeRewardItems = new ArrayList<>();
     
     public static void handleEconomyTemplates(List<SyncEconomyTemplatesPacket.TemplateData> templates,
-            int freeRewardAmount, int freeRewardCooldownHours) {
+            int freeRewardAmount, int freeRewardCooldownHours, List<net.minecraft.world.item.ItemStack> freeRewardItems) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("EconomyTemplates",
                 String.format("%d templates, freeReward=%d, cooldown=%dh", templates.size(), freeRewardAmount, freeRewardCooldownHours));
         cachedTemplates = new ArrayList<>(templates);
         cachedFreeRewardAmount = freeRewardAmount;
         cachedFreeRewardCooldownHours = freeRewardCooldownHours;
+        cachedFreeRewardItems = new ArrayList<>(freeRewardItems);
         refreshOpenScreen();
     }
     
@@ -189,6 +200,10 @@ public class ClientPacketHandler {
     
     public static int getCachedFreeRewardAmount() {
         return cachedFreeRewardAmount;
+    }
+    
+    public static List<net.minecraft.world.item.ItemStack> getCachedFreeRewardItems() {
+        return cachedFreeRewardItems;
     }
     
     public static int getCachedFreeRewardCooldownHours() {

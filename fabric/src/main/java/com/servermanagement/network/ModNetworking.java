@@ -95,6 +95,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playS2C().register(SyncMotdPacket.TYPE, SyncMotdPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncMineBayListingsPacket.TYPE, SyncMineBayListingsPacket.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(SyncListingOffersPacket.TYPE, SyncListingOffersPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC);
 
         // Register server-side handlers
         ServerPlayNetworking.registerGlobalReceiver(CheckForUpdatesPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
@@ -179,6 +180,7 @@ public class ModNetworking {
         ClientPlayNetworking.registerGlobalReceiver(SyncMotdPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncMineBayListingsPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
         ClientPlayNetworking.registerGlobalReceiver(SyncListingOffersPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handle(null)));
+        ClientPlayNetworking.registerGlobalReceiver(OpenGuiPacket.TYPE, (payload, context) -> context.client().execute(() -> payload.handleClient()));
     }
 
     public static void sendToServer(CustomPacketPayload payload) {

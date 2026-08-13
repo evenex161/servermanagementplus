@@ -210,14 +210,21 @@ public class DailyTasksManager {
     /**
      * Claim the free daily reward
      */
-    public int claimFreeReward(UUID playerUUID) {
-        PlayerDailyTasks playerTasksData = getOrCreatePlayerTasks(playerUUID);
+    public int claimFreeReward(net.minecraft.server.level.ServerPlayer player) {
+        PlayerDailyTasks playerTasksData = getOrCreatePlayerTasks(player.getUUID());
         
         if (playerTasksData.isFreeRewardAvailable()) {
             playerTasksData.setFreeRewardClaimed(true);
             playerTasksData.setLastFreeRewardClaimTime(System.currentTimeMillis());
-            // Use the admin-configurable value from template manager
+            
             if (templateManager != null) {
+                for (net.minecraft.world.item.ItemStack stack : templateManager.getFreeRewardItems()) {
+                    if (!stack.isEmpty()) {
+                        if (!player.getInventory().add(stack.copy())) {
+                            player.drop(stack.copy(), false);
+                        }
+                    }
+                }
                 return (int) templateManager.getFreeRewardAmount();
             }
             return playerTasksData.getFreeRewardAmount();

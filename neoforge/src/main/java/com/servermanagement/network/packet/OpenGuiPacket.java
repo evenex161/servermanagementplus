@@ -152,6 +152,21 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
                     case UPDATER:
                         player.openMenu(new com.servermanagement.gui.provider.UpdaterMenuProvider());
                         break;
+                    case HUD_EDIT:
+                        // HUD Edit is a client-side-only screen, send packet to client to open it
+                        com.servermanagement.network.ModNetworking.sendToPlayer(
+                            new OpenGuiPacket(GuiType.HUD_EDIT), player
+                        );
+                        break;
+                }
+            } else {
+                // Client-side handling (packet received from server)
+                if (guiType == GuiType.HUD_EDIT) {
+                    net.minecraft.client.Minecraft.getInstance().execute(() ->
+                        net.minecraft.client.Minecraft.getInstance().setScreen(
+                            new com.servermanagement.gui.overlay.HudEditScreen()
+                        )
+                    );
                 }
             }
         });
@@ -265,7 +280,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
                 resetTime,
                 playerTasks.isFreeRewardAvailable(),
                 freeRewardAmount,
-                playerTasks.getTimeUntilFreeReward()
+                playerTasks.getTimeUntilFreeReward(),
+                templateManager != null ? templateManager.getFreeRewardItems() : new java.util.ArrayList<>()
             ),
             player
         );
@@ -332,7 +348,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
         MINESTACKS,
         PERFORMANCE_SETTINGS,
         MOTD_EDITOR,
-        UPDATER;
+        UPDATER,
+        HUD_EDIT;
 
         public boolean isAdminOnly() {
             return switch (this) {

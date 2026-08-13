@@ -19,7 +19,8 @@ public class SessionEventHandler {
                 com.servermanagement.config.ModConfig.SHOW_MARKET_VALUE_TOOLTIPS.get(),
                 com.servermanagement.config.ModConfig.MINEBAY_ENABLED.get(),
                 com.servermanagement.config.ModConfig.MINESTACKS_ENABLED.get(),
-                com.servermanagement.config.ModConfig.TRADE_BLACKLIST.get()
+                com.servermanagement.config.ModConfig.TRADE_BLACKLIST.get(),
+                com.servermanagement.config.ModConfig.STARTING_BALANCE.get()
             ),
             player
         );

@@ -103,6 +103,7 @@ public class ModNetworking {
         // MineBay client-bound packets
         registrar.playToClient(SyncMineBayListingsPacket.TYPE, SyncMineBayListingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncListingOffersPacket.TYPE, SyncListingOffersPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playToClient(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
 
         ServerManagementMod.LOGGER.info("Registered 72 network packets");
     }

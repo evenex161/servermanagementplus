@@ -9,13 +9,15 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import java.util.List;
+import java.util.ArrayList;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 
 /**
  * Client-to-server packet for saving free reward settings
  */
-public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) implements CustomPacketPayload {
+public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, List<ItemStack> rewardItems) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SaveFreeRewardSettingsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_free_reward_settings"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveFreeRewardSettingsPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveFreeRewardSettingsPacket::new);
 
@@ -24,17 +26,28 @@ public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, 
 
 
     public SaveFreeRewardSettingsPacket {
-        rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
+        rewardItems = rewardItems != null ? rewardItems : new ArrayList<>();
     }
 
     public SaveFreeRewardSettingsPacket(FriendlyByteBuf buf) {
-        this(buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+                this(buf.readInt(), buf.readInt(), decodeItems(buf));
+    }
+    private static List<ItemStack> decodeItems(net.minecraft.network.FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<ItemStack> items = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        }
+        return items;
     }
 
         public void encode(FriendlyByteBuf buf) {
         buf.writeInt(rewardAmount);
         buf.writeInt(cooldownHours);
-        ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItem);
+                buf.writeInt(rewardItems.size());
+        for (ItemStack item : rewardItems) {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, item);
+        }
     }
 
         public void handle(IPayloadContext context) {
@@ -54,7 +67,7 @@ public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, 
             if (cooldownHours > 0) {
                 templateManager.setFreeRewardCooldownHours(Math.min(cooldownHours, 720));
             }
-            templateManager.setFreeRewardItem(rewardItem);
+            templateManager.setFreeRewardItems(rewardItems);
             
             templateManager.save(server);
         });

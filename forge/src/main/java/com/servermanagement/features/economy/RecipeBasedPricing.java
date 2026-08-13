@@ -45,6 +45,8 @@ public class RecipeBasedPricing {
     private final Map<String, Double> anchorPrices = new HashMap<>();
     /** Prices derived from recipe ingredient costs */
     private final Map<String, Double> recipePrices = new ConcurrentHashMap<>();
+    
+    private double capitalMultiplier = 1.0;
 
     private volatile boolean initialized = false;
 
@@ -84,16 +86,23 @@ public class RecipeBasedPricing {
             anchorPrices.clear();
             recipePrices.clear();
 
-            // Step 1: Load anchor prices from ItemValuation's hardcoded map
-            anchorPrices.putAll(ItemValuation.getHardcodedValues());
+            // Calculate starting balance multiplier
+            double startingBalance = com.servermanagement.config.ModConfig.STARTING_BALANCE.get();
+            capitalMultiplier = Math.max(0.1, startingBalance / 1000.0);
+
+            // Step 1: Load anchor prices from ItemValuation's hardcoded map and scale them
+            Map<String, Double> hardcoded = ItemValuation.getHardcodedValues();
+            for (Map.Entry<String, Double> entry : hardcoded.entrySet()) {
+                anchorPrices.put(entry.getKey(), entry.getValue() * capitalMultiplier);
+            }
 
             // Step 2: Collect all recipes from every supported recipe type
-            List<RecipeEntry> allRecipes = collectRecipes(server);
+            List<IRecipeEntry> allRecipes = collectRecipes(server);
 
             // Step 3: Group recipes by output item
-            Map<String, List<RecipeEntry>> recipesByOutput = new HashMap<>();
-            for (RecipeEntry entry : allRecipes) {
-                recipesByOutput.computeIfAbsent(entry.outputId, k -> new ArrayList<>()).add(entry);
+            Map<String, List<IRecipeEntry>> recipesByOutput = new HashMap<>();
+            for (IRecipeEntry entry : allRecipes) {
+                recipesByOutput.computeIfAbsent(entry.getOutputId(), k -> new ArrayList<>()).add(entry);
             }
 
             // Step 4: Iteratively resolve recipe prices until convergence
@@ -128,7 +137,7 @@ public class RecipeBasedPricing {
         if (anchor != null) {
             return anchor;
         }
-        return DEFAULT_PRICE;
+        return getDynamicFallbackPrice(itemId);
     }
 
     /**
@@ -169,10 +178,10 @@ public class RecipeBasedPricing {
 
     // ==================== Recipe Collection ====================
 
-    private List<RecipeEntry> collectRecipes(MinecraftServer server) {
+    private List<IRecipeEntry> collectRecipes(MinecraftServer server) {
         RecipeManager mgr = server.getRecipeManager();
         var registryAccess = server.registryAccess();
-        List<RecipeEntry> result = new ArrayList<>();
+        List<IRecipeEntry> result = new ArrayList<>();
 
         collectFromType(mgr, RecipeType.CRAFTING, registryAccess, CRAFTING_MARKUP, result);
         collectFromType(mgr, RecipeType.SMELTING, registryAccess, SMELTING_MARKUP, result);
@@ -181,6 +190,52 @@ public class RecipeBasedPricing {
         collectFromType(mgr, RecipeType.STONECUTTING, registryAccess, CRAFTING_MARKUP, result);
         collectSmithingRecipes(mgr, registryAccess, result);
 
+        // Add Reverse Crafting (Mono-Ingredient recipes)
+        List<IRecipeEntry> reverseRecipes = new ArrayList<>();
+        for (IRecipeEntry entry : result) {
+            if (entry instanceof StandardRecipeEntry) {
+                StandardRecipeEntry std = (StandardRecipeEntry) entry;
+                String uniqueInputId = null;
+                boolean mono = true;
+                for (Ingredient ing : std.ingredients) {
+                    ItemStack[] options = ing.getItems();
+                    if (options.length != 1) {
+                        mono = false; break;
+                    }
+                    String id = BuiltInRegistries.ITEM.getKey(options[0].getItem()).toString();
+                    if (uniqueInputId == null) {
+                        uniqueInputId = id;
+                    } else if (!uniqueInputId.equals(id)) {
+                        mono = false; break;
+                    }
+                }
+                
+                if (mono && uniqueInputId != null && !uniqueInputId.equals(std.outputId)) {
+                    reverseRecipes.add(new VirtualRecipeEntry(
+                        uniqueInputId, std.ingredients.size(),
+                        std.outputId, std.outputCount,
+                        1.0 // no markup for reverse
+                    ));
+                }
+            }
+        }
+        result.addAll(reverseRecipes);
+        
+        // Add Drop Rate Tracked Virtual Recipes
+        for (Map.Entry<String, Map<String, Double>> blockEntry : DropRateTracker.getInstance().getAverages().entrySet()) {
+            String blockId = blockEntry.getKey();
+            for (Map.Entry<String, Double> dropEntry : blockEntry.getValue().entrySet()) {
+                String dropId = dropEntry.getKey();
+                double avgDrops = dropEntry.getValue();
+                
+                // Forward: 1 Block -> avgDrops DropItem
+                result.add(new VirtualRecipeEntry(dropId, avgDrops, blockId, 1.0, 1.0));
+                
+                // Backward: avgDrops DropItem -> 1 Block
+                result.add(new VirtualRecipeEntry(blockId, 1.0, dropId, avgDrops, 1.0));
+            }
+        }
+
         return result;
     }
 
@@ -188,7 +243,7 @@ public class RecipeBasedPricing {
     private <I extends net.minecraft.world.item.crafting.RecipeInput, T extends Recipe<I>> void collectFromType(
             RecipeManager mgr, RecipeType<T> type,
             net.minecraft.core.RegistryAccess registryAccess,
-            double markup, List<RecipeEntry> result) {
+            double markup, List<IRecipeEntry> result) {
         try {
             for (RecipeHolder<T> holder : mgr.getAllRecipesFor(type)) {
                 try {
@@ -206,7 +261,7 @@ public class RecipeBasedPricing {
                     if (nonEmpty.isEmpty()) continue;
 
                     String outputId = BuiltInRegistries.ITEM.getKey(output.getItem()).toString();
-                    result.add(new RecipeEntry(outputId, output.getCount(), nonEmpty, markup));
+                    result.add(new StandardRecipeEntry(outputId, output.getCount(), nonEmpty, markup));
                 } catch (Exception e) {
                     // Skip individual problematic recipes silently
                 }
@@ -217,7 +272,7 @@ public class RecipeBasedPricing {
     }
 
     private void collectSmithingRecipes(RecipeManager mgr,
-            net.minecraft.core.RegistryAccess registryAccess, List<RecipeEntry> result) {
+            net.minecraft.core.RegistryAccess registryAccess, List<IRecipeEntry> result) {
         try {
             for (RecipeHolder<SmithingRecipe> holder : mgr.getAllRecipesFor(RecipeType.SMITHING)) {
                 try {
@@ -242,7 +297,7 @@ public class RecipeBasedPricing {
                     if (nonEmpty.isEmpty()) continue;
 
                     String outputId = BuiltInRegistries.ITEM.getKey(output.getItem()).toString();
-                    result.add(new RecipeEntry(outputId, output.getCount(), nonEmpty, CRAFTING_MARKUP));
+                    result.add(new StandardRecipeEntry(outputId, output.getCount(), nonEmpty, CRAFTING_MARKUP));
                 } catch (Exception e) {
                     // Skip individual problematic recipes silently
                 }
@@ -275,7 +330,7 @@ public class RecipeBasedPricing {
 
     // ==================== Price Resolution ====================
 
-    private void resolveRecipePrices(Map<String, List<RecipeEntry>> recipesByOutput) {
+    private void resolveRecipePrices(Map<String, List<IRecipeEntry>> recipesByOutput) {
         boolean changed = true;
         int iteration = 0;
         Map<String, Integer> increaseCounts = new HashMap<>();
@@ -285,17 +340,17 @@ public class RecipeBasedPricing {
             changed = false;
             iteration++;
 
-            for (Map.Entry<String, List<RecipeEntry>> entry : recipesByOutput.entrySet()) {
+            for (Map.Entry<String, List<IRecipeEntry>> entry : recipesByOutput.entrySet()) {
                 String itemId = entry.getKey();
                 if (lockedItems.contains(itemId)) {
                     continue;
                 }
 
-                List<RecipeEntry> recipes = entry.getValue();
+                List<IRecipeEntry> recipes = entry.getValue();
 
                 double cheapest = Double.MAX_VALUE;
-                for (RecipeEntry recipe : recipes) {
-                    double cost = computeRecipeCost(recipe);
+                for (IRecipeEntry recipe : recipes) {
+                    double cost = recipe.computeCost();
                     if (cost > 0 && cost < cheapest) {
                         cheapest = cost;
                     }
@@ -310,10 +365,11 @@ public class RecipeBasedPricing {
                             int inc = increaseCounts.getOrDefault(itemId, 0) + 1;
                             if (inc > MAX_PRICE_INCREASES) {
                                 ServerManagementMod.LOGGER.debug(
-                                        "Crafting cycle feedback loop detected for item '{}' after {} price increases. Locking price to default ({})",
-                                        itemId, inc, DEFAULT_PRICE);
+                                        "Crafting cycle feedback loop detected for item '{}' after {} price increases. Locking price to anchor/default",
+                                        itemId, inc);
                                 lockedItems.add(itemId);
-                                recipePrices.put(itemId, DEFAULT_PRICE);
+                                Double anchor = anchorPrices.get(itemId);
+                                recipePrices.put(itemId, anchor != null ? anchor : getDynamicFallbackPrice(itemId));
                                 changed = true;
                                 continue;
                             }
@@ -334,21 +390,14 @@ public class RecipeBasedPricing {
         }
     }
 
-    private double computeRecipeCost(RecipeEntry recipe) {
-        double totalCost = 0;
-        for (Ingredient ingredient : recipe.ingredients) {
-            double ingredientCost = cheapestMatchingPrice(ingredient);
-            totalCost += ingredientCost;
-        }
-        return (totalCost / recipe.outputCount) * recipe.markup;
-    }
+
 
     /**
      * For a tag-based ingredient with multiple matching items, returns the cheapest option.
      */
     private double cheapestMatchingPrice(Ingredient ingredient) {
         ItemStack[] options = ingredient.getItems();
-        if (options.length == 0) return DEFAULT_PRICE;
+        if (options.length == 0) return DEFAULT_PRICE * capitalMultiplier;
 
         double cheapest = Double.MAX_VALUE;
         for (ItemStack option : options) {
@@ -358,7 +407,7 @@ public class RecipeBasedPricing {
                 cheapest = price;
             }
         }
-        return cheapest == Double.MAX_VALUE ? DEFAULT_PRICE : cheapest;
+        return cheapest == Double.MAX_VALUE ? (DEFAULT_PRICE * capitalMultiplier) : cheapest;
     }
 
     /**
@@ -374,22 +423,98 @@ public class RecipeBasedPricing {
         }
         if (recipePrice != null) return recipePrice;
         if (anchorPrice != null) return anchorPrice;
-        return DEFAULT_PRICE;
+        return getDynamicFallbackPrice(itemId);
+    }
+    
+    private double getDynamicFallbackPrice(String itemId) {
+        double basePrice = DEFAULT_PRICE * capitalMultiplier;
+        try {
+            long supply = ItemSupplyDemandTracker.getInstance().getSupplyCount(itemId);
+            
+            // Scarcity multiplier: Base of 100,000 divided by (supply + 1)
+            // This ensures incredibly rare items (0) are worth tens of thousands,
+            // while abundant items (100,000+) drop to the baseline DEFAULT_PRICE.
+            double scarcityMultiplier = Math.max(1.0, 100000.0 / (supply + 1.0));
+            basePrice *= scarcityMultiplier;
+
+            net.minecraft.resources.ResourceLocation resourceLocation = net.minecraft.resources.ResourceLocation.parse(itemId);
+            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
+            
+            if (item != net.minecraft.world.item.Items.AIR) {
+                // Check max stack size or durability (unstackable = higher baseline price)
+                if (item.components().has(net.minecraft.core.component.DataComponents.MAX_DAMAGE) || item.getDefaultInstance().getMaxStackSize() == 1) {
+                    basePrice *= 10.0;
+                }
+                
+                // Check rarity
+                net.minecraft.world.item.Rarity rarity = item.components().getOrDefault(net.minecraft.core.component.DataComponents.RARITY, net.minecraft.world.item.Rarity.COMMON);
+                if (rarity == net.minecraft.world.item.Rarity.UNCOMMON) {
+                    basePrice *= 5.0;
+                } else if (rarity == net.minecraft.world.item.Rarity.RARE) {
+                    basePrice *= 25.0;
+                } else if (rarity == net.minecraft.world.item.Rarity.EPIC) {
+                    basePrice *= 100.0;
+                }
+            }
+        } catch (Exception ignored) {}
+        
+        return basePrice;
     }
 
     // ==================== Inner Classes ====================
 
-    private static class RecipeEntry {
+    private interface IRecipeEntry {
+        String getOutputId();
+        double computeCost();
+    }
+
+    private class StandardRecipeEntry implements IRecipeEntry {
         final String outputId;
         final int outputCount;
         final List<Ingredient> ingredients;
         final double markup;
 
-        RecipeEntry(String outputId, int outputCount, List<Ingredient> ingredients, double markup) {
+        StandardRecipeEntry(String outputId, int outputCount, List<Ingredient> ingredients, double markup) {
             this.outputId = outputId;
             this.outputCount = outputCount;
             this.ingredients = ingredients;
             this.markup = markup;
+        }
+
+        @Override
+        public String getOutputId() { return outputId; }
+
+        @Override
+        public double computeCost() {
+            double totalCost = 0;
+            for (Ingredient ingredient : ingredients) {
+                totalCost += cheapestMatchingPrice(ingredient);
+            }
+            return (totalCost / outputCount) * markup;
+        }
+    }
+
+    private class VirtualRecipeEntry implements IRecipeEntry {
+        final String outputId;
+        final double outputCount;
+        final String inputId;
+        final double inputCount;
+        final double markup;
+
+        VirtualRecipeEntry(String outputId, double outputCount, String inputId, double inputCount, double markup) {
+            this.outputId = outputId;
+            this.outputCount = outputCount;
+            this.inputId = inputId;
+            this.inputCount = inputCount;
+            this.markup = markup;
+        }
+
+        @Override
+        public String getOutputId() { return outputId; }
+
+        @Override
+        public double computeCost() {
+            return (lookupCurrentPrice(inputId) * inputCount / outputCount) * markup;
         }
     }
 }

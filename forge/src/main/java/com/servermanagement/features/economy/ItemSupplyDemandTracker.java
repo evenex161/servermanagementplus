@@ -4,48 +4,42 @@ import com.servermanagement.ServerManagementMod;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraft.world.item.crafting.SmeltingRecipe;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Tracks item supply and demand across the server to influence dynamic market pricing.
- * 
- * Supply increases when items are:
- *   - Mined (block drops)
- *   - Picked up by players
- *   - Crafted (adds to output item supply)
- *   - Smelted (adds to output item supply)
- * 
- * Supply decreases when items are consumed as crafting/smelting inputs.
- * 
- * The supply factor influences MarketPricingEngine:
- *   supplyFactor = 1.0 / (1.0 + log10(max(supplyCount / BASELINE, 1)))
- *   Higher supply → lower prices, lower supply → higher prices.
+ * Uses a Global Census Engine to continuously scan player inventories and container blocks.
  */
 @Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class ItemSupplyDemandTracker {
     private static ItemSupplyDemandTracker instance;
     
-    // Item ID → cumulative supply count
+    // Global real-time supply counts for fast lookups
     private final ConcurrentHashMap<String, Long> supplyMap = new ConcurrentHashMap<>();
     
+    // Caches to track last known states for delta calculation
+    private final Map<String, Map<String, Long>> playerCache = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Long>> chunkCache = new ConcurrentHashMap<>();
+    
+    // Loaded chunks tracking for the chunk scanner
+    private final Map<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>, java.util.Set<net.minecraft.world.level.ChunkPos>> loadedChunks = new ConcurrentHashMap<>();
+    
+    // Scanner iterators
+    private java.util.Iterator<net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level>> levelIterator = null;
+    private java.util.Iterator<net.minecraft.world.level.ChunkPos> chunkIterator = null;
+    private net.minecraft.server.level.ServerLevel currentScanLevel = null;
+
     // Baseline supply count — items below this have no price reduction
     private static final long SUPPLY_BASELINE = 500;
-    
-    // Decay factor: supply counts decay over time to prevent runaway deflation
-    private static final double DECAY_RATE = 0.995; // 0.5% decay per save cycle
     
     // Save/load
     private volatile boolean dirty = false;
@@ -63,32 +57,8 @@ public class ItemSupplyDemandTracker {
     }
     
     /**
-     * Record supply increase for an item (mined, picked up, crafted output, smelted output).
-     */
-    public void recordSupply(ItemStack stack, int count) {
-        if (stack.isEmpty()) return;
-        String itemId = getItemId(stack);
-        supplyMap.merge(itemId, (long) count, Long::sum);
-        dirty = true;
-    }
-    
-    /**
-     * Record supply decrease for an item (consumed as crafting/smelting input).
-     */
-    public void recordConsumption(ItemStack stack, int count) {
-        if (stack.isEmpty()) return;
-        String itemId = getItemId(stack);
-        supplyMap.merge(itemId, (long) -count, Long::sum);
-        // Don't go below 0
-        supplyMap.computeIfPresent(itemId, (k, v) -> Math.max(0, v));
-        dirty = true;
-    }
-    
-    /**
-     * Get the supply factor for an item. Values &lt;lt; 1.0 reduce price (high supply),
+     * Get the supply factor for an item. Values < 1.0 reduce price (high supply),
      * values close to 1.0 mean normal supply.
-     * 
-     * Formula: 1.0 / (1.0 + log10(max(supplyCount / BASELINE, 1)))
      */
     public double getSupplyFactor(ItemStack stack) {
         if (stack.isEmpty()) return 1.0;
@@ -107,89 +77,167 @@ public class ItemSupplyDemandTracker {
         return 1.0 / (1.0 + Math.log10(supplyRatio));
     }
     
-    /**
-     * Get the raw supply count for an item.
-     */
     public long getSupplyCount(String itemId) {
         return supplyMap.getOrDefault(itemId, 0L);
     }
     
-    /**
-     * Get a read-only view of all supply data.
-     */
     public Map<String, Long> getAllSupplyData() {
         return java.util.Collections.unmodifiableMap(supplyMap);
     }
-    
-    /**
-     * Apply time-based decay to all supply counts to prevent runaway values.
-     */
-    public void applyDecay() {
-        supplyMap.replaceAll((itemId, count) -> (long)(count * DECAY_RATE));
-        // Remove zero entries to keep map clean
-        supplyMap.entrySet().removeIf(e -> e.getValue() <= 0);
-        dirty = true;
+
+    // --- Core Census Logic ---
+
+    private void updateSupplyFromDelta(String cacheKey, Map<String, Map<String, Long>> cache, Map<String, Long> currentItems) {
+        Map<String, Long> oldItems = cache.getOrDefault(cacheKey, Collections.emptyMap());
+        
+        // Positive deltas (new items)
+        for (Map.Entry<String, Long> entry : currentItems.entrySet()) {
+            String id = entry.getKey();
+            long currentCount = entry.getValue();
+            long oldCount = oldItems.getOrDefault(id, 0L);
+            long delta = currentCount - oldCount;
+            if (delta != 0) {
+                supplyMap.merge(id, delta, Long::sum);
+                dirty = true;
+            }
+        }
+        
+        // Negative deltas (removed items)
+        for (Map.Entry<String, Long> entry : oldItems.entrySet()) {
+            String id = entry.getKey();
+            if (!currentItems.containsKey(id)) {
+                long delta = -entry.getValue();
+                supplyMap.merge(id, delta, Long::sum);
+                dirty = true;
+            }
+        }
+        
+        // Cleanup empty caches to save memory
+        if (currentItems.isEmpty()) {
+            cache.remove(cacheKey);
+        } else {
+            cache.put(cacheKey, currentItems);
+        }
     }
-    
+
     // --- Event Handlers ---
-    
+
     @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) return;
-        if (event.getPlayer() == null || event.getPlayer().level().isClientSide()) return;
-        
-        // Block drops are tracked when picked up (onItemPickup), 
-        // but we record the block break to increase supply of the block's item form
-        ItemStack blockItem = new ItemStack(event.getState().getBlock().asItem());
-        if (!blockItem.isEmpty()) {
-            getInstance().recordSupply(blockItem, 1);
+    public static void onChunkLoad(net.minecraftforge.event.level.ChunkEvent.Load event) {
+        if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            getInstance().loadedChunks.computeIfAbsent(serverLevel.dimension(), k -> ConcurrentHashMap.newKeySet())
+                .add(event.getChunk().getPos());
         }
     }
-    
+
     @SubscribeEvent
-    public static void onItemPickup(PlayerEvent.ItemPickupEvent event) {
-        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) return;
-        if (event.getEntity().level().isClientSide()) return;
-        
-        ItemStack picked = event.getStack();
-        if (!picked.isEmpty()) {
-            getInstance().recordSupply(picked, picked.getCount());
-        }
-    }
-    
-    @SubscribeEvent
-    public static void onItemCrafted(PlayerEvent.ItemCraftedEvent event) {
-        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) return;
-        if (event.getEntity().level().isClientSide()) return;
-        
-        // Record supply of crafted output
-        ItemStack crafted = event.getCrafting();
-        if (!crafted.isEmpty()) {
-            getInstance().recordSupply(crafted, crafted.getCount());
-        }
-        
-        // Record consumption of crafting inputs
-        net.minecraft.world.Container craftMatrix = event.getInventory();
-        if (craftMatrix != null) {
-            for (int i = 0; i < craftMatrix.getContainerSize(); i++) {
-                ItemStack input = craftMatrix.getItem(i);
-                if (!input.isEmpty()) {
-                    getInstance().recordConsumption(input, 1);
-                }
+    public static void onChunkUnload(net.minecraftforge.event.level.ChunkEvent.Unload event) {
+        if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            java.util.Set<net.minecraft.world.level.ChunkPos> set = getInstance().loadedChunks.get(serverLevel.dimension());
+            if (set != null) {
+                set.remove(event.getChunk().getPos());
             }
         }
     }
-    
+
     @SubscribeEvent
-    public static void onItemSmelted(PlayerEvent.ItemSmeltedEvent event) {
+    public static void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
         if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) return;
-        if (event.getEntity().level().isClientSide()) return;
-        
-        // Record supply of smelted output
-        ItemStack smelted = event.getSmelting();
-        if (!smelted.isEmpty()) {
-            getInstance().recordSupply(smelted, smelted.getCount());
+        if (event.player instanceof net.minecraft.server.level.ServerPlayer player) {
+            if (player.tickCount % 20 == 0) {
+                getInstance().scanPlayer(player);
+            }
         }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) return;
+        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) return;
+        MinecraftServer server = event.getServer();
+        if (server == null) return;
+        
+        getInstance().tickSave(server);
+        getInstance().performChunkCensusTick(server);
+    }
+
+    private void scanPlayer(net.minecraft.server.level.ServerPlayer player) {
+        Map<String, Long> currentItems = new HashMap<>();
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (!stack.isEmpty()) {
+                        if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA) && stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA).contains("servermanagement_creative")) continue;
+                String id = getItemId(stack);
+                currentItems.put(id, currentItems.getOrDefault(id, 0L) + stack.getCount());
+            }
+        }
+        updateSupplyFromDelta(player.getUUID().toString(), playerCache, currentItems);
+    }
+
+    private void performChunkCensusTick(MinecraftServer server) {
+        if (levelIterator == null || !levelIterator.hasNext()) {
+            levelIterator = loadedChunks.keySet().iterator();
+            chunkIterator = null;
+            currentScanLevel = null;
+        }
+        
+        if (levelIterator != null && levelIterator.hasNext()) {
+            if (chunkIterator == null || !chunkIterator.hasNext()) {
+                net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dim = levelIterator.next();
+                currentScanLevel = server.getLevel(dim);
+                java.util.Set<net.minecraft.world.level.ChunkPos> chunks = loadedChunks.get(dim);
+                if (chunks != null) {
+                    chunkIterator = chunks.iterator();
+                } else {
+                    chunkIterator = null;
+                }
+            }
+            
+            if (chunkIterator != null && chunkIterator.hasNext() && currentScanLevel != null) {
+                net.minecraft.world.level.ChunkPos pos = chunkIterator.next();
+                scanChunk(currentScanLevel, pos);
+            }
+        }
+    }
+
+    private void scanChunk(net.minecraft.server.level.ServerLevel level, net.minecraft.world.level.ChunkPos pos) {
+        net.minecraft.world.level.chunk.LevelChunk chunk = level.getChunkSource().getChunkNow(pos.x, pos.z);
+        if (chunk == null) return;
+
+        Map<String, Long> currentChunkItems = new HashMap<>();
+
+        for (java.util.Map.Entry<net.minecraft.core.BlockPos, net.minecraft.world.level.block.entity.BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
+            net.minecraft.world.level.block.entity.BlockEntity be = entry.getValue();
+            
+            // Check capabilities first (Forge)
+            net.minecraftforge.common.util.LazyOptional<net.minecraftforge.items.IItemHandler> handlerOpt = be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER, null);
+            if (handlerOpt.isPresent()) {
+                net.minecraftforge.items.IItemHandler handler = handlerOpt.orElse(null);
+                if (handler != null) {
+                    for (int i = 0; i < handler.getSlots(); i++) {
+                        ItemStack stack = handler.getStackInSlot(i);
+                        if (!stack.isEmpty()) {
+                        if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA) && stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA).contains("servermanagement_creative")) continue;
+                            String id = getItemId(stack);
+                            currentChunkItems.put(id, currentChunkItems.getOrDefault(id, 0L) + stack.getCount());
+                        }
+                    }
+                }
+            } else if (be instanceof net.minecraft.world.Container container) {
+                for (int i = 0; i < container.getContainerSize(); i++) {
+                    ItemStack stack = container.getItem(i);
+                    if (!stack.isEmpty()) {
+                        if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA) && stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA).contains("servermanagement_creative")) continue;
+                        String id = getItemId(stack);
+                        currentChunkItems.put(id, currentChunkItems.getOrDefault(id, 0L) + stack.getCount());
+                    }
+                }
+            }
+        }
+
+        String chunkKey = level.dimension().location() + ":" + pos.toLong();
+        updateSupplyFromDelta(chunkKey, chunkCache, currentChunkItems);
     }
     
     // --- Persistence ---
@@ -200,66 +248,104 @@ public class ItemSupplyDemandTracker {
         try {
             Path dir = server.getServerDirectory().resolve("servermanagement");
             Files.createDirectories(dir);
-            Path file = dir.resolve("supply_demand.dat");
+            Path file = dir.resolve("supply_demand_census.dat");
             
-            try (DataOutputStream out = new DataOutputStream(
-                    new BufferedOutputStream(Files.newOutputStream(file)))) {
-                out.writeInt(supplyMap.size());
-                for (Map.Entry<String, Long> entry : supplyMap.entrySet()) {
-                    out.writeUTF(entry.getKey());
-                    out.writeLong(entry.getValue());
+            try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
+                out.writeInt(1); // version
+                
+                out.writeInt(playerCache.size());
+                for (Map.Entry<String, Map<String, Long>> pEntry : playerCache.entrySet()) {
+                    out.writeUTF(pEntry.getKey());
+                    out.writeInt(pEntry.getValue().size());
+                    for (Map.Entry<String, Long> iEntry : pEntry.getValue().entrySet()) {
+                        out.writeUTF(iEntry.getKey());
+                        out.writeLong(iEntry.getValue());
+                    }
+                }
+                
+                out.writeInt(chunkCache.size());
+                for (Map.Entry<String, Map<String, Long>> cEntry : chunkCache.entrySet()) {
+                    out.writeUTF(cEntry.getKey());
+                    out.writeInt(cEntry.getValue().size());
+                    for (Map.Entry<String, Long> iEntry : cEntry.getValue().entrySet()) {
+                        out.writeUTF(iEntry.getKey());
+                        out.writeLong(iEntry.getValue());
+                    }
                 }
             }
             
             dirty = false;
             lastSave = System.currentTimeMillis();
-            ServerManagementMod.LOGGER.debug("Saved supply/demand data: {} items tracked", supplyMap.size());
+            ServerManagementMod.LOGGER.debug("Saved Global Census data: {} items tracked globally", supplyMap.size());
         } catch (IOException e) {
-            ServerManagementMod.LOGGER.error("Failed to save supply/demand data", e);
+            ServerManagementMod.LOGGER.error("Failed to save Global Census data", e);
         }
     }
     
     public void load(MinecraftServer server) {
         try {
-            Path file = server.getServerDirectory()
-                .resolve("servermanagement").resolve("supply_demand.dat");
+            Path legacyFile = server.getServerDirectory().resolve("servermanagement").resolve("supply_demand.dat");
+            if (Files.exists(legacyFile)) {
+                Files.deleteIfExists(legacyFile); // Delete old event-based tracker file
+            }
             
+            Path file = server.getServerDirectory().resolve("servermanagement").resolve("supply_demand_census.dat");
             if (!Files.exists(file)) {
-                ServerManagementMod.LOGGER.debug("No supply/demand data found, starting fresh");
+                ServerManagementMod.LOGGER.debug("No Global Census data found, starting fresh");
                 return;
             }
             
-            try (DataInputStream in = new DataInputStream(
-                    new BufferedInputStream(Files.newInputStream(file)))) {
-                int count = in.readInt();
-                supplyMap.clear();
-                for (int i = 0; i < count; i++) {
-                    String itemId = in.readUTF();
-                    long supply = in.readLong();
-                    if (supply > 0) {
-                        supplyMap.put(itemId, supply);
+            playerCache.clear();
+            chunkCache.clear();
+            supplyMap.clear();
+            
+            try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
+                int version = in.readInt(); // currently unused, reserved for future
+                
+                int pSize = in.readInt();
+                for (int i = 0; i < pSize; i++) {
+                    String playerKey = in.readUTF();
+                    int itemsSize = in.readInt();
+                    Map<String, Long> items = new HashMap<>();
+                    for (int j = 0; j < itemsSize; j++) {
+                        items.put(in.readUTF(), in.readLong());
                     }
+                    playerCache.put(playerKey, items);
+                }
+                
+                int cSize = in.readInt();
+                for (int i = 0; i < cSize; i++) {
+                    String chunkKey = in.readUTF();
+                    int itemsSize = in.readInt();
+                    Map<String, Long> items = new HashMap<>();
+                    for (int j = 0; j < itemsSize; j++) {
+                        items.put(in.readUTF(), in.readLong());
+                    }
+                    chunkCache.put(chunkKey, items);
                 }
             }
             
-            ServerManagementMod.LOGGER.debug("Loaded supply/demand data: {} items tracked", supplyMap.size());
+            // Rebuild real-time supply map from caches
+            for (Map<String, Long> items : playerCache.values()) {
+                items.forEach((id, count) -> supplyMap.merge(id, count, Long::sum));
+            }
+            for (Map<String, Long> items : chunkCache.values()) {
+                items.forEach((id, count) -> supplyMap.merge(id, count, Long::sum));
+            }
+            
+            ServerManagementMod.LOGGER.debug("Loaded Global Census data: {} items tracked globally", supplyMap.size());
         } catch (IOException e) {
-            ServerManagementMod.LOGGER.error("Failed to load supply/demand data", e);
+            ServerManagementMod.LOGGER.error("Failed to load Global Census data", e);
         }
+        scanOfflinePlayers(server);
     }
     
-    /**
-     * Periodic save check — called from server tick handler.
-     */
     public void tickSave(MinecraftServer server) {
         if (dirty && System.currentTimeMillis() - lastSave > SAVE_INTERVAL_MS) {
             save(server);
         }
     }
     
-    /**
-     * Shutdown and save
-     */
     public void shutdown(MinecraftServer server) {
         save(server);
         instance = null;
@@ -267,5 +353,46 @@ public class ItemSupplyDemandTracker {
     
     private static String getItemId(ItemStack stack) {
         return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+    }
+
+    private void scanOfflinePlayers(MinecraftServer server) {
+        try {
+            java.io.File playerDataDir = new java.io.File(server.getWorldPath(net.minecraft.world.level.storage.LevelResource.PLAYER_DATA_DIR).toFile(), "");
+            if (playerDataDir.exists() && playerDataDir.isDirectory()) {
+                java.io.File[] files = playerDataDir.listFiles((dir, name) -> name.endsWith(".dat"));
+                if (files != null) {
+                    for (java.io.File file : files) {
+                        String uuidStr = file.getName().replace(".dat", "");
+                        if (!playerCache.containsKey(uuidStr)) {
+                            try {
+                                net.minecraft.nbt.CompoundTag tag = net.minecraft.nbt.NbtIo.readCompressed(file.toPath(), net.minecraft.nbt.NbtAccounter.unlimitedHeap());
+                                if (tag != null && tag.contains("Inventory")) {
+                                    net.minecraft.nbt.ListTag inventory = tag.getList("Inventory", 10);
+                                    Map<String, Long> currentItems = new java.util.HashMap<>();
+                                    for (int i = 0; i < inventory.size(); i++) {
+                                        net.minecraft.nbt.CompoundTag itemTag = inventory.getCompound(i);
+                                        // In 1.21.1, items are saved with components
+                                        java.util.Optional<ItemStack> optStack = ItemStack.parse(server.registryAccess(), itemTag);
+                                        if (optStack.isPresent()) {
+                                            ItemStack stack = optStack.get();
+                                            if (!stack.isEmpty()) {
+                                                if (stack.has(net.minecraft.core.component.DataComponents.CUSTOM_DATA) && stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA).contains("servermanagement_creative")) continue;
+                                                String id = getItemId(stack);
+                                                currentItems.put(id, currentItems.getOrDefault(id, 0L) + stack.getCount());
+                                            }
+                                        }
+                                    }
+                                    updateSupplyFromDelta(uuidStr, playerCache, currentItems);
+                                }
+                            } catch (Exception e) {
+                                ServerManagementMod.LOGGER.debug("Failed to read offline player data for economy census: " + uuidStr, e);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            ServerManagementMod.LOGGER.error("Failed to scan offline players", e);
+        }
     }
 }

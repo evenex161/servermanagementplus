@@ -6,9 +6,9 @@ import com.servermanagement.config.ModConfig;
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.network.ModNetworking;
 
-public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean minebayEnabled, boolean minestacksEnabled, String tradeBlacklist) implements IPacket {
+public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean minebayEnabled, boolean minestacksEnabled, String tradeBlacklist, double startingBalance) implements IPacket {
     public SaveEconomySettingsPacket(FriendlyByteBuf buf) {
-        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(32767));
+        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(32767), buf.readDouble());
     }
     @Override
     public void encode(FriendlyByteBuf buf) {
@@ -16,6 +16,7 @@ public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean
         buf.writeBoolean(minebayEnabled);
         buf.writeBoolean(minestacksEnabled);
         buf.writeUtf(tradeBlacklist, 32767);
+        buf.writeDouble(startingBalance);
     }
     @Override
     public void handle(CustomPayloadEvent.Context ctx) {
@@ -26,10 +27,11 @@ public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean
                 ModConfig.MINEBAY_ENABLED.set(minebayEnabled);
                 ModConfig.MINESTACKS_ENABLED.set(minestacksEnabled);
                 ModConfig.TRADE_BLACKLIST.set(tradeBlacklist);
+                ModConfig.STARTING_BALANCE.set(startingBalance);
                 ModConfig.SPEC.save();
                 
                 // Broadcast to all clients
-                ModNetworking.sendToAllPlayers(new SyncEconomySettingsPacket(showMarketValueTooltips, minebayEnabled, minestacksEnabled, tradeBlacklist));
+                ModNetworking.sendToAllPlayers(new SyncEconomySettingsPacket(showMarketValueTooltips, minebayEnabled, minestacksEnabled, tradeBlacklist, startingBalance));
             }
         });
         ctx.setPacketHandled(true);

@@ -8,7 +8,9 @@
     "PlayerAdvancementsMixin",
     "ResultSlotMixin",
     "ServerPlayerChangeDimensionMixin",
-    "ConnectionMixin"
+    "ConnectionMixin",
+    "CreativeItemImportMixin",
+    "ItemInputMixin"
   ],
   "client": [],
   "injectors": {

@@ -56,11 +56,12 @@ public class EconomyServerHandler {
                 ServerManagementMod.LOGGER.debug("Economy auto-save triggered");
             }
             
-            // Periodic supply/demand save and decay
+            // Periodic supply/demand save
             ItemSupplyDemandTracker tracker = ItemSupplyDemandTracker.getInstance();
             if (event.getServer() != null) {
-                tracker.applyDecay();
+                // Decay is handled by Global Census Engine naturally
                 tracker.tickSave(event.getServer());
+                DropRateTracker.getInstance().tickSave(event.getServer());
                 
                 // Periodic margin history save
                 MarginHistoryTracker.getInstance().save(event.getServer());

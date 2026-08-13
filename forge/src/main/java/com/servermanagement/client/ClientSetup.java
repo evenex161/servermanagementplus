@@ -12,9 +12,29 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 @Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientSetup {
     
+
+    
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         com.servermanagement.client.ClientConfig.init(net.minecraft.client.Minecraft.getInstance().gameDirectory);
+        
+        // Inject StatsBarOverlay via reflection since Forge 1.21.1 removed RegisterGuiOverlaysEvent
+        event.enqueueWork(() -> {
+            try {
+                for (java.lang.reflect.Field field : net.minecraft.client.gui.Gui.class.getDeclaredFields()) {
+                    if (field.getType() == net.minecraft.client.gui.LayeredDraw.class) {
+                        field.setAccessible(true);
+                        net.minecraft.client.gui.LayeredDraw layers = (net.minecraft.client.gui.LayeredDraw) field.get(net.minecraft.client.Minecraft.getInstance().gui);
+                        layers.add((guiGraphics, partialTick) -> {
+                            com.servermanagement.gui.overlay.StatsBarOverlay.render(guiGraphics, partialTick.getGameTimeDeltaTicks());
+                        });
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                ServerManagementMod.LOGGER.error("Failed to inject StatsBarOverlay into Gui via reflection", e);
+            }
+        });
         event.enqueueWork(() -> {
             // Register screens
             MenuScreens.register(ModMenuTypes.CONFIG_MENU.get(), ConfigScreen::new);

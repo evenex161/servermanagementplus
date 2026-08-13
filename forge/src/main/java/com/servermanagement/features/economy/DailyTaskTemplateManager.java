@@ -18,6 +18,7 @@ public class DailyTaskTemplateManager {
     private List<DailyTaskTemplate> templates = new ArrayList<>();
     private double freeRewardAmount = 50.0; // Default free reward
     private ItemStack freeRewardItem = ItemStack.EMPTY; // Optional item reward
+    private List<ItemStack> freeRewardItems = new ArrayList<>(); // Multi-item reward
     private int freeRewardCooldownHours = 24; // Default cooldown
 
     public DailyTaskTemplateManager() {
@@ -82,6 +83,15 @@ public class DailyTaskTemplateManager {
         
         // Ensure we have default templates
         manager.initializeDefaultTemplates();
+        
+        // Migrate legacy single item to list
+        if (manager.freeRewardItems == null) {
+            manager.freeRewardItems = new ArrayList<>();
+        }
+        if (manager.freeRewardItem != null && !manager.freeRewardItem.isEmpty()) {
+            manager.freeRewardItems.add(manager.freeRewardItem.copy());
+            manager.freeRewardItem = ItemStack.EMPTY;
+        }
         
         ServerManagementMod.LOGGER.debug("Loaded {} daily task templates (v{})", 
             manager.templates.size(), manager.dataVersion);
@@ -208,6 +218,34 @@ public class DailyTaskTemplateManager {
         this.freeRewardAmount = Math.max(0, amount);
     }
     
+    /**
+     * Get free reward items
+     */
+    public List<ItemStack> getFreeRewardItems() {
+        if (freeRewardItems == null) {
+            freeRewardItems = new ArrayList<>();
+        }
+        List<ItemStack> copies = new ArrayList<>();
+        for (ItemStack item : freeRewardItems) {
+            copies.add(item.copy());
+        }
+        return copies;
+    }
+    
+    /**
+     * Set free reward items
+     */
+    public void setFreeRewardItems(List<ItemStack> items) {
+        this.freeRewardItems = new ArrayList<>();
+        if (items != null) {
+            for (ItemStack item : items) {
+                if (item != null && !item.isEmpty()) {
+                    this.freeRewardItems.add(item.copy());
+                }
+            }
+        }
+    }
+
     /**
      * Get free reward item
      */

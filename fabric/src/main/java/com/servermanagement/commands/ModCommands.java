@@ -90,6 +90,21 @@ public class ModCommands {
                     })
                 )
             )
+            .then(Commands.literal("hud")
+                .then(Commands.literal("edit")
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                            com.servermanagement.network.ModNetworking.sendToPlayer(
+                                new com.servermanagement.network.packet.OpenGuiPacket(
+                                    com.servermanagement.network.packet.OpenGuiPacket.GuiType.HUD_EDIT
+                                ),
+                                player
+                            );
+                        }
+                        return 1;
+                    })
+                )
+            )
         );
         
         // ServerManagement Settings command
@@ -251,6 +266,45 @@ public class ModCommands {
                 return 1;
             })
         );
+
+        // Standalone dailies command
+        dispatcher.register(Commands.literal("dailies")
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                        player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                        return 0;
+                    }
+                    
+                    var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                    var dailyTasksManager = economyManager.getDailyTasksManager();
+                    var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+                    var templateManager = economyManager.getTemplateManager();
+                    
+                    int freeRewardAmount = templateManager != null
+                        ? (int) templateManager.getFreeRewardAmount()
+                        : playerTasks.getFreeRewardAmount();
+                    
+                    long resetTime = System.currentTimeMillis() + playerTasks.getTimeUntilTaskRefresh();
+                    
+                    com.servermanagement.network.ModNetworking.sendToPlayer(
+                        new com.servermanagement.network.packet.SyncDailyTasksPacket(
+                            playerTasks.getTasks(),
+                            resetTime,
+                            playerTasks.isFreeRewardAvailable(),
+                            freeRewardAmount,
+                            playerTasks.getTimeUntilFreeReward(),
+                            templateManager != null ? templateManager.getFreeRewardItems() : new java.util.ArrayList<>()
+                        ),
+                        player
+                    );
+                    
+                    player.openMenu(new com.servermanagement.gui.economy.DailyTasksMenuProvider());
+                }
+                return 1;
+            })
+        );
+
         
         // Spectate command — remove vanilla's /spectate first to prevent collision
         // Vanilla's /spectate requires the player to already be in spectator mode,
@@ -445,6 +499,96 @@ public class ModCommands {
                         context.getSource().sendSuccess(() -> Component.literal("Gave slime head to " + targetName), true);
                     } else {
                         context.getSource().sendFailure(Component.literal("Player not found: " + targetName));
+                    }
+                    return 1;
+                })
+            )
+        );
+        
+        // Standalone dailies command
+        dispatcher.register(Commands.literal("dailies")
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                    if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                        player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                        return 0;
+                    }
+                    
+                    var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                    var dailyTasksManager = economyManager.getDailyTasksManager();
+                    var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+                    var templateManager = economyManager.getTemplateManager();
+                    
+                    int freeRewardAmount = templateManager != null
+                        ? (int) templateManager.getFreeRewardAmount()
+                        : playerTasks.getFreeRewardAmount();
+                    
+                    long resetTime = System.currentTimeMillis() + playerTasks.getTimeUntilTaskRefresh();
+                    
+                    com.servermanagement.network.ModNetworking.sendToPlayer(
+                        new com.servermanagement.network.packet.SyncDailyTasksPacket(
+                            playerTasks.getTasks(),
+                            resetTime,
+                            playerTasks.isFreeRewardAvailable(),
+                            freeRewardAmount,
+                            playerTasks.getTimeUntilFreeReward(),
+                            templateManager != null ? templateManager.getFreeRewardItems() : new java.util.ArrayList<>()
+                        ),
+                        player
+                    );
+                    
+                    player.openMenu(new com.servermanagement.gui.economy.DailyTasksMenuProvider());
+                }
+                return 1;
+            })
+            .then(Commands.literal("claim")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                            return 0;
+                        }
+                        
+                        var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                        var dailyTasksManager = manager.getDailyTasksManager();
+                        var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+                        
+                        int totalReward = 0;
+                        boolean claimedAnything = false;
+                        
+                        for (int i = 0; i < playerTasks.getTasks().size(); i++) {
+                            int reward = dailyTasksManager.claimTaskReward(player.getUUID(), i);
+                            if (reward > 0) {
+                                totalReward += reward;
+                                claimedAnything = true;
+                            }
+                        }
+                        
+                        int freeReward = dailyTasksManager.claimFreeReward(player);
+                        if (freeReward > 0) {
+                            totalReward += freeReward;
+                            claimedAnything = true;
+                        }
+                        
+                        if (claimedAnything) {
+                            if (totalReward > 0) {
+                                manager.deposit(
+                                    player.getUUID(),
+                                    totalReward,
+                                    com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
+                                    "Daily Task Rewards"
+                                );
+                            }
+                            player.sendSystemMessage(Component.literal("§aSuccessfully claimed all available rewards!"));
+                        } else {
+                            player.sendSystemMessage(Component.literal("§e=== Current Tasks Progress ==="));
+                            int i = 1;
+                            for (var task : playerTasks.getTasks()) {
+                                String status = task.isClaimed() ? "§a[Claimed]" : (task.isCompleted() ? "§a[Completed]" : "§e[" + task.getProgress() + "/" + task.getGoal() + "]");
+                                player.sendSystemMessage(Component.literal("§7[" + i + "] §f" + task.getDescription() + " " + status));
+                                i++;
+                            }
+                        }
                     }
                     return 1;
                 })
@@ -708,6 +852,22 @@ public class ModCommands {
                     return 1;
                 })
             )
+            
+            .then(Commands.literal("hud")
+                .then(Commands.literal("edit")
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                            com.servermanagement.network.ModNetworking.sendToPlayer(
+                                new com.servermanagement.network.packet.OpenGuiPacket(
+                                    com.servermanagement.network.packet.OpenGuiPacket.GuiType.HUD_EDIT
+                                ),
+                                player
+                            );
+                        }
+                        return 1;
+                    })
+                )
+            )
             .then(Commands.literal("dailies")
                 .executes(context -> {
                     if (context.getSource().getEntity() instanceof ServerPlayer player) {
@@ -736,7 +896,8 @@ public class ModCommands {
                                 resetTime,
                                 playerTasks.isFreeRewardAvailable(),
                                 freeRewardAmount,
-                                playerTasks.getTimeUntilFreeReward()
+                                playerTasks.getTimeUntilFreeReward(),
+                                templateManager != null ? templateManager.getFreeRewardItems() : new java.util.ArrayList<>()
                             ),
                             player
                         );
@@ -747,41 +908,58 @@ public class ModCommands {
                     return 1;
                 })
                 .then(Commands.literal("claim")
-                    .then(Commands.argument("taskNumber", IntegerArgumentType.integer(1, 3))
-                        .executes(context -> {
-                            if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                    player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
-                                    return 0;
-                                }
-                                
-                                int taskNum = IntegerArgumentType.getInteger(context, "taskNumber");
-                                int taskIndex = taskNum - 1;
-                                
-                                var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
-                                int reward = manager.getDailyTasksManager()
-                                    .claimTaskReward(player.getUUID(), taskIndex);
-                                
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                            if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
+                                return 0;
+                            }
+                            
+                            var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                            var dailyTasksManager = manager.getDailyTasksManager();
+                            var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+                            
+                            int totalReward = 0;
+                            boolean claimedAnything = false;
+                            
+                            // Claim all completed tasks
+                            for (int i = 0; i < playerTasks.getTasks().size(); i++) {
+                                int reward = dailyTasksManager.claimTaskReward(player.getUUID(), i);
                                 if (reward > 0) {
-                                    manager.deposit(
-                                        player.getUUID(),
-                                        reward,
-                                        com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
-                                        "Daily Task Reward"
-                                    );
-                                    
-                                    // Send reward notification
-                                    com.servermanagement.features.economy.notifications.NotificationManager
-                                        .sendRewardClaimedNotification(player, reward);
-                                } else {
-                                    player.sendSystemMessage(Component.literal(
-                                        "§cTask not completed or already claimed"
-                                    ));
+                                    totalReward += reward;
+                                    claimedAnything = true;
                                 }
                             }
-                            return 1;
-                        })
-                    )
+                            
+                            // Claim free reward
+                            int freeReward = dailyTasksManager.claimFreeReward(player);
+                            if (freeReward > 0) {
+                                totalReward += freeReward;
+                                claimedAnything = true;
+                            }
+                            
+                            if (claimedAnything) {
+                                if (totalReward > 0) {
+                                    manager.deposit(
+                                        player.getUUID(),
+                                        totalReward,
+                                        com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
+                                        "Daily Task Rewards"
+                                    );
+                                }
+                                player.sendSystemMessage(Component.literal("§aSuccessfully claimed all available rewards!"));
+                            } else {
+                                player.sendSystemMessage(Component.literal("§e=== Current Tasks Progress ==="));
+                                int i = 1;
+                                for (var task : playerTasks.getTasks()) {
+                                    String status = task.isClaimed() ? "§a[Claimed]" : (task.isCompleted() ? "§a[Completed]" : "§e[" + task.getProgress() + "/" + task.getGoal() + "]");
+                                    player.sendSystemMessage(Component.literal("§7[" + i + "] §f" + task.getDescription() + " " + status));
+                                    i++;
+                                }
+                            }
+                        }
+                        return 1;
+                    })
                 )
                 .then(Commands.literal("free")
                     .executes(context -> {
@@ -792,8 +970,7 @@ public class ModCommands {
                             }
                             
                             var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
-                            int reward = manager.getDailyTasksManager()
-                                .claimFreeReward(player.getUUID());
+                            int reward = manager.getDailyTasksManager().claimFreeReward(player);
                             
                             if (reward > 0) {
                                 manager.deposit(
@@ -803,12 +980,10 @@ public class ModCommands {
                                     "Free Daily Reward"
                                 );
                                 
-                                // Send reward notification
                                 com.servermanagement.features.economy.notifications.NotificationManager
                                     .sendRewardClaimedNotification(player, reward);
                             } else {
-                                var playerTasks = manager.getDailyTasksManager()
-                                    .getOrCreatePlayerTasks(player.getUUID());
+                                var playerTasks = manager.getDailyTasksManager().getOrCreatePlayerTasks(player.getUUID());
                                 long timeRemaining = playerTasks.getTimeUntilFreeReward();
                                 player.sendSystemMessage(Component.literal(
                                     "§cFree reward not available. Next reward in: " +

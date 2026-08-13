@@ -152,10 +152,29 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
                     case UPDATER:
                         player.openMenu(new com.servermanagement.gui.provider.UpdaterMenuProvider());
                         break;
+                    case HUD_EDIT:
+                        // HUD Edit is a client-side-only screen, send packet to client to open it
+                        com.servermanagement.network.ModNetworking.sendToPlayer(
+                            new OpenGuiPacket(GuiType.HUD_EDIT), player
+                        );
+                        break;
                 }
             }
 
-}
+    }
+    
+    /**
+     * Client-side handler for HUD_EDIT packets received from the server.
+     */
+    public void handleClient() {
+        if (guiType == GuiType.HUD_EDIT) {
+            net.minecraft.client.Minecraft.getInstance().execute(() ->
+                net.minecraft.client.Minecraft.getInstance().setScreen(
+                    new com.servermanagement.gui.overlay.HudEditScreen()
+                )
+            );
+        }
+    }
     
     private void syncWorldList(ServerPlayer player) {
         var worldManager = com.servermanagement.features.worldmanager.WorldManager.getInstance();
@@ -264,7 +283,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
                 resetTime,
                 playerTasks.isFreeRewardAvailable(),
                 freeRewardAmount,
-                playerTasks.getTimeUntilFreeReward()
+                playerTasks.getTimeUntilFreeReward(),
+                templateManager != null ? templateManager.getFreeRewardItems() : new java.util.ArrayList<>()
             ),
             player
         );
@@ -331,7 +351,8 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
         MINESTACKS,
         PERFORMANCE_SETTINGS,
         MOTD_EDITOR,
-        UPDATER;
+        UPDATER,
+        HUD_EDIT;
 
         public boolean isAdminOnly() {
             return switch (this) {

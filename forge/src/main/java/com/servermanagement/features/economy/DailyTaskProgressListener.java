@@ -191,7 +191,8 @@ public class DailyTaskProgressListener {
                     resetTime,
                     playerTasks.isFreeRewardAvailable(),
                     freeRewardAmount,
-                    playerTasks.getTimeUntilFreeReward()
+                    playerTasks.getTimeUntilFreeReward(),
+                    templateManager != null ? templateManager.getFreeRewardItems() : new java.util.ArrayList<>()
                 ),
                 player
             );

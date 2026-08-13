@@ -23,6 +23,12 @@ public class EconomyServerHandler {
             return;
         }
         
+        
+        // Item Census tracking
+        ItemSupplyDemandTracker tracker = ItemSupplyDemandTracker.getInstance();
+        tracker.onServerTick(server);
+        tracker.onPlayerTick(server);
+
         autoSaveTicks++;
         marketSyncTicks++;
         
@@ -47,11 +53,10 @@ public class EconomyServerHandler {
                 ServerManagementMod.LOGGER.debug("Economy auto-save triggered");
             }
             
-            // Periodic supply/demand save and decay
-            ItemSupplyDemandTracker tracker = ItemSupplyDemandTracker.getInstance();
+            // Periodic supply/demand save and chunk census tick
             if (server != null) {
-                tracker.applyDecay();
                 tracker.tickSave(server);
+                DropRateTracker.getInstance().tickSave(server);
                 
                 // Periodic margin history save
                 MarginHistoryTracker.getInstance().save(server);

@@ -4,6 +4,7 @@ import com.servermanagement.features.economy.DailyTask;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Client-side storage for daily tasks data
@@ -13,6 +14,7 @@ public class ClientDailyTasksData {
     private static long resetTime = 0;
     private static boolean freeRewardAvailable = false;
     private static int freeRewardAmount = 100;
+    private static List<ItemStack> freeRewardItems = new ArrayList<>();
     private static long timeUntilFreeReward = 0;
 
     public static List<DailyTask> getTasks() {
@@ -55,11 +57,20 @@ public class ClientDailyTasksData {
         timeUntilFreeReward = time;
     }
 
+        public static List<ItemStack> getFreeRewardItems() {
+        return freeRewardItems;
+    }
+
+    public static void setFreeRewardItems(List<ItemStack> items) {
+        freeRewardItems = new ArrayList<>(items);
+    }
+
     public static void clear() {
         tasks.clear();
         resetTime = 0;
         freeRewardAvailable = false;
         freeRewardAmount = 100;
+        freeRewardItems.clear();
         timeUntilFreeReward = 0;
     }
 }

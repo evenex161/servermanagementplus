@@ -5,12 +5,14 @@ import com.servermanagement.features.economy.TaskType;
 import net.minecraft.network.FriendlyByteBuf;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.codec.ByteBufCodecs;
 import java.util.function.Supplier;
 
 /**
  * Packet to sync daily tasks from server to client
  */
-public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, int freeRewardAmount, long timeUntilFreeReward) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolean freeRewardAvailable, int freeRewardAmount, long timeUntilFreeReward, List<ItemStack> freeRewardItems) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SyncDailyTasksPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_daily_tasks_packet"));
@@ -23,7 +25,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
         return TYPE;
     }
     public SyncDailyTasksPacket(FriendlyByteBuf buf) {
-        this(decodeTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong());
+        this(decodeTasks(buf), buf.readLong(), buf.readBoolean(), buf.readInt(), buf.readLong(), ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf)buf));
     }
 
     private static List<DailyTask> decodeTasks(FriendlyByteBuf buf) {
@@ -60,6 +62,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
         buf.writeBoolean(freeRewardAvailable);
         buf.writeInt(freeRewardAmount);
         buf.writeLong(timeUntilFreeReward);
+        ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf)buf, freeRewardItems);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
@@ -69,6 +72,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAvailable(freeRewardAvailable);
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAmount(freeRewardAmount);
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
+            com.servermanagement.client.ClientDailyTasksData.setFreeRewardItems(freeRewardItems);
             com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
 
 }

@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record SyncEconomySettingsPacket(boolean showMarketValueTooltips, boolean minebayEnabled, boolean minestacksEnabled, String tradeBlacklist) implements CustomPacketPayload {
+public record SyncEconomySettingsPacket(boolean showMarketValueTooltips, boolean minebayEnabled, boolean minestacksEnabled, String tradeBlacklist, double startingBalance) implements CustomPacketPayload {
     public static final Type<SyncEconomySettingsPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_economy_settings_packet"));
     
     public static final StreamCodec<FriendlyByteBuf, SyncEconomySettingsPacket> STREAM_CODEC = StreamCodec.ofMember(
@@ -15,7 +15,7 @@ public record SyncEconomySettingsPacket(boolean showMarketValueTooltips, boolean
     );
 
     public SyncEconomySettingsPacket(FriendlyByteBuf buf) {
-        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(32767));
+        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(32767), buf.readDouble());
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -23,6 +23,7 @@ public record SyncEconomySettingsPacket(boolean showMarketValueTooltips, boolean
         buf.writeBoolean(minebayEnabled);
         buf.writeBoolean(minestacksEnabled);
         buf.writeUtf(tradeBlacklist, 32767);
+        buf.writeDouble(startingBalance);
     }
 
     @Override
@@ -36,6 +37,7 @@ public record SyncEconomySettingsPacket(boolean showMarketValueTooltips, boolean
             ClientPacketHandler.setMinebayEnabled(minebayEnabled);
             ClientPacketHandler.setMinestacksEnabled(minestacksEnabled);
             ClientPacketHandler.setTradeBlacklist(tradeBlacklist);
+            ClientPacketHandler.setStartingBalance(startingBalance);
         });
     }
 }

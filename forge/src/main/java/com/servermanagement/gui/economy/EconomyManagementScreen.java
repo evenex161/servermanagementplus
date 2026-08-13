@@ -4,6 +4,8 @@ package com.servermanagement.gui.economy;
 import com.servermanagement.gui.ScalableContainerScreen;
 import com.servermanagement.features.economy.TaskType;
 import com.servermanagement.gui.widgets.ModernButton;
+import com.servermanagement.gui.widgets.NodeBasedTemplateEditorWidget;
+import com.servermanagement.gui.widgets.FreeRewardEditorWidget;
 import com.servermanagement.network.ModNetworking;
 import com.servermanagement.network.packet.DeleteTemplatePacket;
 import com.servermanagement.network.packet.OpenGuiPacket;
@@ -45,9 +47,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     // Edit mode fields
     private boolean editMode = false;
-    private EditBox editDescriptionBox;
-    private EditBox editGoalBox;
-    private EditBox editRewardBox;
+    private NodeBasedTemplateEditorWidget nodeEditor;
     private TaskType editTaskType = TaskType.BREAK_BLOCKS;
     private ItemStack editRewardItem = ItemStack.EMPTY; // Item reward for template editing
     // Persisted edit values (survive rebuildWidgets)
@@ -58,7 +58,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     // Free reward tab fields
     private EditBox freeRewardBox;
     private EditBox cooldownBox;
-    private ItemStack freeRewardItemStack = ItemStack.EMPTY; // Item reward for free reward
+    private FreeRewardEditorWidget freeRewardEditorWidget;
     
     public EconomyManagementScreen(EconomyManagementMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, 600, 450);
@@ -73,11 +73,10 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         
         // Clear all EditBox references when reinitializing
         searchBox = null;
-        editDescriptionBox = null;
-        editGoalBox = null;
-        editRewardBox = null;
+        nodeEditor = null;
         freeRewardBox = null;
         cooldownBox = null;
+        freeRewardEditorWidget = null;
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -216,58 +215,34 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     }
     
     private void initEditMode(int centerX, int centerY) {
-        int formX = centerX + 30;
-        int formY = centerY + 115;
+        // Node-based template editor widget
+        int editorWidth = this.imageWidth - 40;
+        int editorHeight = 150;
+        int editorX = centerX + 20;
+        int editorY = centerY + 110;
         
-        // Task Type selector
+        nodeEditor = new NodeBasedTemplateEditorWidget(editorX, editorY, editorWidth, editorHeight);
+        nodeEditor.setTaskType(editTaskType);
+        nodeEditor.setDescription(pendingDescription);
+        if (!pendingGoal.isEmpty()) {
+            try { nodeEditor.setGoal(Integer.parseInt(pendingGoal)); } catch (NumberFormatException ignored) {}
+        }
+        if (!pendingReward.isEmpty()) {
+            try { nodeEditor.setRewardAmount(Double.parseDouble(pendingReward)); } catch (NumberFormatException ignored) {}
+        }
+        this.addRenderableWidget(nodeEditor);
+        
+        // Save / Cancel buttons below the node editor
+        int buttonY = editorY + editorHeight + 15;
         this.addRenderableWidget(new ModernButton(
-            formX, formY, 100, 20,
-            Component.literal("◄ Type"),
-            button -> cycleTaskType(-1),
-            ModernButton.ButtonStyle.SECONDARY
-        ));
-        
-        this.addRenderableWidget(new ModernButton(
-            formX + 110, formY, 100, 20,
-            Component.literal("Type ►"),
-            button -> cycleTaskType(1),
-            ModernButton.ButtonStyle.SECONDARY
-        ));
-        
-        // Description input
-        editDescriptionBox = new EditBox(this.font, formX, formY + 50, this.imageWidth - 100, 20, Component.literal("Description"));
-        editDescriptionBox.setMaxLength(100);
-        editDescriptionBox.setHint(Component.literal("Task description..."));
-        editDescriptionBox.setValue(pendingDescription);
-        this.addRenderableWidget(editDescriptionBox);
-        
-        // Goal input
-        editGoalBox = new EditBox(this.font, formX, formY + 100, 150, 20, Component.literal("Goal"));
-        editGoalBox.setMaxLength(10);
-        editGoalBox.setHint(Component.literal("Goal amount..."));
-        editGoalBox.setFilter(s -> s.matches("\\d*")); // Numbers only
-        editGoalBox.setValue(pendingGoal);
-        this.addRenderableWidget(editGoalBox);
-        
-        // Reward input
-        editRewardBox = new EditBox(this.font, formX + 170, formY + 100, 150, 20, Component.literal("Reward"));
-        editRewardBox.setMaxLength(10);
-        editRewardBox.setHint(Component.literal("Reward ($)..."));
-        editRewardBox.setFilter(s -> s.matches("\\d*")); // Numbers only
-        editRewardBox.setValue(pendingReward);
-        this.addRenderableWidget(editRewardBox);
-        
-        // Save button (below item slot row)
-        this.addRenderableWidget(new ModernButton(
-            formX, formY + 200, 120, 25,
+            editorX, buttonY, 120, 25,
             Component.literal("Save"),
             button -> saveTemplate(),
             ModernButton.ButtonStyle.SUCCESS
         ));
         
-        // Cancel button
         this.addRenderableWidget(new ModernButton(
-            formX + 130, formY + 200, 120, 25,
+            editorX + 130, buttonY, 120, 25,
             Component.literal("Cancel"),
             button -> cancelEdit(),
             ModernButton.ButtonStyle.DANGER
@@ -280,7 +255,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         
         // Free reward amount
         if (freeRewardBox == null) {
-            freeRewardBox = new EditBox(this.font, formX, formY, 200, 20, Component.literal("Free Reward Amount"));
+            freeRewardBox = new EditBox(this.font, formX, formY, 150, 20, Component.literal("Free Reward Amount"));
             freeRewardBox.setMaxLength(10);
             freeRewardBox.setValue(String.valueOf(ClientPacketHandler.getCachedFreeRewardAmount()));
             freeRewardBox.setFilter(s -> s.matches("\\d*"));
@@ -289,16 +264,21 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         
         // Cooldown hours
         if (cooldownBox == null) {
-            cooldownBox = new EditBox(this.font, formX, formY + 40, 200, 20, Component.literal("Cooldown (hours)"));
+            cooldownBox = new EditBox(this.font, formX + 160, formY, 150, 20, Component.literal("Cooldown (hours)"));
             cooldownBox.setMaxLength(3);
             cooldownBox.setValue(String.valueOf(ClientPacketHandler.getCachedFreeRewardCooldownHours()));
             cooldownBox.setFilter(s -> s.matches("\\d*"));
         }
         this.addRenderableWidget(cooldownBox);
         
+        if (freeRewardEditorWidget == null) {
+            freeRewardEditorWidget = new FreeRewardEditorWidget(formX, formY + 30, 310, 160, ClientPacketHandler.getCachedFreeRewardItems());
+        }
+        this.addRenderableWidget(freeRewardEditorWidget);
+        
         // Save button (below item slot help text)
         this.addRenderableWidget(new ModernButton(
-            formX, formY + 125, 100, 25,
+            formX, formY + 225, 100, 25,
             Component.literal("Save"),
             button -> saveFreeRewardSettings(freeRewardBox.getValue(), cooldownBox.getValue()),
             ModernButton.ButtonStyle.SUCCESS
@@ -336,6 +316,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         pendingGoal = "";
         pendingReward = "";
         this.rebuildWidgets();
+        // Tick the node editor once to initialize animation
+        if (nodeEditor != null) nodeEditor.tick();
     }
     
     private void editTemplate(int index) {
@@ -378,17 +360,21 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     }
     
     private void saveTemplate() {
-        String description = editDescriptionBox != null ? editDescriptionBox.getValue() : "";
+        String description = "";
         int goal = 0;
         int reward = 0;
-        try {
-            goal = editGoalBox != null && !editGoalBox.getValue().isEmpty() ? Integer.parseInt(editGoalBox.getValue()) : 0;
-            reward = editRewardBox != null && !editRewardBox.getValue().isEmpty() ? Integer.parseInt(editRewardBox.getValue()) : 0;
-        } catch (NumberFormatException ignored) {}
+        TaskType taskType = editTaskType;
+        
+        if (nodeEditor != null) {
+            description = nodeEditor.getDescription();
+            goal = nodeEditor.getGoal();
+            reward = (int) nodeEditor.getRewardAmount();
+            taskType = nodeEditor.getSelectedTaskType();
+        }
         
         if (goal > 0 && reward > 0) {
             ModNetworking.sendToServer(new SaveTemplatePacket(
-                editTemplateId, editTaskType, description, goal, reward, editRewardItem
+                editTemplateId, taskType, description, goal, reward, editRewardItem
             ));
         }
         
@@ -413,7 +399,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         } catch (NumberFormatException ignored) {}
         
         if (rewardAmount > 0 && cooldownHours > 0) {
-            ModNetworking.sendToServer(new SaveFreeRewardSettingsPacket(rewardAmount, cooldownHours, freeRewardItemStack));
+            ModNetworking.sendToServer(new SaveFreeRewardSettingsPacket(rewardAmount, cooldownHours, freeRewardEditorWidget != null ? freeRewardEditorWidget.getRewardItems() : new java.util.ArrayList<>()));
         }
     }
     
@@ -477,7 +463,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             guiGraphics.drawString(this.font, "Show Market Value Tooltips", centerX + 20, startY + 5, 0xFFFFFF, true);
             guiGraphics.drawString(this.font, "Enable MineBay", centerX + 20, startY + spacing + 5, 0xFFFFFF, true);
             guiGraphics.drawString(this.font, "Enable MineStacks", centerX + 20, startY + spacing * 2 + 5, 0xFFFFFF, true);
-            guiGraphics.drawString(this.font, "Trade Blacklist:", centerX + 20, startY + spacing * 3 + 2, 0xAAAAAA, true);
+            guiGraphics.drawString(this.font, "Starting Balance ($):", centerX + 20, startY + spacing * 3 + 5, 0xFFFFFF, true);
+            guiGraphics.drawString(this.font, "Trade Blacklist:", centerX + 20, startY + spacing * 4 + 2, 0xAAAAAA, true);
         }
     }
     
@@ -525,56 +512,38 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 }
             }
         } else {
-            // Render edit form
+            // Render node-based editor title
             guiGraphics.drawString(this.font, Component.literal(selectedTemplateIndex == -1 ? "Create New Template" : "Edit Template"),
                 centerX + 35, centerY + 90, 0xFFD700, true);
             
-            int formY = centerY + 115;
-            
-            // Labels
-            guiGraphics.drawString(this.font, Component.literal("Task Type:"),
-                centerX + 35, formY - 10, 0xFFFFFF, true);
-            
-            // Show current task type
-            if (editTaskType != null) {
-                guiGraphics.drawString(this.font, Component.literal(editTaskType.getDisplayName()),
-                    centerX + 220, formY + 5, 0xFFD700, true);
-            }
-            
-            guiGraphics.drawString(this.font, Component.literal("Description:"),
-                centerX + 35, formY + 35, 0xFFFFFF, true);
-            
-            guiGraphics.drawString(this.font, Component.literal("Goal:"),
-                centerX + 35, formY + 85, 0xFFFFFF, true);
-            
-            guiGraphics.drawString(this.font, Component.literal("Reward ($):"),
-                centerX + 205, formY + 85, 0xFFFFFF, true);
-            
-            guiGraphics.drawString(this.font, Component.literal("Reward Item (optional):"),
-                centerX + 35, formY + 135, 0xFFFFFF, true);
-            
-            // Item slot visual
-            int itemSlotX = centerX + 35;
-            int itemSlotY = formY + 150;
-            guiGraphics.fill(itemSlotX - 1, itemSlotY - 1, itemSlotX + 19, itemSlotY + 19, 0xFFFFFFFF);
-            guiGraphics.fill(itemSlotX, itemSlotY, itemSlotX + 18, itemSlotY + 18, 0xFF8B8B8B);
-            
-            if (!editRewardItem.isEmpty()) {
-                guiGraphics.renderItem(editRewardItem, itemSlotX, itemSlotY);
-                guiGraphics.renderItemDecorations(this.font, editRewardItem, itemSlotX, itemSlotY);
+            // Node editor widget renders itself via addRenderableWidget
+            // Render item reward slot below the node editor
+            if (nodeEditor != null) {
+                int itemSlotX = centerX + 35;
+                int itemSlotY = centerY + 110 + 150 + 50; // Below save/cancel buttons
+                
+                guiGraphics.drawString(this.font, Component.literal("Reward Item (optional):"),
+                    itemSlotX, itemSlotY - 15, 0xFFFFFF, true);
+                
+                guiGraphics.fill(itemSlotX - 1, itemSlotY - 1, itemSlotX + 19, itemSlotY + 19, 0xFFFFFFFF);
+                guiGraphics.fill(itemSlotX, itemSlotY, itemSlotX + 18, itemSlotY + 18, 0xFF8B8B8B);
+                
+                if (!editRewardItem.isEmpty()) {
+                    guiGraphics.renderItem(editRewardItem, itemSlotX, itemSlotY);
+                    guiGraphics.renderItemDecorations(this.font, editRewardItem, itemSlotX, itemSlotY);
+                    guiGraphics.drawString(this.font, 
+                        Component.literal(editRewardItem.getHoverName().getString() + " x" + editRewardItem.getCount()),
+                        itemSlotX + 25, itemSlotY + 5, 0x55FF55, true);
+                } else {
+                    guiGraphics.drawString(this.font, 
+                        Component.literal("(None)"),
+                        itemSlotX + 25, itemSlotY + 5, 0x888888, true);
+                }
                 
                 guiGraphics.drawString(this.font, 
-                    Component.literal(editRewardItem.getHoverName().getString() + " x" + editRewardItem.getCount()),
-                    itemSlotX + 25, itemSlotY + 5, 0x55FF55, true);
-            } else {
-                guiGraphics.drawString(this.font, 
-                    Component.literal("(None)"),
-                    itemSlotX + 25, itemSlotY + 5, 0x888888, true);
+                    Component.literal("Tip: Select an item in your hotbar and click the slot"),
+                    itemSlotX, itemSlotY + 25, 0x888888, true);
             }
-            
-            guiGraphics.drawString(this.font, 
-                Component.literal("Tip: Select an item in your hotbar and click the slot to set reward item"),
-                centerX + 35, itemSlotY + 30, 0x888888, true);
         }
     }
     
@@ -588,36 +557,10 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             centerX + 55, formY - 15, 0xFFFFFF, true);
         
         guiGraphics.drawString(this.font, Component.literal("Cooldown (hours):"),
-            centerX + 55, formY + 25, 0xFFFFFF, true);
-        
-        guiGraphics.drawString(this.font, Component.literal("Reward Item (optional):"),
-            centerX + 55, formY + 65, 0xFFFFFF, true);
-        
-        // Item slot visual
-        int itemSlotX = centerX + 55;
-        int itemSlotY = formY + 80;
-        guiGraphics.fill(itemSlotX - 1, itemSlotY - 1, itemSlotX + 19, itemSlotY + 19, 0xFFFFFFFF);
-        guiGraphics.fill(itemSlotX, itemSlotY, itemSlotX + 18, itemSlotY + 18, 0xFF8B8B8B);
-        
-        if (!freeRewardItemStack.isEmpty()) {
-            guiGraphics.renderItem(freeRewardItemStack, itemSlotX, itemSlotY);
-            guiGraphics.renderItemDecorations(this.font, freeRewardItemStack, itemSlotX, itemSlotY);
-            
-            guiGraphics.drawString(this.font, 
-                Component.literal(freeRewardItemStack.getHoverName().getString() + " x" + freeRewardItemStack.getCount()),
-                itemSlotX + 25, itemSlotY + 5, 0x55FF55, true);
-        } else {
-            guiGraphics.drawString(this.font, 
-                Component.literal("(None)"),
-                itemSlotX + 25, itemSlotY + 5, 0x888888, true);
-        }
-        
-        guiGraphics.drawString(this.font, 
-            Component.literal("Select an item in your hotbar and click the slot to set reward item"),
-            centerX + 55, itemSlotY + 25, 0x888888, true);
+            centerX + 215, formY - 15, 0xFFFFFF, true);
         
         guiGraphics.drawString(this.font, Component.literal("Tip: Players can claim this reward once per cooldown period"),
-            centerX + 55, formY + 160, 0x888888, true);
+            centerX + 55, formY + 255, 0x888888, true);
     }
     
     private void renderStatisticsTab(GuiGraphics guiGraphics, int centerX, int centerY) {
@@ -763,9 +706,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         
         // Handle item slot clicks for template editing
         if (editMode && currentTab == Tab.TASK_TEMPLATES) {
-            int formY = centerY + 115;
             int itemSlotX = centerX + 35;
-            int itemSlotY = formY + 150;
+            int itemSlotY = centerY + 110 + 150 + 50; // Below save/cancel buttons, matching render
             
             if (designMouseX >= itemSlotX && designMouseX < itemSlotX + 18 && 
                 designMouseY >= itemSlotY && designMouseY < itemSlotY + 18) {
@@ -774,18 +716,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             }
         }
         
-        // Handle item slot clicks for free reward
-        if (currentTab == Tab.FREE_REWARD) {
-            int formY = centerY + 130;
-            int itemSlotX = centerX + 55;
-            int itemSlotY = formY + 80;
-            
-            if (designMouseX >= itemSlotX && designMouseX < itemSlotX + 18 && 
-                designMouseY >= itemSlotY && designMouseY < itemSlotY + 18) {
-                handleItemSlotClick(false);
-                return true;
-            }
-        }
+
         
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -799,15 +730,11 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 // Set the selected hotbar item as the reward item
                 if (isTemplateEdit) {
                     editRewardItem = selectedItem.copy();
-                } else {
-                    freeRewardItemStack = selectedItem.copy();
                 }
             } else {
                 // Clear item when clicking with empty hand
                 if (isTemplateEdit) {
                     editRewardItem = ItemStack.EMPTY;
-                } else {
-                    freeRewardItemStack = ItemStack.EMPTY;
                 }
             }
         }
@@ -816,6 +743,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     private com.servermanagement.gui.widgets.ToggleSwitch tooltipSwitch;
     private com.servermanagement.gui.widgets.ToggleSwitch minebaySwitch;
     private com.servermanagement.gui.widgets.ToggleSwitch minestacksSwitch;
+    private EditBox startingBalanceBox;
     private com.servermanagement.gui.widgets.TradeBlacklistEditorWidget blacklistWidget;
 
     private void initSettingsTab(int centerX, int centerY) {
@@ -848,9 +776,15 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         );
         this.addRenderableWidget(minestacksSwitch);
 
+        startingBalanceBox = new EditBox(this.font, rightCol - 50, startY + spacing * 3, 100, 20, Component.literal("Starting Balance"));
+        startingBalanceBox.setMaxLength(15);
+        startingBalanceBox.setFilter(s -> s.matches("\\d*(\\.\\d*)?")); // Allow numbers and decimals
+        startingBalanceBox.setValue(String.valueOf(com.servermanagement.client.ClientPacketHandler.getStartingBalance()));
+        this.addRenderableWidget(startingBalanceBox);
+
         // Initialize TradeBlacklistEditorWidget below the toggles
         blacklistWidget = new com.servermanagement.gui.widgets.TradeBlacklistEditorWidget(
-            centerX + 20, startY + spacing * 3 + 15, this.imageWidth - 40, 140,
+            centerX + 20, startY + spacing * 4 + 15, this.imageWidth - 40, 100,
             com.servermanagement.client.ClientPacketHandler.getTradeBlacklist()
         );
         this.addRenderableWidget(blacklistWidget);
@@ -859,11 +793,16 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             centerX + (this.imageWidth / 2) - 60, centerY + this.imageHeight - 45, 120, 25,
             Component.literal("Save Settings"),
             button -> {
+                double startingBalance = 1000.0;
+                try {
+                    startingBalance = startingBalanceBox.getValue().isEmpty() ? 0.0 : Double.parseDouble(startingBalanceBox.getValue());
+                } catch (NumberFormatException ignored) {}
                 com.servermanagement.network.ModNetworking.sendToServer(new com.servermanagement.network.packet.SaveEconomySettingsPacket(
                     tooltipSwitch.isToggled(),
                     minebaySwitch.isToggled(),
                     minestacksSwitch.isToggled(),
-                    blacklistWidget.getBlacklistString()
+                    blacklistWidget.getBlacklistString(),
+                    startingBalance
                 ));
             },
             ModernButton.ButtonStyle.SUCCESS

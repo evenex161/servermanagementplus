@@ -5,12 +5,14 @@ import com.servermanagement.features.economy.EconomyManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Supplier;
 
 /**
  * Client-to-server packet for saving free reward settings
  */
-public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, ItemStack rewardItem) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
+public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, List<ItemStack> rewardItems) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<SaveFreeRewardSettingsPacket> TYPE = 
         new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "save_free_reward_settings_packet"));
@@ -23,16 +25,27 @@ public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, 
         return TYPE;
     }
     public SaveFreeRewardSettingsPacket {
-        if (rewardItem == null) rewardItem = ItemStack.EMPTY;
+        
     }
     public SaveFreeRewardSettingsPacket(FriendlyByteBuf buf) {
-        this(buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+                this(buf.readInt(), buf.readInt(), decodeItems(buf));
+    }
+    private static List<ItemStack> decodeItems(net.minecraft.network.FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<ItemStack> items = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        }
+        return items;
     }
 
         public void encode(FriendlyByteBuf buf) {
         buf.writeInt(rewardAmount);
         buf.writeInt(cooldownHours);
-        ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItem);
+                buf.writeInt(rewardItems.size());
+        for (ItemStack item : rewardItems) {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, item);
+        }
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
@@ -50,7 +63,7 @@ public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, 
             if (cooldownHours > 0) {
                 templateManager.setFreeRewardCooldownHours(Math.min(cooldownHours, 720));
             }
-            templateManager.setFreeRewardItem(rewardItem);
+            templateManager.setFreeRewardItems(rewardItems);
             
             templateManager.save(server);
 

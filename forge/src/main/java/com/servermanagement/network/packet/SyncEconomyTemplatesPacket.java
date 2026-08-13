@@ -20,10 +20,19 @@ import java.util.function.Supplier;
  * Server-to-client packet that syncs economy templates and free reward settings
  */
 public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount,
-                                          int freeRewardCooldownHours) implements IPacket {
+                                          int freeRewardCooldownHours, List<ItemStack> freeRewardItems) implements IPacket {
 
     public SyncEconomyTemplatesPacket(FriendlyByteBuf buf) {
-        this(readTemplates(buf), buf.readInt(), buf.readInt());
+        this(readTemplates(buf), buf.readInt(), buf.readInt(), readItems(buf));
+    }
+
+    private static List<ItemStack> readItems(FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<ItemStack> items = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        }
+        return items;
     }
 
     private static List<TemplateData> readTemplates(FriendlyByteBuf buf) {
@@ -56,13 +65,17 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
             ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, t.rewardItem);
         }
         buf.writeInt(freeRewardAmount);
-        buf.writeInt(freeRewardCooldownHours);
+                buf.writeInt(freeRewardCooldownHours);
+        buf.writeInt(freeRewardItems.size());
+        for (ItemStack item : freeRewardItems) {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, item);
+        }
     }
 
     @Override
     public void handle(CustomPayloadEvent.Context ctx) {
         ctx.enqueueWork(() -> {
-            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours);
+            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours, freeRewardItems);
         });
         ctx.setPacketHandled(true);
     }
@@ -92,7 +105,8 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
             new SyncEconomyTemplatesPacket(
                 data,
                 (int) templateManager.getFreeRewardAmount(),
-                templateManager.getFreeRewardCooldownHours()
+                templateManager.getFreeRewardCooldownHours(),
+                templateManager.getFreeRewardItems()
             ),
             player
         );

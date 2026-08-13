@@ -85,6 +85,7 @@ public class EconomyManager {
         
         // Load supply/demand tracking data
         ItemSupplyDemandTracker.getInstance().load(server);
+        DropRateTracker.getInstance().load(server);
         
         // Load margin history data
         MarginHistoryTracker.getInstance().load(server);
@@ -219,6 +220,7 @@ public class EconomyManager {
         // Save and shutdown supply/demand tracker
         if (server != null) {
             ItemSupplyDemandTracker.getInstance().shutdown(server);
+            DropRateTracker.getInstance().shutdown(server);
             MarginHistoryTracker.getInstance().shutdown(server);
         }
     }

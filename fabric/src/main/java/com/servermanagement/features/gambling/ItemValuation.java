@@ -21,6 +21,29 @@ public class ItemValuation {
         ITEM_VALUES.put("minecraft:netherite_ingot", 500.0);
         ITEM_VALUES.put("minecraft:netherite_scrap", 125.0);
         
+        // Raw Materials and Ores
+        ITEM_VALUES.put("minecraft:raw_gold", 25.0);
+        ITEM_VALUES.put("minecraft:gold_ore", 25.0);
+        ITEM_VALUES.put("minecraft:deepslate_gold_ore", 25.0);
+        
+        ITEM_VALUES.put("minecraft:raw_iron", 10.0);
+        ITEM_VALUES.put("minecraft:iron_ore", 10.0);
+        ITEM_VALUES.put("minecraft:deepslate_iron_ore", 10.0);
+        
+        ITEM_VALUES.put("minecraft:raw_copper", 5.0);
+        ITEM_VALUES.put("minecraft:copper_ore", 5.0);
+        ITEM_VALUES.put("minecraft:deepslate_copper_ore", 5.0);
+        ITEM_VALUES.put("minecraft:copper_ingot", 5.0);
+        ITEM_VALUES.put("minecraft:copper_block", 45.0);
+        
+        ITEM_VALUES.put("minecraft:diamond_ore", 100.0);
+        ITEM_VALUES.put("minecraft:deepslate_diamond_ore", 100.0);
+        
+        ITEM_VALUES.put("minecraft:emerald_ore", 50.0);
+        ITEM_VALUES.put("minecraft:deepslate_emerald_ore", 50.0);
+        
+        ITEM_VALUES.put("minecraft:ancient_debris", 125.0);
+        
         // Blocks
         ITEM_VALUES.put("minecraft:diamond_block", 900.0);
         ITEM_VALUES.put("minecraft:emerald_block", 450.0);
@@ -35,6 +58,18 @@ public class ItemValuation {
         ITEM_VALUES.put("minecraft:beacon", 800.0);
         ITEM_VALUES.put("minecraft:dragon_egg", 5000.0);
         ITEM_VALUES.put("minecraft:enchanted_golden_apple", 200.0);
+
+        ITEM_VALUES.put("minecraft:dragon_head", 1500.0);
+        ITEM_VALUES.put("minecraft:dragon_breath", 50.0);
+        ITEM_VALUES.put("minecraft:heart_of_the_sea", 1000.0);
+        ITEM_VALUES.put("minecraft:sponge", 200.0);
+        ITEM_VALUES.put("minecraft:wet_sponge", 200.0);
+        ITEM_VALUES.put("minecraft:conduit", 1200.0);
+        ITEM_VALUES.put("minecraft:trident", 1000.0);
+        ITEM_VALUES.put("minecraft:wither_skeleton_skull", 250.0);
+        ITEM_VALUES.put("minecraft:shulker_shell", 150.0);
+        ITEM_VALUES.put("minecraft:echo_shard", 300.0);
+
         
         // Enchanted books (base value)
         ITEM_VALUES.put("minecraft:enchanted_book", 100.0);
@@ -71,7 +106,17 @@ public class ItemValuation {
         ITEM_VALUES.put("minecraft:coal", 1.0);
         ITEM_VALUES.put("minecraft:redstone", 2.0);
         ITEM_VALUES.put("minecraft:lapis_lazuli", 3.0);
+        ITEM_VALUES.put("minecraft:lapis_ore", 3.0);
+        ITEM_VALUES.put("minecraft:deepslate_lapis_ore", 3.0);
+        
         ITEM_VALUES.put("minecraft:quartz", 2.0);
+        ITEM_VALUES.put("minecraft:nether_quartz_ore", 2.0);
+        
+        ITEM_VALUES.put("minecraft:coal_ore", 1.0);
+        ITEM_VALUES.put("minecraft:deepslate_coal_ore", 1.0);
+        
+        ITEM_VALUES.put("minecraft:redstone_ore", 2.0);
+        ITEM_VALUES.put("minecraft:deepslate_redstone_ore", 2.0);
     }
     
     /**

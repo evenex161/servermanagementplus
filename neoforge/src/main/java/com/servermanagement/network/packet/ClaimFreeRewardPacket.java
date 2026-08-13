@@ -16,6 +16,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import java.util.List;
+import java.util.ArrayList;
 
 
 /**
@@ -66,28 +68,33 @@ public record ClaimFreeRewardPacket() implements CustomPacketPayload {
                     TransactionType.FREE_REWARD, reward,
                     "Free daily reward"));
                 
-                // Get item reward from template manager
-                ItemStack rewardItem = templateManager != null
-                    ? templateManager.getFreeRewardItem()
-                    : ItemStack.EMPTY;
+                // Get item rewards from template manager
+                List<ItemStack> rewardItems = templateManager != null
+                    ? templateManager.getFreeRewardItems()
+                    : new ArrayList<>();
                 
-                // Give item reward if present
-                if (!rewardItem.isEmpty()) {
-                    boolean addedToInventory = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
-                    
-                    if (!addedToInventory) {
-                        // Inventory full, add to bank inventory
-                        economyManager.getBankInventory(player.getUUID()).addItem(
-                            rewardItem.copy(), 
-                            BankInventory.ItemSource.FREE_REWARD, 
-                            "Free Daily Reward"
-                        );
-                        player.sendSystemMessage(Component.literal("§6[Reward] §eInventory full — item sent to Bank Inventory."));
+                if (!rewardItems.isEmpty()) {
+                    StringBuilder itemsGivenStr = new StringBuilder();
+                    for (int i = 0; i < rewardItems.size(); i++) {
+                        ItemStack item = rewardItems.get(i).copy();
+                        
+                        boolean addedToInventory = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, item.copy());
+                        if (!addedToInventory) {
+                            economyManager.getBankInventory(player.getUUID()).addItem(
+                                item.copy(), 
+                                BankInventory.ItemSource.FREE_REWARD, 
+                                "Free Daily Reward"
+                            );
+                            player.sendSystemMessage(Component.literal("§6[Reward] §eInventory full — " + item.getHoverName().getString() + " sent to Bank Inventory."));
+                        }
+                        
+                        if (i > 0) itemsGivenStr.append(", ");
+                        itemsGivenStr.append(item.getHoverName().getString()).append(" x").append(item.getCount());
                     }
                     
                     player.displayClientMessage(Component.literal(String.format(
-                        "§a§l✓ §r§aClaimed daily reward: §6$%d §a+ §f%s x%d",
-                        reward, rewardItem.getHoverName().getString(), rewardItem.getCount())), true);
+                        "§a§l✓ §r§aClaimed daily reward: §6$%d §a+ §f%s",
+                        reward, itemsGivenStr.toString())), true);
                 } else {
                     // Send success message (money only)
                     player.displayClientMessage(Component.literal(String.format(

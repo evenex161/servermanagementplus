@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Server-to-client packet that syncs economy templates and free reward settings
  */
-public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours) implements CustomPacketPayload {
+public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours, List<ItemStack> freeRewardItems) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncEconomyTemplatesPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_economy_templates"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SyncEconomyTemplatesPacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SyncEconomyTemplatesPacket::new);
 
@@ -30,7 +30,16 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 
     public SyncEconomyTemplatesPacket(FriendlyByteBuf buf) {
-        this(decodeTemplates(buf), buf.readInt(), buf.readInt());
+        this(decodeTemplates(buf), buf.readInt(), buf.readInt(), decodeItems(buf));
+    }
+
+    private static List<ItemStack> decodeItems(FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<ItemStack> items = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            items.add(ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        }
+        return items;
     }
 
     private static List<TemplateData> decodeTemplates(FriendlyByteBuf buf) {
@@ -62,12 +71,16 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
             ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, t.rewardItem);
         }
         buf.writeInt(freeRewardAmount);
-        buf.writeInt(freeRewardCooldownHours);
+                buf.writeInt(freeRewardCooldownHours);
+        buf.writeInt(freeRewardItems.size());
+        for (ItemStack item : freeRewardItems) {
+            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, item);
+        }
     }
 
         public void handle(IPayloadContext context) {
         context.enqueueWork(() -> {
-            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours);
+            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours, freeRewardItems);
         });
         // packet handled
     }
@@ -97,7 +110,8 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
             new SyncEconomyTemplatesPacket(
                 data,
                 (int) templateManager.getFreeRewardAmount(),
-                templateManager.getFreeRewardCooldownHours()
+                templateManager.getFreeRewardCooldownHours(),
+                templateManager.getFreeRewardItems()
             ),
             player
         );

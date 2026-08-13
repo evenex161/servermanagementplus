@@ -293,7 +293,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         renderTasks(guiGraphics, centerX, centerY, partialTick);
         
         // Render free reward section
-        renderFreeReward(guiGraphics, centerX, centerY);
+        renderFreeReward(guiGraphics, centerX, centerY, mouseX, mouseY);
         
         // Celebration message
         if (celebrationTimer > 0) {
@@ -471,7 +471,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         }
     }
     
-    private void renderFreeReward(GuiGraphics guiGraphics, int centerX, int centerY) {
+    private void renderFreeReward(GuiGraphics guiGraphics, int centerX, int centerY, int mouseX, int mouseY) {
         int freeRewardY = centerY + this.imageHeight - FREE_REWARD_HEIGHT - 15;
         boolean freeRewardAvailable = com.servermanagement.client.ClientDailyTasksData.isFreeRewardAvailable();
         int freeRewardAmount = com.servermanagement.client.ClientDailyTasksData.getFreeRewardAmount();
@@ -479,7 +479,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         
         // Title
         String title = "💎 FREE DAILY REWARD";
-        guiGraphics.drawString(this.font, Component.literal(title),
+        guiGraphics.drawString(this.font, net.minecraft.network.chat.Component.literal(title),
             centerX + 20, freeRewardY + 8, 0x55FF55, true);
         
         if (freeRewardAvailable) {
@@ -489,17 +489,37 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
             int color = (alpha << 24) | 0xFFD700;
             
             String amountText = "$" + freeRewardAmount + " Available!";
-            guiGraphics.drawString(this.font, Component.literal(amountText),
+            guiGraphics.drawString(this.font, net.minecraft.network.chat.Component.literal(amountText),
                 centerX + 20, freeRewardY + 28, color, true);
         } else {
             // Show cooldown timer
             String cooldownText = "Next reward in: " + 
                 com.servermanagement.features.economy.PlayerDailyTasks.formatTimeRemaining(timeUntilFree);
-            guiGraphics.drawString(this.font, Component.literal(cooldownText),
+            guiGraphics.drawString(this.font, net.minecraft.network.chat.Component.literal(cooldownText),
                 centerX + 20, freeRewardY + 28, 0x888888, false);
             
-            guiGraphics.drawString(this.font, Component.literal("⏰ Come back later!"),
+            guiGraphics.drawString(this.font, net.minecraft.network.chat.Component.literal("⏰ Come back later!"),
                 centerX + 20, freeRewardY + 42, 0x666666, false);
+        }
+        
+        // Render items
+        java.util.List<net.minecraft.world.item.ItemStack> items = com.servermanagement.client.ClientDailyTasksData.getFreeRewardItems();
+        if (items != null && !items.isEmpty()) {
+            int itemX = centerX + 180;
+            int itemY = freeRewardY + 20;
+            
+            for (net.minecraft.world.item.ItemStack stack : items) {
+                if (!stack.isEmpty()) {
+                    guiGraphics.renderItem(stack, itemX, itemY);
+                    guiGraphics.renderItemDecorations(this.font, stack, itemX, itemY);
+                    
+                    if (mouseX >= itemX && mouseX <= itemX + 16 && mouseY >= itemY && mouseY <= itemY + 16) {
+                        guiGraphics.renderTooltip(this.font, stack, mouseX, mouseY);
+                    }
+                    
+                    itemX += 20;
+                }
+            }
         }
     }
     

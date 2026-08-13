@@ -27,6 +27,24 @@ public class ClientItemTooltipHandler {
         // Admin setting check
         if (!ClientPacketHandler.showMarketValueTooltips()) return;
 
+        // Blacklist Notice Check
+        String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        String blacklist = ClientPacketHandler.getTradeBlacklist();
+        if (blacklist != null && !blacklist.isEmpty()) {
+            boolean isBlacklisted = false;
+            for (String b : blacklist.split(",")) {
+                if (b.trim().equals(itemId)) {
+                    isBlacklisted = true;
+                    break;
+                }
+            }
+            if (isBlacklisted) {
+                event.getToolTip().add(Component.empty());
+                event.getToolTip().add(Component.literal("\u00A7c\u26A0 Item is on the Trading Blacklist"));
+                return;
+            }
+        }
+
         double basePrice = ClientMarketData.getBasePrice(stack);
         if (basePrice <= 0) return;
 

@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean minebayEnabled, boolean minestacksEnabled, String tradeBlacklist) implements CustomPacketPayload {
+public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean minebayEnabled, boolean minestacksEnabled, String tradeBlacklist, double startingBalance) implements CustomPacketPayload {
     public static final Type<SaveEconomySettingsPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_economy_settings_packet"));
     
     public static final StreamCodec<FriendlyByteBuf, SaveEconomySettingsPacket> STREAM_CODEC = StreamCodec.ofMember(
@@ -17,7 +17,7 @@ public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean
     );
 
     public SaveEconomySettingsPacket(FriendlyByteBuf buf) {
-        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(32767));
+        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(32767), buf.readDouble());
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -25,6 +25,7 @@ public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean
         buf.writeBoolean(minebayEnabled);
         buf.writeBoolean(minestacksEnabled);
         buf.writeUtf(tradeBlacklist, 32767);
+        buf.writeDouble(startingBalance);
     }
 
     @Override
@@ -39,9 +40,10 @@ public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean
                 ModConfig.MINEBAY_ENABLED.set(minebayEnabled);
                 ModConfig.MINESTACKS_ENABLED.set(minestacksEnabled);
                 ModConfig.TRADE_BLACKLIST.set(tradeBlacklist);
+                ModConfig.STARTING_BALANCE.set(startingBalance);
                 ModConfig.SPEC.save();
                 
-                ModNetworking.sendToAllPlayers(new SyncEconomySettingsPacket(showMarketValueTooltips, minebayEnabled, minestacksEnabled, tradeBlacklist));
+                ModNetworking.sendToAllPlayers(new SyncEconomySettingsPacket(showMarketValueTooltips, minebayEnabled, minestacksEnabled, tradeBlacklist, startingBalance));
             }
         });
     }

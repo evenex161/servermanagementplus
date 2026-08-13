@@ -10,6 +10,13 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 @EventBusSubscriber(modid = ServerManagementMod.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientSetup {
+    @SubscribeEvent
+    public static void onRegisterGuiLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
+        event.registerAboveAll(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("servermanagement", "stats_bar"), (guiGraphics, partialTick) -> {
+            com.servermanagement.gui.overlay.StatsBarOverlay.render(guiGraphics, partialTick.getGameTimeDeltaTicks());
+        });
+    }
+
     
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
