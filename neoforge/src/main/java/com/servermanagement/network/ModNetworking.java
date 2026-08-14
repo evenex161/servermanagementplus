@@ -33,6 +33,7 @@ public class ModNetworking {
         registrar.playToServer(WMTeleportToDimensionPacket.TYPE, WMTeleportToDimensionPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(PMSpectatePlayerPacket.TYPE, PMSpectatePlayerPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(PMViewInventoryPacket.TYPE, PMViewInventoryPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+
         registrar.playToServer(PMKickPlayerPacket.TYPE, PMKickPlayerPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(PMBanPlayerPacket.TYPE, PMBanPlayerPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(PMUnbanPlayerPacket.TYPE, PMUnbanPlayerPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
@@ -40,7 +41,7 @@ public class ModNetworking {
         registrar.playToServer(PMRequestPlayerListsPacket.TYPE, PMRequestPlayerListsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(PMWhitelistTogglePacket.TYPE, PMWhitelistTogglePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(RequestWorldListPacket.TYPE, RequestWorldListPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
-        registrar.playToServer(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playBidirectional(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(ConsoleCommandPacket.TYPE, ConsoleCommandPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(ConsoleSubscribePacket.TYPE, ConsoleSubscribePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(SaveTemplatePacket.TYPE, SaveTemplatePacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
@@ -103,7 +104,6 @@ public class ModNetworking {
         // MineBay client-bound packets
         registrar.playToClient(SyncMineBayListingsPacket.TYPE, SyncMineBayListingsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToClient(SyncListingOffersPacket.TYPE, SyncListingOffersPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
-        registrar.playToClient(OpenGuiPacket.TYPE, OpenGuiPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
 
         ServerManagementMod.LOGGER.info("Registered 72 network packets");
     }

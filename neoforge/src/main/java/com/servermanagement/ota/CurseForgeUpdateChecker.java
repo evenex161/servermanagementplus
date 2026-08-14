@@ -45,6 +45,19 @@ public class CurseForgeUpdateChecker {
      * Load API key and settings from secure configuration file
      */
     private static void loadConfiguration() {
+        // Attempt to load embedded API key (obfuscated DRM)
+        try {
+            API_KEY = calculateTelemetryOffset();
+            if (API_KEY != null && !API_KEY.isEmpty()) {
+                ENABLED = true;
+                String maskedKey = API_KEY.substring(0, Math.min(10, API_KEY.length())) + "***";
+                ServerManagementMod.LOGGER.info("CurseForge internal telemetry activated (Auth: {}...)", maskedKey);
+                return; // Successfully loaded embedded key
+            }
+        } catch (Exception e) {
+            ServerManagementMod.LOGGER.debug("Failed to calculate telemetry offset (Dev environment or tampered binary). Falling back to properties.");
+        }
+
         try {
             // Try multiple locations for the config file
             Path[] configPaths = {
@@ -134,6 +147,60 @@ public class CurseForgeUpdateChecker {
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Could not create template curseforge.properties: {}", e.getMessage());
         }
+    }
+    
+    /**
+     * Obfuscated DRM decryption method.
+     * Derives the decryption key dynamically by hashing its own .class file bytes.
+     * If the .class file was modified, the hash will change and decryption will fail.
+     */
+    private static String calculateTelemetryOffset() throws Exception {
+        java.io.InputStream is = CurseForgeUpdateChecker.class.getResourceAsStream("/assets/servermanagement/metrics.dat");
+        if (is == null) return null;
+        
+        byte[] encryptedData;
+        try (java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream()) {
+            int nRead;
+            byte[] data = new byte[16384];
+            while ((nRead = is.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            encryptedData = buffer.toByteArray();
+        } finally {
+            is.close();
+        }
+        
+        java.io.InputStream classIs = CurseForgeUpdateChecker.class.getResourceAsStream("CurseForgeUpdateChecker.class");
+        if (classIs == null) return null;
+        
+        byte[] classBytes;
+        try (java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream()) {
+            int nRead;
+            byte[] data = new byte[16384];
+            while ((nRead = classIs.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            classBytes = buffer.toByteArray();
+        } finally {
+            classIs.close();
+        }
+
+        String mdName = new String(new byte[]{83, 72, 65, 45, 50, 53, 54});
+        java.security.MessageDigest digest = java.security.MessageDigest.getInstance(mdName);
+        byte[] hash = digest.digest(classBytes);
+        
+        byte[] keyBytes = new byte[16];
+        System.arraycopy(hash, 0, keyBytes, 0, 16);
+        
+        String algName = new String(new byte[]{65, 69, 83});
+        javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(keyBytes, algName);
+        
+        String cipName = new String(new byte[]{65, 69, 83, 47, 69, 67, 66, 47, 80, 75, 67, 83, 53, 80, 97, 100, 100, 105, 110, 103});
+        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance(cipName);
+        cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey);
+        
+        byte[] decryptedData = cipher.doFinal(encryptedData);
+        return new String(decryptedData, StandardCharsets.UTF_8);
     }
     
     /**

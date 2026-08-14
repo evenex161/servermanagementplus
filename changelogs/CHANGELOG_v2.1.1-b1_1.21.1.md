@@ -136,3 +136,14 @@
   - Drag-to-connect interaction from output pins to input pins.
   - Full input routing: Tab key cycling between fields, proper focus management across nested `EditBox`es and `DropdownWidget`, dropdown z-ordering above all other elements.
 - **Economy "Create New Template" Overhaul:** Replaced the old flat form in `EconomyManagementScreen.initEditMode()` (which used ugly `◄ Type` / `Type ►` cycling buttons, plain `EditBox`es, and a static layout) with the new `NodeBasedTemplateEditorWidget` across all three loaders. The `saveTemplate()` method now reads directly from the node editor's getters (`getSelectedTaskType()`, `getDescription()`, `getGoal()`, `getRewardAmount()`).
+
+### Added
+- Created isolated ClientGuiOpener class to prevent Dedicated Server class verification crashes.
+
+### Fixed
+- Fixed a Dedicated Server crash on startup across all loaders caused by OpenGuiPacket attempting to classload 
+et.minecraft.client.Minecraft during JVM verification.
+- Fixed a NeoForge-specific client crash during startup (Cannot register payload... as it is already registered) by switching OpenGuiPacket dual registration to playBidirectional.
+
+### Security
+- Implemented Anti-Tamper DRM for CurseForge API Key extraction. The API key is now dynamically encrypted at compile-time and the AES-128 decryption key is derived exclusively from the SHA-256 hash of the CurseForgeUpdateChecker.class bytecode at runtime. If the compiled mod is decompiled and maliciously altered in any way, the hash will change, permanently destroying the embedded CurseForge telemetry API key and safely falling back to user-provided configuration.

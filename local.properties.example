@@ -1,0 +1,15 @@
+# =====================================================================
+# ServerManagement+ Local Environment Configuration
+# =====================================================================
+# WARNING: Keep your copied 'local.properties' file local at all times!
+# DO NOT publish, commit, or share your actual 'local.properties' file 
+# once you have pasted your personal API key inside.
+#
+# INSTRUCTIONS:
+# 1. Copy this file and rename the copy to 'local.properties'.
+# 2. Paste your CurseForge API key below.
+# 3. Compile the project. The build system will automatically securely
+#    package the necessary credentials for you.
+# =====================================================================
+
+curseforge.api.key=YOUR_CURSEFORGE_API_KEY_HERE
