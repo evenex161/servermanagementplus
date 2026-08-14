@@ -23,7 +23,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements CustomPacke
 
 
     public OpenGuiPacket(FriendlyByteBuf buf) {
-        this(decodeGuiType(buf), buf.readUtf(256));
+        this(decodeGuiType(buf), buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {

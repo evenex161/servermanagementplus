@@ -17,11 +17,11 @@ public record WMTeleportToDimensionPacket(String dimensionId) implements CustomP
 
 
     public WMTeleportToDimensionPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(dimensionId, 256);
+        buf.writeUtf(dimensionId, 32767);
     }
 
         public void handle(IPayloadContext context) {

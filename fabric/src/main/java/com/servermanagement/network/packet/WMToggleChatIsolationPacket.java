@@ -16,11 +16,11 @@ public record WMToggleChatIsolationPacket(String dimensionId, boolean enabled, l
         return TYPE;
     }
     public WMToggleChatIsolationPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256), buf.readBoolean(), buf.readLong());
+        this(buf.readUtf(32767), buf.readBoolean(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(dimensionId, 256);
+        buf.writeUtf(dimensionId, 32767);
         buf.writeBoolean(enabled);
         buf.writeLong(clientTick);
     }

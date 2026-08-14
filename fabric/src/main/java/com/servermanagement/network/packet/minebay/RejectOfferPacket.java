@@ -28,12 +28,12 @@ public record RejectOfferPacket(String listingId, String offerId) implements net
         return TYPE;
     }
     public RejectOfferPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36), buf.readUtf(36));
+        this(buf.readUtf(32767), buf.readUtf(32767));
     }
     
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(listingId, 36);
-        buf.writeUtf(offerId, 36);
+        buf.writeUtf(listingId, 32767);
+        buf.writeUtf(offerId, 32767);
     }
     
         public void handle(net.minecraft.server.level.ServerPlayer player) {
@@ -45,12 +45,12 @@ public record RejectOfferPacket(String listingId, String offerId) implements net
             
             // Validation
             if (listing == null) {
-                seller.sendSystemMessage(Component.literal("§cListing not found!"));
+                seller.sendSystemMessage(Component.literal("Â§cListing not found!"));
                 return;
             }
             
             if (!listing.getSellerId().equals(seller.getUUID())) {
-                seller.sendSystemMessage(Component.literal("§cYou can only reject offers on your own listings!"));
+                seller.sendSystemMessage(Component.literal("Â§cYou can only reject offers on your own listings!"));
                 return;
             }
             
@@ -64,7 +64,7 @@ public record RejectOfferPacket(String listingId, String offerId) implements net
             }
             
             if (rejectedOffer == null) {
-                seller.sendSystemMessage(Component.literal("§cOffer not found or already processed!"));
+                seller.sendSystemMessage(Component.literal("Â§cOffer not found or already processed!"));
                 return;
             }
             
@@ -88,10 +88,10 @@ public record RejectOfferPacket(String listingId, String offerId) implements net
                     if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, stack)) {
                         com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                             .addItem(buyer.getUUID(), stack);
-                        buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                        buyer.sendSystemMessage(Component.literal("Â§6[MineBay] Â§eInventory full â€” item stored in overflow. Use Â§f/overflow Â§eto claim."));
                     }
                 } else {
-                    // Buyer is offline — store in overflow
+                    // Buyer is offline â€” store in overflow
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(rejectedOffer.getBuyerId(), stack);
                 }
@@ -103,7 +103,7 @@ public record RejectOfferPacket(String listingId, String offerId) implements net
             
             // Notify seller (action bar)
             seller.displayClientMessage(Component.literal(
-                "§e[MineBay] §cOffer rejected §7— escrowed items/money returned to buyer"), true);
+                "Â§e[MineBay] Â§cOffer rejected Â§7â€” escrowed items/money returned to buyer"), true);
             
             // Sync bank account if buyer is online
             if (buyer != null) {
@@ -115,8 +115,8 @@ public record RejectOfferPacket(String listingId, String offerId) implements net
                     buyer
                 );
                 buyer.displayClientMessage(Component.literal(
-                    "§e[MineBay] §c" + seller.getName().getString() + " rejected your offer on §f" + 
-                    listing.getItemForSale().getHoverName().getString() + " §7— escrowed items/money returned"), true);
+                    "Â§e[MineBay] Â§c" + seller.getName().getString() + " rejected your offer on Â§f" + 
+                    listing.getItemForSale().getHoverName().getString() + " Â§7â€” escrowed items/money returned"), true);
             }
 
 }

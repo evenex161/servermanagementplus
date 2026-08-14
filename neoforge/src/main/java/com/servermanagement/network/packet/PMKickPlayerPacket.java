@@ -20,12 +20,12 @@ public record PMKickPlayerPacket(String playerName, String reason) implements Cu
 
 
     public PMKickPlayerPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16), buf.readUtf(256));
+        this(buf.readUtf(32767), buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(playerName, 16);
-        buf.writeUtf(reason, 256);
+        buf.writeUtf(playerName, 32767);
+        buf.writeUtf(reason, 32767);
     }
 
         public void handle(IPayloadContext context) {

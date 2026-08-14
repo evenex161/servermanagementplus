@@ -23,11 +23,11 @@ public record ToggleTemplatePacket(String templateId) implements net.minecraft.n
         return TYPE;
     }
     public ToggleTemplatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64));
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(templateId, 64);
+        buf.writeUtf(templateId, 32767);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {

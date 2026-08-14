@@ -28,11 +28,11 @@ public record PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> w
     public void encode(FriendlyByteBuf buf) {
         buf.writeVarInt(bannedPlayers.size());
         for (String name : bannedPlayers) {
-            buf.writeUtf(name, 16);
+            buf.writeUtf(name, 32767);
         }
         buf.writeVarInt(whitelistedPlayers.size());
         for (String name : whitelistedPlayers) {
-            buf.writeUtf(name, 16);
+            buf.writeUtf(name, 32767);
         }
         buf.writeBoolean(whitelistEnabled);
     }

@@ -8,19 +8,19 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 
 /**
- * Client → Server: updates a single performance setting identified by key.
+ * Client â†’ Server: updates a single performance setting identified by key.
  * Supports both boolean toggles and numeric values (sent as String).
  */
 public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements IPacket {
 
     public UpdatePerformanceSettingPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(128), buf.readUtf(128), buf.readLong());
+        this(buf.readUtf(32767), buf.readUtf(32767), buf.readLong());
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(settingKey, 128);
-        buf.writeUtf(value, 128);
+        buf.writeUtf(settingKey, 32767);
+        buf.writeUtf(value, 32767);
         buf.writeLong(clientTick);
     }
 

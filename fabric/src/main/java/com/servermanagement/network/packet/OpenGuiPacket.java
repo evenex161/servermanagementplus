@@ -20,7 +20,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements net.minecra
         this(guiType, "");
     }
     public OpenGuiPacket(FriendlyByteBuf buf) {
-        this(decodeGuiType(buf.readInt()), buf.readUtf(256));
+        this(decodeGuiType(buf.readInt()), buf.readUtf(32767));
     }
 
     private static GuiType decodeGuiType(int ordinal) {

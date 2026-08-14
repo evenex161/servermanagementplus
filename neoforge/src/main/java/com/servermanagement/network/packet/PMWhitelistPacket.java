@@ -20,11 +20,11 @@ public record PMWhitelistPacket(String playerName, boolean add) implements Custo
 
 
     public PMWhitelistPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16), buf.readBoolean());
+        this(buf.readUtf(32767), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(playerName, 16);
+        buf.writeUtf(playerName, 32767);
         buf.writeBoolean(add);
     }
 

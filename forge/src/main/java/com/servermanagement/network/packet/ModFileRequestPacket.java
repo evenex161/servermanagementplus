@@ -14,13 +14,13 @@ import java.util.function.Supplier;
 public record ModFileRequestPacket(String requestedVersion, String clientVersion, String clientMinecraftVersion) implements IPacket {
     
     public ModFileRequestPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readUtf(64), buf.readUtf(32));
+        this(buf.readUtf(32767), buf.readUtf(32767), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(requestedVersion, 64);
-        buf.writeUtf(clientVersion, 64);
-        buf.writeUtf(clientMinecraftVersion, 32);
+        buf.writeUtf(requestedVersion, 32767);
+        buf.writeUtf(clientVersion, 32767);
+        buf.writeUtf(clientMinecraftVersion, 32767);
     }
     
     public void handle(CustomPayloadEvent.Context contextSupplier) {

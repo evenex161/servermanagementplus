@@ -31,12 +31,12 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
 
     
     public AcceptOfferPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36), buf.readUtf(36));
+        this(buf.readUtf(32767), buf.readUtf(32767));
     }
     
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(listingId, 36);
-        buf.writeUtf(offerId, 36);
+        buf.writeUtf(listingId, 32767);
+        buf.writeUtf(offerId, 32767);
     }
     
         public void handle(IPayloadContext context) {
@@ -51,17 +51,17 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
             
             // Validation
             if (listing == null) {
-                seller.sendSystemMessage(Component.literal("§cListing not found!"));
+                seller.sendSystemMessage(Component.literal("Â§cListing not found!"));
                 return;
             }
             
             if (!listing.getSellerId().equals(seller.getUUID())) {
-                seller.sendSystemMessage(Component.literal("§cYou can only accept offers on your own listings!"));
+                seller.sendSystemMessage(Component.literal("Â§cYou can only accept offers on your own listings!"));
                 return;
             }
             
             if (listing.getStatus() != MineBayListing.ListingStatus.ACTIVE) {
-                seller.sendSystemMessage(Component.literal("§cThis listing is no longer active!"));
+                seller.sendSystemMessage(Component.literal("Â§cThis listing is no longer active!"));
                 return;
             }
             
@@ -75,11 +75,11 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
             }
             
             if (acceptedOffer == null) {
-                seller.sendSystemMessage(Component.literal("§cOffer not found or already processed!"));
+                seller.sendSystemMessage(Component.literal("Â§cOffer not found or already processed!"));
                 return;
             }
             
-            // Execute the transaction — items and money are already escrowed
+            // Execute the transaction â€” items and money are already escrowed
             
             // SECURITY: Mark listing as COMPLETED immediately to prevent concurrent accept operations
             listing.setStatus(MineBayListing.ListingStatus.COMPLETED);
@@ -103,7 +103,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
                     // Overflow: add to seller's overflow inventory
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(seller.getUUID(), stack);
-                    seller.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                    seller.sendSystemMessage(Component.literal("Â§6[MineBay] Â§eInventory full â€” item stored in overflow. Use Â§f/overflow Â§eto claim."));
                 }
             }
             
@@ -125,10 +125,10 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
                 if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, purchasedItem)) {
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(buyer.getUUID(), purchasedItem);
-                    buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                    buyer.sendSystemMessage(Component.literal("Â§6[MineBay] Â§eInventory full â€” item stored in overflow. Use Â§f/overflow Â§eto claim."));
                 }
             } else {
-                // Buyer is offline — store in overflow
+                // Buyer is offline â€” store in overflow
                 com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                     .addItem(acceptedOffer.getBuyerId(), purchasedItem);
             }
@@ -165,14 +165,14 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
             
             // Notify both parties (action bar)
             String moneyStr = acceptedOffer.getMoneyOffer() > 0 ? 
-                " for §6$" + String.format("%.2f", acceptedOffer.getMoneyOffer()) : "";
+                " for Â§6$" + String.format("%.2f", acceptedOffer.getMoneyOffer()) : "";
             seller.displayClientMessage(Component.literal(
-                "§a§l✓ §r§aOffer accepted! Sold §f" + purchasedItemName + moneyStr), true);
+                "Â§aÂ§lâœ“ Â§rÂ§aOffer accepted! Sold Â§f" + purchasedItemName + moneyStr), true);
             
             if (buyer != null) {
                 buyer.displayClientMessage(Component.literal(
-                    "§a§l✓ §r§aYour offer was accepted! Purchased §f" + purchasedItemName + 
-                    " §afrom §6" + seller.getName().getString()), true);
+                    "Â§aÂ§lâœ“ Â§rÂ§aYour offer was accepted! Purchased Â§f" + purchasedItemName + 
+                    " Â§afrom Â§6" + seller.getName().getString()), true);
             }
         });
         // packet handled
@@ -202,7 +202,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
                 if (!com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(buyer, stack)) {
                     com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
                         .addItem(buyer.getUUID(), stack);
-                    buyer.sendSystemMessage(Component.literal("§6[MineBay] §eInventory full — item stored in overflow. Use §f/overflow §eto claim."));
+                    buyer.sendSystemMessage(Component.literal("Â§6[MineBay] Â§eInventory full â€” item stored in overflow. Use Â§f/overflow Â§eto claim."));
                 }
             } else {
                 com.servermanagement.features.economy.OverflowInventoryManager.getInstance()
@@ -212,7 +212,7 @@ public record AcceptOfferPacket(String listingId, String offerId) implements Cus
         
         // Notify buyer if online (action bar)
         if (buyer != null) {
-            buyer.displayClientMessage(Component.literal("§e[MineBay] §cYour offer was auto-rejected §7(listing sold) — escrowed items/money returned"), true);
+            buyer.displayClientMessage(Component.literal("Â§e[MineBay] Â§cYour offer was auto-rejected Â§7(listing sold) â€” escrowed items/money returned"), true);
         }
     }
 }

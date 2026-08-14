@@ -19,18 +19,18 @@ public record ConsoleCommandPacket(String command) implements net.minecraft.netw
         return TYPE;
     }
     public ConsoleCommandPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
+        this(buf.readUtf(32767));
     }
     
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(command, 256);
+        buf.writeUtf(command, 32767);
     }
     
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             if (player != null && player.hasPermissions(2)) {
                 var server = player.getServer();
                 if (server != null) {
-                    // Use the PLAYER's command source stack — not the server's.
+                    // Use the PLAYER's command source stack â€” not the server's.
                     // server.createCommandSourceStack() has permission level 4 (console),
                     // which would let OP2 players run /stop, /op, etc. The player's
                     // source stack respects their actual permission level.

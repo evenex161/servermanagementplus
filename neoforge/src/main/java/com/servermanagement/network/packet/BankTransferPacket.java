@@ -26,11 +26,11 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
 
     
     public BankTransferPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16), buf.readDouble());
+        this(buf.readUtf(32767), buf.readDouble());
     }
     
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(this.targetPlayerName, 16);
+        buf.writeUtf(this.targetPlayerName, 32767);
         buf.writeDouble(this.amount);
     }
     
@@ -44,26 +44,26 @@ context.enqueueWork(() -> {
             // Input validation - prevent exploits
             if (this.targetPlayerName == null || this.targetPlayerName.trim().isEmpty()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid player name"));
+                    "Â§cInvalid player name"));
                 return;
             }
             
             // Sanitize player name (prevent injection/exploits)
             if (this.targetPlayerName.length() > 16 || !PLAYER_NAME_PATTERN.matcher(this.targetPlayerName).matches()) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid player name format"));
+                    "Â§cInvalid player name format"));
                 return;
             }
             
             if (Double.isNaN(this.amount) || Double.isInfinite(this.amount) || this.amount <= 0) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid transfer amount"));
+                    "Â§cInvalid transfer amount"));
                 return;
             }
             
             if (this.amount < 0.01 || this.amount > 1000000.0) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cTransfer amount must be between $0.01 and $1,000,000"));
+                    "Â§cTransfer amount must be between $0.01 and $1,000,000"));
                 return;
             }
             
@@ -71,13 +71,13 @@ context.enqueueWork(() -> {
             ServerPlayer target = sender.server.getPlayerList().getPlayerByName(targetPlayerName);
             if (target == null) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cPlayer not found: " + targetPlayerName));
+                    "Â§cPlayer not found: " + targetPlayerName));
                 return;
             }
             
             if (target.getUUID().equals(sender.getUUID())) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cYou cannot transfer money to yourself"));
+                    "Â§cYou cannot transfer money to yourself"));
                 return;
             }
             
@@ -87,9 +87,9 @@ context.enqueueWork(() -> {
             
             if (success) {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    String.format("§aTransferred $%.2f to %s", amount, target.getName().getString())));
+                    String.format("Â§aTransferred $%.2f to %s", amount, target.getName().getString())));
                 target.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    String.format("§aReceived $%.2f from %s", amount, sender.getName().getString())));
+                    String.format("Â§aReceived $%.2f from %s", amount, sender.getName().getString())));
                 
                 // Sync balances and transactions
                 BankAccount senderAccount = manager.getOrCreateAccount(sender.getUUID());
@@ -108,7 +108,7 @@ context.enqueueWork(() -> {
                     ), target);
             } else {
                 sender.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cTransfer failed - insufficient funds"));
+                    "Â§cTransfer failed - insufficient funds"));
             }
         });
 }

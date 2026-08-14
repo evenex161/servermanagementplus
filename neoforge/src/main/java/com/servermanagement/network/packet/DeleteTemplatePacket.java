@@ -23,11 +23,11 @@ public record DeleteTemplatePacket(String templateId) implements CustomPacketPay
 
 
     public DeleteTemplatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64));
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(templateId, 64);
+        buf.writeUtf(templateId, 32767);
     }
 
         public void handle(IPayloadContext context) {

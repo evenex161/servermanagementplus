@@ -32,14 +32,14 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
         int taskCount = buf.readInt();
         List<DailyTask> tasks = new java.util.ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            String id = buf.readUtf(64);
+            String id = buf.readUtf(32767);
             int compCount = buf.readInt();
             List<com.servermanagement.features.economy.TaskComponent> components = new java.util.ArrayList<>();
             for (int j = 0; j < compCount; j++) {
                 components.add(new com.servermanagement.features.economy.TaskComponent(
                     com.servermanagement.features.economy.TaskType.values()[buf.readInt()],
                     buf.readInt(),
-                    buf.readUtf(100)
+                    buf.readUtf(32767)
                 ));
             }
             int currentStep = buf.readInt();
@@ -61,12 +61,12 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
         buf.writeInt(tasks.size());
         
         for (DailyTask task : tasks) {
-            buf.writeUtf(task.getId() != null ? task.getId() : "", 64);
+            buf.writeUtf(task.getId() != null ? task.getId() : "", 32767);
             buf.writeInt(task.getComponents().size());
             for (com.servermanagement.features.economy.TaskComponent comp : task.getComponents()) {
                 buf.writeInt(comp.getType().ordinal());
                 buf.writeInt(comp.getTargetAmount());
-                buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 100);
+                buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 32767);
             }
             buf.writeInt(task.getCurrentStep());
             buf.writeInt(task.getProgress());

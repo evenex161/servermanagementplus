@@ -31,16 +31,16 @@ public record SyncListingOffersPacket(String listingId, List<MineBayOffer> offer
     }
 
     public SyncListingOffersPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36), decodeOffers(buf));
+        this(buf.readUtf(32767), decodeOffers(buf));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(listingId, 36);
+        buf.writeUtf(listingId, 32767);
         buf.writeInt(offers.size());
         for (MineBayOffer offer : offers) {
-            buf.writeUtf(offer.getOfferId(), 36);
+            buf.writeUtf(offer.getOfferId(), 32767);
             buf.writeUUID(offer.getBuyerId());
-            buf.writeUtf(offer.getBuyerName(), 16);
+            buf.writeUtf(offer.getBuyerName(), 32767);
             buf.writeDouble(offer.getMoneyOffer());
             buf.writeLong(offer.getCreatedTimestamp());
 
@@ -68,9 +68,9 @@ public record SyncListingOffersPacket(String listingId, List<MineBayOffer> offer
         if (count < 0 || count > 50) count = 0;
         List<MineBayOffer> offers = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            String offerId = buf.readUtf(36);
+            String offerId = buf.readUtf(32767);
             UUID buyerId = buf.readUUID();
-            String buyerName = buf.readUtf(16);
+            String buyerName = buf.readUtf(32767);
             double moneyOffer = buf.readDouble();
             long timestamp = buf.readLong();
             int itemCount = buf.readInt();

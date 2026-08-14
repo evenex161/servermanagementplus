@@ -13,7 +13,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
     }
 
     public OpenGuiPacket(FriendlyByteBuf buf) {
-        this(readGuiType(buf), buf.readUtf(256));
+        this(readGuiType(buf), buf.readUtf(32767));
     }
 
     private static GuiType readGuiType(FriendlyByteBuf buf) {

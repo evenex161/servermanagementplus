@@ -16,13 +16,13 @@ public record WMSetTimerPacket(String dimensionId, int seconds, String portalTyp
         return TYPE;
     }// "nether", "end", or "both"
     public WMSetTimerPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256), buf.readInt(), buf.readUtf(32), buf.readLong());
+        this(buf.readUtf(32767), buf.readInt(), buf.readUtf(32767), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(dimensionId, 256);
+        buf.writeUtf(dimensionId, 32767);
         buf.writeInt(seconds);
-        buf.writeUtf(portalType, 32);
+        buf.writeUtf(portalType, 32767);
         buf.writeLong(clientTick);
     }
 
@@ -42,7 +42,7 @@ public record WMSetTimerPacket(String dimensionId, int seconds, String portalTyp
                             ? com.servermanagement.features.worldmanager.WorldManager.getDimensionName(activeDim) 
                             : "unknown";
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cA timer is already running for " + activeDimName + "! Only one timer can be active at a time."));
+                            "Â§cA timer is already running for " + activeDimName + "! Only one timer can be active at a time."));
                     } else {
                         // Push a fresh world-detail snapshot so the open screen sees the new
                         // timer (or its cancellation) immediately instead of waiting for a reopen.

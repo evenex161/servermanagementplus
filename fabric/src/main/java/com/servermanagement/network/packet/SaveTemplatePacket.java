@@ -24,25 +24,25 @@ public record SaveTemplatePacket(String templateId, List<TaskComponent> componen
     }
 
     public SaveTemplatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), readComponents(buf), buf.readInt(), ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        this(buf.readUtf(32767), readComponents(buf), buf.readInt(), ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
     }
     
     private static List<TaskComponent> readComponents(FriendlyByteBuf buf) {
         int count = buf.readInt();
         List<TaskComponent> list = new ArrayList<>();
         for(int i = 0; i < count; i++) {
-            list.add(new TaskComponent(TaskType.values()[buf.readInt()], buf.readInt(), buf.readUtf(100)));
+            list.add(new TaskComponent(TaskType.values()[buf.readInt()], buf.readInt(), buf.readUtf(32767)));
         }
         return list;
     }
 
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(templateId != null ? templateId : "", 64);
+        buf.writeUtf(templateId != null ? templateId : "", 32767);
         buf.writeInt(components.size());
         for (TaskComponent comp : components) {
             buf.writeInt(comp.getType().ordinal());
             buf.writeInt(comp.getTargetAmount());
-            buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 100);
+            buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 32767);
         }
         buf.writeInt(rewardAmount);
         ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItems);

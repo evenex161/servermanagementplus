@@ -32,7 +32,7 @@ public record ModFileChunkPacket(int chunkIndex, int totalChunks, byte[] chunkDa
     }
 
     private static Object[] decodeChunkPayload(FriendlyByteBuf buf) {
-        String fileHash = buf.readUtf(128);
+        String fileHash = buf.readUtf(32767);
         int dataLength = Math.min(buf.readInt(), CHUNK_SIZE + 1024);
         byte[] chunkData = new byte[dataLength];
         buf.readBytes(chunkData);
@@ -42,7 +42,7 @@ public record ModFileChunkPacket(int chunkIndex, int totalChunks, byte[] chunkDa
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(chunkIndex);
         buf.writeInt(totalChunks);
-        buf.writeUtf(fileHash, 128);
+        buf.writeUtf(fileHash, 32767);
         buf.writeInt(chunkData.length);
         buf.writeBytes(chunkData);
     }

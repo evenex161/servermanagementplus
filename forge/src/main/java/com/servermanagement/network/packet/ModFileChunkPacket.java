@@ -16,7 +16,7 @@ public record ModFileChunkPacket(int chunkIndex, int totalChunks, String fileHas
     public static final int CHUNK_SIZE = 32768; // 32 KB chunks
     
     public ModFileChunkPacket(FriendlyByteBuf buf) {
-        this(buf.readInt(), buf.readInt(), buf.readUtf(128), readChunkBytes(buf));
+        this(buf.readInt(), buf.readInt(), buf.readUtf(32767), readChunkBytes(buf));
     }
 
     private static byte[] readChunkBytes(FriendlyByteBuf buf) {
@@ -30,7 +30,7 @@ public record ModFileChunkPacket(int chunkIndex, int totalChunks, String fileHas
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(chunkIndex);
         buf.writeInt(totalChunks);
-        buf.writeUtf(fileHash, 128);
+        buf.writeUtf(fileHash, 32767);
         buf.writeInt(chunkData.length);
         buf.writeBytes(chunkData);
     }

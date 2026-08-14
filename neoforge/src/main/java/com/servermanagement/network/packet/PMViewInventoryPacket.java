@@ -20,11 +20,11 @@ public record PMViewInventoryPacket(String playerName) implements CustomPacketPa
 
 
     public PMViewInventoryPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16));
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(playerName, 16);
+        buf.writeUtf(playerName, 32767);
     }
 
         public void handle(IPayloadContext context) {

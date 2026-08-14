@@ -20,12 +20,12 @@ public record PMBanPlayerPacket(String playerName, String reason, boolean banIP)
 
 
     public PMBanPlayerPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16), buf.readUtf(256), buf.readBoolean());
+        this(buf.readUtf(32767), buf.readUtf(32767), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(playerName, 16);
-        buf.writeUtf(reason, 256);
+        buf.writeUtf(playerName, 32767);
+        buf.writeUtf(reason, 32767);
         buf.writeBoolean(banIP);
     }
 

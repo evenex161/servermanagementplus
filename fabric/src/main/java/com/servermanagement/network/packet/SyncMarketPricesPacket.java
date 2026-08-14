@@ -34,7 +34,7 @@ public record SyncMarketPricesPacket(double inflationMultiplier, double averageB
         int size = buf.readVarInt();
         Map<String, Long> map = new HashMap<>(size);
         for (int i = 0; i < size; i++) {
-            map.put(buf.readUtf(256), buf.readLong());
+            map.put(buf.readUtf(32767), buf.readLong());
         }
         return map;
     }
@@ -43,7 +43,7 @@ public record SyncMarketPricesPacket(double inflationMultiplier, double averageB
         int size = buf.readVarInt();
         Map<String, Double> map = new HashMap<>(size);
         for (int i = 0; i < size; i++) {
-            map.put(buf.readUtf(256), buf.readDouble());
+            map.put(buf.readUtf(32767), buf.readDouble());
         }
         return map;
     }
@@ -55,12 +55,12 @@ public record SyncMarketPricesPacket(double inflationMultiplier, double averageB
         buf.writeDouble(starterMoney);
         buf.writeVarInt(supplyData.size());
         for (Map.Entry<String, Long> entry : supplyData.entrySet()) {
-            buf.writeUtf(entry.getKey(), 256);
+            buf.writeUtf(entry.getKey(), 32767);
             buf.writeLong(entry.getValue());
         }
         buf.writeVarInt(recipePrices.size());
         for (Map.Entry<String, Double> entry : recipePrices.entrySet()) {
-            buf.writeUtf(entry.getKey(), 256);
+            buf.writeUtf(entry.getKey(), 32767);
             buf.writeDouble(entry.getValue());
         }
     }

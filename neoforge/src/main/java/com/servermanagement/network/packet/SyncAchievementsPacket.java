@@ -29,7 +29,7 @@ public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRe
         buf.writeInt(earnedAchievements.size());
         
         for (String achievementId : earnedAchievements) {
-            buf.writeUtf(achievementId, 128);
+            buf.writeUtf(achievementId, 32767);
         }
         
         buf.writeInt(totalRewards);
@@ -48,7 +48,7 @@ public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRe
         int count = buf.readInt();
         Set<String> set = new HashSet<>();
         for (int i = 0; i < count; i++) {
-            set.add(buf.readUtf(128));
+            set.add(buf.readUtf(32767));
         }
         return set;
     }

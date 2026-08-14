@@ -25,12 +25,12 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
         return TYPE;
     }
     public PlaceGamblingBetWithItemPacket(FriendlyByteBuf buf) {
-        this(buf.readEnum(PlaceGamblingBetPacket.GameType.class), buf.readUtf(64));
+        this(buf.readEnum(PlaceGamblingBetPacket.GameType.class), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
         buf.writeEnum(this.gameType);
-        buf.writeUtf(this.gameOption, 64);
+        buf.writeUtf(this.gameOption, 32767);
     }
     
     public void handle(net.minecraft.server.level.ServerPlayer player) {
@@ -41,7 +41,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
             // Validate game option
             if (this.gameOption == null || this.gameOption.length() > 50) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid game option"));
+                    "Â§cInvalid game option"));
                 return;
             }
             
@@ -54,7 +54,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                 // Validate item
                 if (bettingItem == null || bettingItem.isEmpty()) {
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cNo betting item found"));
+                        "Â§cNo betting item found"));
                     return;
                 }
                 
@@ -64,7 +64,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                         .getBasePrice(bettingItem) * bettingItem.getCount();
                     if (marketValue < GamblingManager.MIN_BET) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cThis item cannot be used for gambling (value: $" + 
+                            "Â§cThis item cannot be used for gambling (value: $" + 
                             String.format("%.2f", marketValue) + ", min: $" + 
                             String.format("%.0f", GamblingManager.MIN_BET) + ")"));
                         return;
@@ -79,7 +79,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                     game = createGame(this.gameType, this.gameOption);
                 } catch (Exception e) {
                     player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "§cInvalid game parameters"));
+                        "Â§cInvalid game parameters"));
                     return;
                 }
                 
@@ -173,7 +173,7 @@ public record PlaceGamblingBetWithItemPacket(PlaceGamblingBetPacket.GameType gam
                 }
             } else {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid gambling menu state"));
+                    "Â§cInvalid gambling menu state"));
             }
     }
     

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Server → Client: Sync money requests for display in the Bank GUI
+ * Server â†’ Client: Sync money requests for display in the Bank GUI
  */
 public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> incoming, List<ClientMoneyRequestData.RequestEntry> outgoing) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SyncMoneyRequestsPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "sync_money_requests"));
@@ -40,21 +40,21 @@ public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> 
 
     private static void writeEntry(FriendlyByteBuf buf, ClientMoneyRequestData.RequestEntry entry) {
         buf.writeUUID(entry.getRequestId());
-        buf.writeUtf(entry.getPlayerName(), 16);
+        buf.writeUtf(entry.getPlayerName(), 32767);
         buf.writeDouble(entry.getAmount());
-        buf.writeUtf(entry.getMessage(), 256);
-        buf.writeUtf(entry.getAge(), 64);
-        buf.writeUtf(entry.getStatus(), 32);
+        buf.writeUtf(entry.getMessage(), 32767);
+        buf.writeUtf(entry.getAge(), 32767);
+        buf.writeUtf(entry.getStatus(), 32767);
     }
 
     private static ClientMoneyRequestData.RequestEntry readEntry(FriendlyByteBuf buf) {
         return new ClientMoneyRequestData.RequestEntry(
             buf.readUUID(),
-            buf.readUtf(16),
+            buf.readUtf(32767),
             buf.readDouble(),
-            buf.readUtf(256),
-            buf.readUtf(64),
-            buf.readUtf(32)
+            buf.readUtf(32767),
+            buf.readUtf(32767),
+            buf.readUtf(32767)
         );
     }
 

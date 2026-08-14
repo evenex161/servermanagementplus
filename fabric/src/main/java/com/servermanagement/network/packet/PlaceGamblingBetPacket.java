@@ -41,13 +41,13 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
         ROULETTE
     }
     public PlaceGamblingBetPacket(FriendlyByteBuf buf) {
-        this(buf.readEnum(GameType.class), buf.readDouble(), buf.readUtf(64));
+        this(buf.readEnum(GameType.class), buf.readDouble(), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
         buf.writeEnum(this.gameType);
         buf.writeDouble(this.betAmount);
-        buf.writeUtf(this.gameOption, 64);
+        buf.writeUtf(this.gameOption, 32767);
     }
     
     public void handle(net.minecraft.server.level.ServerPlayer player) {
@@ -58,19 +58,19 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
             // Input validation - prevent exploits
             if (Double.isNaN(this.betAmount) || Double.isInfinite(this.betAmount)) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid bet amount"));
+                    "Â§cInvalid bet amount"));
                 return;
             }
             
             if (this.betAmount < 10.0 || this.betAmount > 10000.0) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cBet amount must be between $10 and $10,000"));
+                    "Â§cBet amount must be between $10 and $10,000"));
                 return;
             }
             
             if (this.gameOption == null || this.gameOption.length() > 50) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid game option"));
+                    "Â§cInvalid game option"));
                 return;
             }
             
@@ -82,7 +82,7 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
                 game = createGame(this.gameType, this.gameOption);
             } catch (Exception e) {
                 player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                    "§cInvalid game parameters"));
+                    "Â§cInvalid game parameters"));
                 return;
             }
             
@@ -138,7 +138,7 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
                     DELAYED_EXECUTOR.schedule(() -> {
                         // Execute on the main server thread for thread safety
                         server.execute(() -> {
-                            // Re-lookup player by UUID — original reference may be stale
+                            // Re-lookup player by UUID â€” original reference may be stale
                             // (player could have disconnected/reconnected during the 3s delay)
                             ServerPlayer currentPlayer = server.getPlayerList().getPlayer(playerUUID);
                             if (currentPlayer == null) return; // Player disconnected

@@ -14,15 +14,15 @@ import java.util.function.Supplier;
 public record ModFileCompletePacket(String fileHash, long fileSize, String version, boolean success, String message) implements IPacket {
 
     public ModFileCompletePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(128), buf.readLong(), buf.readUtf(64), buf.readBoolean(), buf.readUtf(256));
+        this(buf.readUtf(32767), buf.readLong(), buf.readUtf(32767), buf.readBoolean(), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(fileHash, 128);
+        buf.writeUtf(fileHash, 32767);
         buf.writeLong(fileSize);
-        buf.writeUtf(version, 64);
+        buf.writeUtf(version, 32767);
         buf.writeBoolean(success);
-        buf.writeUtf(message, 256);
+        buf.writeUtf(message, 32767);
     }
     
     public void handle(CustomPayloadEvent.Context contextSupplier) {

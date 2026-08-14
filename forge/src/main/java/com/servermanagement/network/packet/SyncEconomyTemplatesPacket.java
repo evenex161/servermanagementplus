@@ -39,14 +39,14 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         int count = buf.readInt();
         List<TemplateData> list = new java.util.ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            String id = buf.readUtf(64);
+            String id = buf.readUtf(32767);
             int compCount = buf.readInt();
             java.util.List<com.servermanagement.features.economy.TaskComponent> components = new java.util.ArrayList<>();
             for(int j = 0; j < compCount; j++) {
                 components.add(new com.servermanagement.features.economy.TaskComponent(
                     com.servermanagement.features.economy.TaskType.values()[buf.readInt()],
                     buf.readInt(),
-                    buf.readUtf(100)
+                    buf.readUtf(32767)
                 ));
             }
             list.add(new TemplateData(
@@ -64,12 +64,12 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(templates.size());
         for (TemplateData t : templates) {
-            buf.writeUtf(t.id, 64);
+            buf.writeUtf(t.id, 32767);
             buf.writeInt(t.components.size());
             for (com.servermanagement.features.economy.TaskComponent comp : t.components) {
                 buf.writeInt(comp.getType().ordinal());
                 buf.writeInt(comp.getTargetAmount());
-                buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 100);
+                buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 32767);
             }
             buf.writeInt(t.rewardAmount);
             buf.writeBoolean(t.enabled);

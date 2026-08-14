@@ -26,7 +26,7 @@ public record SyncWorldListPacket(List<WorldInfo> worlds) implements net.minecra
         List<WorldInfo> worlds = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             worlds.add(new WorldInfo(
-                buf.readUtf(256), buf.readUtf(128),
+                buf.readUtf(32767), buf.readUtf(32767),
                 buf.readBoolean(), buf.readBoolean(), buf.readInt()));
         }
         return worlds;
@@ -35,8 +35,8 @@ public record SyncWorldListPacket(List<WorldInfo> worlds) implements net.minecra
         public void encode(FriendlyByteBuf buf) {
         buf.writeInt(worlds.size());
         for (WorldInfo world : worlds) {
-            buf.writeUtf(world.dimensionId, 256);
-            buf.writeUtf(world.name, 128);
+            buf.writeUtf(world.dimensionId, 32767);
+            buf.writeUtf(world.name, 32767);
             buf.writeBoolean(world.netherPortalsEnabled);
             buf.writeBoolean(world.endPortalsEnabled);
             buf.writeInt(world.playerCount);

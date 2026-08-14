@@ -28,11 +28,11 @@ public record PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> w
         public void encode(FriendlyByteBuf buf) {
         buf.writeVarInt(bannedPlayers.size());
         for (String name : bannedPlayers) {
-            buf.writeUtf(name, 16);
+            buf.writeUtf(name, 32767);
         }
         buf.writeVarInt(whitelistedPlayers.size());
         for (String name : whitelistedPlayers) {
-            buf.writeUtf(name, 16);
+            buf.writeUtf(name, 32767);
         }
         buf.writeBoolean(whitelistEnabled);
     }
@@ -61,7 +61,7 @@ public record PMSyncPlayerListsPacket(List<String> bannedPlayers, List<String> w
         int count = buf.readVarInt();
         List<String> list = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            list.add(buf.readUtf(16));
+            list.add(buf.readUtf(32767));
         }
         return list;
     }

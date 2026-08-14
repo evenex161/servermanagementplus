@@ -25,7 +25,7 @@ public record SyncFeatureStatesPacket(Map<String, Boolean> featureStates) implem
         int size = buf.readInt();
         Map<String, Boolean> map = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            map.put(buf.readUtf(64), buf.readBoolean());
+            map.put(buf.readUtf(32767), buf.readBoolean());
         }
         return map;
     }
@@ -33,7 +33,7 @@ public record SyncFeatureStatesPacket(Map<String, Boolean> featureStates) implem
         public void encode(FriendlyByteBuf buf) {
         buf.writeInt(featureStates.size());
         featureStates.forEach((key, value) -> {
-            buf.writeUtf(key, 64);
+            buf.writeUtf(key, 32767);
             buf.writeBoolean(value);
         });
     }

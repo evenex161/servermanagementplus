@@ -16,13 +16,13 @@ public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String 
         return TYPE;
     }// "nether", "end", or "both"
     public WMTogglePortalsPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256), buf.readBoolean(), buf.readUtf(32), buf.readLong());
+        this(buf.readUtf(32767), buf.readBoolean(), buf.readUtf(32767), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(dimensionId, 256);
+        buf.writeUtf(dimensionId, 32767);
         buf.writeBoolean(enabled);
-        buf.writeUtf(portalType, 32);
+        buf.writeUtf(portalType, 32767);
         buf.writeLong(clientTick);
     }
 
@@ -35,7 +35,7 @@ public record WMTogglePortalsPacket(String dimensionId, boolean enabled, String 
                     var worldData = com.servermanagement.features.worldmanager.WorldManager.getInstance().getData();
                     if (worldData.hasActiveTimer(dimensionId)) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                            "§cCannot change portal state while a timer is active for this dimension!"));
+                            "Â§cCannot change portal state while a timer is active for this dimension!"));
                         return;
                     }
 

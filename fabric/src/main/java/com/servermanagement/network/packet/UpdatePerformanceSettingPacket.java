@@ -6,7 +6,7 @@ import com.servermanagement.network.PacketTimestampTracker;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 /**
- * Client → Server: updates a single performance setting identified by key.
+ * Client â†’ Server: updates a single performance setting identified by key.
  * Supports both boolean toggles and numeric values (sent as String).
  */
 public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
@@ -22,12 +22,12 @@ public record UpdatePerformanceSettingPacket(String settingKey, String value, lo
         return TYPE;
     }
     public UpdatePerformanceSettingPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(128), buf.readUtf(128), buf.readLong());
+        this(buf.readUtf(32767), buf.readUtf(32767), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(settingKey, 128);
-        buf.writeUtf(value, 128);
+        buf.writeUtf(settingKey, 32767);
+        buf.writeUtf(value, 32767);
         buf.writeLong(clientTick);
     }
 

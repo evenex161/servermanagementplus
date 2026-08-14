@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
- * Server → Client: Sync money requests for display in the Bank GUI
+ * Server â†’ Client: Sync money requests for display in the Bank GUI
  */
 public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> incoming, List<ClientMoneyRequestData.RequestEntry> outgoing) implements net.minecraft.network.protocol.common.custom.CustomPacketPayload {
 
@@ -31,8 +31,8 @@ public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> 
         List<ClientMoneyRequestData.RequestEntry> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             list.add(new ClientMoneyRequestData.RequestEntry(
-                buf.readUUID(), buf.readUtf(16), buf.readDouble(),
-                buf.readUtf(256), buf.readUtf(64), buf.readUtf(32)));
+                buf.readUUID(), buf.readUtf(32767), buf.readDouble(),
+                buf.readUtf(32767), buf.readUtf(32767), buf.readUtf(32767)));
         }
         return list;
     }
@@ -50,21 +50,21 @@ public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> 
 
     private void writeEntry(FriendlyByteBuf buf, ClientMoneyRequestData.RequestEntry entry) {
         buf.writeUUID(entry.getRequestId());
-        buf.writeUtf(entry.getPlayerName(), 16);
+        buf.writeUtf(entry.getPlayerName(), 32767);
         buf.writeDouble(entry.getAmount());
-        buf.writeUtf(entry.getMessage(), 256);
-        buf.writeUtf(entry.getAge(), 64);
-        buf.writeUtf(entry.getStatus(), 32);
+        buf.writeUtf(entry.getMessage(), 32767);
+        buf.writeUtf(entry.getAge(), 32767);
+        buf.writeUtf(entry.getStatus(), 32767);
     }
 
     private ClientMoneyRequestData.RequestEntry readEntry(FriendlyByteBuf buf) {
         return new ClientMoneyRequestData.RequestEntry(
             buf.readUUID(),
-            buf.readUtf(16),
+            buf.readUtf(32767),
             buf.readDouble(),
-            buf.readUtf(256),
-            buf.readUtf(64),
-            buf.readUtf(32)
+            buf.readUtf(32767),
+            buf.readUtf(32767),
+            buf.readUtf(32767)
         );
     }
 

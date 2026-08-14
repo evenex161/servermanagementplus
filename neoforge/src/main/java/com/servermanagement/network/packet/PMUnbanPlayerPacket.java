@@ -20,11 +20,11 @@ public record PMUnbanPlayerPacket(String playerName) implements CustomPacketPayl
 
 
     public PMUnbanPlayerPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16));
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(playerName, 16);
+        buf.writeUtf(playerName, 32767);
     }
 
         public void handle(IPayloadContext context) {

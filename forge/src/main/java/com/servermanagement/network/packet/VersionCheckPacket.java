@@ -17,17 +17,17 @@ public record VersionCheckPacket(String serverModVersion, int serverDataVersion,
                                   String serverModLoader) implements IPacket {
 
     public VersionCheckPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readInt(), buf.readUtf(256), buf.readUtf(128), buf.readLong(), buf.readUtf(32), buf.readUtf(32));
+        this(buf.readUtf(32767), buf.readInt(), buf.readUtf(32767), buf.readUtf(32767), buf.readLong(), buf.readUtf(32767), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(serverModVersion, 64);
+        buf.writeUtf(serverModVersion, 32767);
         buf.writeInt(serverDataVersion);
-        buf.writeUtf(serverModJarName, 256);
-        buf.writeUtf(serverModJarHash, 128);
+        buf.writeUtf(serverModJarName, 32767);
+        buf.writeUtf(serverModJarHash, 32767);
         buf.writeLong(serverModJarSize);
-        buf.writeUtf(serverMinecraftVersion, 32);
-        buf.writeUtf(serverModLoader, 32);
+        buf.writeUtf(serverMinecraftVersion, 32767);
+        buf.writeUtf(serverModLoader, 32767);
     }
     
     public void handle(CustomPayloadEvent.Context contextSupplier) {

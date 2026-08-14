@@ -31,13 +31,13 @@ public record ModFileChunkPacket(int chunkIndex, int totalChunks, String fileHas
     }
     
     public ModFileChunkPacket(FriendlyByteBuf buf) {
-        this(buf.readInt(), buf.readInt(), buf.readUtf(128), decodeChunkData(buf));
+        this(buf.readInt(), buf.readInt(), buf.readUtf(32767), decodeChunkData(buf));
     }
     
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(chunkIndex);
         buf.writeInt(totalChunks);
-        buf.writeUtf(fileHash, 128);
+        buf.writeUtf(fileHash, 32767);
         buf.writeInt(chunkData.length);
         buf.writeBytes(chunkData);
     }
