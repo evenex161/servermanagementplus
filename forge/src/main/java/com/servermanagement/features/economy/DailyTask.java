@@ -1,6 +1,8 @@
 package com.servermanagement.features.economy;
 
 import net.minecraft.world.item.ItemStack;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Represents a single daily task with progress tracking
@@ -11,7 +13,8 @@ public class DailyTask {
     private int progress;
     private boolean claimed;
     private final int reward;
-    private ItemStack rewardItem; // Optional item reward
+    private ItemStack rewardItem; // Legacy field for Gson backward compatibility
+    private List<ItemStack> rewardItems = new ArrayList<>(); // Optional item rewards
     private final String customDescription; // Optional custom description
 
     public DailyTask(TaskType type, int goal) {
@@ -21,7 +24,7 @@ public class DailyTask {
         this.claimed = false;
         this.reward = type.getReward(goal);
         this.customDescription = null;
-        this.rewardItem = ItemStack.EMPTY;
+        this.rewardItems = new ArrayList<>();
     }
 
     public DailyTask(TaskType type, int goal, double reward, String description) {
@@ -31,7 +34,18 @@ public class DailyTask {
         this.claimed = false;
         this.reward = (int) reward;
         this.customDescription = description;
-        this.rewardItem = ItemStack.EMPTY;
+        this.rewardItems = new ArrayList<>();
+    }
+
+    
+    public void migrateLegacyData() {
+        if (rewardItems == null) {
+            rewardItems = new ArrayList<>();
+        }
+        if (rewardItem != null && !rewardItem.isEmpty()) {
+            rewardItems.add(rewardItem.copy());
+            rewardItem = null; // Clear it so it doesn't get saved again if we exclude nulls, or just leave it empty
+        }
     }
 
     public TaskType getType() {
@@ -70,12 +84,12 @@ public class DailyTask {
         return reward;
     }
     
-    public ItemStack getRewardItem() {
-        return rewardItem != null ? rewardItem : ItemStack.EMPTY;
+    public List<ItemStack> getRewardItems() {
+        return rewardItems != null ? rewardItems : new ArrayList<>();
     }
     
-    public void setRewardItem(ItemStack rewardItem) {
-        this.rewardItem = rewardItem != null ? rewardItem.copy() : ItemStack.EMPTY;
+    public void setRewardItems(List<ItemStack> rewardItems) {
+        this.rewardItems = rewardItems != null ? new ArrayList<>(rewardItems) : new ArrayList<>();
     }
 
     /**

@@ -9,6 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -57,24 +58,36 @@ public record ClaimDailyTaskPacket(int taskIndex) implements net.minecraft.netwo
                 BankAccount account = economyManager.getOrCreateAccount(player.getUUID());
                 account.deposit(reward);
                 
-                // Give item reward if present
-                ItemStack rewardItem = task.getRewardItem();
-                if (!rewardItem.isEmpty()) {
-                    boolean addedToInventory = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
-                    
-                    if (!addedToInventory) {
-                        // Inventory full, add to bank inventory
-                        economyManager.getBankInventory(player.getUUID()).addItem(
-                            rewardItem.copy(), 
-                            BankInventory.ItemSource.DAILY_TASK, 
-                            "Daily Task #" + (taskIndex + 1)
-                        );
-                        player.sendSystemMessage(Component.literal("§e⚠ Inventory full! Item sent to Bank Inventory."));
+                // Give item rewards if present
+                List<ItemStack> rewardItems = task.getRewardItems();
+                if (rewardItems != null && !rewardItems.isEmpty()) {
+                    StringBuilder itemsString = new StringBuilder();
+                    boolean first = true;
+                    for (ItemStack rewardItem : rewardItems) {
+                        if (rewardItem.isEmpty()) continue;
+                        if (!first) itemsString.append(", ");
+                        itemsString.append(rewardItem.getHoverName().getString()).append(" x").append(rewardItem.getCount());
+                        first = false;
+
+                        boolean addedToInventory = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
+                        
+                        if (!addedToInventory) {
+                            // Inventory full, add to bank inventory
+                            economyManager.getBankInventory(player.getUUID()).addItem(
+                                rewardItem.copy(), 
+                                BankInventory.ItemSource.DAILY_TASK, 
+                                "Daily Task #" + (taskIndex + 1)
+                            );
+                            player.sendSystemMessage(Component.literal("§e⚠ Inventory full! Item sent to Bank Inventory."));
+                        }
                     }
                     
-                    player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " + " + 
-                        rewardItem.getHoverName().getString() + " x" + rewardItem.getCount() + 
-                        " for completing task #" + (taskIndex + 1)));
+                    if (itemsString.length() > 0) {
+                        player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " + " + 
+                            itemsString.toString() + " for completing task #" + (taskIndex + 1)));
+                    } else {
+                        player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " for completing task #" + (taskIndex + 1)));
+                    }
                 } else {
                     // Send success message (money only)
                     player.sendSystemMessage(Component.literal("§a✓ Claimed $" + reward + " for completing task #" + (taskIndex + 1)));

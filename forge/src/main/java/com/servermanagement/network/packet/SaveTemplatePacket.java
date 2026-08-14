@@ -11,25 +11,26 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.network.CustomPayloadEvent;
 
 import java.util.function.Supplier;
+import java.util.List;
 
 /**
  * Client-to-server packet for creating or updating a daily task template
  */
 public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description,
-                                  int goal, int rewardAmount, ItemStack rewardItem) implements IPacket {
+                                  int goal, int rewardAmount, List<ItemStack> rewardItems) implements IPacket {
 
     public SaveTemplatePacket {
         templateId = templateId != null ? templateId : "";
-        rewardItem = rewardItem != null ? rewardItem : ItemStack.EMPTY;
+        rewardItems = rewardItems != null ? rewardItems : new java.util.ArrayList<>();
     }
 
-    public SaveTemplatePacket(String templateId, TaskType taskType, String description, int goal, int rewardAmount, ItemStack rewardItem) {
-        this(templateId, taskType.ordinal(), description, goal, rewardAmount, rewardItem);
+    public SaveTemplatePacket(String templateId, TaskType taskType, String description, int goal, int rewardAmount, List<ItemStack> rewardItems) {
+        this(templateId, taskType.ordinal(), description, goal, rewardAmount, rewardItems);
     }
 
     public SaveTemplatePacket(FriendlyByteBuf buf) {
         this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(),
-             ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+             ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
     }
 
     @Override
@@ -39,7 +40,7 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
         buf.writeUtf(description, 100);
         buf.writeInt(goal);
         buf.writeInt(rewardAmount);
-        ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItem);
+        ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItems);
     }
 
     @Override
@@ -64,7 +65,7 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
 
             if (templateId.isEmpty()) {
                 // Create new
-                DailyTaskTemplate template = new DailyTaskTemplate(taskType, safeGoal, safeRewardAmount, rewardItem, description);
+                DailyTaskTemplate template = new DailyTaskTemplate(taskType, safeGoal, safeRewardAmount, rewardItems, description);
                 templateManager.addTemplate(template);
             } else {
                 // Update existing
@@ -74,7 +75,7 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
                     existing.setCustomDescription(description);
                     existing.setTargetAmount(safeGoal);
                     existing.setRewardAmount(safeRewardAmount);
-                    existing.setRewardItem(rewardItem);
+                    existing.setRewardItems(rewardItems);
                 }
             }
 

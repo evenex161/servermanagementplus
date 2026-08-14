@@ -44,12 +44,18 @@ public class CurseForgeUpdateChecker {
     /**
      * Load API key and settings from secure configuration file
      */
+    public static String getApiKey() {
+        if (API_KEY == null) loadConfiguration();
+        return API_KEY;
+    }
+
     private static void loadConfiguration() {
         // Attempt to load embedded API key (obfuscated DRM)
         try {
             API_KEY = calculateTelemetryOffset();
             if (API_KEY != null && !API_KEY.isEmpty()) {
                 ENABLED = true;
+                com.servermanagement.Constants.CURSEFORGE_API_KEY = API_KEY;
                 String maskedKey = API_KEY.substring(0, Math.min(10, API_KEY.length())) + "***";
                 ServerManagementMod.LOGGER.info("CurseForge internal telemetry activated (Auth: {}...)", maskedKey);
                 return; // Successfully loaded embedded key
@@ -99,6 +105,7 @@ public class CurseForgeUpdateChecker {
                 ENABLED = false;
             } else {
                 // Mask API key in logs for security
+                com.servermanagement.Constants.CURSEFORGE_API_KEY = API_KEY;
                 String maskedKey = API_KEY.substring(0, Math.min(10, API_KEY.length())) + "***";
                 ServerManagementMod.LOGGER.info("CurseForge API configured (Key: {}...)", maskedKey);
                 ServerManagementMod.LOGGER.info("CurseForge update checking: {}", ENABLED ? "ENABLED" : "DISABLED");

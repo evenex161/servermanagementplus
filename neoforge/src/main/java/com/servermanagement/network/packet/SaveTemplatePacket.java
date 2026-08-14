@@ -9,16 +9,18 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import java.util.List;
 
 
 /**
  * Client-to-server packet for creating or updating a daily task template
  */
-public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description, int goal, int rewardAmount, ItemStack rewardItem) implements CustomPacketPayload {
+public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description, int goal, int rewardAmount, List<ItemStack> rewardItems) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<SaveTemplatePacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("servermanagement", "save_template"));
     public static final StreamCodec<net.minecraft.network.FriendlyByteBuf, SaveTemplatePacket> STREAM_CODEC = StreamCodec.of((buf, pkt) -> pkt.encode(buf), SaveTemplatePacket::new);
 
@@ -26,12 +28,12 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
     public CustomPacketPayload.Type<? extends CustomPacketPayload> type() { return TYPE; }
 // empty for new template
 
-    public SaveTemplatePacket(String templateId, TaskType taskType, String description, int goal, int rewardAmount, ItemStack rewardItem) {
-        this(templateId != null ? templateId : "", taskType.ordinal(), description, goal, rewardAmount, rewardItem != null ? rewardItem : ItemStack.EMPTY);
+    public SaveTemplatePacket(String templateId, TaskType taskType, String description, int goal, int rewardAmount, List<ItemStack> rewardItems) {
+        this(templateId != null ? templateId : "", taskType.ordinal(), description, goal, rewardAmount, rewardItems != null ? rewardItems : new java.util.ArrayList<>());
     }
 
     public SaveTemplatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(), ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -40,7 +42,7 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
         buf.writeUtf(description, 100);
         buf.writeInt(goal);
         buf.writeInt(rewardAmount);
-        ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItem);
+        ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItems);
     }
 
         public void handle(IPayloadContext context) {
@@ -64,7 +66,7 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
 
             if (templateId.isEmpty()) {
                 // Create new
-                DailyTaskTemplate template = new DailyTaskTemplate(taskType, safeGoal, safeRewardAmount, rewardItem, description);
+                DailyTaskTemplate template = new DailyTaskTemplate(taskType, safeGoal, safeRewardAmount, rewardItems, description);
                 templateManager.addTemplate(template);
             } else {
                 // Update existing
@@ -74,7 +76,7 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
                     existing.setCustomDescription(description);
                     existing.setTargetAmount(safeGoal);
                     existing.setRewardAmount(safeRewardAmount);
-                    existing.setRewardItem(rewardItem);
+                    existing.setRewardItems(rewardItems);
                 }
             }
 

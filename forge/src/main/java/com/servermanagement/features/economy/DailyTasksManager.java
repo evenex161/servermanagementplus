@@ -65,6 +65,18 @@ public class DailyTasksManager {
         }
         
         manager.dataVersion = DataVersion.CURRENT_VERSION;
+
+        // Migrate legacy tasks
+        if (manager.playerTasks != null) {
+            for (PlayerDailyTasks playerTasks : manager.playerTasks.values()) {
+                if (playerTasks.getTasks() != null) {
+                    for (DailyTask task : playerTasks.getTasks()) {
+                        task.migrateLegacyData();
+                    }
+                }
+            }
+        }
+
         
         // Re-initialize transient fields after deserialization
         if (manager.random == null) {

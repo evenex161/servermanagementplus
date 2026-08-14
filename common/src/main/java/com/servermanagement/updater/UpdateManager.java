@@ -162,7 +162,7 @@ public class UpdateManager {
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("x-api-key", Constants.CURSEFORGE_API_KEY)
+                    .header("x-api-key", Constants.CURSEFORGE_API_KEY != null ? Constants.CURSEFORGE_API_KEY : "")
                     .header("Accept", "application/json")
                     .GET().build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());

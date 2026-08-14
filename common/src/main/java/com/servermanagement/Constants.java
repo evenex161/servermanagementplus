@@ -10,4 +10,5 @@ public class Constants {
 
     public static final String MODRINTH_PROJECT_ID = "j0mPPVWV"; // Modrinth project ID
     public static final String CURSEFORGE_PROJECT_ID = "1381899"; // CurseForge project ID
+    public static String CURSEFORGE_API_KEY = null;
 }

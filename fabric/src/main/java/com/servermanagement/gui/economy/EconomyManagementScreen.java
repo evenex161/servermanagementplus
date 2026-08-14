@@ -49,7 +49,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     private boolean editMode = false;
     private NodeBasedTemplateEditorWidget nodeEditor;
     private TaskType editTaskType = TaskType.BREAK_BLOCKS;
-    private ItemStack editRewardItem = ItemStack.EMPTY; // Item reward for template editing
+    private List<ItemStack> editRewardItems = new ArrayList<>();
+    private FreeRewardEditorWidget templateRewardEditorWidget; // Item reward for template editing
     // Persisted edit values (survive rebuildWidgets)
     private String pendingDescription = "";
     private String pendingGoal = "";
@@ -232,8 +233,13 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         }
         this.addRenderableWidget(nodeEditor);
         
-        // Save / Cancel buttons below the node editor
-        int buttonY = editorY + editorHeight + 15;
+        if (templateRewardEditorWidget == null) {
+            templateRewardEditorWidget = new FreeRewardEditorWidget(editorX, editorY + editorHeight + 10, 310, 160, editRewardItems);
+        }
+        this.addRenderableWidget(templateRewardEditorWidget);
+
+        // Save / Cancel buttons below the reward widget
+        int buttonY = editorY + editorHeight + 175;
         this.addRenderableWidget(new ModernButton(
             editorX, buttonY, 120, 25,
             Component.literal("Save"),
@@ -302,6 +308,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         this.currentTab = tab;
         this.scrollOffset = 0;
         this.editMode = false;
+        this.templateRewardEditorWidget = null;
         this.selectedTemplateIndex = -1;
         this.rebuildWidgets();
     }
@@ -311,7 +318,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         selectedTemplateIndex = -1;
         editTemplateId = null;
         editTaskType = TaskType.BREAK_BLOCKS;
-        editRewardItem = ItemStack.EMPTY;
+        editRewardItems = new ArrayList<>();
         pendingDescription = "";
         pendingGoal = "";
         pendingReward = "";
@@ -326,7 +333,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         SyncEconomyTemplatesPacket.TemplateData template = templates.get(index);
         editTemplateId = template.id();
         editTaskType = template.getTaskType();
-        editRewardItem = template.rewardItem() != null ? template.rewardItem().copy() : ItemStack.EMPTY;
+        editRewardItems = template.rewardItems() != null ? new ArrayList<>(template.rewardItems()) : new ArrayList<>();
         pendingDescription = template.description() != null ? template.description() : "";
         pendingGoal = String.valueOf(template.goal());
         pendingReward = String.valueOf(template.rewardAmount());
@@ -347,7 +354,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         templates.set(index, new SyncEconomyTemplatesPacket.TemplateData(
             template.id(), template.taskTypeOrdinal(), template.description(),
             template.goal(), template.rewardAmount(), !template.enabled(),
-            template.rewardItem()
+            template.rewardItems()
         ));
         this.rebuildWidgets();
     }
@@ -374,7 +381,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         
         if (goal > 0 && reward > 0) {
             ModNetworking.sendToServer(new SaveTemplatePacket(
-                editTemplateId, taskType, description, goal, reward, editRewardItem
+                editTemplateId, taskType, description, goal, reward, templateRewardEditorWidget != null ? templateRewardEditorWidget.getRewardItems() : new ArrayList<>()
             ));
         }
         
@@ -495,12 +502,19 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                     guiGraphics.drawString(this.font, Component.literal("Reward: $" + template.rewardAmount()),
                         centerX + 30, yPos + 31, 0x55FF55, true);
                     
-                    // Show reward item if set
-                    if (template.rewardItem() != null && !template.rewardItem().isEmpty()) {
+                    // Show reward items if set
+                    if (template.rewardItems() != null && !template.rewardItems().isEmpty()) {
                         int itemX = centerX + 160;
-                        guiGraphics.renderItem(template.rewardItem(), itemX, yPos + 27);
+                        ItemStack firstItem = template.rewardItems().get(0);
+                        guiGraphics.renderItem(firstItem, itemX, yPos + 27);
+                        
+                        String text = "+ " + firstItem.getHoverName().getString();
+                        if (template.rewardItems().size() > 1) {
+                            text += " (+" + (template.rewardItems().size() - 1) + " more)";
+                        }
+                        
                         guiGraphics.drawString(this.font, 
-                            Component.literal("+ " + template.rewardItem().getHoverName().getString()),
+                            Component.literal(text),
                             itemX + 20, yPos + 31, 0x55FFAA, true);
                     }
                     
@@ -517,33 +531,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 centerX + 35, centerY + 90, 0xFFD700, true);
             
             // Node editor widget renders itself via addRenderableWidget
-            // Render item reward slot below the node editor
-            if (nodeEditor != null) {
-                int itemSlotX = centerX + 35;
-                int itemSlotY = centerY + 110 + 150 + 50; // Below save/cancel buttons
-                
-                guiGraphics.drawString(this.font, Component.literal("Reward Item (optional):"),
-                    itemSlotX, itemSlotY - 15, 0xFFFFFF, true);
-                
-                guiGraphics.fill(itemSlotX - 1, itemSlotY - 1, itemSlotX + 19, itemSlotY + 19, 0xFFFFFFFF);
-                guiGraphics.fill(itemSlotX, itemSlotY, itemSlotX + 18, itemSlotY + 18, 0xFF8B8B8B);
-                
-                if (!editRewardItem.isEmpty()) {
-                    guiGraphics.renderItem(editRewardItem, itemSlotX, itemSlotY);
-                    guiGraphics.renderItemDecorations(this.font, editRewardItem, itemSlotX, itemSlotY);
-                    guiGraphics.drawString(this.font, 
-                        Component.literal(editRewardItem.getHoverName().getString() + " x" + editRewardItem.getCount()),
-                        itemSlotX + 25, itemSlotY + 5, 0x55FF55, true);
-                } else {
-                    guiGraphics.drawString(this.font, 
-                        Component.literal("(None)"),
-                        itemSlotX + 25, itemSlotY + 5, 0x888888, true);
-                }
-                
-                guiGraphics.drawString(this.font, 
-                    Component.literal("Tip: Select an item in your hotbar and click the slot"),
-                    itemSlotX, itemSlotY + 25, 0x888888, true);
-            }
+
         }
     }
     
@@ -729,12 +717,12 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             if (!selectedItem.isEmpty()) {
                 // Set the selected hotbar item as the reward item
                 if (isTemplateEdit) {
-                    editRewardItem = selectedItem.copy();
+                    
                 }
             } else {
                 // Clear item when clicking with empty hand
                 if (isTemplateEdit) {
-                    editRewardItem = ItemStack.EMPTY;
+                    editRewardItems = new ArrayList<>();
                 }
             }
         }

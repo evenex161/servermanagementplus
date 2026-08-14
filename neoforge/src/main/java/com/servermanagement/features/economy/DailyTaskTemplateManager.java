@@ -84,6 +84,13 @@ public class DailyTaskTemplateManager {
         // Ensure we have default templates
         manager.initializeDefaultTemplates();
         
+        // Migrate legacy template data
+        if (manager.templates != null) {
+            for (DailyTaskTemplate template : manager.templates) {
+                template.migrateLegacyData();
+            }
+        }
+        
         // Migrate legacy single item to list
         if (manager.freeRewardItems == null) {
             manager.freeRewardItems = new ArrayList<>();

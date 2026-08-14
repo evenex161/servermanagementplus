@@ -53,7 +53,7 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
                 buf.readInt(),
                 buf.readInt(),
                 buf.readBoolean(),
-                ItemStack.OPTIONAL_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf)
+                ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf)
             ));
         }
         return templates;
@@ -68,7 +68,7 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
             buf.writeInt(t.goal);
             buf.writeInt(t.rewardAmount);
             buf.writeBoolean(t.enabled);
-            ItemStack.OPTIONAL_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, t.rewardItem);
+            ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, t.rewardItems);
         }
         buf.writeInt(freeRewardAmount);
                 buf.writeInt(freeRewardCooldownHours);
@@ -100,7 +100,7 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
                 t.getTargetAmount(),
                 (int) t.getRewardAmount(),
                 t.isEnabled(),
-                t.getRewardItem()
+                t.getRewardItems()
             ));
         }
 
@@ -125,7 +125,7 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         int goal,
         int rewardAmount,
         boolean enabled,
-        ItemStack rewardItem
+        List<ItemStack> rewardItems
     ) {
         public TaskType getTaskType() {
             TaskType[] types = TaskType.values();

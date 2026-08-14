@@ -30,7 +30,9 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             boolean claimed = buf.readBoolean();
             int reward = buf.readInt();
             String description = buf.readUtf(256);
+            List<ItemStack> rewardItems = ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf)buf);
             DailyTask task = new DailyTask(type, goal, reward, description);
+            task.setRewardItems(rewardItems);
             task.setProgress(progress);
             task.setClaimed(claimed);
             tasks.add(task);
@@ -49,6 +51,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             buf.writeBoolean(task.isClaimed());
             buf.writeInt(task.getReward());
             buf.writeUtf(task.getDescription(), 256);
+            ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf)buf, task.getRewardItems());
         }
         
         buf.writeLong(resetTime);

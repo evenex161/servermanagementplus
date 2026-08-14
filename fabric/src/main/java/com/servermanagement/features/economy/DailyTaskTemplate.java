@@ -4,6 +4,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Template for daily tasks that admins can create and manage.
@@ -14,14 +16,15 @@ public class DailyTaskTemplate {
     private TaskType type;
     private int targetAmount;
     private double rewardAmount;
-    private ItemStack rewardItem; // Optional item reward
+    private ItemStack rewardItem; // Legacy field for Gson backward compatibility
+    private List<ItemStack> rewardItems = new ArrayList<>(); // Optional item rewards
     private String customDescription; // Optional custom description
     private boolean enabled; // Can be disabled without deleting
     
     public DailyTaskTemplate() {
         this.id = UUID.randomUUID().toString();
         this.enabled = true;
-        this.rewardItem = ItemStack.EMPTY;
+        this.rewardItems = new ArrayList<>();
     }
     
     public DailyTaskTemplate(TaskType type, int targetAmount, double rewardAmount, String customDescription) {
@@ -31,20 +34,31 @@ public class DailyTaskTemplate {
         this.rewardAmount = rewardAmount;
         this.customDescription = customDescription;
         this.enabled = true;
-        this.rewardItem = ItemStack.EMPTY;
+        this.rewardItems = new ArrayList<>();
     }
     
-    public DailyTaskTemplate(TaskType type, int targetAmount, double rewardAmount, ItemStack rewardItem, String customDescription) {
+    public DailyTaskTemplate(TaskType type, int targetAmount, double rewardAmount, List<ItemStack> rewardItems, String customDescription) {
         this.id = UUID.randomUUID().toString();
         this.type = type;
         this.targetAmount = targetAmount;
         this.rewardAmount = rewardAmount;
-        this.rewardItem = rewardItem != null ? rewardItem.copy() : ItemStack.EMPTY;
+        this.rewardItems = rewardItems != null ? new ArrayList<>(rewardItems) : new ArrayList<>();
         this.customDescription = customDescription;
         this.enabled = true;
     }
 
     // Getters
+    
+    public void migrateLegacyData() {
+        if (rewardItems == null) {
+            rewardItems = new ArrayList<>();
+        }
+        if (rewardItem != null && !rewardItem.isEmpty()) {
+            rewardItems.add(rewardItem.copy());
+            rewardItem = null; // Clear it so it doesn't get saved again if we exclude nulls, or just leave it empty
+        }
+    }
+
     public String getId() {
         return id;
     }
@@ -61,8 +75,8 @@ public class DailyTaskTemplate {
         return rewardAmount;
     }
     
-    public ItemStack getRewardItem() {
-        return rewardItem != null ? rewardItem : ItemStack.EMPTY;
+    public List<ItemStack> getRewardItems() {
+        return rewardItems != null ? rewardItems : new ArrayList<>();
     }
 
     public String getCustomDescription() {
@@ -86,8 +100,8 @@ public class DailyTaskTemplate {
         this.rewardAmount = rewardAmount;
     }
     
-    public void setRewardItem(ItemStack rewardItem) {
-        this.rewardItem = rewardItem != null ? rewardItem.copy() : ItemStack.EMPTY;
+    public void setRewardItems(List<ItemStack> rewardItems) {
+        this.rewardItems = rewardItems != null ? new ArrayList<>(rewardItems) : new ArrayList<>();
     }
 
     public void setCustomDescription(String customDescription) {
@@ -135,8 +149,8 @@ public class DailyTaskTemplate {
      */
     public DailyTask createTask() {
         DailyTask task = new DailyTask(type, targetAmount, rewardAmount, getDescription());
-        if (!rewardItem.isEmpty()) {
-            task.setRewardItem(rewardItem.copy());
+        if (rewardItems != null && !rewardItems.isEmpty()) {
+            task.setRewardItems(new ArrayList<>(rewardItems));
         }
         return task;
     }
