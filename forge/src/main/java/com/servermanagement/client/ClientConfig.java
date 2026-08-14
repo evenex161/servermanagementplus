@@ -24,6 +24,7 @@ public class ClientConfig {
     private static int statsBarX = 10;
     private static int statsBarY = 10;
     private static boolean showStatsBar = true;
+    private static String lastRunVersion = "";
 
     public static void init(File gameDir) {
         configFile = new File(gameDir, "config/servermanagement_client.json");
@@ -38,6 +39,7 @@ public class ClientConfig {
                     if (json.has("statsBarX")) statsBarX = json.get("statsBarX").getAsInt();
                     if (json.has("statsBarY")) statsBarY = json.get("statsBarY").getAsInt();
                     if (json.has("showStatsBar")) showStatsBar = json.get("showStatsBar").getAsBoolean();
+                    if (json.has("lastRunVersion")) lastRunVersion = json.get("lastRunVersion").getAsString();
                 }
                 if (json != null && json.has("skipBlacklistDeleteWarnings")) {
                     JsonObject warnings = json.getAsJsonObject("skipBlacklistDeleteWarnings");
@@ -63,6 +65,7 @@ public class ClientConfig {
             json.addProperty("statsBarX", statsBarX);
             json.addProperty("statsBarY", statsBarY);
             json.addProperty("showStatsBar", showStatsBar);
+            json.addProperty("lastRunVersion", lastRunVersion);
             GSON.toJson(json, writer);
         } catch (IOException e) {
             ServerManagementMod.LOGGER.error("Failed to save client config", e);
@@ -96,4 +99,7 @@ public class ClientConfig {
         skipBlacklistDeleteWarnings.put(getCurrentServerId(), skip);
         save();
     }
+    
+    public static String getLastRunVersion() { return lastRunVersion; }
+    public static void setLastRunVersion(String version) { lastRunVersion = version; save(); }
 }

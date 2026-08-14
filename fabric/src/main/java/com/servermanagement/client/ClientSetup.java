@@ -45,23 +45,56 @@ public class ClientSetup implements ClientModInitializer {
         MenuScreens.register(ModMenuTypes.UPDATER_MENU, UpdaterScreen::new);
 
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            if (screen instanceof net.minecraft.client.gui.screens.TitleScreen titleScreen && !updateChecked) {
-                updateChecked = true;
-                com.servermanagement.updater.UpdatePreferences.load();
-                String version = com.servermanagement.ServerManagementMod.getModVersion();
-                String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
-                String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
-                com.servermanagement.updater.UpdateManager.checkForUpdates(version, loader, mcVersion).thenAccept(optInfo -> {
-                    optInfo.ifPresent(info -> {
-                        if (!com.servermanagement.updater.UpdatePreferences.isSkipped(info.version())) {
-                            client.execute(() -> {
-                                client.setScreen(new UpdateAvailableScreen(
-                                    titleScreen, info, version
-                                ));
-                            });
+            if (screen instanceof net.minecraft.client.gui.screens.TitleScreen titleScreen) {
+                com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(scaledWidth, scaledHeight, false, () -> {
+                    // Trigger manual update check with visual feedback
+                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                    String ver = com.servermanagement.ServerManagementMod.getModVersion();
+                    com.servermanagement.updater.UpdatePreferences.load();
+                    ClientUpdateManager.checkForUpdates(mc, ver, titleScreen);
+                });
+                net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(btn);
+
+                if (!updateChecked) {
+                    updateChecked = true;
+                    
+                    String currentVersion = com.servermanagement.ServerManagementMod.getModVersion();
+                    String lastRun = ClientConfig.getLastRunVersion();
+                    if (lastRun.isEmpty()) {
+                        ClientConfig.setLastRunVersion(currentVersion);
+                    } else if (!lastRun.equals(currentVersion)) {
+                        ClientConfig.setLastRunVersion(currentVersion);
+                        client.execute(() -> {
+                            client.setScreen(new com.servermanagement.gui.screen.ChangelogScreen(titleScreen));
+                        });
+                        return; // skip update check for this launch
+                    }
+                    
+                    com.servermanagement.updater.UpdatePreferences.load();
+                    String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
+                    String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+                    com.servermanagement.updater.UpdateManager.checkAllUpdates(currentVersion, loader, mcVersion).thenAccept(result -> {
+                        if (result == null || (result.modrinth() == null && result.curseforge() == null)) return;
+                        com.servermanagement.updater.UpdateInfo target = result.resolve(com.servermanagement.updater.UpdatePreferences.getMainSource(), com.servermanagement.updater.UpdatePreferences.isCheckFallback());
+                        if (target != null) {
+                            btn.setNotification(true);
+                            if (!com.servermanagement.updater.UpdatePreferences.isSkipped(target.version())) {
+                                client.execute(() -> {
+                                    client.setScreen(new UpdateAvailableScreen(titleScreen, result, target, currentVersion));
+                                });
+                            }
                         }
                     });
+                }
+            } else if (screen instanceof net.minecraft.client.gui.screens.PauseScreen pauseScreen) {
+                com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(scaledWidth, scaledHeight, false, () -> {
+                    client.setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
+                        new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, client.player.getInventory()),
+                        client.player.getInventory(),
+                        net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
+                    ));
                 });
+                net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(btn);
             }
         });
     }

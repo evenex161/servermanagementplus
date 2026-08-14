@@ -13,6 +13,16 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
+    private boolean hasUpdate(SyncUpdateInfoPacket packet) {
+        if (packet == null || packet.getResult() == null) return false;
+        com.servermanagement.updater.UpdateInfo target = packet.getResult().resolve(com.servermanagement.updater.UpdatePreferences.getMainSource(), com.servermanagement.updater.UpdatePreferences.isCheckFallback());
+        return target != null;
+    }
+    
+    private com.servermanagement.updater.UpdateInfo getTarget(SyncUpdateInfoPacket packet) {
+        if (packet == null || packet.getResult() == null) return null;
+        return packet.getResult().resolve(com.servermanagement.updater.UpdatePreferences.getMainSource(), com.servermanagement.updater.UpdatePreferences.isCheckFallback());
+    }
 
     private boolean confirmMode = false;
     private boolean smartStartWarningMode = false;
@@ -29,6 +39,8 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
     }
 
     public void onUpdateInfoReceived(SyncUpdateInfoPacket packet) {
+        com.servermanagement.updater.UpdatePreferences.load();
+
         this.currentInfo = packet;
         this.confirmMode = false;
         this.smartStartWarningMode = false;
@@ -77,7 +89,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
             this.addRenderableWidget(new ModernButton.Builder(
                 Component.literal("CONFIRM UPDATE"),
                 btn -> {
-                    ModNetworking.sendToServer(new StartServerUpdatePacket(currentInfo != null ? currentInfo.downloadUrl() : "", overrideSelected));
+                    ModNetworking.sendToServer(new StartServerUpdatePacket(currentInfo != null ? getTarget(currentInfo).downloadUrl() : "", overrideSelected));
                     this.onClose();
                 })
                 .bounds(cX + this.imageWidth / 2 + 10, cY + this.imageHeight - 35, btnWidth, btnHeight)
@@ -131,17 +143,32 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                 .build());
 
             this.addRenderableWidget(new ModernButton.Builder(
+                Component.literal("Path: " + (com.servermanagement.updater.UpdatePreferences.getUpdateChannel(null).equals("beta") ? "Beta" : "Release")),
+                btn -> {
+                    String current = com.servermanagement.updater.UpdatePreferences.getUpdateChannel(null);
+                    com.servermanagement.updater.UpdatePreferences.setUpdateChannel(current.equals("beta") ? "release" : "beta");
+                    com.servermanagement.updater.UpdatePreferences.save();
+                    this.currentInfo = null;
+                    this.hasAutoChecked = true;
+                    ModNetworking.sendToServer(new CheckForUpdatesPacket());
+                    this.refreshWidgets();
+                })
+                .bounds(cX + 125, cY + this.imageHeight - 35, 90, btnHeight)
+                .style(ModernButton.ButtonStyle.SECONDARY)
+                .build());
+
+            this.addRenderableWidget(new ModernButton.Builder(
                 Component.literal("Close"),
                 btn -> this.onClose())
                 .bounds(cX + this.imageWidth - 80, cY + this.imageHeight - 35, 70, btnHeight)
                 .style(ModernButton.ButtonStyle.SECONDARY)
                 .build());
 
-            if (currentInfo != null && currentInfo.hasUpdate()) {
+            if (currentInfo != null && hasUpdate(currentInfo)) {
                 this.addRenderableWidget(new ModernButton.Builder(
                     Component.literal("Update Now"),
                     btn -> {
-                        if (!currentInfo.smartStartActive()) {
+                        if (!currentInfo.isSmartStartActive()) {
                             this.smartStartWarningMode = true;
                         } else {
                             this.confirmMode = true;
@@ -185,7 +212,7 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
             g.drawCenteredString(this.font, "\u00a7cWARNING: SERVER WILL RESTART", cX + this.imageWidth / 2, cY + 60, 0xFF5555);
             g.drawCenteredString(this.font, "Are you sure you want to apply the update now?", cX + this.imageWidth / 2, cY + 80, 0xFFFFFF);
             g.drawCenteredString(this.font, "All players will be disconnected immediately.", cX + this.imageWidth / 2, cY + 100, 0xAAAAAA);
-            if (!currentInfo.smartStartActive()) {
+            if (!currentInfo.isSmartStartActive()) {
                 g.drawCenteredString(this.font, "\u00a7eThe server will NOT restart automatically.", cX + this.imageWidth / 2, cY + 120, 0xFFFF55);
                 g.drawCenteredString(this.font, "\u00a7eYou must restart it manually.", cX + this.imageWidth / 2, cY + 135, 0xFFFF55);
             }
@@ -204,16 +231,16 @@ public class UpdaterScreen extends ScalableContainerScreen<UpdaterMenu> {
                     default -> "...";
                 };
                 g.drawCenteredString(this.font, "Checking for updates" + dots, cX + this.imageWidth / 2, cY + 80, 0xAAAAAA);
-            } else if (!currentInfo.hasUpdate()) {
+            } else if (!hasUpdate(currentInfo)) {
                 g.drawCenteredString(this.font, "\u00a7aServer is up to date!", cX + this.imageWidth / 2, cY + 80, 0x55FF55);
             } else {
                 g.drawCenteredString(this.font, "\u00a7aUpdate Available!", cX + this.imageWidth / 2, cY + 40, 0x55FF55);
-                g.drawString(this.font, "Version: \u00a7e" + currentInfo.version(), cX + 20, cY + 70, 0xFFFFFF, false);
-                g.drawString(this.font, "Date: \u00a77" + currentInfo.date(), cX + 20, cY + 85, 0xFFFFFF, false);
+                g.drawString(this.font, "Version: \u00a7e" + getTarget(currentInfo).version(), cX + 20, cY + 70, 0xFFFFFF, false);
+                g.drawString(this.font, "Date: \u00a77" + getTarget(currentInfo).releaseDate(), cX + 20, cY + 85, 0xFFFFFF, false);
 
                 // Render changelog (limit to a few lines)
                 g.drawString(this.font, "Changelog:", cX + 20, cY + 105, 0xAAAAAA, false);
-                String[] changelogLines = currentInfo.changelog().split("\n");
+                String[] changelogLines = getTarget(currentInfo).changelog().split("\n");
                 int maxChangelogWidth = this.imageWidth - 60;
                 for (int i = 0; i < Math.min(3, changelogLines.length); i++) {
                     String line = changelogLines[i];

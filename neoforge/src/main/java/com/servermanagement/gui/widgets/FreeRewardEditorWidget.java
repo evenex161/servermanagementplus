@@ -171,10 +171,15 @@ public class FreeRewardEditorWidget extends AbstractWidget {
         }
     }
 
+    public boolean isSearchBoxFocused() {
+        return (this.searchBox != null && this.searchBox.isFocused()) || (this.quantityBox != null && this.quantityBox.isFocused());
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.searchBox.mouseClicked(mouseX, mouseY, button)) {
-            this.isPendingSearchBoxFocus = true;
+            this.searchBox.setFocused(true);
+            this.quantityBox.setFocused(false);
             return true;
         }
         
@@ -406,6 +411,23 @@ public class FreeRewardEditorWidget extends AbstractWidget {
             
             guiGraphics.pose().popPose();
         }
+    }
+
+    @Override
+    public void setX(int x) {
+        super.setX(x);
+        if (this.searchBox != null) this.searchBox.setX(x);
+        if (this.quantityBox != null) this.quantityBox.setX(x);
+        if (this.applyQuantityBtn != null) this.applyQuantityBtn.setX(x + 55);
+    }
+    
+    @Override
+    public void setY(int y) {
+        super.setY(y);
+        if (this.searchBox != null) this.searchBox.setY(y);
+        int bottomY = y + 25 + (VISIBLE_ITEMS * ITEM_HEIGHT) + 5;
+        if (this.quantityBox != null) this.quantityBox.setY(bottomY);
+        if (this.applyQuantityBtn != null) this.applyQuantityBtn.setY(bottomY);
     }
 
     @Override

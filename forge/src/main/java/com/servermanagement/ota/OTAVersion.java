@@ -49,7 +49,13 @@ public class OTAVersion {
             props.load(is);
             
             String version = props.getProperty("ota.version", "1.0.0");
-            int build = Integer.parseInt(props.getProperty("ota.build", "1"));
+            String buildStr = props.getProperty("ota.build", "1");
+            int build;
+            try {
+                build = Integer.parseInt(buildStr);
+            } catch (NumberFormatException ignored) {
+                build = parseVersionPart(buildStr);
+            }
             String releaseType = props.getProperty("ota.releaseType", "unknown");
             String releaseNotes = props.getProperty("ota.releaseNotes", "No release notes");
             String mcVersion = props.getProperty("ota.minecraft_version", "unknown");

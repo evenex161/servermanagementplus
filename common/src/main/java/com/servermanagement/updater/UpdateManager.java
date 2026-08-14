@@ -22,26 +22,35 @@ public class UpdateManager {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("ServerManagementUpdater");
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
-    public static CompletableFuture<Optional<UpdateInfo>> checkForUpdates(String currentVersion, String loader, String gameVersion) {
+    public static CompletableFuture<UpdateCheckResult> checkAllUpdates(String currentVersion, String loader, String gameVersion) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                LOGGER.info("Checking for updates for {} {}...", loader, gameVersion);
+                LOGGER.info("Checking for updates across all sources for {} {}...", loader, gameVersion);
                 
-                UpdateInfo modrinthData = queryModrinth(loader, gameVersion);
-                UpdateInfo curseforgeData = queryCurseForge(loader, gameVersion);
+                String channel = UpdatePreferences.getUpdateChannel(currentVersion);
                 
-                UpdateInfo best = chooseBest(modrinthData, curseforgeData, currentVersion);
-                if (best == null) {
-                    LOGGER.info("No updates found (Current: {}).", currentVersion);
-                    return Optional.empty();
-                }
-
-                LOGGER.info("Update available: {}", best.version());
-                return Optional.of(best);
+                UpdateInfo modrinthData = queryModrinth(loader, gameVersion, channel);
+                UpdateInfo curseforgeData = queryCurseForge(loader, gameVersion, channel);
+                
+                return new UpdateCheckResult(modrinthData, curseforgeData, currentVersion);
             } catch (Exception e) {
                 LOGGER.error("Failed to check for updates", e);
+                return new UpdateCheckResult(null, null, currentVersion);
+            }
+        });
+    }
+
+    // Deprecated, maintained for compatibility but routes to new system
+    public static CompletableFuture<Optional<UpdateInfo>> checkForUpdates(String currentVersion, String loader, String gameVersion) {
+        return checkAllUpdates(currentVersion, loader, gameVersion).thenApply(result -> {
+            UpdatePreferences.load();
+            UpdateInfo best = result.resolve(UpdatePreferences.getMainSource(), UpdatePreferences.isCheckFallback());
+            if (best == null) {
+                LOGGER.info("No updates found (Current: {}).", currentVersion);
                 return Optional.empty();
             }
+            LOGGER.info("Update available: {}", best.version());
+            return Optional.of(best);
         });
     }
 
@@ -124,7 +133,7 @@ public class UpdateManager {
         });
     }
 
-    private static UpdateInfo queryModrinth(String loader, String gameVersion) {
+    private static UpdateInfo queryModrinth(String loader, String gameVersion, String channel) {
         if (Constants.MODRINTH_PROJECT_ID.equals("YOUR_MODRINTH_ID")) return null;
         try {
             String url = String.format("https://api.modrinth.com/v2/project/%s/version?loaders=%s&game_versions=%s",
@@ -139,8 +148,12 @@ public class UpdateManager {
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
                 JsonArray versions = JsonParser.parseString(response.body()).getAsJsonArray();
-                if (versions.size() > 0) {
-                    JsonObject latest = versions.get(0).getAsJsonObject();
+                for (int i = 0; i < versions.size(); i++) {
+                    JsonObject latest = versions.get(i).getAsJsonObject();
+                    String type = latest.has("version_type") ? latest.get("version_type").getAsString() : "release";
+                    if (channel.equals("release") && !type.equals("release")) continue;
+                    if (channel.equals("beta") && type.equals("alpha")) continue;
+                    
                     String versionNumber = latest.get("version_number").getAsString();
                     String dlUrl = latest.getAsJsonArray("files").get(0).getAsJsonObject().get("url").getAsString();
                     String changelog = latest.has("changelog") && !latest.get("changelog").isJsonNull() ? latest.get("changelog").getAsString() : "No changelog provided.";
@@ -154,7 +167,7 @@ public class UpdateManager {
         return null;
     }
 
-    private static UpdateInfo queryCurseForge(String loader, String gameVersion) {
+    private static UpdateInfo queryCurseForge(String loader, String gameVersion, String channel) {
         if (Constants.CURSEFORGE_PROJECT_ID.equals("YOUR_CURSEFORGE_ID")) return null;
         try {
             String url = String.format("https://api.curseforge.com/v1/mods/%s/files?gameVersion=%s",
@@ -170,6 +183,11 @@ public class UpdateManager {
                 JsonArray files = JsonParser.parseString(response.body()).getAsJsonObject().getAsJsonArray("data");
                 for (int i = 0; i < files.size(); i++) {
                     JsonObject file = files.get(i).getAsJsonObject();
+                    
+                    int rt = file.has("releaseType") ? file.get("releaseType").getAsInt() : 1;
+                    if (channel.equals("release") && rt != 1) continue;
+                    if (channel.equals("beta") && rt == 3) continue;
+
                     JsonArray gameVersions = file.getAsJsonArray("gameVersions");
                     boolean matchesLoader = false;
                     for (int j = 0; j < gameVersions.size(); j++) {
@@ -190,15 +208,7 @@ public class UpdateManager {
         return null;
     }
 
-    private static UpdateInfo chooseBest(UpdateInfo modrinthData, UpdateInfo curseforgeData, String currentVersion) {
-        UpdateInfo best = modrinthData != null ? modrinthData : curseforgeData;
-        if (best != null && isNewerVersion(best.version(), currentVersion)) {
-            return best;
-        }
-        return null;
-    }
-
-    private static boolean isNewerVersion(String remote, String current) {
+    public static boolean isNewerVersion(String remote, String current) {
         if (remote == null || current == null || remote.equals(current)) return false;
         
         // Normalize "2.1.0b1" to "2.1.0-b1" for consistent splitting

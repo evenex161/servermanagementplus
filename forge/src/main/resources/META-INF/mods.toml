@@ -9,6 +9,7 @@ version="${version}"
 displayName="${mod_name}"
 description='''${description}'''
 authors="${mod_author}"
+logoFile="logo.png"
 
 [[dependencies.${mod_id}]]
     modId="forge"

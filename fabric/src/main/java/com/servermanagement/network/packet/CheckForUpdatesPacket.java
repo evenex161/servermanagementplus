@@ -27,22 +27,14 @@ public record CheckForUpdatesPacket() implements CustomPacketPayload {
             String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
             String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
             
-            UpdateManager.checkForUpdates(currentVersion, loader, mcVersion).thenAccept(optInfo -> {
+            UpdateManager.checkAllUpdates(currentVersion, loader, mcVersion).thenAccept(result -> {
                 if (player.hasDisconnected()) return;
                 
                 boolean smartStartActive = Boolean.parseBoolean(System.getProperty("servermanagement.smartstart", "false"));
-                if (optInfo.isPresent()) {
-                    var info = optInfo.get();
-                    com.servermanagement.network.ModNetworking.sendToPlayer(
-                        new SyncUpdateInfoPacket(true, info.version(), info.changelog(), info.downloadUrl(), info.releaseDate(), smartStartActive),
-                        player
-                    );
-                } else {
-                    com.servermanagement.network.ModNetworking.sendToPlayer(
-                        new SyncUpdateInfoPacket(false, "", "", "", "", smartStartActive),
-                        player
-                    );
-                }
+                com.servermanagement.network.ModNetworking.sendToPlayer(
+                    new SyncUpdateInfoPacket(result, smartStartActive),
+                    player
+                );
             });
         }
     }

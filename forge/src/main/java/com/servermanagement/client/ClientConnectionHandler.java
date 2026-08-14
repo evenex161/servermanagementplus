@@ -42,23 +42,57 @@ public class ClientConnectionHandler {
 
     @SubscribeEvent
     public static void onScreenInit(net.minecraftforge.client.event.ScreenEvent.Init.Post event) {
-        if (event.getScreen() instanceof net.minecraft.client.gui.screens.TitleScreen titleScreen && !updateChecked) {
-            updateChecked = true;
-            com.servermanagement.updater.UpdatePreferences.load();
-            String version = com.servermanagement.ServerManagementMod.getModVersion();
-            String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
-            String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
-            com.servermanagement.updater.UpdateManager.checkForUpdates(version, loader, mcVersion).thenAccept(optInfo -> {
-                optInfo.ifPresent(info -> {
-                    if (!com.servermanagement.updater.UpdatePreferences.isSkipped(info.version())) {
-                        Minecraft.getInstance().execute(() -> {
-                            Minecraft.getInstance().setScreen(new UpdateAvailableScreen(
-                                titleScreen, info, version
-                            ));
-                        });
+        if (event.getScreen() instanceof net.minecraft.client.gui.screens.TitleScreen titleScreen) {
+            com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(titleScreen.width, titleScreen.height, false, () -> {
+                // Trigger manual update check with visual feedback
+                Minecraft mc = Minecraft.getInstance();
+                String ver = com.servermanagement.ServerManagementMod.getModVersion();
+                com.servermanagement.updater.UpdatePreferences.load();
+                ClientUpdateManager.checkForUpdates(mc, ver, titleScreen);
+            });
+            event.addListener(btn);
+
+            if (!updateChecked) {
+                updateChecked = true;
+                
+                // Check for successful update changelog
+                String currentVersion = com.servermanagement.ServerManagementMod.getModVersion();
+                String lastRun = ClientConfig.getLastRunVersion();
+                if (lastRun.isEmpty()) {
+                    ClientConfig.setLastRunVersion(currentVersion);
+                } else if (!lastRun.equals(currentVersion)) {
+                    ClientConfig.setLastRunVersion(currentVersion);
+                    Minecraft.getInstance().execute(() -> {
+                        Minecraft.getInstance().setScreen(new com.servermanagement.gui.screen.ChangelogScreen(titleScreen));
+                    });
+                    return; // skip update check for this launch
+                }
+                
+                com.servermanagement.updater.UpdatePreferences.load();
+                String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
+                String mcVersion = net.minecraft.SharedConstants.getCurrentVersion().getName();
+                com.servermanagement.updater.UpdateManager.checkAllUpdates(currentVersion, loader, mcVersion).thenAccept(result -> {
+                    if (result == null || (result.modrinth() == null && result.curseforge() == null)) return;
+                    com.servermanagement.updater.UpdateInfo target = result.resolve(com.servermanagement.updater.UpdatePreferences.getMainSource(), com.servermanagement.updater.UpdatePreferences.isCheckFallback());
+                    if (target != null) {
+                        btn.setNotification(true); // Always notify visually if update exists
+                        if (!com.servermanagement.updater.UpdatePreferences.isSkipped(target.version())) {
+                            Minecraft.getInstance().execute(() -> {
+                                Minecraft.getInstance().setScreen(new UpdateAvailableScreen(titleScreen, result, target, currentVersion));
+                            });
+                        }
                     }
                 });
+            }
+        } else if (event.getScreen() instanceof net.minecraft.client.gui.screens.PauseScreen pauseScreen) {
+            com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(pauseScreen.width, pauseScreen.height, false, () -> {
+                Minecraft.getInstance().setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
+                    new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, Minecraft.getInstance().player.getInventory()),
+                    Minecraft.getInstance().player.getInventory(),
+                    net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
+                ));
             });
+            event.addListener(btn);
         }
     }
 }

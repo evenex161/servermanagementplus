@@ -144,6 +144,10 @@ public class TradeBlacklistEditorWidget extends AbstractWidget {
         }
     }
 
+    public boolean isSearchBoxFocused() {
+        return this.searchBox != null && this.searchBox.isFocused();
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.searchBox.mouseClicked(mouseX, mouseY, button)) {

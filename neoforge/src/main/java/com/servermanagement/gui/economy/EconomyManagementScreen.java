@@ -47,6 +47,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     // Edit mode fields
     private boolean editMode = false;
+    private boolean isFullscreen = false;
     private NodeBasedTemplateEditorWidget nodeEditor;
     private TaskType editTaskType = TaskType.BREAK_BLOCKS;
     private List<ItemStack> editRewardItems = new ArrayList<>();
@@ -61,11 +62,17 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     private EditBox cooldownBox;
     private FreeRewardEditorWidget freeRewardEditorWidget;
     
+    // Vision Pro Camera fields
+    private boolean cameraLocked = true;
+    
     public EconomyManagementScreen(EconomyManagementMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, 600, 450);
         this.imageHeight = 450;
         this.imageWidth = 600;
     }
+
+    @Override
+    protected boolean isFullscreenMode() { return isFullscreen; }
     
     @Override
     protected void init() {
@@ -82,52 +89,54 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        // Back to Dashboard button
-        this.addRenderableWidget(new ModernButton(
-            centerX + 10, centerY + 10, 120, 20,
-            Component.literal("← Dashboard"),
-            button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD)),
-            ModernButton.ButtonStyle.SECONDARY
-        ));
-        
-        // Close button
-        this.addRenderableWidget(new ModernButton(
-            centerX + this.imageWidth - 90, centerY + 10, 80, 20,
-            Component.literal("Close"),
-            button -> this.onClose(),
-            ModernButton.ButtonStyle.DANGER
-        ));
-        
-        // Settings button
-        this.addRenderableWidget(new ModernButton(
-            centerX + this.imageWidth - 120, centerY + 10, 25, 20,
-            Component.literal("⚙"),
-            button -> switchTab(Tab.SETTINGS),
-            currentTab == Tab.SETTINGS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
-        ));
-        
-        // Tab buttons
-        int tabW = (this.imageWidth - 40) / 3;
-        this.addRenderableWidget(new ModernButton(
-            centerX + 10, centerY + 50, tabW, 25,
-            Component.literal("Task Templates"),
-            button -> switchTab(Tab.TASK_TEMPLATES),
-            currentTab == Tab.TASK_TEMPLATES ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
-        ));
-        
-        this.addRenderableWidget(new ModernButton(
-            centerX + 10 + tabW + 5, centerY + 50, tabW, 25,
-            Component.literal("Free Reward"),
-            button -> switchTab(Tab.FREE_REWARD),
-            currentTab == Tab.FREE_REWARD ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
-        ));
-        
-        this.addRenderableWidget(new ModernButton(
-            centerX + 10 + (tabW + 5) * 2, centerY + 50, tabW, 25,
-            Component.literal("Statistics"),
-            button -> switchTab(Tab.STATISTICS),
-            currentTab == Tab.STATISTICS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
-        ));
+        if (!isFullscreen) {
+            // Back to Dashboard button
+            this.addRenderableWidget(new ModernButton(
+                centerX + 10, centerY + 10, 120, 20,
+                Component.literal("← Dashboard"),
+                button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD)),
+                ModernButton.ButtonStyle.SECONDARY
+            ));
+            
+            // Close button
+            this.addRenderableWidget(new ModernButton(
+                centerX + this.imageWidth - 90, centerY + 10, 80, 20,
+                Component.literal("Close"),
+                button -> this.onClose(),
+                ModernButton.ButtonStyle.DANGER
+            ));
+            
+            // Settings button
+            this.addRenderableWidget(new ModernButton(
+                centerX + this.imageWidth - 120, centerY + 10, 25, 20,
+                Component.literal("⚙"),
+                button -> switchTab(Tab.SETTINGS),
+                currentTab == Tab.SETTINGS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
+            ));
+            
+            // Tab buttons
+            int tabW = (this.imageWidth - 40) / 3;
+            this.addRenderableWidget(new ModernButton(
+                centerX + 10, centerY + 50, tabW, 25,
+                Component.literal("Task Templates"),
+                button -> switchTab(Tab.TASK_TEMPLATES),
+                currentTab == Tab.TASK_TEMPLATES ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
+            ));
+            
+            this.addRenderableWidget(new ModernButton(
+                centerX + 10 + tabW + 5, centerY + 50, tabW, 25,
+                Component.literal("Free Reward"),
+                button -> switchTab(Tab.FREE_REWARD),
+                currentTab == Tab.FREE_REWARD ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
+            ));
+            
+            this.addRenderableWidget(new ModernButton(
+                centerX + 10 + (tabW + 5) * 2, centerY + 50, tabW, 25,
+                Component.literal("Statistics"),
+                button -> switchTab(Tab.STATISTICS),
+                currentTab == Tab.STATISTICS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
+            ));
+        }
         
         // Load templates from client cache
         templates = new ArrayList<>(ClientPacketHandler.getCachedTemplates());
@@ -217,12 +226,20 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     private void initEditMode(int centerX, int centerY) {
         // Node-based template editor widget
-        int editorWidth = this.imageWidth - 40;
-        int editorHeight = this.imageHeight - 160;
-        int editorX = centerX + 20;
-        int editorY = centerY + 110;
+        int editorWidth = isFullscreen ? this.width : this.imageWidth - 40;
+        int editorHeight = isFullscreen ? this.height : this.imageHeight - 160;
+        int editorX = isFullscreen ? 0 : centerX + 20;
+        int editorY = isFullscreen ? 0 : centerY + 110;
         
         nodeEditor = new NodeBasedTemplateEditorWidget(editorX, editorY, editorWidth, editorHeight);
+        nodeEditor.setFullscreen(isFullscreen);
+        nodeEditor.setOnCameraToggle(() -> {
+            if (this.cameraLocked && this.minecraft != null) {
+                this.cameraLocked = false;
+                this.minecraft.mouseHandler.grabMouse();
+            }
+        });
+        
         java.util.List<com.servermanagement.features.economy.TaskComponent> fallbackComps = new java.util.ArrayList<>();
         if (editTaskType != null) {
             int g = 1;
@@ -250,19 +267,31 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         // Reward widget moved into NodeBasedTemplateEditorWidget
 
         // Save / Cancel buttons below the reward widget
-        int buttonY = editorY + editorHeight + 15;
+        int buttonY = isFullscreen ? this.height - 40 : editorY + editorHeight + 15;
+        int buttonX = isFullscreen ? 20 : editorX;
+        
         this.addRenderableWidget(new ModernButton(
-            editorX, buttonY, 120, 25,
+            buttonX, buttonY, 120, 25,
             Component.literal("Save"),
             button -> saveTemplate(),
             ModernButton.ButtonStyle.SUCCESS
         ));
         
         this.addRenderableWidget(new ModernButton(
-            editorX + 130, buttonY, 120, 25,
+            buttonX + 130, buttonY, 120, 25,
             Component.literal("Cancel"),
             button -> cancelEdit(),
             ModernButton.ButtonStyle.DANGER
+        ));
+        
+        this.addRenderableWidget(new ModernButton(
+            buttonX + 260, buttonY, 120, 25,
+            Component.literal(isFullscreen ? "Exit Fullscreen" : "Fullscreen"),
+            button -> {
+                isFullscreen = !isFullscreen;
+                this.rebuildWidgets();
+            },
+            ModernButton.ButtonStyle.SECONDARY
         ));
     }
     
@@ -319,6 +348,10 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         this.currentTab = tab;
         this.scrollOffset = 0;
         this.editMode = false;
+        this.cameraLocked = true;
+        if (this.minecraft != null && !this.minecraft.mouseHandler.isMouseGrabbed() == false) {
+            this.minecraft.mouseHandler.releaseMouse();
+        }
         this.templateRewardEditorWidget = null;
         this.selectedTemplateIndex = -1;
         this.rebuildWidgets();
@@ -406,6 +439,10 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     private void cancelEdit() {
         editMode = false;
+        cameraLocked = true;
+        if (this.minecraft != null && !this.minecraft.mouseHandler.isMouseGrabbed() == false) {
+            this.minecraft.mouseHandler.releaseMouse();
+        }
         editTemplateId = null;
         selectedTemplateIndex = -1;
         this.rebuildWidgets();
@@ -426,19 +463,27 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        if (isFullscreen) return;
+        
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        // Main background
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xE0101010);
-        
-        // Header bar
-        guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xFF1A1A2E);
-        guiGraphics.fill(centerX, centerY + 40, centerX + this.imageWidth, centerY + 41, 0xFF333333);
-        
-        // Tab content area
-        guiGraphics.fill(centerX + 10, centerY + 80, centerX + this.imageWidth - 10, 
-            centerY + this.imageHeight - 15, 0xE01A1A1A);
+        if (!editMode || currentTab != Tab.TASK_TEMPLATES) {
+            // Main background
+            guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + this.imageHeight, 0xE0101010);
+            
+            // Header bar
+            guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xFF1A1A2E);
+            guiGraphics.fill(centerX, centerY + 40, centerX + this.imageWidth, centerY + 41, 0xFF333333);
+            
+            // Tab content area
+            guiGraphics.fill(centerX + 10, centerY + 80, centerX + this.imageWidth - 10, 
+                centerY + this.imageHeight - 15, 0xE01A1A1A);
+        } else {
+            // Fullscreen edit mode: subtle translucent header only
+            guiGraphics.fill(centerX, centerY, centerX + this.imageWidth, centerY + 40, 0xCC1A1A2E);
+            guiGraphics.fill(centerX, centerY + 40, centerX + this.imageWidth, centerY + 41, 0xCC333333);
+        }
         
         if (currentTab == Tab.TASK_TEMPLATES && !editMode) {
             // Render template boxes
@@ -450,16 +495,14 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 guiGraphics.fill(centerX + 20, yPos, centerX + this.imageWidth - 20, 
                     yPos + TEMPLATE_HEIGHT, 0xE0252525);
             }
-        } else if (editMode) {
-            // Edit form background
-            guiGraphics.fill(centerX + 15, centerY + 100, centerX + this.imageWidth - 15, 
-                centerY + this.imageHeight - 100, 0xE0252525);
         }
     }
     
     @Override
     protected void renderContent(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.renderContent(guiGraphics, mouseX, mouseY, partialTick);
+        
+        if (isFullscreen) return;
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
@@ -673,6 +716,25 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // ESC while editing: step back instead of closing the screen
+        if (keyCode == 256 && editMode) { // GLFW_KEY_ESCAPE = 256
+            if (isFullscreen) {
+                isFullscreen = false;
+                this.rebuildWidgets();
+            } else {
+                cancelEdit();
+            }
+            return true;
+        }
+        if (this.minecraft != null && this.minecraft.options.keyInventory.matches(keyCode, scanCode)) {
+            if (this.searchBox != null && this.searchBox.isFocused()) return true;
+            if (this.freeRewardBox != null && this.freeRewardBox.isFocused()) return true;
+            if (this.cooldownBox != null && this.cooldownBox.isFocused()) return true;
+            if (this.blacklistWidget != null && this.blacklistWidget.isSearchBoxFocused()) return true;
+            if (this.nodeEditor != null && this.nodeEditor.isAnyTextFieldFocused()) return true;
+            if (this.freeRewardEditorWidget != null && this.freeRewardEditorWidget.isSearchBoxFocused()) return true;
+        }
+
         if (keyCode != 256 && this.searchBox != null && this.searchBox.isFocused()) {
             this.searchBox.keyPressed(keyCode, scanCode, modifiers);
             return true;
@@ -696,6 +758,14 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (!cameraLocked && button == 1) {
+            this.cameraLocked = true;
+            if (this.minecraft != null) {
+                this.minecraft.mouseHandler.releaseMouse();
+            }
+            return true;
+        }
+
         // Convert raw screen-pixel coords to design-space because the screen
         // is rendered through ScalableContainerScreen's pose scale. Without
         // this the custom slot hit-tests below silently miss at non-1.0 GUI

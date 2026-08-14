@@ -10,11 +10,13 @@ import net.minecraft.network.chat.Component;
 
 public class UpdateAvailableScreen extends Screen {
     private final Screen previousScreen;
+    private final com.servermanagement.updater.UpdateCheckResult result;
     private final UpdateInfo updateInfo;
     private final String currentVersion;
 
-    public UpdateAvailableScreen(Screen previousScreen, UpdateInfo updateInfo, String currentVersion) {
+    public UpdateAvailableScreen(Screen previousScreen, com.servermanagement.updater.UpdateCheckResult result, UpdateInfo updateInfo, String currentVersion) {
         super(Component.literal("Update Available"));
+        this.result = result;
         this.previousScreen = previousScreen;
         this.updateInfo = updateInfo;
         this.currentVersion = currentVersion;
@@ -30,15 +32,15 @@ public class UpdateAvailableScreen extends Screen {
         if (this.width < totalBtnWidth + 20) {
             // Stack vertically
             this.addRenderableWidget(Button.builder(Component.literal("Update Now"), b -> {
-                OTAUpdateScreen otaScreen = new OTAUpdateScreen(currentVersion, updateInfo.version(), 0);
-                this.minecraft.setScreen(otaScreen);
-                
-                java.nio.file.Path currentJar = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("servermanagement").get().getOrigin().getPaths().get(0);
-                UpdateManager.downloadAndHandoff(updateInfo.downloadUrl(), true, currentJar,
-                    (progress, status) -> otaScreen.updateProgress(progress, status),
-                    () -> otaScreen.setComplete(),
-                    (error) -> otaScreen.setFailed(error)
-                );
+                if (com.servermanagement.updater.UpdatePreferences.getMainSource().equals("ask")) {
+                    this.minecraft.setScreen(new com.servermanagement.gui.screen.UpdateSourceScreen(this, result, currentVersion, true, target -> {
+                        ClientUpdateManager.startDownloadHandoff(this.minecraft, currentVersion, target, true);
+                    }, () -> {
+                        ClientUpdateManager.checkForUpdates(this.minecraft, currentVersion, this.previousScreen);
+                    }));
+                } else {
+                    ClientUpdateManager.startDownloadHandoff(this.minecraft, currentVersion, updateInfo, true);
+                }
             }).bounds(centerX - 100, centerY + 50, 200, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("Update Later"), b -> {
@@ -52,15 +54,15 @@ public class UpdateAvailableScreen extends Screen {
         } else {
             // Original horizontal layout
             this.addRenderableWidget(Button.builder(Component.literal("Update Now"), b -> {
-                OTAUpdateScreen otaScreen = new OTAUpdateScreen(currentVersion, updateInfo.version(), 0);
-                this.minecraft.setScreen(otaScreen);
-                
-                java.nio.file.Path currentJar = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("servermanagement").get().getOrigin().getPaths().get(0);
-                UpdateManager.downloadAndHandoff(updateInfo.downloadUrl(), true, currentJar,
-                    (progress, status) -> otaScreen.updateProgress(progress, status),
-                    () -> otaScreen.setComplete(),
-                    (error) -> otaScreen.setFailed(error)
-                );
+                if (com.servermanagement.updater.UpdatePreferences.getMainSource().equals("ask")) {
+                    this.minecraft.setScreen(new com.servermanagement.gui.screen.UpdateSourceScreen(this, result, currentVersion, true, target -> {
+                        ClientUpdateManager.startDownloadHandoff(this.minecraft, currentVersion, target, true);
+                    }, () -> {
+                        ClientUpdateManager.checkForUpdates(this.minecraft, currentVersion, this.previousScreen);
+                    }));
+                } else {
+                    ClientUpdateManager.startDownloadHandoff(this.minecraft, currentVersion, updateInfo, true);
+                }
             }).bounds(centerX - 155, centerY + 80, 100, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("Update Later"), b -> {
@@ -77,8 +79,8 @@ public class UpdateAvailableScreen extends Screen {
     @Override
     public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-        // Dark background overlay
-        guiGraphics.fillGradient(0, 0, this.width, this.height, 0xFF1a1a1a, 0xFF2d2d2d);
+        // Dark background overlay (translucent)
+        guiGraphics.fillGradient(0, 0, this.width, this.height, 0xCC1a1a1a, 0xCC2d2d2d);
     }
 
     @Override

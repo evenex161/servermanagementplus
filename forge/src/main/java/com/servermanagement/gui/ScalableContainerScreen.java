@@ -100,17 +100,30 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
         g.fill(x0, y0, x1, y1, color);
     }
 
+    /**
+     * Override in subclasses to suppress the dim/blur/frosted-panel overlays
+     * when the screen occupies fullscreen mode (e.g. the node template editor).
+     * When true the raw world renders behind the GUI with no darkening.
+     */
+    protected boolean isFullscreenMode() { return false; }
+
     @Override
     public final void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        boolean fs = isFullscreenMode();
+
         // 1. Render ONLY the dimmed world overlay at full screen size.
-        //    DO NOT call renderBackground() — AbstractContainerScreen overrides it
-        //    to also invoke renderBg(), which would paint an unscaled "ghost" panel
-        //    at design-space (leftPos, topPos) before our pose scale is applied.
+        //    Skip in fullscreen — we want the raw world to show through.
         if (this.minecraft != null && this.minecraft.level == null) {
             this.renderPanorama(g, partialTick);
         }
-        this.renderBlurredBackground(partialTick);
-        this.renderMenuBackground(g);
+        if (!fs) {
+            this.renderBlurredBackground(partialTick);
+            this.renderMenuBackground(g);
+        } else {
+            // Semi-transparent dark overlay — keeps the world visible
+            // behind the projected dots while maintaining node readability.
+            g.fill(0, 0, this.width, this.height, 0xAA000000);
+        }
 
         // 2. Suppress every further renderBackground call (the one inside
         //    Screen.render, plus any explicit calls inside subclasses'
@@ -124,10 +137,11 @@ public abstract class ScalableContainerScreen<T extends AbstractContainerMenu>
             g.pose().scale(guiScale, guiScale, 1f);
             g.pose().translate(-cx, -cy, 0f);
 
-            // 3. Paint a uniform translucent "frosted panel" backdrop behind
-            //    every screen's content. The blurred world stays visible, but
-            //    text rendered on top now has guaranteed contrast.
-            drawFrostedPanel(g);
+            // 3. Paint a uniform translucent "frosted panel" backdrop.
+            //    Skip entirely in fullscreen so the world is fully visible.
+            if (!fs) {
+                drawFrostedPanel(g);
+            }
 
             int dmx = (int) inverseMouseX(mouseX);
             int dmy = (int) inverseMouseY(mouseY);
