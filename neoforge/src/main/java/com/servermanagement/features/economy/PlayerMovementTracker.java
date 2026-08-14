@@ -19,88 +19,48 @@ import java.util.concurrent.ConcurrentHashMap;
 @EventBusSubscriber(modid = ServerManagementMod.MOD_ID)
 public class PlayerMovementTracker {
     private static final Map<UUID, Vec3> lastPositions = new ConcurrentHashMap<>();
-    private static final Map<UUID, Integer> accumulatedDistance = new ConcurrentHashMap<>();
-    private static int tickCounter = 0;
-    
-    // Check movement every 40 ticks (2 seconds) to reduce performance impact
-    private static final int CHECK_INTERVAL = 40;
-    // Save every 50 blocks instead of 10 to drastically reduce I/O
-    private static final int SAVE_THRESHOLD = 50;
+    private static final Map<UUID, Double> accumulatedDistance = new ConcurrentHashMap<>();
+    private static final double SAVE_THRESHOLD = 15.0;
 
     @SubscribeEvent
     public static void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-            return;
-        }
+        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) return;
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
-        if (!(event.getEntity() instanceof ServerPlayer player)) {
-            return;
-        }
-
-        // Only check every CHECK_INTERVAL ticks
-        tickCounter++;
-        if (tickCounter < CHECK_INTERVAL) {
-            return;
-        }
-        tickCounter = 0;
+        if (player.tickCount % 20 != 0) return;
 
         UUID playerUUID = player.getUUID();
         Vec3 currentPos = player.position();
         
-        // Get last position
         Vec3 lastPos = lastPositions.get(playerUUID);
         if (lastPos != null) {
-            // Calculate horizontal distance traveled (ignore vertical)
             double dx = currentPos.x - lastPos.x;
             double dz = currentPos.z - lastPos.z;
             double distance = Math.sqrt(dx * dx + dz * dz);
             
-            // Only count if player actually moved (not just standing/looking around)
             if (distance > 0.1) {
-                int distanceBlocks = (int) distance;
-                
-                // Accumulate distance
-                int totalDistance = accumulatedDistance.getOrDefault(playerUUID, 0) + distanceBlocks;
+                double totalDistance = accumulatedDistance.getOrDefault(playerUUID, 0.0) + distance;
                 accumulatedDistance.put(playerUUID, totalDistance);
                 
-                // Update progress every SAVE_THRESHOLD blocks to reduce saves
                 if (totalDistance >= SAVE_THRESHOLD) {
                     EconomyManager manager = EconomyManager.getInstance();
-                    
-                    // Check and refresh tasks if needed
                     manager.getDailyTasksManager().checkAndRefreshTasks(playerUUID);
                     
-                    // Add progress
-                    String completedTask = manager.getDailyTasksManager()
-                        .addProgress(playerUUID, TaskType.TRAVEL_DISTANCE, totalDistance);
+                    int distanceBlocks = (int) totalDistance;
+                    String completedTask = manager.getDailyTasksManager().addProgress(playerUUID, TaskType.TRAVEL_DISTANCE, distanceBlocks);
+                    accumulatedDistance.put(playerUUID, totalDistance - distanceBlocks);
                     
-                    // Reset accumulator
-                    accumulatedDistance.put(playerUUID, 0);
-                    
-                    // Send notification if task completed
                     if (completedTask != null) {
-                        net.minecraft.server.level.ServerPlayer serverPlayer = 
-                            manager.getServer().getPlayerList().getPlayer(playerUUID);
-                        if (serverPlayer != null) {
-                            com.servermanagement.features.economy.notifications.NotificationManager
-                                .sendTaskCompletedNotification(serverPlayer, completedTask);
-                        }
-                        // Only save when task completes
+                        net.minecraft.server.level.ServerPlayer serverPlayer = manager.getServer().getPlayerList().getPlayer(playerUUID);
+                        if (serverPlayer != null) com.servermanagement.features.economy.notifications.NotificationManager.sendTaskCompletedNotification(serverPlayer, completedTask);
                         manager.save();
                     }
-                    // Push live sync so an open DailyTasks GUI sees the
-                    // accumulated travel progress without a reopen.
-                    net.minecraft.server.level.ServerPlayer sp =
-                        manager.getServer().getPlayerList().getPlayer(playerUUID);
-                    if (sp != null) {
-                        DailyTaskProgressListener.pushSyncDailyTasks(sp);
-                    }
-                    // No save if task not completed - data will be saved eventually
+                    
+                    net.minecraft.server.level.ServerPlayer sp = manager.getServer().getPlayerList().getPlayer(playerUUID);
+                    if (sp != null) DailyTaskProgressListener.pushSyncDailyTasks(sp);
                 }
             }
         }
-        
-        // Update last position
         lastPositions.put(playerUUID, currentPos);
     }
 

@@ -32,24 +32,24 @@ public class DailyTaskTemplateManager {
     private void initializeDefaultTemplates() {
         if (templates.isEmpty()) {
             // Default task templates
-            templates.add(new DailyTaskTemplate(TaskType.BREAK_BLOCKS, 100, 75.0, null));
-            templates.add(new DailyTaskTemplate(TaskType.BREAK_BLOCKS, 250, 150.0, null));
-            templates.add(new DailyTaskTemplate(TaskType.BREAK_BLOCKS, 500, 250.0, null));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.BREAK_BLOCKS, 100, "")), 75.0, new java.util.ArrayList<>()));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.BREAK_BLOCKS, 250, "")), 150.0, new java.util.ArrayList<>()));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.BREAK_BLOCKS, 500, "")), 250.0, new java.util.ArrayList<>()));
             
-            templates.add(new DailyTaskTemplate(TaskType.KILL_MOBS, 20, 100.0, null));
-            templates.add(new DailyTaskTemplate(TaskType.KILL_MOBS, 50, 200.0, null));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.KILL_MOBS, 20, "")), 100.0, new java.util.ArrayList<>()));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.KILL_MOBS, 50, "")), 200.0, new java.util.ArrayList<>()));
             
-            templates.add(new DailyTaskTemplate(TaskType.TRAVEL_DISTANCE, 1000, 80.0, null));
-            templates.add(new DailyTaskTemplate(TaskType.TRAVEL_DISTANCE, 5000, 200.0, null));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.TRAVEL_DISTANCE, 1000, "")), 80.0, new java.util.ArrayList<>()));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.TRAVEL_DISTANCE, 5000, "")), 200.0, new java.util.ArrayList<>()));
             
-            templates.add(new DailyTaskTemplate(TaskType.CRAFT_ITEMS, 50, 90.0, null));
-            templates.add(new DailyTaskTemplate(TaskType.CRAFT_ITEMS, 100, 175.0, null));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.CRAFT_ITEMS, 50, "")), 90.0, new java.util.ArrayList<>()));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.CRAFT_ITEMS, 100, "")), 175.0, new java.util.ArrayList<>()));
             
-            templates.add(new DailyTaskTemplate(TaskType.MINE_ORES, 30, 120.0, null));
-            templates.add(new DailyTaskTemplate(TaskType.MINE_ORES, 75, 250.0, null));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.MINE_ORES, 30, "")), 120.0, new java.util.ArrayList<>()));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.MINE_ORES, 75, "")), 250.0, new java.util.ArrayList<>()));
             
-            templates.add(new DailyTaskTemplate(TaskType.TRADE_VILLAGERS, 10, 100.0, null));
-            templates.add(new DailyTaskTemplate(TaskType.TRADE_VILLAGERS, 25, 225.0, null));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.TRADE_VILLAGERS, 10, "")), 100.0, new java.util.ArrayList<>()));
+            templates.add(new DailyTaskTemplate(java.util.Collections.singletonList(new TaskComponent(TaskType.TRADE_VILLAGERS, 25, "")), 225.0, new java.util.ArrayList<>()));
         }
     }
 
@@ -149,7 +149,7 @@ public class DailyTaskTemplateManager {
     public List<DailyTaskTemplate> getEnabledTemplates() {
         List<DailyTaskTemplate> result = new ArrayList<>();
         for (DailyTaskTemplate t : templates) {
-            if (t.isEnabled() && t.isValid()) {
+            if (t.isEnabled() ) {
                 result.add(t);
             }
         }

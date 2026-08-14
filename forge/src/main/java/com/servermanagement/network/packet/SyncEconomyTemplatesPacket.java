@@ -37,16 +37,24 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
 
     private static List<TemplateData> readTemplates(FriendlyByteBuf buf) {
         int count = buf.readInt();
-        List<TemplateData> list = new ArrayList<>(count);
+        List<TemplateData> list = new java.util.ArrayList<>(count);
         for (int i = 0; i < count; i++) {
+            String id = buf.readUtf(64);
+            int compCount = buf.readInt();
+            java.util.List<com.servermanagement.features.economy.TaskComponent> components = new java.util.ArrayList<>();
+            for(int j = 0; j < compCount; j++) {
+                components.add(new com.servermanagement.features.economy.TaskComponent(
+                    com.servermanagement.features.economy.TaskType.values()[buf.readInt()],
+                    buf.readInt(),
+                    buf.readUtf(100)
+                ));
+            }
             list.add(new TemplateData(
-                buf.readUtf(64),
-                buf.readInt(),
-                buf.readUtf(100),
-                buf.readInt(),
+                id,
+                components,
                 buf.readInt(),
                 buf.readBoolean(),
-                ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf)
+                net.minecraft.world.item.ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf)
             ));
         }
         return list;
@@ -57,9 +65,12 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         buf.writeInt(templates.size());
         for (TemplateData t : templates) {
             buf.writeUtf(t.id, 64);
-            buf.writeInt(t.taskTypeOrdinal);
-            buf.writeUtf(t.description, 100);
-            buf.writeInt(t.goal);
+            buf.writeInt(t.components.size());
+            for (com.servermanagement.features.economy.TaskComponent comp : t.components) {
+                buf.writeInt(comp.getType().ordinal());
+                buf.writeInt(comp.getTargetAmount());
+                buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 100);
+            }
             buf.writeInt(t.rewardAmount);
             buf.writeBoolean(t.enabled);
             ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, t.rewardItems);
@@ -92,9 +103,7 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         for (DailyTaskTemplate t : allTemplates) {
             data.add(new TemplateData(
                 t.getId(),
-                t.getType().ordinal(),
-                t.getDescription(),
-                t.getTargetAmount(),
+                t.getComponents(),
                 (int) t.getRewardAmount(),
                 t.isEnabled(),
                 t.getRewardItems()
@@ -117,19 +126,13 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
      */
     public record TemplateData(
         String id,
-        int taskTypeOrdinal,
-        String description,
-        int goal,
+        List<com.servermanagement.features.economy.TaskComponent> components,
         int rewardAmount,
         boolean enabled,
         List<ItemStack> rewardItems
     ) {
-        public TaskType getTaskType() {
-            TaskType[] types = TaskType.values();
-            if (taskTypeOrdinal >= 0 && taskTypeOrdinal < types.length) {
-                return types[taskTypeOrdinal];
-            }
-            return TaskType.BREAK_BLOCKS;
+        public com.servermanagement.features.economy.TaskType getTaskType() {
+            return components != null && !components.isEmpty() ? components.get(0).getType() : com.servermanagement.features.economy.TaskType.BREAK_BLOCKS;
         }
     }
 }

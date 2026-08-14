@@ -1,119 +1,146 @@
 package com.servermanagement.features.economy;
 
 import net.minecraft.world.item.ItemStack;
+import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * Represents a single daily task with progress tracking
- */
 public class DailyTask {
-    private final TaskType type;
-    private final int goal;
-    private int progress;
-    private boolean claimed;
-    private final int reward;
-    private ItemStack rewardItem; // Legacy field for Gson backward compatibility
-    private List<ItemStack> rewardItems = new ArrayList<>(); // Optional item rewards
-    private final String customDescription; // Optional custom description
-
-    public DailyTask(TaskType type, int goal) {
-        this.type = type;
-        this.goal = goal;
-        this.progress = 0;
-        this.claimed = false;
-        this.reward = type.getReward(goal);
-        this.customDescription = null;
-        this.rewardItems = new ArrayList<>();
-    }
-
-    public DailyTask(TaskType type, int goal, double reward, String description) {
-        this.type = type;
-        this.goal = goal;
-        this.progress = 0;
-        this.claimed = false;
-        this.reward = (int) reward;
-        this.customDescription = description;
-        this.rewardItems = new ArrayList<>();
-    }
-
+    private String id;
+    private List<TaskComponent> components = new ArrayList<>();
+    private int currentStep = 0;
+    private int progress = 0;
     
+    // Legacy fields for migration
+    private TaskType type;
+    private int goal;
+    private String customDescription;
+    
+    private double rewardAmount;
+    private List<ItemStack> rewardItems = new ArrayList<>();
+    private boolean isClaimed;
+    private long completedTime;
+    
+    public DailyTask() {}
+    
+    public DailyTask(String templateId, List<TaskComponent> components, double rewardAmount, List<ItemStack> rewardItems) {
+        this.id = UUID.randomUUID().toString() + "-" + templateId;
+        this.components = components != null ? components : new ArrayList<>();
+        this.rewardAmount = rewardAmount;
+        this.rewardItems = rewardItems != null ? rewardItems : new ArrayList<>();
+        this.currentStep = 0;
+        this.progress = 0;
+        this.isClaimed = false;
+        this.completedTime = 0;
+    }
+    
+    public DailyTask(TaskType type, int goal) {
+        this.id = UUID.randomUUID().toString();
+        this.components = new ArrayList<>();
+        this.components.add(new TaskComponent(type, goal, ""));
+        this.rewardAmount = goal * 10.0;
+        this.rewardItems = new ArrayList<>();
+        this.currentStep = 0;
+        this.progress = 0;
+        this.isClaimed = false;
+        this.completedTime = 0;
+    }
+
     public void migrateLegacyData() {
+        if (components == null) {
+            components = new ArrayList<>();
+        }
+        if (components.isEmpty() && type != null) {
+            components.add(new TaskComponent(type, goal, customDescription));
+            type = null;
+            customDescription = null;
+        }
         if (rewardItems == null) {
             rewardItems = new ArrayList<>();
         }
-        if (rewardItem != null && !rewardItem.isEmpty()) {
-            rewardItems.add(rewardItem.copy());
-            rewardItem = null; // Clear it so it doesn't get saved again if we exclude nulls, or just leave it empty
+    }
+
+    public String getId() { return id; }
+    
+    public List<TaskComponent> getComponents() { return components != null ? components : new ArrayList<>(); }
+    
+    public TaskComponent getCurrentComponent() {
+        if (components != null && currentStep >= 0 && currentStep < components.size()) {
+            return components.get(currentStep);
         }
+        return null; // All done or empty
     }
-
-    public TaskType getType() {
-        return type;
-    }
-
+    
+    public int getCurrentStep() { return currentStep; }
+    
+    // For StatsBarOverlay UI progress bounds
+    public int getProgress() { return progress; }
     public int getGoal() {
-        return goal;
+        TaskComponent curr = getCurrentComponent();
+        return curr != null ? curr.getTargetAmount() : 1;
+    }
+    
+    // Legacy mapping
+    public TaskType getType() { 
+        TaskComponent curr = getCurrentComponent();
+        return curr != null ? curr.getType() : TaskType.BREAK_BLOCKS;
+    }
+    
+    public String getDescription() {
+        TaskComponent curr = getCurrentComponent();
+        if (curr == null) return "Completed";
+        if (curr.getCustomDescription() != null && !curr.getCustomDescription().isEmpty()) {
+            return curr.getCustomDescription();
+        }
+        return curr.getType().getDisplayName();
+    }
+    
+    public String getFullDescription() {
+        if (components == null || components.isEmpty()) return "Unknown Task";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < components.size(); i++) {
+            TaskComponent c = components.get(i);
+            String text = c.getCustomDescription() != null && !c.getCustomDescription().isEmpty() ? c.getCustomDescription() : c.getType().getDisplayName();
+            if (i < currentStep) sb.append("§m").append(text).append("§r, ");
+            else if (i == currentStep) sb.append("§e").append(text).append("§r, ");
+            else sb.append("§7").append(text).append("§r, ");
+        }
+        if (sb.length() > 2) sb.setLength(sb.length() - 2);
+        return sb.toString();
     }
 
-    public int getProgress() {
-        return progress;
-    }
-
-    public void setProgress(int progress) {
-        this.progress = Math.min(progress, goal);
-    }
-
-    public void addProgress(int amount) {
-        this.progress = Math.min(this.progress + amount, goal);
-    }
+    public double getRewardAmount() { return rewardAmount; }
+    public List<ItemStack> getRewardItems() { return rewardItems; }
+    public void setRewardItems(List<ItemStack> rewardItems) { this.rewardItems = rewardItems != null ? rewardItems : new ArrayList<>(); }
+    public void setRewardAmount(double rewardAmount) { this.rewardAmount = rewardAmount; }
 
     public boolean isCompleted() {
-        return progress >= goal;
+        return currentStep >= components.size();
     }
 
-    public boolean isClaimed() {
-        return claimed;
-    }
+    public boolean isClaimed() { return isClaimed; }
+    public void setClaimed(boolean claimed) { this.isClaimed = claimed; }
 
-    public void setClaimed(boolean claimed) {
-        this.claimed = claimed;
-    }
-
-    public int getReward() {
-        return reward;
-    }
-    
-    public List<ItemStack> getRewardItems() {
-        return rewardItems != null ? rewardItems : new ArrayList<>();
-    }
-    
-    public void setRewardItems(List<ItemStack> rewardItems) {
-        this.rewardItems = rewardItems != null ? new ArrayList<>(rewardItems) : new ArrayList<>();
-    }
-
-    /**
-     * Get progress percentage (0-100)
-     */
-    public int getProgressPercentage() {
-        if (goal == 0) return 100;
-        return Math.min(100, (progress * 100) / goal);
-    }
-
-    /**
-     * Get formatted progress string (e.g., "15/20")
-     */
-    public String getProgressString() {
-        return progress + "/" + goal;
-    }
-
-    /**
-     * Get description for this task
-     */
-    public String getDescription() {
-        if (customDescription != null && !customDescription.isEmpty()) {
-            return customDescription;
+    public void addProgress(int amount) {
+        if (isCompleted() || isClaimed()) return;
+        
+        TaskComponent current = getCurrentComponent();
+        if (current == null) return;
+        
+        this.progress += amount;
+        if (this.progress >= current.getTargetAmount()) {
+            // Step finished
+            this.currentStep++;
+            this.progress = 0; // Reset for next step
+            
+            if (isCompleted()) {
+                this.completedTime = System.currentTimeMillis();
+            }
         }
-        return type.getDescription(goal);
     }
+    
+    // Used by networking
+    public void setCurrentStep(int step) { this.currentStep = step; }
+    public void setProgress(int progress) { this.progress = progress; }
+    public void forceSetCompleted() { this.currentStep = this.components.size(); }
 }

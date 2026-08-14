@@ -4,86 +4,74 @@ import com.servermanagement.features.economy.DailyTaskTemplate;
 import com.servermanagement.features.economy.DailyTaskTemplateManager;
 import com.servermanagement.features.economy.EconomyManager;
 import com.servermanagement.features.economy.TaskType;
-import com.servermanagement.network.ModNetworking;
+import com.servermanagement.features.economy.TaskComponent;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.network.CustomPayloadEvent;
-
-import java.util.function.Supplier;
 import java.util.List;
+import java.util.ArrayList;
 
-/**
- * Client-to-server packet for creating or updating a daily task template
- */
-public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String description,
-                                  int goal, int rewardAmount, List<ItemStack> rewardItems) implements IPacket {
-
-    public SaveTemplatePacket {
-        templateId = templateId != null ? templateId : "";
-        rewardItems = rewardItems != null ? rewardItems : new java.util.ArrayList<>();
-    }
-
-    public SaveTemplatePacket(String templateId, TaskType taskType, String description, int goal, int rewardAmount, List<ItemStack> rewardItems) {
-        this(templateId, taskType.ordinal(), description, goal, rewardAmount, rewardItems);
-    }
+public record SaveTemplatePacket(String templateId, List<TaskComponent> components, int rewardAmount, List<ItemStack> rewardItems) implements IPacket {
 
     public SaveTemplatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(),
-             ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+        this(buf.readUtf(64), readComponents(buf), buf.readInt(), ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf) buf));
+    }
+    
+    private static List<TaskComponent> readComponents(FriendlyByteBuf buf) {
+        int count = buf.readInt();
+        List<TaskComponent> list = new ArrayList<>();
+        for(int i = 0; i < count; i++) {
+            list.add(new TaskComponent(TaskType.values()[buf.readInt()], buf.readInt(), buf.readUtf(100)));
+        }
+        return list;
     }
 
-    @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(templateId, 64);
-        buf.writeInt(taskTypeOrdinal);
-        buf.writeUtf(description, 100);
-        buf.writeInt(goal);
+        buf.writeUtf(templateId != null ? templateId : "", 64);
+        buf.writeInt(components.size());
+        for (TaskComponent comp : components) {
+            buf.writeInt(comp.getType().ordinal());
+            buf.writeInt(comp.getTargetAmount());
+            buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 100);
+        }
         buf.writeInt(rewardAmount);
         ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf) buf, rewardItems);
     }
 
     @Override
-    public void handle(CustomPayloadEvent.Context ctx) {
-        ctx.enqueueWork(() -> {
-            ServerPlayer player = ctx.getSender();
+    public void handle(net.minecraftforge.event.network.CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> {
+            net.minecraft.server.level.ServerPlayer player = context.getSender();
             if (player == null || !player.hasPermissions(2)) return;
 
             var server = player.getServer();
             if (server == null) return;
 
-            TaskType[] types = TaskType.values();
-            if (taskTypeOrdinal < 0 || taskTypeOrdinal >= types.length) return;
-            TaskType taskType = types[taskTypeOrdinal];
-
-            // Validate bounds on integer fields
-            int safeGoal = Math.max(1, Math.min(goal, 10000));
             int safeRewardAmount = Math.max(0, Math.min(rewardAmount, 100000));
+            
+            List<TaskComponent> safeComponents = new ArrayList<>();
+            for(TaskComponent c : components) {
+                if (safeComponents.size() >= 10) break;
+                safeComponents.add(new TaskComponent(c.getType(), Math.max(1, Math.min(c.getTargetAmount(), 10000)), c.getCustomDescription()));
+            }
 
             var economyManager = EconomyManager.getInstance(server);
             DailyTaskTemplateManager templateManager = economyManager.getTemplateManager();
 
-            if (templateId.isEmpty()) {
-                // Create new
-                DailyTaskTemplate template = new DailyTaskTemplate(taskType, safeGoal, safeRewardAmount, rewardItems, description);
+            if (templateId == null || templateId.isEmpty()) {
+                DailyTaskTemplate template = new DailyTaskTemplate(safeComponents, safeRewardAmount, rewardItems);
                 templateManager.addTemplate(template);
             } else {
-                // Update existing
                 DailyTaskTemplate existing = templateManager.getTemplate(templateId);
                 if (existing != null) {
-                    existing.setType(taskType);
-                    existing.setCustomDescription(description);
-                    existing.setTargetAmount(safeGoal);
+                    existing.setComponents(safeComponents);
                     existing.setRewardAmount(safeRewardAmount);
                     existing.setRewardItems(rewardItems);
                 }
             }
 
             templateManager.save(server);
-
-            // Sync updated list back to client
             SyncEconomyTemplatesPacket.syncToPlayer(player, server);
         });
-        ctx.setPacketHandled(true);
+        context.setPacketHandled(true);
     }
 }

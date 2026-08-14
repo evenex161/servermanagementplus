@@ -213,7 +213,7 @@ public class DailyTasksManager {
         
         if (task != null && task.isCompleted() && !task.isClaimed()) {
             task.setClaimed(true);
-            return task.getReward();
+            return (int) task.getRewardAmount();
         }
         
         return 0;

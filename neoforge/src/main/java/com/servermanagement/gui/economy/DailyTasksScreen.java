@@ -109,7 +109,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
                 final int taskIndex = i;
                 this.addRenderableWidget(new ModernButton(
                     centerX + this.imageWidth - 100, taskY + taskCardHeight - 27, 80, 20,
-                    Component.literal("Claim $" + task.getReward()),
+                    Component.literal("Claim $" + (int)task.getRewardAmount()),
                     button -> claimReward(taskIndex),
                     ModernButton.ButtonStyle.PRIMARY
                 ));
@@ -162,7 +162,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         isClaiming[taskIndex] = true;
         claimAnimations[taskIndex] = 0f;
         celebrationTimer = CELEBRATION_DURATION;
-        celebrationMessage = "§6+$" + task.getReward() + " Claimed!";
+        celebrationMessage = "§6+$" + (int)task.getRewardAmount() + " Claimed!";
         
         // Mark as claimed locally for immediate visual feedback
         task.setClaimed(true);
@@ -180,7 +180,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         // Update animations
         for (int i = 0; i < tasks.size() && i < 3; i++) {
             DailyTask task = tasks.get(i);
-            float targetProgress = task.getProgressPercentage() / 100f;
+            float targetProgress = Math.min(100, (int)((task.getProgress() / (float)Math.max(1, task.getGoal())) * 100)) / 100f;
             
             // Smooth progress bar animation
             if (progressAnimations[i] < targetProgress) {
@@ -379,17 +379,17 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
             x + 25, (int) (y + 5 + bounceOffset), 0xFFFFFF, false);
         
         // Task description
-        String description = task.getDescription();
+        String description = task.getFullDescription();
         guiGraphics.drawString(this.font, Component.literal(description),
             x + 45, y + 5, 0xCCCCCC, false);
         
         // Progress text
-        String progressText = task.getProgressString();
+        String progressText = (task.getProgress() + "/" + task.getGoal());
         guiGraphics.drawString(this.font, Component.literal(progressText),
             x, y + 22, 0xAAAAAA, false);
         
         // Progress percentage with animation
-        int percentage = task.getProgressPercentage();
+        int percentage = Math.min(100, (int)((task.getProgress() / (float)Math.max(1, task.getGoal())) * 100));
         float animatedPercentage = Mth.lerp(partialTick, progressAnimations[index] * 100, 
             Math.min(progressAnimations[index] * 100 + PROGRESS_ANIMATION_SPEED * 100, percentage));
         
@@ -442,7 +442,7 @@ public class DailyTasksScreen extends ScalableContainerScreen<DailyTasksMenu> {
         guiGraphics.fill(barX + barWidth - 1, barY, barX + barWidth, barY + barHeight, 0xFF555555);
         
         // Reward display with shine effect
-        String rewardText = "Reward: $" + task.getReward();
+        String rewardText = "Reward: $" + (int)task.getRewardAmount();
         int rewardColor = 0x55FF55;
         
         if (isClaiming[index]) {

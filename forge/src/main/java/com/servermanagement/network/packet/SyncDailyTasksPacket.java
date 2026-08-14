@@ -22,17 +22,26 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
 
     private static List<DailyTask> readTasks(FriendlyByteBuf buf) {
         int taskCount = buf.readInt();
-        List<DailyTask> tasks = new ArrayList<>();
+        List<DailyTask> tasks = new java.util.ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            TaskType type = TaskType.values()[buf.readInt()];
-            int goal = buf.readInt();
+            String id = buf.readUtf(64);
+            int compCount = buf.readInt();
+            List<com.servermanagement.features.economy.TaskComponent> components = new java.util.ArrayList<>();
+            for (int j = 0; j < compCount; j++) {
+                components.add(new com.servermanagement.features.economy.TaskComponent(
+                    com.servermanagement.features.economy.TaskType.values()[buf.readInt()],
+                    buf.readInt(),
+                    buf.readUtf(100)
+                ));
+            }
+            int currentStep = buf.readInt();
             int progress = buf.readInt();
             boolean claimed = buf.readBoolean();
-            int reward = buf.readInt();
-            String description = buf.readUtf(256);
-            List<ItemStack> rewardItems = ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf)buf);
-            DailyTask task = new DailyTask(type, goal, reward, description);
-            task.setRewardItems(rewardItems);
+            double reward = buf.readDouble();
+            List<net.minecraft.world.item.ItemStack> rewardItems = net.minecraft.world.item.ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode((net.minecraft.network.RegistryFriendlyByteBuf)buf);
+            
+            DailyTask task = new DailyTask(id, components, reward, rewardItems);
+            task.setCurrentStep(currentStep);
             task.setProgress(progress);
             task.setClaimed(claimed);
             tasks.add(task);
@@ -45,13 +54,18 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
         buf.writeInt(tasks.size());
         
         for (DailyTask task : tasks) {
-            buf.writeInt(task.getType().ordinal());
-            buf.writeInt(task.getGoal());
+            buf.writeUtf(task.getId() != null ? task.getId() : "", 64);
+            buf.writeInt(task.getComponents().size());
+            for (com.servermanagement.features.economy.TaskComponent comp : task.getComponents()) {
+                buf.writeInt(comp.getType().ordinal());
+                buf.writeInt(comp.getTargetAmount());
+                buf.writeUtf(comp.getCustomDescription() != null ? comp.getCustomDescription() : "", 100);
+            }
+            buf.writeInt(task.getCurrentStep());
             buf.writeInt(task.getProgress());
             buf.writeBoolean(task.isClaimed());
-            buf.writeInt(task.getReward());
-            buf.writeUtf(task.getDescription(), 256);
-            ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf)buf, task.getRewardItems());
+            buf.writeDouble(task.getRewardAmount());
+            net.minecraft.world.item.ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode((net.minecraft.network.RegistryFriendlyByteBuf)buf, task.getRewardItems());
         }
         
         buf.writeLong(resetTime);

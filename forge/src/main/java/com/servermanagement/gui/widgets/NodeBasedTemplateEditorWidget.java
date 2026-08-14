@@ -1,7 +1,7 @@
 package com.servermanagement.gui.widgets;
 
+import com.servermanagement.features.economy.TaskComponent;
 import com.servermanagement.features.economy.TaskType;
-import com.servermanagement.gui.widgets.DropdownWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -9,28 +9,19 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
-/**
- * Node-based visual template editor widget for the Economy Daily Task template system.
- * Inspired by TIA Portal / Unreal Blueprint node editors.
- * 
- * Layout: [Task Type Node] ---> [Task Details Node] ---> [Reward Node]
- * 
- * Each node is a dark card with gold title bar, input/output connector pins on edges,
- * and interactive content inside. Nodes are connected by rendered bezier-approximation lines.
- */
 public class NodeBasedTemplateEditorWidget extends AbstractWidget {
 
     // Node dimensions
     private static final int NODE_WIDTH = 160;
     private static final int NODE_HEADER_HEIGHT = 22;
-    private static final int NODE_MIN_HEIGHT = 120;
+    private static final int NODE_MIN_HEIGHT = 140;
     private static final int CONNECTOR_RADIUS = 5;
-    private static final int NODE_GAP = 50;
     
     // Colors
     private static final int NODE_BG = 0xFF1A1A2E;
@@ -42,222 +33,177 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
     private static final int CONNECTOR_CONNECTED = 0xFF4A9EFF;
     private static final int CONNECTION_LINE = 0xFF4A9EFF;
     private static final int LABEL_COLOR = 0xFFAAAAAA;
-    private static final int TEXT_COLOR = 0xFFFFFFFF;
     private static final int GRID_DOT = 0xFF222233;
     
-    // State
     private final Font font;
-    private DropdownWidget taskTypeDropdown;
-    private EditBox descriptionBox;
-    private EditBox goalBox;
-    private EditBox rewardBox;
-    
-    // Connection state
-    private boolean node1Connected = true; // Task Type → Details auto-connected
-    private boolean node2Connected = true; // Details → Reward auto-connected
-    private int draggingFromNode = -1; // -1 = none, 0/1/2 = node index
-    private boolean draggingFromOutput = false;
-    private double dragMouseX, dragMouseY;
-    
-    // Connector positions (computed during render)
-    private int[] node1OutputX = new int[1], node1OutputY = new int[1];
-    private int[] node2InputX = new int[1], node2InputY = new int[1];
-    private int[] node2OutputX = new int[1], node2OutputY = new int[1];
-    private int[] node3InputX = new int[1], node3InputY = new int[1];
-    
-    // Hover tracking
-    private int hoveredConnector = -1; // 0=n1out, 1=n2in, 2=n2out, 3=n3in
-    
-    // Pulse animation
     private int tickCount = 0;
     
-    // Node positions
-    private int node1X, node1Y;
-    private int node2X, node2Y;
-    private int node3X, node3Y;
+    // Core Graph Data
+    private List<Node> nodes = new ArrayList<>();
+    private List<Connection> connections = new ArrayList<>();
+    
+    // Hardcoded Node limits
+    private static final int MAX_TASK_NODES = 5;
+    private RootNode rootNode;
+    private RewardNode rewardNode;
+    
+    // Drag/Drop Interaction State
+    private Node draggingFromNode = null;
+    private boolean draggingFromOutput = false; // true if output pin, false if input pin
+    private double dragMouseX, dragMouseY;
+    private Pin hoveredPin = null;
+    private Connection previewInsertion = null;
 
     public NodeBasedTemplateEditorWidget(int x, int y, int width, int height) {
         super(x, y, width, height, Component.literal("Node Editor"));
         this.font = Minecraft.getInstance().font;
         
-        calculateNodePositions();
-        initializeWidgets();
-    }
-    
-    private void calculateNodePositions() {
-        int totalWidth = NODE_WIDTH * 3 + NODE_GAP * 2;
-        int startX = getX() + (getWidth() - totalWidth) / 2;
-        int startY = getY() + 15;
+        // Initialize Base Nodes
+        rootNode = new RootNode(x + 20, y + height / 2 - 40);
+        rewardNode = new RewardNode(x + width - 180, y + height / 2 - 40);
         
-        node1X = startX;
-        node1Y = startY;
-        node2X = startX + NODE_WIDTH + NODE_GAP;
-        node2Y = startY;
-        node3X = startX + (NODE_WIDTH + NODE_GAP) * 2;
-        node3Y = startY;
+        nodes.add(rootNode);
+        nodes.add(rewardNode);
     }
     
-    private void initializeWidgets() {
-        // Task Type dropdown (inside node 1)
-        List<String> taskTypeNames = new ArrayList<>();
-        for (TaskType type : TaskType.values()) {
-            taskTypeNames.add(type.getDisplayName());
-        }
-        taskTypeDropdown = new DropdownWidget(
-            node1X + 8, node1Y + NODE_HEADER_HEIGHT + 30,
-            NODE_WIDTH - 16, 18,
-            Component.literal("Select Type...")
-        );
-        taskTypeDropdown.setOptions(taskTypeNames);
-        taskTypeDropdown.setOnSelectionChanged(idx -> {
-            // Auto-update the goal hint based on task type
-            if (goalBox != null) {
-                TaskType selectedType = TaskType.values()[idx];
-                goalBox.setHint(Component.literal(selectedType.getDisplayName() + " amount..."));
+    private void clearOtherFocus(Node activeNode) {
+        for (Node n : nodes) {
+            if (n != activeNode) {
+                n.clearFocus();
             }
-        });
-        
-        // Description box (inside node 2)
-        descriptionBox = new EditBox(font,
-            node2X + 8, node2Y + NODE_HEADER_HEIGHT + 30,
-            NODE_WIDTH - 16, 16,
-            Component.literal("Description")
-        );
-        descriptionBox.setMaxLength(100);
-        descriptionBox.setHint(Component.literal("Custom description..."));
-        descriptionBox.setBordered(true);
-        
-        // Goal box (inside node 2)
-        goalBox = new EditBox(font,
-            node2X + 8, node2Y + NODE_HEADER_HEIGHT + 68,
-            NODE_WIDTH - 16, 16,
-            Component.literal("Goal")
-        );
-        goalBox.setMaxLength(10);
-        goalBox.setHint(Component.literal("Target amount..."));
-        goalBox.setFilter(s -> s.matches("\\d*"));
-        goalBox.setBordered(true);
-        
-        // Reward box (inside node 3)
-        rewardBox = new EditBox(font,
-            node3X + 8, node3Y + NODE_HEADER_HEIGHT + 30,
-            NODE_WIDTH - 16, 16,
-            Component.literal("Reward")
-        );
-        rewardBox.setMaxLength(10);
-        rewardBox.setHint(Component.literal("Cash reward ($)..."));
-        rewardBox.setFilter(s -> s.matches("\\d*"));
-        rewardBox.setBordered(true);
+        }
     }
-    
+
     public void tick() {
         tickCount++;
     }
-
-    // --- Data Getters for save ---
     
-    public TaskType getSelectedTaskType() {
-        int idx = taskTypeDropdown.getSelectedIndex();
-        TaskType[] values = TaskType.values();
-        return (idx >= 0 && idx < values.length) ? values[idx] : TaskType.BREAK_BLOCKS;
-    }
+    // --- Data Management for Save/Load ---
     
-    public String getDescription() {
-        return descriptionBox != null ? descriptionBox.getValue() : "";
-    }
-    
-    public int getGoal() {
-        try {
-            return goalBox != null ? Integer.parseInt(goalBox.getValue()) : 0;
-        } catch (NumberFormatException e) {
-            return 0;
+    public List<TaskComponent> getComponents() {
+        List<TaskComponent> components = new ArrayList<>();
+        
+        // Trace graph starting from root
+        Node current = getConnectedOutput(rootNode);
+        int infiniteLoopGuard = 0;
+        while (current != null && current instanceof TaskNode && infiniteLoopGuard < MAX_TASK_NODES) {
+            TaskNode tn = (TaskNode) current;
+            components.add(new TaskComponent(tn.getSelectedTaskType(), tn.getGoal(), tn.getDescription()));
+            current = getConnectedOutput(tn);
+            infiniteLoopGuard++;
         }
+        
+        return components;
+    }
+    
+    private Node getConnectedOutput(Node node) {
+        for (Connection c : connections) {
+            if (c.from == node) {
+                return c.to;
+            }
+        }
+        return null;
+    }
+    
+    public List<net.minecraft.world.item.ItemStack> getRewardItems() {
+        return rewardNode.getRewardItems();
     }
     
     public double getRewardAmount() {
-        try {
-            return rewardBox != null ? Double.parseDouble(rewardBox.getValue()) : 0;
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+        return rewardNode.getRewardAmount();
     }
     
-    // --- Data Setters for edit ---
-    
-    public void setTaskType(TaskType type) {
-        if (type != null) {
-            taskTypeDropdown.setSelectedIndex(type.ordinal());
+    public void setTemplateData(List<TaskComponent> components, double rewardAmount, List<net.minecraft.world.item.ItemStack> rewardItems) {
+        nodes.clear();
+        connections.clear();
+        
+        rootNode = new RootNode(getX() + 20, getY() + 20);
+        nodes.add(rootNode);
+        
+        Node previous = rootNode;
+        int spacing = 200;
+        int cx = getX() + spacing;
+        
+        for (TaskComponent comp : components) {
+            if (nodes.size() - 2 >= MAX_TASK_NODES) break;
+            
+            TaskNode tn = new TaskNode(cx, getY() + 20);
+            tn.setTaskType(comp.getType());
+            tn.setGoal(comp.getTargetAmount());
+            tn.setDescription(comp.getCustomDescription());
+            
+            nodes.add(tn);
+            connections.add(new Connection(previous, tn));
+            previous = tn;
+            cx += spacing;
         }
-    }
-    
-    public void setDescription(String desc) {
-        if (descriptionBox != null && desc != null) {
-            descriptionBox.setValue(desc);
-        }
-    }
-    
-    public void setGoal(int goal) {
-        if (goalBox != null) {
-            goalBox.setValue(String.valueOf(goal));
-        }
-    }
-    
-    public void setRewardAmount(double reward) {
-        if (rewardBox != null) {
-            rewardBox.setValue(String.valueOf((int) reward));
-        }
+        
+        rewardNode = new RewardNode(cx, getY() + 20);
+        rewardNode.setRewardAmount(rewardAmount);
+        rewardNode.setRewardItems(rewardItems);
+        nodes.add(rewardNode);
+        
+        connections.add(new Connection(previous, rewardNode));
     }
 
+    // --- Rendering ---
+    
     @Override
     protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Recalculate positions in case of resize
-        calculateNodePositions();
-        repositionWidgets();
-        
-        // Render grid background dots
         renderGridDots(guiGraphics);
         
-        // Compute connector positions
-        computeConnectorPositions();
+        hoveredPin = null;
         
-        // Update hover state
-        updateHoverState(mouseX, mouseY);
-        
-        // Render connection lines
-        renderConnections(guiGraphics, mouseX, mouseY);
-        
-        // Render nodes
-        renderNode(guiGraphics, node1X, node1Y, "Task Type", true, false, mouseX, mouseY, 0);
-        renderNode(guiGraphics, node2X, node2Y, "Task Details", true, true, mouseX, mouseY, 1);
-        renderNode(guiGraphics, node3X, node3Y, "Rewards", false, true, mouseX, mouseY, 2);
-        
-        // Render node contents
-        renderNode1Content(guiGraphics, mouseX, mouseY, partialTick);
-        renderNode2Content(guiGraphics, mouseX, mouseY, partialTick);
-        renderNode3Content(guiGraphics, mouseX, mouseY, partialTick);
-        
-        // Render drag line if dragging
-        if (draggingFromNode >= 0) {
-            renderDragLine(guiGraphics, mouseX, mouseY);
+        // Update hovered pin
+        for (Node n : nodes) {
+            if (n.hasInput && isNearConnector(mouseX, mouseY, n.getInputX(), n.getInputY())) {
+                hoveredPin = new Pin(n, false);
+            }
+            if (n.hasOutput && isNearConnector(mouseX, mouseY, n.getOutputX(), n.getOutputY())) {
+                hoveredPin = new Pin(n, true);
+            }
         }
-    }
-    
-    private void repositionWidgets() {
-        if (taskTypeDropdown != null) {
-            taskTypeDropdown.setX(node1X + 8);
-            taskTypeDropdown.setY(node1Y + NODE_HEADER_HEIGHT + 30);
+        
+        // Draw standard connections
+        for (Connection c : connections) {
+            renderBezierLine(guiGraphics, c.from.getOutputX(), c.from.getOutputY(), c.to.getInputX(), c.to.getInputY(), CONNECTION_LINE);
         }
-        if (descriptionBox != null) {
-            descriptionBox.setX(node2X + 8);
-            descriptionBox.setY(node2Y + NODE_HEADER_HEIGHT + 30);
+        
+        // Draw dragging connection
+        if (draggingFromNode != null) {
+            int startX = draggingFromOutput ? draggingFromNode.getOutputX() : draggingFromNode.getInputX();
+            int startY = draggingFromOutput ? draggingFromNode.getOutputY() : draggingFromNode.getInputY();
+            
+            if (draggingFromOutput) {
+                renderBezierLine(guiGraphics, startX, startY, mouseX, mouseY, 0x88FFD700);
+            } else {
+                renderBezierLine(guiGraphics, mouseX, mouseY, startX, startY, 0x88FFD700);
+            }
         }
-        if (goalBox != null) {
-            goalBox.setX(node2X + 8);
-            goalBox.setY(node2Y + NODE_HEADER_HEIGHT + 68);
+        
+        // Draw preview insertion
+        if (previewInsertion != null) {
+            for(Node n : nodes) {
+                if(n.isDragging) {
+                    renderBezierLine(guiGraphics, previewInsertion.from.getOutputX(), previewInsertion.from.getOutputY(), n.getInputX(), n.getInputY(), 0xFF00FF00);
+                    renderBezierLine(guiGraphics, n.getOutputX(), n.getOutputY(), previewInsertion.to.getInputX(), previewInsertion.to.getInputY(), 0xFF00FF00);
+                    break;
+                }
+            }
         }
-        if (rewardBox != null) {
-            rewardBox.setX(node3X + 8);
-            rewardBox.setY(node3Y + NODE_HEADER_HEIGHT + 30);
+        
+        // Draw nodes
+        for (Node n : nodes) {
+            n.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
+        
+        // Draw add node button if space exists
+        int taskNodeCount = nodes.size() - 2;
+        if (taskNodeCount < MAX_TASK_NODES) {
+            int btnX = getX() + getWidth() / 2 - 50;
+            int btnY = getY() + getHeight() - 30;
+            guiGraphics.fill(btnX, btnY, btnX + 100, btnY + 20, NODE_HEADER_BG);
+            guiGraphics.drawString(font, Component.literal("+ Add Task Node"), btnX + 10, btnY + 6, GOLD, false);
         }
     }
     
@@ -270,53 +216,10 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
         }
     }
     
-    private void computeConnectorPositions() {
-        // Node 1 output (right side, vertically centered)
-        node1OutputX[0] = node1X + NODE_WIDTH;
-        node1OutputY[0] = node1Y + NODE_MIN_HEIGHT / 2;
-        
-        // Node 2 input (left side) and output (right side)
-        node2InputX[0] = node2X;
-        node2InputY[0] = node2Y + NODE_MIN_HEIGHT / 2;
-        node2OutputX[0] = node2X + NODE_WIDTH;
-        node2OutputY[0] = node2Y + NODE_MIN_HEIGHT / 2;
-        
-        // Node 3 input (left side)
-        node3InputX[0] = node3X;
-        node3InputY[0] = node3Y + NODE_MIN_HEIGHT / 2;
-    }
-    
-    private void updateHoverState(int mouseX, int mouseY) {
-        hoveredConnector = -1;
-        if (isNearConnector(mouseX, mouseY, node1OutputX[0], node1OutputY[0])) hoveredConnector = 0;
-        else if (isNearConnector(mouseX, mouseY, node2InputX[0], node2InputY[0])) hoveredConnector = 1;
-        else if (isNearConnector(mouseX, mouseY, node2OutputX[0], node2OutputY[0])) hoveredConnector = 2;
-        else if (isNearConnector(mouseX, mouseY, node3InputX[0], node3InputY[0])) hoveredConnector = 3;
-    }
-    
     private boolean isNearConnector(double mouseX, double mouseY, int cx, int cy) {
-        double dist = Math.sqrt(Math.pow(mouseX - cx, 2) + Math.pow(mouseY - cy, 2));
-        return dist <= CONNECTOR_RADIUS + 4;
+        return Math.sqrt(Math.pow(mouseX - cx, 2) + Math.pow(mouseY - cy, 2)) <= CONNECTOR_RADIUS + 4;
     }
     
-    private void renderConnections(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        if (node1Connected) {
-            renderBezierLine(guiGraphics, 
-                node1OutputX[0], node1OutputY[0],
-                node2InputX[0], node2InputY[0],
-                CONNECTION_LINE);
-        }
-        if (node2Connected) {
-            renderBezierLine(guiGraphics, 
-                node2OutputX[0], node2OutputY[0],
-                node3InputX[0], node3InputY[0],
-                CONNECTION_LINE);
-        }
-    }
-    
-    /**
-     * Render a bezier-approximation connection line using small filled segments.
-     */
     private void renderBezierLine(GuiGraphics guiGraphics, int x1, int y1, int x2, int y2, int color) {
         int segments = 20;
         int cp1x = x1 + (x2 - x1) / 3;
@@ -327,25 +230,16 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
             float t = (float) i / segments;
             float invT = 1 - t;
             
-            // Cubic bezier with control points
             float bx = invT * invT * invT * x1 + 3 * invT * invT * t * cp1x + 3 * invT * t * t * cp2x + t * t * t * x2;
             float by = invT * invT * invT * y1 + 3 * invT * invT * t * y1 + 3 * invT * t * t * y2 + t * t * t * y2;
             
-            // Draw line segment (2px thick)
             int px1 = (int) prevX, py1 = (int) prevY;
             int px2 = (int) bx, py2 = (int) by;
             
-            // Horizontal-dominant segments
             if (Math.abs(px2 - px1) >= Math.abs(py2 - py1)) {
-                int minX = Math.min(px1, px2);
-                int maxX = Math.max(px1, px2);
-                int midY = (py1 + py2) / 2;
-                guiGraphics.fill(minX, midY - 1, maxX + 1, midY + 1, color);
+                guiGraphics.fill(Math.min(px1, px2), (py1 + py2) / 2 - 1, Math.max(px1, px2) + 1, (py1 + py2) / 2 + 1, color);
             } else {
-                int minY = Math.min(py1, py2);
-                int maxY = Math.max(py1, py2);
-                int midX = (px1 + px2) / 2;
-                guiGraphics.fill(midX - 1, minY, midX + 1, maxY + 1, color);
+                guiGraphics.fill((px1 + px2) / 2 - 1, Math.min(py1, py2), (px1 + px2) / 2 + 1, Math.max(py1, py2) + 1, color);
             }
             
             prevX = bx;
@@ -353,254 +247,457 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
         }
     }
     
-    private void renderDragLine(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        int startX = 0, startY = 0;
-        if (draggingFromNode == 0 && draggingFromOutput) {
-            startX = node1OutputX[0]; startY = node1OutputY[0];
-        } else if (draggingFromNode == 1 && draggingFromOutput) {
-            startX = node2OutputX[0]; startY = node2OutputY[0];
-        }
-        renderBezierLine(guiGraphics, startX, startY, mouseX, mouseY, 0x88FFD700);
-    }
-    
-    private void renderNode(GuiGraphics guiGraphics, int nx, int ny, String title, 
-                           boolean hasOutput, boolean hasInput, int mouseX, int mouseY, int nodeIndex) {
-        // Node background
-        guiGraphics.fill(nx, ny, nx + NODE_WIDTH, ny + NODE_MIN_HEIGHT, NODE_BG);
-        
-        // Border
-        guiGraphics.fill(nx, ny, nx + NODE_WIDTH, ny + 1, NODE_BORDER);
-        guiGraphics.fill(nx, ny + NODE_MIN_HEIGHT - 1, nx + NODE_WIDTH, ny + NODE_MIN_HEIGHT, NODE_BORDER);
-        guiGraphics.fill(nx, ny, nx + 1, ny + NODE_MIN_HEIGHT, NODE_BORDER);
-        guiGraphics.fill(nx + NODE_WIDTH - 1, ny, nx + NODE_WIDTH, ny + NODE_MIN_HEIGHT, NODE_BORDER);
-        
-        // Header bar
-        guiGraphics.fill(nx + 1, ny + 1, nx + NODE_WIDTH - 1, ny + NODE_HEADER_HEIGHT, NODE_HEADER_BG);
-        
-        // Title
-        guiGraphics.drawString(font, Component.literal(title), 
-            nx + 8, ny + 7, GOLD, false);
-        
-        // Connector pins
-        if (hasOutput) {
-            int connX = nx + NODE_WIDTH;
-            int connY = ny + NODE_MIN_HEIGHT / 2;
-            int connColor = getConnectorColor(nodeIndex == 0 ? 0 : 2);
-            renderConnectorPin(guiGraphics, connX, connY, connColor);
-        }
-        if (hasInput) {
-            int connX = nx;
-            int connY = ny + NODE_MIN_HEIGHT / 2;
-            int connColor = getConnectorColor(nodeIndex == 1 ? 1 : 3);
-            renderConnectorPin(guiGraphics, connX, connY, connColor);
-        }
-    }
-    
-    private int getConnectorColor(int connectorIndex) {
-        if (hoveredConnector == connectorIndex) {
-            // Pulse animation on hover
-            float pulse = (float) (0.5 + 0.5 * Math.sin(tickCount * 0.15));
-            int alpha = (int) (180 + 75 * pulse);
-            return (alpha << 24) | (0xFFD700 & 0x00FFFFFF);
-        }
-        // Connected state
-        boolean connected = (connectorIndex <= 1 && node1Connected) || (connectorIndex >= 2 && node2Connected);
-        return connected ? CONNECTOR_CONNECTED : CONNECTOR_DEFAULT;
-    }
-    
-    private void renderConnectorPin(GuiGraphics guiGraphics, int cx, int cy, int color) {
-        // Simple circle approximation using filled rectangles
-        guiGraphics.fill(cx - 4, cy - 2, cx + 4, cy + 2, color);
-        guiGraphics.fill(cx - 3, cy - 3, cx + 3, cy + 3, color);
-        guiGraphics.fill(cx - 2, cy - 4, cx + 2, cy + 4, color);
-        // Inner dot
-        guiGraphics.fill(cx - 2, cy - 1, cx + 2, cy + 1, 0xFF000000);
-    }
-    
-    private void renderNode1Content(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Label above dropdown
-        guiGraphics.drawString(font, Component.literal("Type:"),
-            node1X + 8, node1Y + NODE_HEADER_HEIGHT + 18, LABEL_COLOR, false);
-        
-        // Render the dropdown widget
-        taskTypeDropdown.render(guiGraphics, mouseX, mouseY, partialTick);
-        
-        // Show selected type icon below
-        TaskType selected = getSelectedTaskType();
-        guiGraphics.drawString(font, 
-            Component.literal(selected.getIcon() + " " + selected.getDisplayName()),
-            node1X + 8, node1Y + NODE_MIN_HEIGHT - 20, 0xFF88CC88, false);
-    }
-    
-    private void renderNode2Content(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Description label
-        guiGraphics.drawString(font, Component.literal("Description:"),
-            node2X + 8, node2Y + NODE_HEADER_HEIGHT + 18, LABEL_COLOR, false);
-        descriptionBox.render(guiGraphics, mouseX, mouseY, partialTick);
-        
-        // Goal label
-        guiGraphics.drawString(font, Component.literal("Target Amount:"),
-            node2X + 8, node2Y + NODE_HEADER_HEIGHT + 56, LABEL_COLOR, false);
-        goalBox.render(guiGraphics, mouseX, mouseY, partialTick);
-    }
-    
-    private void renderNode3Content(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        // Reward label
-        guiGraphics.drawString(font, Component.literal("Cash Reward ($):"),
-            node3X + 8, node3Y + NODE_HEADER_HEIGHT + 18, LABEL_COLOR, false);
-        rewardBox.render(guiGraphics, mouseX, mouseY, partialTick);
-        
-        // Preview the reward
-        try {
-            int reward = Integer.parseInt(rewardBox.getValue());
-            if (reward > 0) {
-                guiGraphics.drawString(font,
-                    Component.literal("$" + String.format("%,d", reward)),
-                    node3X + 8, node3Y + NODE_MIN_HEIGHT - 20, 0xFF88CC88, false);
-            }
-        } catch (NumberFormatException ignored) {}
-    }
-    
-    // --- Input handling ---
+    // --- Input Handling ---
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (!this.active || !this.visible) return false;
         
-        // Check dropdown first (highest z-order)
-        if (taskTypeDropdown.isExpanded()) {
-            boolean result = taskTypeDropdown.mouseClicked(mouseX, mouseY, button);
-            if (result) return true;
-            // Close dropdown if clicked outside
-            taskTypeDropdown.closeDropdown();
-        }
-        
-        // Check connectors for drag start
-        if (button == 0) {
-            if (isNearConnector(mouseX, mouseY, node1OutputX[0], node1OutputY[0])) {
-                draggingFromNode = 0;
-                draggingFromOutput = true;
-                return true;
-            }
-            if (isNearConnector(mouseX, mouseY, node2OutputX[0], node2OutputY[0])) {
-                draggingFromNode = 1;
-                draggingFromOutput = true;
+        // Add Node Button
+        int taskNodeCount = nodes.size() - 2;
+        if (taskNodeCount < MAX_TASK_NODES) {
+            int btnX = getX() + getWidth() / 2 - 50;
+            int btnY = getY() + getHeight() - 30;
+            if (mouseX >= btnX && mouseX <= btnX + 100 && mouseY >= btnY && mouseY <= btnY + 20) {
+                int newX = getX() + getWidth() / 2 - NODE_WIDTH / 2 + (taskNodeCount * 25);
+                int newY = getY() + getHeight() / 2 - NODE_MIN_HEIGHT / 2 + (taskNodeCount * 25);
+                TaskNode tn = new TaskNode(newX, newY);
+                nodes.add(nodes.size() - 1, tn); // Insert before reward node
                 return true;
             }
         }
         
-        // Check EditBoxes
-        boolean anyClicked = false;
-        if (descriptionBox.mouseClicked(mouseX, mouseY, button)) {
-            goalBox.setFocused(false);
-            rewardBox.setFocused(false);
-            anyClicked = true;
-        } else if (goalBox.mouseClicked(mouseX, mouseY, button)) {
-            descriptionBox.setFocused(false);
-            rewardBox.setFocused(false);
-            anyClicked = true;
-        } else if (rewardBox.mouseClicked(mouseX, mouseY, button)) {
-            descriptionBox.setFocused(false);
-            goalBox.setFocused(false);
-            anyClicked = true;
-        } else if (taskTypeDropdown.mouseClicked(mouseX, mouseY, button)) {
-            descriptionBox.setFocused(false);
-            goalBox.setFocused(false);
-            rewardBox.setFocused(false);
-            anyClicked = true;
+        // Disconnect on right-click pin
+        if (button == 1 && hoveredPin != null) {
+            connections.removeIf(c -> (hoveredPin.isOutput && c.from == hoveredPin.node) || (!hoveredPin.isOutput && c.to == hoveredPin.node));
+            return true;
         }
         
-        if (!anyClicked) {
-            // Clear focus from all
-            descriptionBox.setFocused(false);
-            goalBox.setFocused(false);
-            rewardBox.setFocused(false);
+        // Start dragging
+        if (button == 0 && hoveredPin != null) {
+            draggingFromNode = hoveredPin.node;
+            draggingFromOutput = hoveredPin.isOutput;
+            // Disconnect existing if dragging from input
+            if (!draggingFromOutput) {
+                connections.removeIf(c -> c.to == draggingFromNode);
+            } else {
+                connections.removeIf(c -> c.from == draggingFromNode);
+            }
+            return true;
         }
         
-        return anyClicked;
+        // Node dragging or interaction
+        for (int i = nodes.size() - 1; i >= 0; i--) {
+            Node n = nodes.get(i);
+            if (n.mouseClicked(mouseX, mouseY, button)) {
+                if (i > 1 && i < nodes.size() - 1) { // Not root or reward
+                    nodes.remove(i);
+                    nodes.add(nodes.size() - 1, n);
+                }
+                clearOtherFocus(n);
+                return true;
+            }
+        }
+        clearOtherFocus(null);
+        return false;
     }
     
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (draggingFromNode >= 0) {
-            // Check if released on a valid connector
-            if (draggingFromNode == 0 && draggingFromOutput) {
-                if (isNearConnector(mouseX, mouseY, node2InputX[0], node2InputY[0])) {
-                    node1Connected = true;
-                }
-            } else if (draggingFromNode == 1 && draggingFromOutput) {
-                if (isNearConnector(mouseX, mouseY, node3InputX[0], node3InputY[0])) {
-                    node2Connected = true;
+        for (Node n : nodes) {
+            n.mouseReleased(mouseX, mouseY, button);
+        }
+        
+        if (draggingFromNode != null) {
+            if (hoveredPin != null && hoveredPin.node != draggingFromNode && hoveredPin.isOutput != draggingFromOutput) {
+                Node from = draggingFromOutput ? draggingFromNode : hoveredPin.node;
+                Node to = draggingFromOutput ? hoveredPin.node : draggingFromNode;
+                
+                // Prevent loops (DAG check)
+                if (!wouldCreateLoop(from, to)) {
+                    connections.removeIf(c -> c.from == from || c.to == to); // Max 1 connection per pin
+                    connections.add(new Connection(from, to));
                 }
             }
-            draggingFromNode = -1;
+            draggingFromNode = null;
             return true;
+        }
+        return false;
+    }
+    
+    private boolean hasConnections(Node n) {
+        for (Connection c : connections) {
+            if (c.from == n || c.to == n) return true;
+        }
+        return false;
+    }
+    
+    private boolean wouldCreateLoop(Node from, Node to) {
+        if (from == to) return true;
+        Node current = to;
+        int checks = 0;
+        while (current != null && checks < nodes.size()) {
+            Node next = getConnectedOutput(current);
+            if (next == from) return true;
+            current = next;
+            checks++;
         }
         return false;
     }
     
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (draggingFromNode >= 0) {
+        if (draggingFromNode != null) {
             dragMouseX = mouseX;
             dragMouseY = mouseY;
             return true;
+        }
+        for (Node n : nodes) {
+            if (n.mouseDragged(mouseX, mouseY, button, dragX, dragY)) return true;
         }
         return false;
     }
     
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Route to dropdown first
-        if (taskTypeDropdown.isExpanded()) {
-            return taskTypeDropdown.keyPressed(keyCode, scanCode, modifiers);
-        }
-        
-        // Route to focused EditBox
-        if (descriptionBox.isFocused()) return descriptionBox.keyPressed(keyCode, scanCode, modifiers);
-        if (goalBox.isFocused()) return goalBox.keyPressed(keyCode, scanCode, modifiers);
-        if (rewardBox.isFocused()) return rewardBox.keyPressed(keyCode, scanCode, modifiers);
-        
-        // Tab key to cycle focus
-        if (keyCode == 258) { // TAB
-            if (!descriptionBox.isFocused() && !goalBox.isFocused() && !rewardBox.isFocused()) {
-                descriptionBox.setFocused(true);
-            } else if (descriptionBox.isFocused()) {
-                descriptionBox.setFocused(false);
-                goalBox.setFocused(true);
-            } else if (goalBox.isFocused()) {
-                goalBox.setFocused(false);
-                rewardBox.setFocused(true);
-            } else {
-                rewardBox.setFocused(false);
+        // Delete Node on DEL key
+        if (keyCode == GLFW.GLFW_KEY_DELETE) {
+            for (int i = 1; i < nodes.size() - 1; i++) { // Skip root and reward
+                Node n = nodes.get(i);
+                if (n.isHovered) {
+                    connections.removeIf(c -> c.from == n || c.to == n);
+                    nodes.remove(i);
+                    return true;
+                }
             }
-            return true;
         }
-        
+        for (Node n : nodes) {
+            if (n.keyPressed(keyCode, scanCode, modifiers)) return true;
+        }
+        return false;
+    }
+    
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        for (Node n : nodes) {
+            if (n.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) return true;
+        }
         return false;
     }
     
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        if (descriptionBox.isFocused()) return descriptionBox.charTyped(codePoint, modifiers);
-        if (goalBox.isFocused()) return goalBox.charTyped(codePoint, modifiers);
-        if (rewardBox.isFocused()) return rewardBox.charTyped(codePoint, modifiers);
+        for (Node n : nodes) {
+            if (n.charTyped(codePoint, modifiers)) return true;
+        }
         return false;
     }
-    
+
     @Override
-    public void setFocused(boolean focused) {
-        super.setFocused(focused);
-        if (!focused) {
-            descriptionBox.setFocused(false);
-            goalBox.setFocused(false);
-            rewardBox.setFocused(false);
-            taskTypeDropdown.closeDropdown();
+    protected void updateWidgetNarration(NarrationElementOutput narration) {}
+    
+    // --- Inner Classes ---
+    
+    private record Pin(Node node, boolean isOutput) {}
+    
+    private static class Connection {
+        Node from;
+        Node to;
+        Connection(Node from, Node to) { this.from = from; this.to = to; }
+    }
+    
+    private abstract class Node {
+        int x, y;
+        int width = NODE_WIDTH;
+        int height = NODE_MIN_HEIGHT;
+        boolean hasInput, hasOutput;
+        String title;
+        boolean isDragging = false;
+        boolean isHovered = false;
+        double dragOffsetX = 0, dragOffsetY = 0;
+        
+        Node(int x, int y, String title, boolean hasInput, boolean hasOutput) {
+            this.x = x; this.y = y; this.title = title;
+            this.hasInput = hasInput; this.hasOutput = hasOutput;
+        }
+        
+        void clearFocus() {}
+        
+        int getInputX() { return x; }
+        int getInputY() { return y + height / 2; }
+        int getOutputX() { return x + width; }
+        int getOutputY() { return y + height / 2; }
+        
+        void render(GuiGraphics g, int mx, int my, float pt) {
+            isHovered = (mx >= x && mx <= x + width && my >= y && my <= y + height);
+            
+            g.fill(x, y, x + width, y + height, NODE_BG);
+            
+            int borderColor = isHovered ? GOLD : NODE_BORDER;
+            g.fill(x, y, x + width, y + 1, borderColor);
+            g.fill(x, y + height - 1, x + width, y + height, borderColor);
+            g.fill(x, y, x + 1, y + height, borderColor);
+            g.fill(x + width - 1, y, x + width, y + height, borderColor);
+            
+            g.fill(x + 1, y + 1, x + width - 1, y + NODE_HEADER_HEIGHT, NODE_HEADER_BG);
+            g.drawString(font, Component.literal(title), x + 8, y + 7, GOLD, false);
+            
+            if (hasInput) renderPin(g, getInputX(), getInputY(), getPinColor(false));
+            if (hasOutput) renderPin(g, getOutputX(), getOutputY(), getPinColor(true));
+            
+            renderContent(g, mx, my, pt);
+        }
+        
+        int getPinColor(boolean isOutput) {
+            if (hoveredPin != null && hoveredPin.node == this && hoveredPin.isOutput == isOutput) {
+                float pulse = (float) (0.5 + 0.5 * Math.sin(tickCount * 0.15));
+                return ((int)(180 + 75 * pulse) << 24) | 0xFFD700;
+            }
+            boolean connected = false;
+            for (Connection c : connections) {
+                if ((isOutput && c.from == this) || (!isOutput && c.to == this)) { connected = true; break; }
+            }
+            return connected ? CONNECTOR_CONNECTED : CONNECTOR_DEFAULT;
+        }
+        
+        void renderPin(GuiGraphics g, int cx, int cy, int color) {
+            g.fill(cx - 4, cy - 2, cx + 4, cy + 2, color);
+            g.fill(cx - 3, cy - 3, cx + 3, cy + 3, color);
+            g.fill(cx - 2, cy - 4, cx + 2, cy + 4, color);
+            g.fill(cx - 2, cy - 1, cx + 2, cy + 1, 0xFF000000);
+        }
+        
+        abstract void renderContent(GuiGraphics g, int mx, int my, float pt);
+        
+        boolean mouseClicked(double mx, double my, int btn) {
+            if (my >= y && my <= y + NODE_HEADER_HEIGHT && mx >= x && mx <= x + width) {
+                isDragging = true;
+                dragOffsetX = mx - x;
+                dragOffsetY = my - y;
+                return true;
+            }
+            return false;
+        }
+        
+        boolean mouseReleased(double mx, double my, int btn) {
+            if (isDragging) {
+                isDragging = false;
+                if (previewInsertion != null) {
+                    Connection c = previewInsertion;
+                    connections.remove(c);
+                    connections.add(new Connection(c.from, this));
+                    connections.add(new Connection(this, c.to));
+                    previewInsertion = null;
+                }
+            }
+            return false;
+        }
+        
+        boolean mouseDragged(double mx, double my, int btn, double dx, double dy) {
+            if (isDragging) {
+                x = (int)(mx - dragOffsetX);
+                y = (int)(my - dragOffsetY);
+                
+                previewInsertion = null;
+                if (!hasConnections(this)) {
+                    for (Connection c : connections) {
+                        int x1 = c.from.getOutputX();
+                        int x2 = c.to.getInputX();
+                        int y1 = c.from.getOutputY();
+                        int y2 = c.to.getInputY();
+                        if (x2 == x1) continue;
+                        
+                        int nodeCenterX = x + width / 2;
+                        int nodeCenterY = y + height / 2;
+                        float t = (nodeCenterX - x1) / (float)(x2 - x1);
+                        
+                        if (t >= 0.05f && t <= 0.95f) {
+                            float invT = 1 - t;
+                            float expectedY = invT * invT * invT * y1 + 3 * invT * invT * t * y1 + 3 * invT * t * t * y2 + t * t * t * y2;
+                            
+                            if (Math.abs(nodeCenterY - expectedY) < 60) {
+                                y = (int) expectedY - NODE_MIN_HEIGHT / 2;
+                                previewInsertion = c;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                x = Math.max(NodeBasedTemplateEditorWidget.this.getX(), Math.min(x, NodeBasedTemplateEditorWidget.this.getX() + NodeBasedTemplateEditorWidget.this.getWidth() - NODE_WIDTH));
+                y = Math.max(NodeBasedTemplateEditorWidget.this.getY(), Math.min(y, NodeBasedTemplateEditorWidget.this.getY() + NodeBasedTemplateEditorWidget.this.getHeight() - NODE_MIN_HEIGHT));
+                updateWidgets();
+                return true;
+            }
+            return false;
+        }
+        
+        void updateWidgets() {}
+        boolean mouseScrolled(double mx, double my, double sx, double sy) { return false; }
+        boolean keyPressed(int k, int s, int m) { return false; }
+        boolean charTyped(char c, int m) { return false; }
+    }
+    
+    private class RootNode extends Node {
+        RootNode(int x, int y) { super(x, y, "Start Flow", false, true); }
+        @Override void renderContent(GuiGraphics g, int mx, int my, float pt) {
+            g.drawString(font, Component.literal("Trigger Event"), x + 8, y + 40, LABEL_COLOR, false);
         }
     }
     
-    @Override
-    protected void updateWidgetNarration(NarrationElementOutput narration) {
-        this.defaultButtonNarrationText(narration);
+    private class TaskNode extends Node {
+        private DropdownWidget dropdown;
+        private EditBox goalBox;
+        private EditBox descBox;
+        
+        TaskNode(int x, int y) {
+            super(x, y, "Task Objective", true, true);
+            
+            List<String> types = new ArrayList<>();
+            for(TaskType t : TaskType.values()) types.add(t.getDisplayName());
+            
+            dropdown = new DropdownWidget(x + 8, y + 30, NODE_WIDTH - 16, 18, Component.literal("Select Type..."));
+            dropdown.setOptions(types);
+            
+            goalBox = new EditBox(font, x + 8, y + 70, NODE_WIDTH - 16, 16, Component.literal("Goal"));
+            goalBox.setFilter(s -> s.matches("\\d*"));
+            goalBox.setMaxLength(10);
+            
+            descBox = new EditBox(font, x + 8, y + 110, NODE_WIDTH - 16, 16, Component.literal("Desc"));
+            descBox.setMaxLength(100);
+            
+            updateWidgets();
+        }
+        
+        TaskType getSelectedTaskType() {
+            int idx = dropdown.getSelectedIndex();
+            return (idx >= 0 && idx < TaskType.values().length) ? TaskType.values()[idx] : TaskType.BREAK_BLOCKS;
+        }
+        void setTaskType(TaskType t) { if (t != null) dropdown.setSelectedIndex(t.ordinal()); }
+        
+        int getGoal() { try { return Integer.parseInt(goalBox.getValue()); } catch(Exception e) { return 1; } }
+        void setGoal(int g) { goalBox.setValue(String.valueOf(g)); }
+        
+        String getDescription() { return descBox.getValue(); }
+        void setDescription(String s) { if (s != null) descBox.setValue(s); }
+        
+        @Override void updateWidgets() {
+            dropdown.setX(x + 8); dropdown.setY(y + 30);
+            goalBox.setX(x + 8); goalBox.setY(y + 70);
+            descBox.setX(x + 8); descBox.setY(y + 110);
+        }
+        
+        @Override void renderContent(GuiGraphics g, int mx, int my, float pt) {
+            dropdown.render(g, mx, my, pt);
+            g.drawString(font, Component.literal("Target Amount:"), x + 8, y + 58, LABEL_COLOR, false);
+            goalBox.render(g, mx, my, pt);
+            g.drawString(font, Component.literal("Description:"), x + 8, y + 98, LABEL_COLOR, false);
+            descBox.render(g, mx, my, pt);
+        }
+        
+        @Override void clearFocus() {
+            goalBox.setFocused(false);
+            descBox.setFocused(false);
+            dropdown.closeDropdown();
+        }
+        
+        @Override boolean mouseClicked(double mx, double my, int btn) {
+            if (dropdown.isExpanded() && dropdown.mouseClicked(mx, my, btn)) return true;
+            
+            boolean clicked = false;
+            if (dropdown.mouseClicked(mx, my, btn)) clicked = true;
+            else if (goalBox.mouseClicked(mx, my, btn)) { goalBox.setFocused(true); descBox.setFocused(false); clicked = true; }
+            else if (descBox.mouseClicked(mx, my, btn)) { descBox.setFocused(true); goalBox.setFocused(false); clicked = true; }
+            
+            if (clicked) return true;
+            
+            return super.mouseClicked(mx, my, btn);
+        }
+        
+        @Override boolean keyPressed(int k, int s, int m) {
+            if (dropdown.isExpanded() && dropdown.keyPressed(k, s, m)) return true;
+            if (goalBox.isFocused() && goalBox.keyPressed(k, s, m)) return true;
+            if (descBox.isFocused() && descBox.keyPressed(k, s, m)) return true;
+            return false;
+        }
+        
+        @Override boolean charTyped(char c, int m) {
+            if (goalBox.isFocused() && goalBox.charTyped(c, m)) return true;
+            if (descBox.isFocused() && descBox.charTyped(c, m)) return true;
+            return false;
+        }
+    }
+    
+    private class RewardNode extends Node {
+        private EditBox rewardBox;
+        private FreeRewardEditorWidget itemPicker;
+        
+        RewardNode(int x, int y) {
+            super(x, y, "Reward Data", true, false);
+            this.height = 240; 
+            this.width = 180; 
+            
+            rewardBox = new EditBox(font, x + 8, y + 50, this.width - 16, 16, Component.literal("Reward"));
+            rewardBox.setFilter(s -> s.matches("\\d*"));
+            rewardBox.setMaxLength(10);
+            
+            itemPicker = new FreeRewardEditorWidget(x + 8, y + 70, this.width - 16, 160, new ArrayList<>());
+            
+            updateWidgets();
+        }
+        
+        void setRewardItems(List<net.minecraft.world.item.ItemStack> items) {
+            itemPicker = new FreeRewardEditorWidget(x + 8, y + 70, this.width - 16, 160, items);
+        }
+        
+        List<net.minecraft.world.item.ItemStack> getRewardItems() {
+            return itemPicker.getRewardItems();
+        }
+        
+        double getRewardAmount() { try { return Double.parseDouble(rewardBox.getValue()); } catch(Exception e) { return 0; } }
+        void setRewardAmount(double d) { rewardBox.setValue(String.valueOf((int)d)); }
+        
+        @Override void updateWidgets() { 
+            rewardBox.setX(x + 8); 
+            rewardBox.setY(y + 50); 
+            itemPicker.setX(x + 8);
+            itemPicker.setY(y + 70);
+        }
+        
+        @Override void renderContent(GuiGraphics g, int mx, int my, float pt) {
+            g.drawString(font, Component.literal("Cash Reward ($):"), x + 8, y + 38, LABEL_COLOR, false);
+            rewardBox.render(g, mx, my, pt);
+            itemPicker.tick(); 
+            itemPicker.render(g, mx, my, pt);
+        }
+        
+        @Override void clearFocus() {
+            rewardBox.setFocused(false);
+            itemPicker.setFocused(false);
+        }
+        
+        @Override boolean mouseClicked(double mx, double my, int btn) {
+            if (itemPicker.mouseClicked(mx, my, btn)) return true;
+            if (rewardBox.mouseClicked(mx, my, btn)) { rewardBox.setFocused(true); return true; }
+            return super.mouseClicked(mx, my, btn);
+        }
+        
+        @Override boolean mouseReleased(double mx, double my, int btn) {
+            itemPicker.mouseReleased(mx, my, btn);
+            return super.mouseReleased(mx, my, btn);
+        }
+        
+        @Override boolean keyPressed(int k, int s, int m) { 
+            if (itemPicker.keyPressed(k, s, m)) return true;
+            return rewardBox.isFocused() && rewardBox.keyPressed(k, s, m); 
+        }
+        @Override boolean charTyped(char c, int m) { 
+            if (itemPicker.charTyped(c, m)) return true;
+            return rewardBox.isFocused() && rewardBox.charTyped(c, m); 
+        }
+        
+        @Override boolean mouseScrolled(double mx, double my, double sx, double sy) {
+            return itemPicker.mouseScrolled(mx, my, sx, sy);
+        }
     }
 }

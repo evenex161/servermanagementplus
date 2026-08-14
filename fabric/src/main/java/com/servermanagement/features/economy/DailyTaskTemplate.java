@@ -1,175 +1,78 @@
 package com.servermanagement.features.economy;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-
 import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * Template for daily tasks that admins can create and manage.
- * The daily system selects from these templates when generating player tasks.
- */
 public class DailyTaskTemplate {
-    private String id; // Unique identifier
+    private String id;
+    private List<TaskComponent> components = new ArrayList<>();
+    
+    // Legacy fields for migration
     private TaskType type;
     private int targetAmount;
+    private String customDescription;
+    
     private double rewardAmount;
-    private ItemStack rewardItem; // Legacy field for Gson backward compatibility
-    private List<ItemStack> rewardItems = new ArrayList<>(); // Optional item rewards
-    private String customDescription; // Optional custom description
-    private boolean enabled; // Can be disabled without deleting
+    private ItemStack rewardItem;
+    private List<ItemStack> rewardItems = new ArrayList<>();
+    private boolean enabled;
     
     public DailyTaskTemplate() {
         this.id = UUID.randomUUID().toString();
         this.enabled = true;
+        this.components = new ArrayList<>();
         this.rewardItems = new ArrayList<>();
     }
     
-    public DailyTaskTemplate(TaskType type, int targetAmount, double rewardAmount, String customDescription) {
+    public DailyTaskTemplate(List<TaskComponent> components, double rewardAmount, List<ItemStack> rewardItems) {
         this.id = UUID.randomUUID().toString();
-        this.type = type;
-        this.targetAmount = targetAmount;
-        this.rewardAmount = rewardAmount;
-        this.customDescription = customDescription;
-        this.enabled = true;
-        this.rewardItems = new ArrayList<>();
-    }
-    
-    public DailyTaskTemplate(TaskType type, int targetAmount, double rewardAmount, List<ItemStack> rewardItems, String customDescription) {
-        this.id = UUID.randomUUID().toString();
-        this.type = type;
-        this.targetAmount = targetAmount;
+        this.components = components != null ? new ArrayList<>(components) : new ArrayList<>();
         this.rewardAmount = rewardAmount;
         this.rewardItems = rewardItems != null ? new ArrayList<>(rewardItems) : new ArrayList<>();
-        this.customDescription = customDescription;
         this.enabled = true;
     }
 
-    // Getters
-    
     public void migrateLegacyData() {
+        if (components == null) {
+            components = new ArrayList<>();
+        }
+        if (components.isEmpty() && type != null) {
+            components.add(new TaskComponent(type, targetAmount, customDescription));
+            type = null;
+            customDescription = null;
+        }
+        
         if (rewardItems == null) {
             rewardItems = new ArrayList<>();
         }
         if (rewardItem != null && !rewardItem.isEmpty()) {
             rewardItems.add(rewardItem.copy());
-            rewardItem = null; // Clear it so it doesn't get saved again if we exclude nulls, or just leave it empty
+            rewardItem = null;
         }
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public TaskType getType() {
-        return type;
-    }
-
-    public int getTargetAmount() {
-        return targetAmount;
-    }
-
-    public double getRewardAmount() {
-        return rewardAmount;
-    }
+    public String getId() { return id; }
     
-    public List<ItemStack> getRewardItems() {
-        return rewardItems != null ? rewardItems : new ArrayList<>();
-    }
+    public List<TaskComponent> getComponents() { return components != null ? components : new ArrayList<>(); }
+    public void setComponents(List<TaskComponent> components) { this.components = components != null ? components : new ArrayList<>(); }
 
-    public String getCustomDescription() {
-        return customDescription;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    // Setters
-    public void setType(TaskType type) {
-        this.type = type;
-    }
-
-    public void setTargetAmount(int targetAmount) {
-        this.targetAmount = targetAmount;
-    }
-
-    public void setRewardAmount(double rewardAmount) {
-        this.rewardAmount = rewardAmount;
-    }
+    public double getRewardAmount() { return rewardAmount; }
+    public void setRewardAmount(double rewardAmount) { this.rewardAmount = rewardAmount; }
     
-    public void setRewardItems(List<ItemStack> rewardItems) {
-        this.rewardItems = rewardItems != null ? new ArrayList<>(rewardItems) : new ArrayList<>();
-    }
+    public List<ItemStack> getRewardItems() { return rewardItems != null ? rewardItems : new ArrayList<>(); }
+    public void setRewardItems(List<ItemStack> rewardItems) { this.rewardItems = rewardItems != null ? rewardItems : new ArrayList<>(); }
 
-    public void setCustomDescription(String customDescription) {
-        this.customDescription = customDescription;
-    }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    /**
-     * Get display description (custom or auto-generated)
-     */
-    public String getDescription() {
-        if (customDescription != null && !customDescription.isEmpty()) {
-            return customDescription;
-        }
-        return generateDescription();
-    }
-
-    /**
-     * Generate automatic description based on task type
-     */
-    private String generateDescription() {
-        switch (type) {
-            case BREAK_BLOCKS:
-                return "Break " + targetAmount + " blocks";
-            case KILL_MOBS:
-                return "Kill " + targetAmount + " mobs";
-            case TRAVEL_DISTANCE:
-                return "Travel " + targetAmount + " blocks";
-            case CRAFT_ITEMS:
-                return "Craft " + targetAmount + " items";
-            case MINE_ORES:
-                return "Mine " + targetAmount + " ores";
-            case TRADE_VILLAGERS:
-                return "Trade with villagers " + targetAmount + " times";
-            default:
-                return "Complete task";
-        }
-    }
-
-    /**
-     * Create a DailyTask instance from this template
-     */
     public DailyTask createTask() {
-        DailyTask task = new DailyTask(type, targetAmount, rewardAmount, getDescription());
-        if (rewardItems != null && !rewardItems.isEmpty()) {
-            task.setRewardItems(new ArrayList<>(rewardItems));
-        }
-        return task;
+        return new DailyTask(this.id, new ArrayList<>(this.components), this.rewardAmount, new ArrayList<>(this.rewardItems));
     }
-
-    /**
-     * Validate template has required fields
-     */
-    public boolean isValid() {
-        return type != null && targetAmount > 0 && rewardAmount > 0;
-    }
-
-    @Override
-    public String toString() {
-        return "DailyTaskTemplate{" +
-                "id='" + id + '\'' +
-                ", type=" + type +
-                ", target=" + targetAmount +
-                ", reward=$" + rewardAmount +
-                ", enabled=" + enabled +
-                '}';
-    }
+    
+    // Fallback getters for legacy network packets or UI that expects a single type
+    public TaskType getType() { return components != null && !components.isEmpty() ? components.get(0).getType() : TaskType.BREAK_BLOCKS; }
+    public int getTargetAmount() { return components != null && !components.isEmpty() ? components.get(0).getTargetAmount() : 0; }
+    public String getCustomDescription() { return components != null && !components.isEmpty() ? components.get(0).getCustomDescription() : ""; }
 }
