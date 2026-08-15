@@ -145,6 +145,12 @@ public class ServerManagementModFabric implements ModInitializer {
             } catch (Throwable t) {
                 LOGGER.error("PlayerMovementTracker tick failed", t);
             }
+            // DH synergy: throttle chunk generation when TPS drops
+            try {
+                com.servermanagement.features.serverperformance.ChunkGenThrottleHandler.onServerTick(server);
+            } catch (Throwable t) {
+                LOGGER.error("ChunkGenThrottleHandler tick failed", t);
+            }
         });
 
         // Daily task: block-break tracking. Forge fires DailyTaskProgressListener
@@ -213,6 +219,12 @@ public class ServerManagementModFabric implements ModInitializer {
                 com.servermanagement.ota.PlayerJoinListener.onPlayerJoin(p);
             } catch (Throwable t) {
                 LOGGER.error("PlayerJoinListener.onPlayerJoin failed", t);
+            }
+            // DH synergy: apply movement leniency on join
+            try {
+                com.servermanagement.features.serverperformance.MovementLeniencyHandler.onPlayerJoin(p);
+            } catch (Throwable t) {
+                LOGGER.error("MovementLeniencyHandler.onPlayerJoin failed", t);
             }
         });
 

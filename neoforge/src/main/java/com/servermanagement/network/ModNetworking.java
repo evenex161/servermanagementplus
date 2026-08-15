@@ -61,6 +61,7 @@ public class ModNetworking {
         registrar.playToServer(UpdatePerformanceSettingPacket.TYPE, UpdatePerformanceSettingPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(SaveMotdPacket.TYPE, SaveMotdPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
         registrar.playToServer(RequestEconomyStatsPacket.TYPE, RequestEconomyStatsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
+        registrar.playToServer(PatchJvmFlagsPacket.TYPE, PatchJvmFlagsPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));
 
         // MineBay server-bound packets
         registrar.playToServer(HoldItemPacket.TYPE, HoldItemPacket.STREAM_CODEC, (pkt, ctx) -> pkt.handle(ctx));

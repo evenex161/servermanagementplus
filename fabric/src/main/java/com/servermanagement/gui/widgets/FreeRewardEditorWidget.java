@@ -184,7 +184,8 @@ public class FreeRewardEditorWidget extends AbstractWidget {
         }
         
         if (this.quantityBox.mouseClicked(mouseX, mouseY, button)) {
-            this.isPendingQuantityBoxFocus = true;
+            this.quantityBox.setFocused(true);
+            this.searchBox.setFocused(false);
             return true;
         }
         
@@ -243,13 +244,19 @@ public class FreeRewardEditorWidget extends AbstractWidget {
             }
         }
         
-        return super.mouseClicked(mouseX, mouseY, button);
+        return false;
     }
     
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (button == 1) {
             holdingIndex = -1;
+        }
+        if (this.searchBox != null && this.searchBox.isFocused()) {
+            this.searchBox.setFocused(true);
+        }
+        if (this.quantityBox != null && this.quantityBox.isFocused()) {
+            this.quantityBox.setFocused(true);
         }
         return super.mouseReleased(mouseX, mouseY, button);
     }

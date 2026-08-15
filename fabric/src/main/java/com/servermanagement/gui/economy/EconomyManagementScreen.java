@@ -62,9 +62,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     private EditBox cooldownBox;
     private FreeRewardEditorWidget freeRewardEditorWidget;
     
-    // Vision Pro Camera fields
-    private boolean cameraLocked = true;
-    
+
     public EconomyManagementScreen(EconomyManagementMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, 600, 450);
         this.imageHeight = 450;
@@ -233,13 +231,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         
         nodeEditor = new NodeBasedTemplateEditorWidget(editorX, editorY, editorWidth, editorHeight);
         nodeEditor.setFullscreen(isFullscreen);
-        nodeEditor.setOnCameraToggle(() -> {
-            if (this.cameraLocked && this.minecraft != null) {
-                this.cameraLocked = false;
-                this.minecraft.mouseHandler.grabMouse();
-            }
-        });
-        
+
         java.util.List<com.servermanagement.features.economy.TaskComponent> fallbackComps = new java.util.ArrayList<>();
         if (editTaskType != null) {
             int g = 1;
@@ -348,10 +340,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         this.currentTab = tab;
         this.scrollOffset = 0;
         this.editMode = false;
-        this.cameraLocked = true;
-        if (this.minecraft != null && !this.minecraft.mouseHandler.isMouseGrabbed() == false) {
-            this.minecraft.mouseHandler.releaseMouse();
-        }
+
         this.templateRewardEditorWidget = null;
         this.selectedTemplateIndex = -1;
         this.rebuildWidgets();
@@ -439,10 +428,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     private void cancelEdit() {
         editMode = false;
-        cameraLocked = true;
-        if (this.minecraft != null && !this.minecraft.mouseHandler.isMouseGrabbed() == false) {
-            this.minecraft.mouseHandler.releaseMouse();
-        }
+
         editTemplateId = null;
         selectedTemplateIndex = -1;
         this.rebuildWidgets();
@@ -719,9 +705,11 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         // ESC while editing: step back instead of closing the screen
         if (keyCode == 256 && editMode) { // GLFW_KEY_ESCAPE = 256
             if (isFullscreen) {
+                // Step 1: exit fullscreen back to windowed editor
                 isFullscreen = false;
                 this.rebuildWidgets();
             } else {
+                // Step 2: cancel edit back to template list
                 cancelEdit();
             }
             return true;
@@ -758,14 +746,6 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!cameraLocked && button == 1) {
-            this.cameraLocked = true;
-            if (this.minecraft != null) {
-                this.minecraft.mouseHandler.releaseMouse();
-            }
-            return true;
-        }
-
         // Convert raw screen-pixel coords to design-space because the screen
         // is rendered through ScalableContainerScreen's pose scale. Without
         // this the custom slot hit-tests below silently miss at non-1.0 GUI
@@ -793,6 +773,18 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         return super.mouseClicked(mouseX, mouseY, button);
     }
     
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (editMode && currentTab == Tab.TASK_TEMPLATES && nodeEditor != null) {
+            double designMouseX = inverseMouseX(mouseX);
+            double designMouseY = inverseMouseY(mouseY);
+            if (nodeEditor.mouseDragged(designMouseX, designMouseY, button, dragX / getGuiScale(), dragY / getGuiScale())) {
+                return true;
+            }
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
     private void handleItemSlotClick(boolean isTemplateEdit) {
         if (this.minecraft != null && this.minecraft.player != null) {
             // Use currently selected hotbar item (since this screen has no inventory slots)

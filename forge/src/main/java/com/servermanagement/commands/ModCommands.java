@@ -113,6 +113,56 @@ public class ModCommands {
                     })
                 )
             )
+            .then(Commands.literal("gc")
+                .then(Commands.literal("patch")
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                            java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
+                            var scripts = com.servermanagement.features.serverperformance.JvmFlagPatcher.getDetectedScriptNames(serverRoot);
+                            if (scripts.isEmpty()) {
+                                player.sendSystemMessage(Component.literal("\u00a7c[SM+] No run scripts found. Create a run.bat or run.sh first."));
+                            } else {
+                                player.sendSystemMessage(Component.literal(
+                                    "\u00a7e[SM+] This will patch: " + String.join(", ", scripts) + "\n" +
+                                    "\u00a7e[SM+] Adding: " + com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags() + "\n" +
+                                    "\u00a7e[SM+] A .bak backup will be created."
+                                ));
+                                player.sendSystemMessage(
+                                    Component.literal(" [Confirm Patch]").withStyle(net.minecraft.ChatFormatting.GREEN, net.minecraft.ChatFormatting.BOLD)
+                                        .withStyle(style -> style
+                                            .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm gc patch confirm"))
+                                            .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, Component.literal("Apply ZGC flags now"))))
+                                );
+                            }
+                        }
+                        return 1;
+                    })
+                    .then(Commands.literal("confirm")
+                        .executes(context -> {
+                            if (context.getSource().getEntity() instanceof ServerPlayer player) {
+                                java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
+                                java.util.List<String> patched = com.servermanagement.features.serverperformance.JvmFlagPatcher.patchRunScripts(serverRoot);
+                                if (!patched.isEmpty()) {
+                                    player.sendSystemMessage(Component.literal(
+                                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", patched) + "\n" +
+                                        "\u00a7e[SM+] .bak backups created. Restart server for ZGC to activate."
+                                    ));
+                                } else {
+                                    player.sendSystemMessage(Component.literal("\u00a7c[SM+] No run scripts found to patch."));
+                                }
+                            }
+                            return 1;
+                        })
+                    )
+                )
+                .then(Commands.literal("dismiss")
+                    .executes(context -> {
+                        com.servermanagement.features.serverperformance.GCAdvisor.setDismissed(true);
+                        context.getSource().sendSuccess(() -> Component.literal("\u00a77[SM+] GC advisory dismissed until server restart."), false);
+                        return 1;
+                    })
+                )
+            )
         );
         
         // ServerManagement Settings command
@@ -1251,6 +1301,17 @@ public class ModCommands {
             "§7Redstone Throttle: " + (ModConfig.REDSTONE_THROTTLE_ENABLED.get() ? "§aON" : "§cOFF") +
             " §7| TPS Monitor: " + (ModConfig.TPS_MONITOR_ENABLED.get() ? "§aON" : "§cOFF")
         ), false);
+        source.sendSuccess(() -> Component.literal(
+            "§7Chunk Gen Throttle: " + (ModConfig.CHUNK_GEN_THROTTLE_ENABLED.get() ?
+                (com.servermanagement.features.serverperformance.ChunkGenThrottleHandler.isThrottleActive() ? "§eACTIVE" : "§aStandby") : "§cOFF") +
+            " §7| Move Leniency: " + (ModConfig.MOVEMENT_LENIENCY_ENABLED.get() ? "§aON" : "§cOFF")
+        ), false);
+        source.sendSuccess(() -> Component.literal(
+            "§7Dynamic ViewDist: " + (ModConfig.DYNAMIC_VIEW_DISTANCE_ENABLED.get() ?
+                (manager.isViewDistanceReduced() ? "§eREDUCED" : "§aStandby") : "§cOFF") +
+            " §7| View: §f" + manager.getEffectiveViewDistance() +
+            " §7| Sim: §f" + manager.getEffectiveSimulationDistance()
+        ), false);
         
         return 1;
     }
@@ -1269,6 +1330,13 @@ public class ModCommands {
         source.sendSuccess(() -> Component.literal("§7Spawns Cancelled: §e" + manager.getTotalSpawnsCancelled()), false);
         source.sendSuccess(() -> Component.literal("§7Entities Throttled: §e" + manager.getTotalEntitiesThrottled()), false);
         source.sendSuccess(() -> Component.literal("§7Redstone Updates Throttled: §e" + manager.getTotalRedstoneThrottled()), false);
+        source.sendSuccess(() -> Component.literal("§7Chunk Loads Throttled: §e" + manager.getTotalChunksThrottled()), false);
+        source.sendSuccess(() -> Component.literal("§7View Distance Reductions: §e" + manager.getViewDistanceReductions()), false);
+        source.sendSuccess(() -> Component.literal("§7Movement Leniency: " +
+            (com.servermanagement.features.serverperformance.MovementLeniencyHandler.isReflectionAvailable() ?
+                "§a" + com.servermanagement.features.serverperformance.MovementLeniencyHandler.getAppliedLeniencyTicks() + " ticks" :
+                "§cN/A")
+        ), false);
         
         return 1;
     }

@@ -33,6 +33,7 @@ public class ServerPerformanceFeature implements Feature {
 
     @Override
     public void initialize(MinecraftServer server) {
+        GCAdvisor.initialize();
         ServerPerformanceManager.getInstance().initialize(server);
     }
 

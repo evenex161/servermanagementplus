@@ -55,6 +55,7 @@ public class ModNetworking {
         PayloadTypeRegistry.playC2S().register(UpdatePerformanceSettingPacket.TYPE, UpdatePerformanceSettingPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(SaveMotdPacket.TYPE, SaveMotdPacket.STREAM_CODEC);
         PayloadTypeRegistry.playC2S().register(SyncBettingSlotStatePacket.TYPE, SyncBettingSlotStatePacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(PatchJvmFlagsPacket.TYPE, PatchJvmFlagsPacket.STREAM_CODEC);
 
         // MineBay server-bound
         PayloadTypeRegistry.playC2S().register(CreateListingPacket.TYPE, CreateListingPacket.STREAM_CODEC);
@@ -138,6 +139,7 @@ public class ModNetworking {
         ServerPlayNetworking.registerGlobalReceiver(UpdatePerformanceSettingPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(SaveMotdPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(SyncBettingSlotStatePacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
+        ServerPlayNetworking.registerGlobalReceiver(PatchJvmFlagsPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
 
         // MineBay server-bound handlers
         ServerPlayNetworking.registerGlobalReceiver(CreateListingPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });

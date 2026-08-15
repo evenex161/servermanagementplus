@@ -63,6 +63,18 @@ public class ModConfig {
     public static final DoubleValue TPS_CRITICAL_THRESHOLD;
     public static final BooleanValue TPS_AUTO_OPTIMIZE;
 
+    // Chunk Gen Throttle (DH synergy)
+    public static final BooleanValue CHUNK_GEN_THROTTLE_ENABLED;
+    public static final IntValue MAX_CHUNKS_PER_TICK;
+
+    // Movement Leniency (DH synergy)
+    public static final BooleanValue MOVEMENT_LENIENCY_ENABLED;
+    public static final IntValue MOVEMENT_LENIENCY_MULTIPLIER;
+
+    // Dynamic View Distance
+    public static final BooleanValue DYNAMIC_VIEW_DISTANCE_ENABLED;
+    public static final IntValue VIEW_DISTANCE_REDUCTION;
+
     static {
         BUILDER.push("Meta");
         CONFIG_VERSION = BUILDER
@@ -215,6 +227,33 @@ public class ModConfig {
         TPS_AUTO_OPTIMIZE = BUILDER
             .comment("Automatically enable more aggressive optimizations when TPS drops below critical threshold")
             .define("tpsAutoOptimize", false);
+        BUILDER.pop();
+
+        BUILDER.push("Chunk Gen Throttle");
+        CHUNK_GEN_THROTTLE_ENABLED = BUILDER
+            .comment("Throttle chunk generation rate when TPS drops. Highly recommended with Distant Horizons.")
+            .define("chunkGenThrottleEnabled", true);
+        MAX_CHUNKS_PER_TICK = BUILDER
+            .comment("Maximum chunk loads allowed per tick when throttling is active (default: 3)")
+            .defineInRange("maxChunksPerTick", 3, 1, 20);
+        BUILDER.pop();
+
+        BUILDER.push("Movement Leniency");
+        MOVEMENT_LENIENCY_ENABLED = BUILDER
+            .comment("Increase server movement tolerance to suppress 'moved too quickly' spam during TPS drops or with DH.")
+            .define("movementLeniencyEnabled", true);
+        MOVEMENT_LENIENCY_MULTIPLIER = BUILDER
+            .comment("Multiplier for the vanilla movement tolerance (default: 3, meaning 3x leniency)")
+            .defineInRange("movementLeniencyMultiplier", 3, 1, 10);
+        BUILDER.pop();
+
+        BUILDER.push("Dynamic View Distance");
+        DYNAMIC_VIEW_DISTANCE_ENABLED = BUILDER
+            .comment("Automatically reduce view/simulation distance when auto-optimize triggers to relieve chunk pressure.")
+            .define("dynamicViewDistanceEnabled", true);
+        VIEW_DISTANCE_REDUCTION = BUILDER
+            .comment("Number of chunks to reduce view/simulation distance by during auto-optimize (default: 2)")
+            .defineInRange("viewDistanceReduction", 2, 1, 6);
         BUILDER.pop();
 
         BUILDER.pop();

@@ -1,40 +1,60 @@
 package com.servermanagement.integration.dh;
 
 import com.servermanagement.Constants;
-import net.minecraft.world.level.ChunkPos;
 
-import java.lang.reflect.Method;
-
+/**
+ * Detects and hooks into Distant Horizons via reflection.
+ * All methods are safe to call regardless of whether DH is installed.
+ * Uses reflection exclusively to avoid compile-time dependency.
+ */
 public class DistantHorizonsHook {
 
     private static boolean isDHAvailable = false;
-    private static Method dhBroadcastMethod = null;
+    private static String dhVersion = "Unknown";
 
     static {
         try {
-            // Attempt to resolve DH API via reflection to prevent hard crashes
-            Class<?> dhApiClass = Class.forName("com.seibel.distanthorizons.api.DistantHorizonsAPI");
-            dhBroadcastMethod = dhApiClass.getDeclaredMethod("notifyChunkFinalized", int.class, int.class);
+            // Try the DH 2.x API entry point first
+            Class<?> dhApiClass = Class.forName("com.seibel.distanthorizons.api.DhApi");
             isDHAvailable = true;
-            Constants.LOG.info("Distant Horizons API hooked successfully via reflection.");
+
+            // Attempt to read DH version
+            try {
+                var versionMethod = dhApiClass.getDeclaredMethod("getModVersion");
+                Object version = versionMethod.invoke(null);
+                if (version != null) {
+                    dhVersion = version.toString();
+                }
+            } catch (Exception e) {
+                // Version method may not exist in all DH builds
+                Constants.LOG.debug("DH API detected but could not read version.");
+            }
+
+            Constants.LOG.info("Distant Horizons detected (v{}). LOD integration enabled.", dhVersion);
         } catch (ClassNotFoundException e) {
-            Constants.LOG.debug("Distant Horizons not found. LOD integration disabled.");
-        } catch (NoSuchMethodException e) {
-            Constants.LOG.warn("Distant Horizons API found but method notifyChunkFinalized is missing. Version mismatch?");
+            // Try legacy DH 1.x / early 2.x detection
+            try {
+                Class.forName("com.seibel.distanthorizons.core.DistantHorizons");
+                isDHAvailable = true;
+                dhVersion = "1.x (legacy)";
+                Constants.LOG.info("Distant Horizons detected (legacy). LOD integration enabled.");
+            } catch (ClassNotFoundException e2) {
+                Constants.LOG.debug("Distant Horizons not found. LOD integration disabled.");
+            }
         }
     }
 
-    public static void broadcastChunkFinalized(ChunkPos pos) {
-        if (!isDHAvailable || dhBroadcastMethod == null) return;
-        
-        try {
-            dhBroadcastMethod.invoke(null, pos.x, pos.z);
-        } catch (Exception e) {
-            Constants.LOG.error("Failed to broadcast chunk finalized to Distant Horizons", e);
-        }
-    }
-
+    /**
+     * Returns true if Distant Horizons is loaded in the current environment.
+     */
     public static boolean isAvailable() {
         return isDHAvailable;
+    }
+
+    /**
+     * Returns the detected DH version string, or "Unknown" / "Not Installed".
+     */
+    public static String getVersion() {
+        return isDHAvailable ? dhVersion : "Not Installed";
     }
 }

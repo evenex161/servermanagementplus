@@ -86,12 +86,7 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
     private boolean draggingFromOutput = false; // true if output pin, false if input pin
     private double dragMouseX, dragMouseY;
     private Pin hoveredPin = null;
-    private Runnable onCameraToggle;
     private Connection previewInsertion = null;
-    
-    public void setOnCameraToggle(Runnable callback) {
-        this.onCameraToggle = callback;
-    }
     
     public void setFullscreen(boolean fullscreen) {
         this.fullscreen = fullscreen;
@@ -195,11 +190,7 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
     
     @Override
     protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        if (fullscreen) {
-            renderWorldProjectedDots(guiGraphics, mouseX, mouseY, partialTick);
-        } else {
-            renderGridDots(guiGraphics, mouseX, mouseY);
-        }
+        renderGridDots(guiGraphics, mouseX, mouseY);
         
         hoveredPin = null;
         
@@ -264,145 +255,7 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
         }
     }
     
-    /**
-     * Fullscreen mode: project dots onto the 3D world by raycasting from the
-     * camera through a screen-space grid. Each hit block surface gets a dot
-     * rendered at the projected 2D screen position. Distance-based LOD and
-     * alpha fade create a holographic wireframe overlay that follows terrain
-     * contours, letting the player see the world geometry behind the editor.
-     */
-    private void renderWorldProjectedDots(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null || mc.gameRenderer == null) {
-            // Fallback to flat grid if no world context
-            renderGridDots(guiGraphics, mouseX, mouseY);
-            return;
-        }
-        
-        Entity cameraEntity = mc.getCameraEntity() != null ? mc.getCameraEntity() : mc.player;
-        Vec3 eyePos = cameraEntity.getEyePosition(partialTick);
-        
-        // Camera rotation vectors
-        float yawRad = (float) Math.toRadians(cameraEntity.getViewYRot(partialTick));
-        float pitchRad = (float) Math.toRadians(cameraEntity.getViewXRot(partialTick));
-        
-        float cosYaw = (float) Math.cos(-yawRad - Math.PI);
-        float sinYaw = (float) Math.sin(-yawRad - Math.PI);
-        float cosPitch = (float) Math.cos(-pitchRad);
-        float sinPitch = (float) Math.sin(-pitchRad);
-        
-        // Forward, right, up vectors in world space
-        Vector3f forward = new Vector3f(sinYaw * cosPitch, sinPitch, cosYaw * cosPitch);
-        Vector3f right = new Vector3f(cosYaw, 0, -sinYaw);
-        Vector3f up = new Vector3f();
-        right.cross(forward, up); // up = right x forward
-        
-        // Screen dimensions and FOV
-        int screenW = mc.getWindow().getGuiScaledWidth();
-        int screenH = mc.getWindow().getGuiScaledHeight();
-        double fov = mc.options.fov().get();
-        float tanHalfFov = (float) Math.tan(Math.toRadians(fov * 0.5));
-        float aspect = (float) screenW / (float) screenH;
-        
-        int animOffset = tickCount * 3;
-        
-        // Iterate screen-space grid and raycast each point
-        int startX = getX();
-        int startY = getY();
-        int endX = startX + getWidth();
-        int endY = startY + getHeight();
-        
-        for (int gx = startX; gx < endX; gx += WORLD_GRID_SPACING) {
-            int dxMouse = gx - mouseX;
-            int dxMouseSq = dxMouse * dxMouse;
-            
-            // Normalized device coordinate X: [-1, 1]
-            float ndcX = (2.0f * gx / screenW - 1.0f) * tanHalfFov * aspect;
-            
-            for (int gy = startY; gy < endY; gy += WORLD_GRID_SPACING) {
-                int dyMouse = gy - mouseY;
-                int distSqMouse = dxMouseSq + dyMouse * dyMouse;
-                
-                // LOD: skip every-other dot in far field from mouse
-                if (distSqMouse > LOD_NEAR_RADIUS_SQ) {
-                    if (((gx - startX) % WORLD_GRID_SPACING_LOD != 0) || ((gy - startY) % WORLD_GRID_SPACING_LOD != 0)) {
-                        continue;
-                    }
-                }
-                
-                // Normalized device coordinate Y: [-1, 1] (inverted for screen)
-                float ndcY = -(2.0f * gy / screenH - 1.0f) * tanHalfFov;
-                
-                // Ray direction in world space
-                float rdx = forward.x() + right.x() * ndcX + up.x() * ndcY;
-                float rdy = forward.y() + right.y() * ndcX + up.y() * ndcY;
-                float rdz = forward.z() + right.z() * ndcX + up.z() * ndcY;
-                
-                // Normalize
-                float len = (float) Math.sqrt(rdx * rdx + rdy * rdy + rdz * rdz);
-                if (len < 1e-6f) continue;
-                rdx /= len; rdy /= len; rdz /= len;
-                
-                // Raycast endpoint
-                Vec3 rayEnd = eyePos.add(rdx * WORLD_DOT_MAX_DISTANCE, rdy * WORLD_DOT_MAX_DISTANCE, rdz * WORLD_DOT_MAX_DISTANCE);
-                
-                BlockHitResult hit = mc.level.clip(new ClipContext(
-                    eyePos, rayEnd,
-                    ClipContext.Block.OUTLINE,
-                    ClipContext.Fluid.NONE,
-                    cameraEntity
-                ));
-                
-                if (hit.getType() == HitResult.Type.MISS) continue;
-                
-                // Distance-based alpha (near=bright, far=faded)
-                double hitDist = hit.getLocation().distanceTo(eyePos);
-                if (hitDist > WORLD_DOT_MAX_DISTANCE) continue;
-                
-                float distAlpha;
-                if (hitDist <= WORLD_DOT_NEAR_DIST) {
-                    distAlpha = 1.0f;
-                } else if (hitDist >= WORLD_DOT_FAR_FADE) {
-                    distAlpha = Math.max(0.0f, 1.0f - (float)(hitDist - WORLD_DOT_FAR_FADE) / (WORLD_DOT_MAX_DISTANCE - WORLD_DOT_FAR_FADE));
-                } else {
-                    distAlpha = 1.0f - 0.4f * (float)((hitDist - WORLD_DOT_NEAR_DIST) / (WORLD_DOT_FAR_FADE - WORLD_DOT_NEAR_DIST));
-                }
-                
-                // Subtle time fluctuation
-                int sinIndex = ((animOffset + gx * 2 + gy * 3) >> 2) & 255;
-                float timeFluctuation = SIN_TABLE[sinIndex] * 0.1f + 0.9f;
-                
-                // Mouse proximity highlight
-                float mouseHighlight;
-                if (distSqMouse >= MOUSE_INFLUENCE_RADIUS_SQ) {
-                    mouseHighlight = 0.0f;
-                } else {
-                    float distNorm = distSqMouse * (MOUSE_INFLUENCE_INV * MOUSE_INFLUENCE_INV);
-                    mouseHighlight = 1.0f - (float) Math.sqrt(distNorm);
-                }
-                
-                float alpha = distAlpha * timeFluctuation * 0.6f + mouseHighlight * 0.4f;
-                if (alpha < 0.05f) continue;
-                alpha = Math.min(1.0f, alpha);
-                
-                // Color based on hit face direction for depth perception
-                int baseColor;
-                switch (hit.getDirection()) {
-                    case UP:    baseColor = 0x7AC5FF; break; // bright sky-blue for top faces
-                    case DOWN:  baseColor = 0x2A5A8F; break; // deep blue for bottom
-                    default:    baseColor = 0x4A9EFF; break; // medium blue for sides
-                }
-                int color = ((int)(alpha * 255) << 24) | baseColor;
-                
-                // Dot size: close hits get 2px, far get 1px
-                if (hitDist < 12.0 && mouseHighlight > 0.3f) {
-                    guiGraphics.fill(gx, gy, gx + 2, gy + 2, color);
-                } else {
-                    guiGraphics.fill(gx, gy, gx + 1, gy + 1, color);
-                }
-            }
-        }
-    }
+
     
     private void renderGridDots(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         int startX = getX();
@@ -552,12 +405,7 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
             }
         }
         
-        if (button == 1) {
-            if (this.onCameraToggle != null) {
-                this.onCameraToggle.run();
-                return true;
-            }
-        }
+
         
         clearOtherFocus(null);
         // Return true for any click within our bounds to prevent container
@@ -949,8 +797,18 @@ public class NodeBasedTemplateEditorWidget extends AbstractWidget {
         }
         
         @Override boolean mouseClicked(double mx, double my, int btn) {
-            if (itemPicker.mouseClicked(mx, my, btn)) return true;
-            if (rewardBox.mouseClicked(mx, my, btn)) { rewardBox.setFocused(true); return true; }
+            if (itemPicker.mouseClicked(mx, my, btn)) {
+                rewardBox.setFocused(false);
+                return true;
+            }
+            if (rewardBox.mouseClicked(mx, my, btn)) {
+                rewardBox.setFocused(true);
+                itemPicker.setFocused(false);
+                return true;
+            }
+            
+            itemPicker.setFocused(false);
+            rewardBox.setFocused(false);
             return super.mouseClicked(mx, my, btn);
         }
         

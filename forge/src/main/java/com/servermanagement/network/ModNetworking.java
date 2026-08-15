@@ -54,15 +54,16 @@ import com.servermanagement.network.packet.SyncPerformanceSettingsPacket;
 import com.servermanagement.network.packet.SyncWorldDetailPacket;
 import com.servermanagement.network.packet.SyncWorldListPacket;
 import com.servermanagement.network.packet.ToggleAutoShowPacket;
-import com.servermanagement.network.packet.CheckForUpdatesPacket;
-import com.servermanagement.network.packet.StartServerUpdatePacket;
-import com.servermanagement.network.packet.SyncUpdateInfoPacket;
 import com.servermanagement.network.packet.ToggleFeaturePacket;
 import com.servermanagement.network.packet.ToggleTemplatePacket;
 import com.servermanagement.network.packet.UpdatePerformanceSettingPacket;
 import com.servermanagement.network.packet.VersionCheckPacket;
 import com.servermanagement.network.packet.WMSetLobbyPacket;
 import com.servermanagement.network.packet.WMSetTimerPacket;
+import com.servermanagement.network.packet.CheckForUpdatesPacket;
+import com.servermanagement.network.packet.StartServerUpdatePacket;
+import com.servermanagement.network.packet.SyncUpdateInfoPacket;
+import com.servermanagement.network.packet.PatchJvmFlagsPacket;
 import com.servermanagement.network.packet.WMTeleportToDimensionPacket;
 import com.servermanagement.network.packet.WMToggleChatIsolationPacket;
 import com.servermanagement.network.packet.WMTogglePortalsPacket;
@@ -530,6 +531,12 @@ INSTANCE.messageBuilder(ToggleFeaturePacket.class, id())
             .encoder(UpdatePerformanceSettingPacket::encode)
             .decoder(UpdatePerformanceSettingPacket::new)
             .consumer(UpdatePerformanceSettingPacket::handle)
+            .add();
+        
+        INSTANCE.messageBuilder(PatchJvmFlagsPacket.class, id())
+            .encoder(PatchJvmFlagsPacket::encode)
+            .decoder(PatchJvmFlagsPacket::new)
+            .consumer(PatchJvmFlagsPacket::handle)
             .add();
         
         INSTANCE.messageBuilder(com.servermanagement.network.packet.SyncMarketPricesPacket.class, id())
