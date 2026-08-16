@@ -73,6 +73,11 @@ dependencies {
     // Forge's hack fix
     implementation(libs.jopt.simple) { version { strictly libs.versions.jopt.simple.get() } }
     implementation libs.zstd.jni
+    jarJar(libs.zstd.jni) {
+        version {
+            prefer libs.versions.zstd.get()
+        }
+    }
 }
 
 publishing {

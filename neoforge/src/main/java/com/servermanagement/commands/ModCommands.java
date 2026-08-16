@@ -142,10 +142,10 @@ public class ModCommands {
                         .executes(context -> {
                             if (context.getSource().getEntity() instanceof ServerPlayer player) {
                                 java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
-                                java.util.List<String> patched = com.servermanagement.features.serverperformance.JvmFlagPatcher.patchRunScripts(serverRoot);
-                                if (!patched.isEmpty()) {
+                                var result = com.servermanagement.features.serverperformance.JvmFlagPatcher.patchRunScripts(serverRoot);
+                                if (result.success()) {
                                     player.sendSystemMessage(Component.literal(
-                                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", patched) + "\n" +
+                                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", result.patchedScripts()) + "\n" +
                                         "\u00a7e[SM+] .bak backups created. Restart server for ZGC to activate."
                                     ));
                                 } else {

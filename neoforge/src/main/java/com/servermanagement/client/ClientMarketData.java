@@ -52,6 +52,7 @@ public class ClientMarketData {
 
     /**
      * Calculate the supply factor for an item, mirroring server-side logic.
+     * Uses gentle natural log curve to prevent over-deflation.
      */
     private static double getSupplyFactor(net.minecraft.world.item.ItemStack stack) {
         if (stack.isEmpty()) return 1.0;
@@ -59,39 +60,40 @@ public class ClientMarketData {
         long supply = supplyData.getOrDefault(itemId, 0L);
         
         if (supply <= SUPPLY_BASELINE) {
-            if (supply <= 0) return 1.2;
+            if (supply <= 0) return 1.1;
             double scarcityRatio = (double) supply / SUPPLY_BASELINE;
-            return 1.0 + (1.0 - scarcityRatio) * 0.2;
+            return 1.0 + (1.0 - scarcityRatio) * 0.1;
         }
         
         double supplyRatio = (double) supply / SUPPLY_BASELINE;
-        return 1.0 / (1.0 + Math.log10(supplyRatio));
+        return 1.0 / (1.0 + 0.15 * Math.log(supplyRatio));
     }
 
     /**
      * Client-side replica of the server's dynamic fallback scarcity pricing.
+     * Bounded with gentle multipliers and a hard $500 cap.
      */
     private static double getDynamicFallbackPrice(net.minecraft.world.item.ItemStack item, String itemId) {
-        double basePrice = DEFAULT_PRICE * (starterMoney / 1000.0);
+        double basePrice = DEFAULT_PRICE;
         
         long supply = supplyData.getOrDefault(itemId, 0L);
-        double scarcityMultiplier = Math.max(1.0, 100000.0 / (supply + 1.0));
+        double scarcityMultiplier = Math.max(1.0, 10.0 / (Math.sqrt(supply) + 1.0));
         basePrice *= scarcityMultiplier;
         
         if (item.has(net.minecraft.core.component.DataComponents.MAX_DAMAGE) || item.getMaxStackSize() == 1) {
-            basePrice *= 10.0;
+            basePrice *= 2.0;
         }
         
         net.minecraft.world.item.Rarity rarity = item.getOrDefault(net.minecraft.core.component.DataComponents.RARITY, net.minecraft.world.item.Rarity.COMMON);
         if (rarity == net.minecraft.world.item.Rarity.UNCOMMON) {
-            basePrice *= 5.0;
+            basePrice *= 1.5;
         } else if (rarity == net.minecraft.world.item.Rarity.RARE) {
-            basePrice *= 25.0;
+            basePrice *= 3.0;
         } else if (rarity == net.minecraft.world.item.Rarity.EPIC) {
-            basePrice *= 100.0;
+            basePrice *= 5.0;
         }
         
-        return basePrice;
+        return Math.min(500.0, basePrice);
     }
 
     /**
@@ -103,7 +105,8 @@ public class ClientMarketData {
         if (stack.isEmpty()) return 0.0;
         net.minecraft.world.item.ItemStack singleItem = stack.copyWithCount(1);
         
-        // Use recipe-based prices if available, otherwise fall back to dynamic scarcity pricing
+        // Use recipe-based prices if available, otherwise fall back to dynamic scarcity pricing.
+        // Recipe prices are raw intrinsic values (NOT pre-scaled by capitalMultiplier).
         String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(singleItem.getItem()).toString();
         double staticValue;
         if (!recipePrices.isEmpty()) {
@@ -114,7 +117,7 @@ public class ClientMarketData {
                 staticValue = getDynamicFallbackPrice(singleItem, itemId);
             }
         } else {
-            staticValue = com.servermanagement.features.gambling.ItemValuation.getItemValue(singleItem) * (starterMoney / 1000.0);
+            staticValue = com.servermanagement.features.gambling.ItemValuation.getItemValue(singleItem);
         }
         
         // Apply enchantment bonus

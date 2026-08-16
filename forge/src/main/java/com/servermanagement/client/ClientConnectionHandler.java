@@ -14,6 +14,41 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = ServerManagementMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ClientConnectionHandler {
     
+    private static boolean clientGcNotified = false;
+
+    @SubscribeEvent
+    public static void onClientJoin(ClientPlayerNetworkEvent.LoggingIn event) {
+        // Client-side GC advisory for all players (shown once per session)
+        if (!clientGcNotified) {
+            com.servermanagement.features.serverperformance.GCAdvisor.initialize();
+            if (com.servermanagement.features.serverperformance.GCAdvisor.isUsingSuboptimalGC()
+                    && !com.servermanagement.features.serverperformance.GCAdvisor.isDismissed()) {
+                clientGcNotified = true;
+                var gcType = com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC();
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null) {
+                    net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component.literal("\n")
+                        .append(net.minecraft.network.chat.Component.literal(" [SM+] Performance Tip: ").withStyle(net.minecraft.ChatFormatting.GOLD, net.minecraft.ChatFormatting.BOLD))
+                        .append(net.minecraft.network.chat.Component.literal("Your client is using " + gcType.getDisplayName() + "\n").withStyle(net.minecraft.ChatFormatting.YELLOW))
+                        .append(net.minecraft.network.chat.Component.literal(" ZGC is recommended for Minecraft -- it reduces\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                        .append(net.minecraft.network.chat.Component.literal(" lag spikes and stuttering, especially with mods.\n\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                        .append(net.minecraft.network.chat.Component.literal(" How to switch:\n").withStyle(net.minecraft.ChatFormatting.WHITE))
+                        .append(net.minecraft.network.chat.Component.literal(" 1. Open your launcher's JVM Arguments\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                        .append(net.minecraft.network.chat.Component.literal(" 2. Add: ").withStyle(net.minecraft.ChatFormatting.GRAY))
+                        .append(net.minecraft.network.chat.Component.literal("-XX:+UseZGC -XX:+ZGenerational").withStyle(net.minecraft.ChatFormatting.GREEN))
+                        .append(net.minecraft.network.chat.Component.literal("\n 3. Restart your game\n\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                        .append(net.minecraft.network.chat.Component.literal(" [Got it]").withStyle(net.minecraft.ChatFormatting.AQUA)
+                            .withStyle(style -> style
+                                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm gc client_dismiss"))
+                                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                                    net.minecraft.network.chat.Component.literal("Hide this tip for the rest of this session")))))
+                        .append(net.minecraft.network.chat.Component.literal("\n"));
+                    mc.player.sendSystemMessage(msg);
+                }
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
         ServerManagementMod.LOGGER.info("Client disconnecting from server");
@@ -85,14 +120,16 @@ public class ClientConnectionHandler {
                 });
             }
         } else if (event.getScreen() instanceof net.minecraft.client.gui.screens.PauseScreen pauseScreen) {
-            com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(pauseScreen.width, pauseScreen.height, false, () -> {
-                Minecraft.getInstance().setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
-                    new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, Minecraft.getInstance().player.getInventory()),
-                    Minecraft.getInstance().player.getInventory(),
-                    net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
-                ));
-            });
-            event.addListener(btn);
+            if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.hasPermissions(2)) {
+                com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(pauseScreen.width, pauseScreen.height, false, () -> {
+                    Minecraft.getInstance().setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
+                        new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, Minecraft.getInstance().player.getInventory()),
+                        Minecraft.getInstance().player.getInventory(),
+                        net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
+                    ));
+                });
+                event.addListener(btn);
+            }
         }
     }
 }

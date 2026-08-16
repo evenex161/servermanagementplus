@@ -62,6 +62,10 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     private EditBox cooldownBox;
     private FreeRewardEditorWidget freeRewardEditorWidget;
     
+    // Unsaved changes state
+    private Runnable pendingNavigation = null;
+    private boolean showingUnsavedDialog = false;
+
 
     public EconomyManagementScreen(EconomyManagementMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, 600, 450);
@@ -92,7 +96,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             this.addRenderableWidget(new ModernButton(
                 centerX + 10, centerY + 10, 120, 20,
                 Component.literal("← Dashboard"),
-                button -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD)),
+                button -> handleNavigation(() -> ModNetworking.sendToServer(new OpenGuiPacket(OpenGuiPacket.GuiType.DASHBOARD))),
                 ModernButton.ButtonStyle.SECONDARY
             ));
             
@@ -100,7 +104,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 90, centerY + 10, 80, 20,
                 Component.literal("Close"),
-                button -> this.onClose(),
+                button -> handleNavigation(() -> super.onClose()),
                 ModernButton.ButtonStyle.DANGER
             ));
             
@@ -108,7 +112,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             this.addRenderableWidget(new ModernButton(
                 centerX + this.imageWidth - 120, centerY + 10, 25, 20,
                 Component.literal("⚙"),
-                button -> switchTab(Tab.SETTINGS),
+                button -> { if (currentTab != Tab.SETTINGS) handleNavigation(() -> switchTab(Tab.SETTINGS)); },
                 currentTab == Tab.SETTINGS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
             ));
             
@@ -117,21 +121,21 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             this.addRenderableWidget(new ModernButton(
                 centerX + 10, centerY + 50, tabW, 25,
                 Component.literal("Task Templates"),
-                button -> switchTab(Tab.TASK_TEMPLATES),
+                button -> { if (currentTab != Tab.TASK_TEMPLATES) handleNavigation(() -> switchTab(Tab.TASK_TEMPLATES)); },
                 currentTab == Tab.TASK_TEMPLATES ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
             ));
             
             this.addRenderableWidget(new ModernButton(
                 centerX + 10 + tabW + 5, centerY + 50, tabW, 25,
                 Component.literal("Free Reward"),
-                button -> switchTab(Tab.FREE_REWARD),
+                button -> { if (currentTab != Tab.FREE_REWARD) handleNavigation(() -> switchTab(Tab.FREE_REWARD)); },
                 currentTab == Tab.FREE_REWARD ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
             ));
             
             this.addRenderableWidget(new ModernButton(
                 centerX + 10 + (tabW + 5) * 2, centerY + 50, tabW, 25,
                 Component.literal("Statistics"),
-                button -> switchTab(Tab.STATISTICS),
+                button -> { if (currentTab != Tab.STATISTICS) handleNavigation(() -> switchTab(Tab.STATISTICS)); },
                 currentTab == Tab.STATISTICS ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY
             ));
         }
@@ -157,6 +161,14 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 searchBox = new EditBox(this.font, centerX + 20, centerY + 88, 180, 15, Component.literal("Search"));
                 searchBox.setMaxLength(50);
                 searchBox.setHint(Component.literal("Search templates..."));
+                searchBox.setResponder(query -> {
+                    String q = query.toLowerCase();
+                    templates = com.servermanagement.client.ClientPacketHandler.getCachedTemplates().stream()
+                        .filter(t -> t.getTaskType().getDisplayName().toLowerCase().contains(q) || 
+                                     (!t.components().isEmpty() && t.components().get(0).getCustomDescription().toLowerCase().contains(q)))
+                        .toList();
+                    scrollOffset = 0;
+                });
             }
             searchBox.setPosition(centerX + 20, centerY + 88);
             this.addRenderableWidget(searchBox);
@@ -224,10 +236,10 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     private void initEditMode(int centerX, int centerY) {
         // Node-based template editor widget
-        int editorWidth = isFullscreen ? this.width : this.imageWidth - 40;
-        int editorHeight = isFullscreen ? this.height : this.imageHeight - 160;
-        int editorX = isFullscreen ? 0 : centerX + 20;
-        int editorY = isFullscreen ? 0 : centerY + 110;
+        int editorX = isFullscreen ? (int) inverseMouseX(0) : centerX + 20;
+        int editorY = isFullscreen ? (int) inverseMouseY(0) : centerY + 110;
+        int editorWidth = isFullscreen ? (int) (this.width / getGuiScale()) : this.imageWidth - 40;
+        int editorHeight = isFullscreen ? (int) (this.height / getGuiScale()) - 60 : this.imageHeight - 160;
         
         nodeEditor = new NodeBasedTemplateEditorWidget(editorX, editorY, editorWidth, editorHeight);
         nodeEditor.setFullscreen(isFullscreen);
@@ -259,8 +271,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         // Reward widget moved into NodeBasedTemplateEditorWidget
 
         // Save / Cancel buttons below the reward widget
-        int buttonY = isFullscreen ? this.height - 40 : editorY + editorHeight + 15;
-        int buttonX = isFullscreen ? 20 : editorX;
+        int buttonY = isFullscreen ? (int) inverseMouseY(this.height) - 40 : editorY + editorHeight + 15;
+        int buttonX = isFullscreen ? (int) inverseMouseX(0) + 20 : editorX;
         
         this.addRenderableWidget(new ModernButton(
             buttonX, buttonY, 120, 25,
@@ -340,6 +352,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         this.currentTab = tab;
         this.scrollOffset = 0;
         this.editMode = false;
+        this.isFullscreen = false;
 
         this.templateRewardEditorWidget = null;
         this.selectedTemplateIndex = -1;
@@ -415,19 +428,23 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             }
         }
         
-        if (goal > 0 && reward > 0) {
+        java.util.List<ItemStack> rewardItems = nodeEditor != null ? nodeEditor.getRewardItems() : new ArrayList<>();
+        
+        if (goal > 0 && (reward > 0 || !rewardItems.isEmpty())) {
             ModNetworking.sendToServer(new SaveTemplatePacket(
-                editTemplateId, components, reward, templateRewardEditorWidget != null ? templateRewardEditorWidget.getRewardItems() : new ArrayList<>()
+                editTemplateId, components, reward, rewardItems
             ));
         }
         
         editMode = false;
+        isFullscreen = false;
         editTemplateId = null;
         this.rebuildWidgets();
     }
     
     private void cancelEdit() {
         editMode = false;
+        isFullscreen = false;
 
         editTemplateId = null;
         selectedTemplateIndex = -1;
@@ -447,6 +464,80 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         }
     }
     
+    private void saveSettings() {
+        double startingBalance = 1000.0;
+        try {
+            startingBalance = startingBalanceBox.getValue().isEmpty() ? 0.0 : Double.parseDouble(startingBalanceBox.getValue());
+        } catch (NumberFormatException ignored) {}
+        com.servermanagement.network.ModNetworking.sendToServer(new com.servermanagement.network.packet.SaveEconomySettingsPacket(
+            tooltipSwitch.isToggled(),
+            minebaySwitch.isToggled(),
+            minestacksSwitch.isToggled(),
+            blacklistWidget.getBlacklistString(),
+            startingBalance
+        ));
+    }
+    
+    private boolean hasUnsavedChanges() {
+        if (currentTab == Tab.TASK_TEMPLATES && editMode && nodeEditor != null) {
+            java.util.List<com.servermanagement.features.economy.TaskComponent> currentComps = nodeEditor.getComponents();
+            double currentReward = nodeEditor.getRewardAmount();
+            java.util.List<ItemStack> currentRewardItems = nodeEditor.getRewardItems();
+            
+            if (editTemplateId == null) {
+                return !currentComps.isEmpty() || currentReward > 0 || !currentRewardItems.isEmpty();
+            } else {
+                SyncEconomyTemplatesPacket.TemplateData td = null;
+                for(SyncEconomyTemplatesPacket.TemplateData t : templates) {
+                    if (t.id().equals(editTemplateId)) { td = t; break; }
+                }
+                if (td != null) {
+                    if (currentReward != td.rewardAmount()) return true;
+                    if ((currentRewardItems == null ? 0 : currentRewardItems.size()) != (td.rewardItems() == null ? 0 : td.rewardItems().size())) return true;
+                    if (currentComps.size() != td.components().size()) return true;
+                    if (!currentComps.isEmpty() && !td.components().isEmpty()) {
+                        if (!currentComps.get(0).getCustomDescription().equals(td.components().get(0).getCustomDescription())) return true;
+                        if (currentComps.get(0).getTargetAmount() != td.components().get(0).getTargetAmount()) return true;
+                        if (currentComps.get(0).getType() != td.components().get(0).getType()) return true;
+                    }
+                }
+            }
+        } else if (currentTab == Tab.FREE_REWARD && freeRewardBox != null && cooldownBox != null && freeRewardEditorWidget != null) {
+            int cachedReward = com.servermanagement.client.ClientPacketHandler.getCachedFreeRewardAmount();
+            int cachedCooldown = com.servermanagement.client.ClientPacketHandler.getCachedFreeRewardCooldownHours();
+            int currentReward = freeRewardBox.getValue().isEmpty() ? 0 : Integer.parseInt(freeRewardBox.getValue());
+            int currentCooldown = cooldownBox.getValue().isEmpty() ? 0 : Integer.parseInt(cooldownBox.getValue());
+            if (currentReward != cachedReward || currentCooldown != cachedCooldown) return true;
+            if (freeRewardEditorWidget.getRewardItems().size() != com.servermanagement.client.ClientPacketHandler.getCachedFreeRewardItems().size()) return true;
+        } else if (currentTab == Tab.SETTINGS && tooltipSwitch != null && minebaySwitch != null && minestacksSwitch != null && startingBalanceBox != null && blacklistWidget != null) {
+            if (tooltipSwitch.isToggled() != com.servermanagement.client.ClientPacketHandler.showMarketValueTooltips()) return true;
+            if (minebaySwitch.isToggled() != com.servermanagement.client.ClientPacketHandler.minebayEnabled()) return true;
+            if (minestacksSwitch.isToggled() != com.servermanagement.client.ClientPacketHandler.minestacksEnabled()) return true;
+            double currentBalance = startingBalanceBox.getValue().isEmpty() ? 0.0 : Double.parseDouble(startingBalanceBox.getValue());
+            if (currentBalance != com.servermanagement.client.ClientPacketHandler.getStartingBalance()) return true;
+            if (!blacklistWidget.getBlacklistString().equals(com.servermanagement.client.ClientPacketHandler.getTradeBlacklist())) return true;
+        }
+        return false;
+    }
+
+    private void handleNavigation(Runnable action) {
+        if (!showingUnsavedDialog && hasUnsavedChanges()) {
+            showingUnsavedDialog = true;
+            pendingNavigation = action;
+        } else {
+            action.run();
+        }
+    }
+
+    @Override
+    public void onClose() {
+        if (showingUnsavedDialog) {
+            super.onClose();
+            return;
+        }
+        handleNavigation(() -> super.onClose());
+    }
+
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         if (isFullscreen) return;
@@ -516,7 +607,48 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             guiGraphics.drawString(this.font, "Starting Balance ($):", centerX + 20, startY + spacing * 3 + 5, 0xFFFFFF, true);
             guiGraphics.drawString(this.font, "Trade Blacklist:", centerX + 20, startY + spacing * 4 + 2, 0xAAAAAA, true);
         }
+        
+        if (showingUnsavedDialog) {
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0, 0, 500); // Force overlay above all other widgets including EditBox
+            
+            // Dim background
+            fillScreen(guiGraphics, 0xAA000000);
+            
+            // Dialog box
+            int boxW = 280;
+            int boxH = 100;
+            int boxX = (this.width - boxW) / 2;
+            int boxY = (this.height - boxH) / 2;
+            
+            guiGraphics.fill(boxX, boxY, boxX + boxW, boxY + boxH, 0xFF222222);
+            guiGraphics.renderOutline(boxX, boxY, boxW, boxH, 0xFFFFAA00);
+            
+            Component title = Component.literal("Unsaved Changes");
+            guiGraphics.drawString(this.font, title, boxX + (boxW - this.font.width(title)) / 2, boxY + 15, 0xFFFFAA00, true);
+            
+            Component msg = Component.literal("Do you want to apply your unsaved changes?");
+            guiGraphics.drawString(this.font, msg, boxX + (boxW - this.font.width(msg)) / 2, boxY + 40, 0xFFFFFF, true);
+            
+            // Note: The buttons for the dialog are rendered below by manually drawing them since they are dynamic
+            // But to use standard hit testing, it's easier to just draw rectangles and check mouse bounds in mouseClicked
+            int btnY = boxY + 65;
+            // Yes Button
+            guiGraphics.fill(boxX + 20, btnY, boxX + 90, btnY + 20, 0xFF28a745); // Green
+            guiGraphics.drawString(this.font, "Yes", boxX + 55 - this.font.width("Yes") / 2, btnY + 6, 0xFFFFFF, true);
+            
+            // No Button
+            guiGraphics.fill(boxX + 105, btnY, boxX + 175, btnY + 20, 0xFFdc3545); // Red
+            guiGraphics.drawString(this.font, "No", boxX + 140 - this.font.width("No") / 2, btnY + 6, 0xFFFFFF, true);
+            
+            // Cancel Button
+            guiGraphics.fill(boxX + 190, btnY, boxX + 260, btnY + 20, 0xFF6c757d); // Gray
+            guiGraphics.drawString(this.font, "Cancel", boxX + 225 - this.font.width("Cancel") / 2, btnY + 6, 0xFFFFFF, true);
+            
+            guiGraphics.pose().popPose();
+        }
     }
+
     
     private void renderTaskTemplatesTab(GuiGraphics guiGraphics, int centerX, int centerY) {
         if (!editMode) {
@@ -702,6 +834,8 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (showingUnsavedDialog) return true; // Block keyboard inputs while dialog is open
+
         // ESC while editing: step back instead of closing the screen
         if (keyCode == 256 && editMode) { // GLFW_KEY_ESCAPE = 256
             if (isFullscreen) {
@@ -710,7 +844,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
                 this.rebuildWidgets();
             } else {
                 // Step 2: cancel edit back to template list
-                cancelEdit();
+                handleNavigation(() -> cancelEdit());
             }
             return true;
         }
@@ -731,6 +865,22 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     }
     
     @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (currentTab == Tab.TASK_TEMPLATES && !editMode) {
+            if (scrollY > 0 && scrollOffset > 0) {
+                scrollOffset--;
+                this.rebuildWidgets();
+                return true;
+            } else if (scrollY < 0 && scrollOffset + 3 < templates.size()) {
+                scrollOffset++;
+                this.rebuildWidgets();
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    @Override
     public boolean charTyped(char codePoint, int modifiers) {
         if (this.searchBox != null && this.searchBox.isFocused()) {
             this.searchBox.charTyped(codePoint, modifiers);
@@ -746,27 +896,51 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Convert raw screen-pixel coords to design-space because the screen
-        // is rendered through ScalableContainerScreen's pose scale. Without
-        // this the custom slot hit-tests below silently miss at non-1.0 GUI
-        // scales (Auto / Scale 4 / Scale 5).
+        // Handle unsaved changes dialog clicks first (these are in raw coords, not design-space, if rendering happened outside scaled pose, but renderContent is inside scaled pose! Wait, renderContent scales, so this must be design coords.)
         double designMouseX = inverseMouseX(mouseX);
         double designMouseY = inverseMouseY(mouseY);
+        
+        if (showingUnsavedDialog) {
+            int boxW = 280;
+            int boxH = 100;
+            int boxX = (this.width - boxW) / 2;
+            int boxY = (this.height - boxH) / 2;
+            int btnY = boxY + 65;
+            
+            // Yes button (boxX + 20 to boxX + 90)
+            if (designMouseX >= boxX + 20 && designMouseX <= boxX + 90 && designMouseY >= btnY && designMouseY <= btnY + 20) {
+                if (currentTab == Tab.TASK_TEMPLATES) saveTemplate();
+                else if (currentTab == Tab.FREE_REWARD) saveFreeRewardSettings(freeRewardBox.getValue(), cooldownBox.getValue());
+                else if (currentTab == Tab.SETTINGS) saveSettings();
+                
+                showingUnsavedDialog = false;
+                if (pendingNavigation != null) pendingNavigation.run();
+                return true;
+            }
+            // No button (boxX + 105 to boxX + 175)
+            if (designMouseX >= boxX + 105 && designMouseX <= boxX + 175 && designMouseY >= btnY && designMouseY <= btnY + 20) {
+                showingUnsavedDialog = false;
+                if (pendingNavigation != null) pendingNavigation.run();
+                return true;
+            }
+            // Cancel button (boxX + 190 to boxX + 260)
+            if (designMouseX >= boxX + 190 && designMouseX <= boxX + 260 && designMouseY >= btnY && designMouseY <= btnY + 20) {
+                showingUnsavedDialog = false;
+                pendingNavigation = null;
+                return true;
+            }
+            return true; // Swallow all other clicks
+        }
+
+        if (searchBox != null && searchBox.isFocused() &&
+            !(designMouseX >= searchBox.getX() && designMouseX < searchBox.getX() + searchBox.getWidth() &&
+              designMouseY >= searchBox.getY() && designMouseY < searchBox.getY() + searchBox.getHeight())) {
+            searchBox.setFocused(false);
+        }
 
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;
         
-        // Handle item slot clicks for template editing
-        if (editMode && currentTab == Tab.TASK_TEMPLATES) {
-            int itemSlotX = centerX + 35;
-            int itemSlotY = centerY + 110 + 150 + 50; // Below save/cancel buttons, matching render
-            
-            if (designMouseX >= itemSlotX && designMouseX < itemSlotX + 18 && 
-                designMouseY >= itemSlotY && designMouseY < itemSlotY + 18) {
-                handleItemSlotClick(true);
-                return true;
-            }
-        }
         
 
         
@@ -785,24 +959,6 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
-    private void handleItemSlotClick(boolean isTemplateEdit) {
-        if (this.minecraft != null && this.minecraft.player != null) {
-            // Use currently selected hotbar item (since this screen has no inventory slots)
-            ItemStack selectedItem = this.minecraft.player.getInventory().getSelected();
-            
-            if (!selectedItem.isEmpty()) {
-                // Set the selected hotbar item as the reward item
-                if (isTemplateEdit) {
-                    
-                }
-            } else {
-                // Clear item when clicking with empty hand
-                if (isTemplateEdit) {
-                    editRewardItems = new ArrayList<>();
-                }
-            }
-        }
-    }
 
     private com.servermanagement.gui.widgets.ToggleSwitch tooltipSwitch;
     private com.servermanagement.gui.widgets.ToggleSwitch minebaySwitch;
@@ -856,19 +1012,7 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         this.addRenderableWidget(new ModernButton(
             centerX + (this.imageWidth / 2) - 60, centerY + this.imageHeight - 45, 120, 25,
             Component.literal("Save Settings"),
-            button -> {
-                double startingBalance = 1000.0;
-                try {
-                    startingBalance = startingBalanceBox.getValue().isEmpty() ? 0.0 : Double.parseDouble(startingBalanceBox.getValue());
-                } catch (NumberFormatException ignored) {}
-                com.servermanagement.network.ModNetworking.sendToServer(new com.servermanagement.network.packet.SaveEconomySettingsPacket(
-                    tooltipSwitch.isToggled(),
-                    minebaySwitch.isToggled(),
-                    minestacksSwitch.isToggled(),
-                    blacklistWidget.getBlacklistString(),
-                    startingBalance
-                ));
-            },
+            button -> saveSettings(),
             ModernButton.ButtonStyle.SUCCESS
         ));
     }

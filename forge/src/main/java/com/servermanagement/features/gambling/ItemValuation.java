@@ -109,8 +109,73 @@ public class ItemValuation {
         ITEM_VALUES.put("minecraft:lapis_ore", 3.0);
         ITEM_VALUES.put("minecraft:deepslate_lapis_ore", 3.0);
         
-        ITEM_VALUES.put("minecraft:quartz", 2.0);
-        ITEM_VALUES.put("minecraft:nether_quartz_ore", 2.0);
+        // New Building Block & Material Anchor Prices
+        ITEM_VALUES.put("minecraft:stone", 5.0);
+        ITEM_VALUES.put("minecraft:cobblestone", 2.0);
+        ITEM_VALUES.put("minecraft:granite", 3.0);
+        ITEM_VALUES.put("minecraft:diorite", 3.0);
+        ITEM_VALUES.put("minecraft:andesite", 3.0);
+        ITEM_VALUES.put("minecraft:deepslate", 3.0);
+        ITEM_VALUES.put("minecraft:cobbled_deepslate", 2.0);
+        ITEM_VALUES.put("minecraft:tuff", 3.0);
+        
+        ITEM_VALUES.put("minecraft:bricks", 10.0);
+        ITEM_VALUES.put("minecraft:brick", 2.5);
+        ITEM_VALUES.put("minecraft:sandstone", 5.0);
+        ITEM_VALUES.put("minecraft:red_sandstone", 5.0);
+        ITEM_VALUES.put("minecraft:chiseled_sandstone", 6.0);
+        ITEM_VALUES.put("minecraft:cut_sandstone", 5.0);
+        ITEM_VALUES.put("minecraft:chiseled_red_sandstone", 6.0);
+        ITEM_VALUES.put("minecraft:cut_red_sandstone", 5.0);
+        ITEM_VALUES.put("minecraft:smooth_sandstone", 6.0);
+        ITEM_VALUES.put("minecraft:smooth_red_sandstone", 6.0);
+        
+        ITEM_VALUES.put("minecraft:prismarine", 10.0);
+        ITEM_VALUES.put("minecraft:prismarine_bricks", 15.0);
+        ITEM_VALUES.put("minecraft:dark_prismarine", 20.0);
+        ITEM_VALUES.put("minecraft:prismarine_shard", 2.5);
+        ITEM_VALUES.put("minecraft:prismarine_crystals", 5.0);
+        
+        ITEM_VALUES.put("minecraft:netherrack", 2.0);
+        ITEM_VALUES.put("minecraft:nether_bricks", 10.0);
+        ITEM_VALUES.put("minecraft:nether_brick", 2.5);
+        
+        ITEM_VALUES.put("minecraft:quartz", 10.0);
+        ITEM_VALUES.put("minecraft:nether_quartz_ore", 15.0);
+        ITEM_VALUES.put("minecraft:quartz_block", 45.0);
+        ITEM_VALUES.put("minecraft:smooth_quartz", 45.0);
+        ITEM_VALUES.put("minecraft:chiseled_quartz_block", 45.0);
+        ITEM_VALUES.put("minecraft:quartz_pillar", 45.0);
+        ITEM_VALUES.put("minecraft:quartz_bricks", 45.0);
+        
+        // Copper specific anchors to prevent 0.50 floor
+        ITEM_VALUES.put("minecraft:copper_trapdoor", 15.0);
+        ITEM_VALUES.put("minecraft:exposed_copper", 45.0);
+        ITEM_VALUES.put("minecraft:weathered_copper", 45.0);
+        ITEM_VALUES.put("minecraft:oxidized_copper", 45.0);
+        ITEM_VALUES.put("minecraft:cut_copper", 45.0);
+        ITEM_VALUES.put("minecraft:exposed_cut_copper", 45.0);
+        ITEM_VALUES.put("minecraft:weathered_cut_copper", 45.0);
+        ITEM_VALUES.put("minecraft:oxidized_cut_copper", 45.0);
+        ITEM_VALUES.put("minecraft:chiseled_copper", 45.0);
+        ITEM_VALUES.put("minecraft:exposed_chiseled_copper", 45.0);
+        ITEM_VALUES.put("minecraft:weathered_chiseled_copper", 45.0);
+        ITEM_VALUES.put("minecraft:oxidized_chiseled_copper", 45.0);
+        ITEM_VALUES.put("minecraft:copper_bulb", 50.0);
+        ITEM_VALUES.put("minecraft:exposed_copper_bulb", 50.0);
+        ITEM_VALUES.put("minecraft:weathered_copper_bulb", 50.0);
+        ITEM_VALUES.put("minecraft:oxidized_copper_bulb", 50.0);
+        ITEM_VALUES.put("minecraft:copper_grate", 45.0);
+        ITEM_VALUES.put("minecraft:exposed_copper_grate", 45.0);
+        ITEM_VALUES.put("minecraft:weathered_copper_grate", 45.0);
+        ITEM_VALUES.put("minecraft:oxidized_copper_grate", 45.0);
+        ITEM_VALUES.put("minecraft:copper_door", 20.0);
+        ITEM_VALUES.put("minecraft:exposed_copper_door", 20.0);
+        ITEM_VALUES.put("minecraft:weathered_copper_door", 20.0);
+        ITEM_VALUES.put("minecraft:oxidized_copper_door", 20.0);
+        ITEM_VALUES.put("minecraft:exposed_copper_trapdoor", 15.0);
+        ITEM_VALUES.put("minecraft:weathered_copper_trapdoor", 15.0);
+        ITEM_VALUES.put("minecraft:oxidized_copper_trapdoor", 15.0);
         
         ITEM_VALUES.put("minecraft:coal_ore", 1.0);
         ITEM_VALUES.put("minecraft:deepslate_coal_ore", 1.0);

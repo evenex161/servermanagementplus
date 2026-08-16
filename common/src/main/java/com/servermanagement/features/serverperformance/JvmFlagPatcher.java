@@ -18,6 +18,37 @@ public class JvmFlagPatcher {
 
     private static final String[] BAT_SCRIPTS = {"run.bat", "start.bat", "launch.bat", "server_start.bat"};
     private static final String[] SH_SCRIPTS = {"run.sh", "start.sh", "launch.sh", "server_start.sh"};
+    private static final String SMART_START_MARKER = "-Dservermanagement.smartstart=true";
+
+    /**
+     * Result of a patch operation, containing patched script names and whether SmartStart was detected.
+     */
+    public record PatchResult(List<String> patchedScripts, boolean smartStartDetected) {
+        public boolean success() { return !patchedScripts.isEmpty(); }
+    }
+
+    /**
+     * Checks if any detected run script already has SmartStart integrated.
+     */
+    public static boolean hasSmartStart(Path serverRoot) {
+        for (String name : BAT_SCRIPTS) {
+            Path script = serverRoot.resolve(name);
+            if (Files.exists(script)) {
+                try {
+                    if (Files.readString(script).contains(SMART_START_MARKER)) return true;
+                } catch (IOException ignored) {}
+            }
+        }
+        for (String name : SH_SCRIPTS) {
+            Path script = serverRoot.resolve(name);
+            if (Files.exists(script)) {
+                try {
+                    if (Files.readString(script).contains(SMART_START_MARKER)) return true;
+                } catch (IOException ignored) {}
+            }
+        }
+        return false;
+    }
 
     /**
      * Checks if any detected run script already contains the recommended GC flags.
@@ -63,18 +94,23 @@ public class JvmFlagPatcher {
 
     /**
      * Patches all detected run scripts with the recommended GC flags.
-     * Creates .bak backups before modifying.
-     * @return list of patched script names, empty if none found or on failure
+     * Creates .bak backups before modifying (unless SmartStart is already integrated).
+     * @return PatchResult with patched script names and SmartStart detection status
      */
-    public static List<String> patchRunScripts(Path serverRoot) {
+    public static PatchResult patchRunScripts(Path serverRoot) {
         List<String> patched = new ArrayList<>();
         String recommendedFlags = GCAdvisor.getRecommendedFlags();
         Set<String> removalFlags = GCAdvisor.getRemovalFlags();
+        boolean smartStartDetected = false;
 
         // Patch first found .bat
         for (String name : BAT_SCRIPTS) {
             Path script = serverRoot.resolve(name);
             if (Files.exists(script)) {
+                try {
+                    String content = Files.readString(script);
+                    if (content.contains(SMART_START_MARKER)) smartStartDetected = true;
+                } catch (IOException ignored) {}
                 if (patchScript(script, recommendedFlags, removalFlags)) {
                     patched.add(name);
                 }
@@ -86,6 +122,10 @@ public class JvmFlagPatcher {
         for (String name : SH_SCRIPTS) {
             Path script = serverRoot.resolve(name);
             if (Files.exists(script)) {
+                try {
+                    String content = Files.readString(script);
+                    if (content.contains(SMART_START_MARKER)) smartStartDetected = true;
+                } catch (IOException ignored) {}
                 if (patchScript(script, recommendedFlags, removalFlags)) {
                     patched.add(name);
                 }
@@ -100,15 +140,25 @@ public class JvmFlagPatcher {
             Constants.LOG.warn("JvmFlagPatcher: No run scripts found to patch in {}", serverRoot);
         }
 
-        return patched;
+        return new PatchResult(patched, smartStartDetected);
     }
 
     private static boolean patchScript(Path script, String recommendedFlags, Set<String> removalFlags) {
         try {
-            // Create .bak backup
+            // Read content first to check for SmartStart marker
+            String rawContent = Files.readString(script);
+            boolean hasSmartStart = rawContent.contains(SMART_START_MARKER);
+
+            // Only create .bak backup if the script does NOT already contain the SmartStart flag.
+            // If SmartStart is already integrated, StartScriptGenerator already created a .bak of the
+            // user's original script. Overwriting it here would lose that original backup permanently.
             Path backup = script.resolveSibling(script.getFileName().toString() + ".bak");
-            Files.copy(script, backup, StandardCopyOption.REPLACE_EXISTING);
-            Constants.LOG.info("JvmFlagPatcher: Created backup {}", backup.getFileName());
+            if (!hasSmartStart) {
+                Files.copy(script, backup, StandardCopyOption.REPLACE_EXISTING);
+                Constants.LOG.info("JvmFlagPatcher: Created backup {}", backup.getFileName());
+            } else {
+                Constants.LOG.info("JvmFlagPatcher: Skipping backup for {} (SmartStart already integrated, original .bak preserved)", script.getFileName());
+            }
 
             // Read and patch lines
             List<String> lines = Files.readAllLines(script);

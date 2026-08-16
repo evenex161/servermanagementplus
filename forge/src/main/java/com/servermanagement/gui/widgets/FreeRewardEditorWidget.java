@@ -180,12 +180,14 @@ public class FreeRewardEditorWidget extends AbstractWidget {
         if (this.searchBox.mouseClicked(mouseX, mouseY, button)) {
             this.searchBox.setFocused(true);
             this.quantityBox.setFocused(false);
+            this.isPendingSearchBoxFocus = true;
             return true;
         }
         
         if (this.quantityBox.mouseClicked(mouseX, mouseY, button)) {
             this.quantityBox.setFocused(true);
             this.searchBox.setFocused(false);
+            this.isPendingQuantityBoxFocus = true;
             return true;
         }
         

@@ -77,14 +77,16 @@ public class ClientConnectionHandler {
                 });
             }
         } else if (event.getScreen() instanceof net.minecraft.client.gui.screens.PauseScreen pauseScreen) {
-            com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(pauseScreen.width, pauseScreen.height, false, () -> {
-                Minecraft.getInstance().setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
-                    new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, Minecraft.getInstance().player.getInventory()),
-                    Minecraft.getInstance().player.getInventory(),
-                    net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
-                ));
-            });
-            event.addListener(btn);
+            if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.hasPermissions(2)) {
+                com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(pauseScreen.width, pauseScreen.height, false, () -> {
+                    Minecraft.getInstance().setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
+                        new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, Minecraft.getInstance().player.getInventory()),
+                        Minecraft.getInstance().player.getInventory(),
+                        net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
+                    ));
+                });
+                event.addListener(btn);
+            }
         }
     }
 }

@@ -33,7 +33,10 @@ public class MarketPricingEngine {
     private volatile long lastRecalculation = 0;
 
     private static final long RECALCULATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-    private static final double MIN_INFLATION = 0.1;
+    // Minimum inflation multiplier — anchors represent intrinsic value floors.
+    // Inflation should only scale prices UP when the economy grows (money supply increases),
+    // never push them below their baseline. A value of 1.0 means anchor prices are the absolute floor.
+    private static final double MIN_INFLATION = 1.0;
     private static final double MAX_INFLATION = 50.0;
     private static final double FLOOR_PRICE = 0.50; // Minimum price for any item
 

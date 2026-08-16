@@ -1,4 +1,4 @@
-# ServerManagement+ v2.1.1-b1 (Minecraft 1.21.1)
+# ServerManagement+ v2.1.1-b1 (Minecraft 1.21.1) — *Internal Beta, superseded by v2.1.2*
 
 ## Architecture & Up-Porting
 - **Up-ported from 1.20.1 to 1.21.1:** Successfully up-ported all architectural changes, UI overhauls, and bug fixes from the `mc/1.20.1` branch to `mc/1.21.1`.

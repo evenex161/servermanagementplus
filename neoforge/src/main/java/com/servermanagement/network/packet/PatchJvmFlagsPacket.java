@@ -32,11 +32,11 @@ public record PatchJvmFlagsPacket(boolean confirmed) implements CustomPacketPayl
             ServerPlayer player = ((ctx.player() instanceof ServerPlayer) ? (ServerPlayer) ctx.player() : null);
             if (player != null && player.hasPermissions(2) && confirmed) {
                 java.nio.file.Path serverRoot = Paths.get("").toAbsolutePath();
-                List<String> patched = JvmFlagPatcher.patchRunScripts(serverRoot);
+                var result = JvmFlagPatcher.patchRunScripts(serverRoot);
 
-                if (!patched.isEmpty()) {
+                if (result.success()) {
                     player.sendSystemMessage(Component.literal(
-                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", patched) +
+                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", result.patchedScripts()) +
                         "\n\u00a7e[SM+] .bak backups created. Restart server for ZGC to activate."
                     ));
                 } else {

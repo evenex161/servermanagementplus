@@ -102,6 +102,7 @@ public class ModNetworking {
         ServerPlayNetworking.registerGlobalReceiver(CheckForUpdatesPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(StartServerUpdatePacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(ToggleFeaturePacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
+        ServerPlayNetworking.registerGlobalReceiver(SaveEconomySettingsPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(ToggleAutoShowPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(RequestAutoShowPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });
         ServerPlayNetworking.registerGlobalReceiver(WMTogglePortalsPacket.TYPE, (payload, context) -> { var p = context.player(); p.server.execute(() -> payload.handle(p)); });

@@ -27,5 +27,6 @@
     },
     "mixins": [
         "servermanagement.mixins.json"
-    ]
+    ],
+    "accessWidener": "servermanagement.accesswidener"
 }

@@ -114,10 +114,13 @@ public class ModCommands {
                             if (scripts.isEmpty()) {
                                 player.sendSystemMessage(Component.literal("\u00a7c[SM+] No run scripts found. Create a run.bat or run.sh first."));
                             } else {
+                                boolean hasSmartStart = com.servermanagement.features.serverperformance.JvmFlagPatcher.hasSmartStart(serverRoot);
                                 player.sendSystemMessage(Component.literal(
                                     "\u00a7e[SM+] This will patch: " + String.join(", ", scripts) + "\n" +
                                     "\u00a7e[SM+] Adding: " + com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags() + "\n" +
-                                    "\u00a7e[SM+] A .bak backup will be created."
+                                    (hasSmartStart
+                                        ? "\u00a7a[SM+] SmartStart detected -- your original .bak backup will be preserved."
+                                        : "\u00a7e[SM+] A .bak backup will be created.")
                                 ));
                                 player.sendSystemMessage(
                                     Component.literal(" [Confirm Patch]").withStyle(net.minecraft.ChatFormatting.GREEN, net.minecraft.ChatFormatting.BOLD)
@@ -133,12 +136,25 @@ public class ModCommands {
                         .executes(context -> {
                             if (context.getSource().getEntity() instanceof ServerPlayer player) {
                                 java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
-                                java.util.List<String> patched = com.servermanagement.features.serverperformance.JvmFlagPatcher.patchRunScripts(serverRoot);
-                                if (!patched.isEmpty()) {
+                                var result = com.servermanagement.features.serverperformance.JvmFlagPatcher.patchRunScripts(serverRoot);
+                                if (result.success()) {
+                                    String backupMsg = result.smartStartDetected()
+                                        ? "\u00a7a[SM+] SmartStart detected -- your original .bak backup is preserved."
+                                        : "\u00a7e[SM+] .bak backups created.";
                                     player.sendSystemMessage(Component.literal(
-                                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", patched) + "\n" +
-                                        "\u00a7e[SM+] .bak backups created. Restart server for ZGC to activate."
+                                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", result.patchedScripts()) + "\n" +
+                                        backupMsg + "\n" +
+                                        "\u00a7e[SM+] Restart server for ZGC to activate."
                                     ));
+                                    if (result.smartStartDetected()) {
+                                        player.sendSystemMessage(
+                                            Component.literal(" [Restart Now]").withStyle(net.minecraft.ChatFormatting.AQUA, net.minecraft.ChatFormatting.BOLD)
+                                                .withStyle(style -> style
+                                                    .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm restart"))
+                                                    .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                                                        Component.literal("Write restart flag and gracefully stop the server. SmartStart will auto-restart it."))))
+                                        );
+                                    }
                                 } else {
                                     player.sendSystemMessage(Component.literal("\u00a7c[SM+] No run scripts found to patch."));
                                 }
@@ -154,6 +170,31 @@ public class ModCommands {
                         return 1;
                     })
                 )
+            )
+            .then(Commands.literal("restart")
+                .executes(context -> {
+                    java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
+                    boolean hasSmartStart = com.servermanagement.features.serverperformance.JvmFlagPatcher.hasSmartStart(serverRoot);
+                    if (!hasSmartStart) {
+                        context.getSource().sendSuccess(() -> Component.literal(
+                            "\u00a7c[SM+] Restart requires SmartStart integration.\n" +
+                            "\u00a77[SM+] Use the update manager to integrate SmartStart, or restart manually."
+                        ), false);
+                        return 0;
+                    }
+                    try {
+                        java.nio.file.Files.writeString(serverRoot.resolve("restart_requested.flag"), "restart");
+                    } catch (java.io.IOException e) {
+                        context.getSource().sendFailure(Component.literal("\u00a7c[SM+] Failed to write restart flag: " + e.getMessage()));
+                        return 0;
+                    }
+                    context.getSource().sendSuccess(() -> Component.literal(
+                        "\u00a7a[SM+] Restart flag written. Stopping server...\n" +
+                        "\u00a77[SM+] SmartStart will automatically restart it."
+                    ), true);
+                    context.getSource().getServer().halt(false);
+                    return 1;
+                })
             )
         );
         

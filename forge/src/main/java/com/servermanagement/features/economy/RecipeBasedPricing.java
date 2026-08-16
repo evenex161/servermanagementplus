@@ -86,14 +86,12 @@ public class RecipeBasedPricing {
             anchorPrices.clear();
             recipePrices.clear();
 
-            // Calculate starting balance multiplier
-            double startingBalance = com.servermanagement.config.ModConfig.STARTING_BALANCE.get();
-            capitalMultiplier = Math.max(0.1, startingBalance / 1000.0);
-
-            // Step 1: Load anchor prices from ItemValuation's hardcoded map and scale them
+            // Step 1: Load anchor prices from ItemValuation's hardcoded map as raw intrinsic values.
+            // These are NOT scaled by capitalMultiplier — inflation is handled separately by
+            // MarketPricingEngine.inflationMultiplier which already accounts for economy size.
             Map<String, Double> hardcoded = ItemValuation.getHardcodedValues();
             for (Map.Entry<String, Double> entry : hardcoded.entrySet()) {
-                anchorPrices.put(entry.getKey(), entry.getValue() * capitalMultiplier);
+                anchorPrices.put(entry.getKey(), entry.getValue());
             }
 
             // Step 2: Collect all recipes from every supported recipe type
@@ -190,37 +188,6 @@ public class RecipeBasedPricing {
         collectFromType(mgr, RecipeType.STONECUTTING, registryAccess, CRAFTING_MARKUP, result);
         collectSmithingRecipes(mgr, registryAccess, result);
 
-        // Add Reverse Crafting (Mono-Ingredient recipes)
-        List<IRecipeEntry> reverseRecipes = new ArrayList<>();
-        for (IRecipeEntry entry : result) {
-            if (entry instanceof StandardRecipeEntry) {
-                StandardRecipeEntry std = (StandardRecipeEntry) entry;
-                String uniqueInputId = null;
-                boolean mono = true;
-                for (Ingredient ing : std.ingredients) {
-                    ItemStack[] options = ing.getItems();
-                    if (options.length != 1) {
-                        mono = false; break;
-                    }
-                    String id = BuiltInRegistries.ITEM.getKey(options[0].getItem()).toString();
-                    if (uniqueInputId == null) {
-                        uniqueInputId = id;
-                    } else if (!uniqueInputId.equals(id)) {
-                        mono = false; break;
-                    }
-                }
-                
-                if (mono && uniqueInputId != null && !uniqueInputId.equals(std.outputId)) {
-                    reverseRecipes.add(new VirtualRecipeEntry(
-                        uniqueInputId, std.ingredients.size(),
-                        std.outputId, std.outputCount,
-                        1.0 // no markup for reverse
-                    ));
-                }
-            }
-        }
-        result.addAll(reverseRecipes);
-        
         // Add Drop Rate Tracked Virtual Recipes
         for (Map.Entry<String, Map<String, Double>> blockEntry : DropRateTracker.getInstance().getAverages().entrySet()) {
             String blockId = blockEntry.getKey();
@@ -230,9 +197,6 @@ public class RecipeBasedPricing {
                 
                 // Forward: 1 Block -> avgDrops DropItem
                 result.add(new VirtualRecipeEntry(dropId, avgDrops, blockId, 1.0, 1.0));
-                
-                // Backward: avgDrops DropItem -> 1 Block
-                result.add(new VirtualRecipeEntry(blockId, 1.0, dropId, avgDrops, 1.0));
             }
         }
 
@@ -397,7 +361,7 @@ public class RecipeBasedPricing {
      */
     private double cheapestMatchingPrice(Ingredient ingredient) {
         ItemStack[] options = ingredient.getItems();
-        if (options.length == 0) return DEFAULT_PRICE * capitalMultiplier;
+        if (options.length == 0) return DEFAULT_PRICE;
 
         double cheapest = Double.MAX_VALUE;
         for (ItemStack option : options) {
@@ -407,7 +371,7 @@ public class RecipeBasedPricing {
                 cheapest = price;
             }
         }
-        return cheapest == Double.MAX_VALUE ? (DEFAULT_PRICE * capitalMultiplier) : cheapest;
+        return cheapest == Double.MAX_VALUE ? DEFAULT_PRICE : cheapest;
     }
 
     /**
@@ -426,39 +390,46 @@ public class RecipeBasedPricing {
         return getDynamicFallbackPrice(itemId);
     }
     
+    /**
+     * Dynamic fallback price for items with no recipe and no hardcoded anchor.
+     * Uses bounded scarcity + rarity modifiers with a hard cap to prevent
+     * both the $0.50 collapse and $3M+ runaway prices.
+     */
     private double getDynamicFallbackPrice(String itemId) {
-        double basePrice = DEFAULT_PRICE * capitalMultiplier;
+        double basePrice = DEFAULT_PRICE;
         try {
             long supply = ItemSupplyDemandTracker.getInstance().getSupplyCount(itemId);
             
-            // Scarcity multiplier: Base of 100,000 divided by (supply + 1)
-            // This ensures incredibly rare items (0) are worth tens of thousands,
-            // while abundant items (100,000+) drop to the baseline DEFAULT_PRICE.
-            double scarcityMultiplier = Math.max(1.0, 100000.0 / (supply + 1.0));
+            // Gentle scarcity multiplier: max 10x for zero-supply items, tapers with sqrt.
+            // At 100 supply: 10/(sqrt(100)+1) = 10/11 ≈ 0.9x (baseline)
+            // At 0 supply: 10/(0+1) = 10x
+            double scarcityMultiplier = Math.max(1.0, 10.0 / (Math.sqrt(supply) + 1.0));
             basePrice *= scarcityMultiplier;
 
             net.minecraft.resources.ResourceLocation resourceLocation = net.minecraft.resources.ResourceLocation.parse(itemId);
             net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
             
             if (item != net.minecraft.world.item.Items.AIR) {
-                // Check max stack size or durability (unstackable = higher baseline price)
+                // Unstackable items (tools, armor) get a modest 2x boost
                 if (item.components().has(net.minecraft.core.component.DataComponents.MAX_DAMAGE) || item.getDefaultInstance().getMaxStackSize() == 1) {
-                    basePrice *= 10.0;
+                    basePrice *= 2.0;
                 }
                 
-                // Check rarity
+                // Rarity modifiers — gentle, additive-style to prevent compounding explosion
                 net.minecraft.world.item.Rarity rarity = item.components().getOrDefault(net.minecraft.core.component.DataComponents.RARITY, net.minecraft.world.item.Rarity.COMMON);
                 if (rarity == net.minecraft.world.item.Rarity.UNCOMMON) {
-                    basePrice *= 5.0;
+                    basePrice *= 1.5;
                 } else if (rarity == net.minecraft.world.item.Rarity.RARE) {
-                    basePrice *= 25.0;
+                    basePrice *= 3.0;
                 } else if (rarity == net.minecraft.world.item.Rarity.EPIC) {
-                    basePrice *= 100.0;
+                    basePrice *= 5.0;
                 }
             }
         } catch (Exception ignored) {}
         
-        return basePrice;
+        // Hard cap: fallback items should never exceed the value of a rare anchored item
+        // like a nether star (1000.0). This prevents unknown items from breaking the economy.
+        return Math.min(500.0, basePrice);
     }
 
     // ==================== Inner Classes ====================

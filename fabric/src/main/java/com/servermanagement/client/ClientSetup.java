@@ -44,6 +44,9 @@ public class ClientSetup implements ClientModInitializer {
         MenuScreens.register(ModMenuTypes.MOTD_EDITOR_MENU, MotdEditorScreen::new);
         MenuScreens.register(ModMenuTypes.UPDATER_MENU, UpdaterScreen::new);
 
+        // Register client-side GC advisory notification
+        registerClientGcAdvisory();
+
         net.fabricmc.fabric.api.client.screen.v1.ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof net.minecraft.client.gui.screens.TitleScreen titleScreen) {
                 com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(scaledWidth, scaledHeight, false, () -> {
@@ -87,17 +90,54 @@ public class ClientSetup implements ClientModInitializer {
                     });
                 }
             } else if (screen instanceof net.minecraft.client.gui.screens.PauseScreen pauseScreen) {
-                com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(scaledWidth, scaledHeight, false, () -> {
-                    client.setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
-                        new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, client.player.getInventory()),
-                        client.player.getInventory(),
-                        net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
-                    ));
-                });
-                net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(btn);
+                if (client.player != null && client.player.hasPermissions(2)) {
+                    com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(scaledWidth, scaledHeight, false, () -> {
+                        client.setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
+                            new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, client.player.getInventory()),
+                            client.player.getInventory(),
+                            net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
+                        ));
+                    });
+                    net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen).add(btn);
+                }
             }
         });
     }
 
     private static boolean updateChecked = false;
+    private static boolean clientGcNotified = false;
+
+    private void registerClientGcAdvisory() {
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            if (!clientGcNotified) {
+                com.servermanagement.features.serverperformance.GCAdvisor.initialize();
+                if (com.servermanagement.features.serverperformance.GCAdvisor.isUsingSuboptimalGC()
+                        && !com.servermanagement.features.serverperformance.GCAdvisor.isDismissed()) {
+                    clientGcNotified = true;
+                    var gcType = com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC();
+                    client.execute(() -> {
+                        if (client.player != null) {
+                            net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component.literal("\n")
+                                .append(net.minecraft.network.chat.Component.literal(" [SM+] Performance Tip: ").withStyle(net.minecraft.ChatFormatting.GOLD, net.minecraft.ChatFormatting.BOLD))
+                                .append(net.minecraft.network.chat.Component.literal("Your client is using " + gcType.getDisplayName() + "\n").withStyle(net.minecraft.ChatFormatting.YELLOW))
+                                .append(net.minecraft.network.chat.Component.literal(" ZGC is recommended for Minecraft -- it reduces\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                                .append(net.minecraft.network.chat.Component.literal(" lag spikes and stuttering, especially with mods.\n\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                                .append(net.minecraft.network.chat.Component.literal(" How to switch:\n").withStyle(net.minecraft.ChatFormatting.WHITE))
+                                .append(net.minecraft.network.chat.Component.literal(" 1. Open your launcher's JVM Arguments\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                                .append(net.minecraft.network.chat.Component.literal(" 2. Add: ").withStyle(net.minecraft.ChatFormatting.GRAY))
+                                .append(net.minecraft.network.chat.Component.literal("-XX:+UseZGC -XX:+ZGenerational").withStyle(net.minecraft.ChatFormatting.GREEN))
+                                .append(net.minecraft.network.chat.Component.literal("\n 3. Restart your game\n\n").withStyle(net.minecraft.ChatFormatting.GRAY))
+                                .append(net.minecraft.network.chat.Component.literal(" [Got it]").withStyle(net.minecraft.ChatFormatting.AQUA)
+                                    .withStyle(style -> style
+                                        .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm gc dismiss"))
+                                        .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT,
+                                            net.minecraft.network.chat.Component.literal("Hide this tip for the rest of this session")))))
+                                .append(net.minecraft.network.chat.Component.literal("\n"));
+                            client.player.sendSystemMessage(msg);
+                        }
+                    });
+                }
+            }
+        });
+    }
 }

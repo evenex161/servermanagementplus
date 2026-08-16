@@ -22,7 +22,7 @@ public class StatsBarOverlay {
         if (!ClientConfig.isShowStatsBar()) return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.options.hideGui || mc.screen != null) return;
+        if (mc.options.hideGui || mc.screen != null || mc.getDebugOverlay().showDebugScreen()) return;
 
         int x = ClientConfig.getStatsBarX();
         int y = ClientConfig.getStatsBarY();

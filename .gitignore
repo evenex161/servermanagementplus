@@ -35,6 +35,8 @@ GUI_TEST_CHECKLIST.md
 tools/
 CLAUDE.md
 GEMINI.md
+apply_lesson.py
+update_rules.py
 
 # Minecraft runtime
 run/

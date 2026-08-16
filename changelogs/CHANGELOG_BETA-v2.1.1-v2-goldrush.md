@@ -1,4 +1,4 @@
-# ServerManagement+ BETA-v2.1.1-v2-goldrush
+# ServerManagement+ BETA-v2.1.1-v2-goldrush — *Internal Beta, superseded by v2.1.2*
 
 Welcome to the "Goldrush" Beta! This massive update completely overhauls the global economy engine and introduces a stunning visual node-based editor for daily tasks!
 

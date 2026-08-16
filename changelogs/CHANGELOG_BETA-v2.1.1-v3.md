@@ -1,11 +1,19 @@
-# ServerManagement+ BETA-v2.1.1-v3
+# ServerManagement+ BETA-v2.1.1-v3 — *Internal Beta, superseded by v2.1.2*
 
 ## 🐛 Notable Bug Fixes & Polish
 - **Node Graph UI Dragging:** Fixed an issue where the node graph editor could not be dragged across the screen. Drag events are now properly routed through the screen scaling logic and will no longer be swallowed by vanilla container slot interaction checks.
 - **Nested UI Focus Loss:** Fixed a bug in the Economy Node Editor where clicking the Cash Reward text box failed to unfocus the internal item search field. This previously caused all typed numbers to be incorrectly swallowed by the hidden item picker.
+- **Template Editor Fullscreen Fix:** Fixed a bug where the Save, Cancel, and Exit Fullscreen buttons were completely unclickable in the fullscreen Node Editor. The Node Editor widget was previously swallowing the click events because its interactable bounds covered the entire physical screen. Resolved by clamping the widget's height in fullscreen mode to leave space for the bottom UI buttons, allowing them to properly receive clicks.
+- **Fullscreen Editor Persistence:** Fixed an issue where the fullscreen template editor background would persist and trap the user when clicking Save, Cancel, or switching tabs.
+- **Template Saving & Reward Fixes:** Fixed an issue where task templates would fail to save if they only provided item rewards without a cash reward (cash = 0). Templates now correctly extract the item list from the nested RewardNode and save as long as either a cash or item reward is present.
+- **Template Search & Scrolling:** Fixed the template search box in the Economy Management screen not actually filtering the list, and fixed it getting permanently stuck in focus when clicking away. Additionally added mouse wheel scrolling support for the task templates list.
 - **Network Stability (EncoderException):** Fixed a critical disconnect issue (`String too big`) when sending custom payloads by removing restrictive arbitrary string length bounds across all network packets. Network payload variables now utilize the standard Minecraft length limit, fully accommodating dynamically long string representations (such as 73+ character UUIDs or descriptions) without crashing the server connection.
+- **Unsaved Changes Protection:** Added a confirmation dialog to the Economy Management Screen. When editing task templates, configuring free rewards, or changing settings (like the trade blacklist), attempting to close the screen, switch tabs, or return to the dashboard with unsaved changes will now prompt the user to save or discard their progress, preventing accidental data loss.
 - **"Moved too quickly" Spam Fix:** Eliminated excessive `moved too quickly!` log warnings that plagued servers using Distant Horizons or experiencing TPS drops, by dynamically increasing movement validation tolerance based on server load.
 - **Chunk Gen Throttle Oscillation:** Fixed an issue where the TPS chunk throttling system would rapidly oscillate the server view distance under heavy load. The system now uses a robust deadband hysteresis, waiting for sustained TPS recovery before restoring view distances to prevent massive chunk load spikes that would instantly re-kill TPS.
+- **Qty Field Focus Fix:** Fixed an issue where the `Qty` text field on the `EconomyManagementScreen` Free Reward Tab was unselectable. The internal `FreeRewardEditorWidget` was swallowing clicks but failing to correctly sync its focus state, preventing the screen from appropriately routing keyboard inputs.
+- **Unsaved Changes Overlay Rendering:** Fixed major GUI layering glitches on the `EconomyManagementScreen` where inner components (like FreeReward text fields and NodeEditor buttons) were rendering on top of the "Unsaved Changes" dim overlay. Also fixed the dim background to properly scale to the entire monitor screen regardless of `ScalableContainerScreen` dimensions.
+- **F3 Debug Screen HUD Overlap:** Fixed an issue where the `StatsBarOverlay` (Daily Tasks HUD) would render over the vanilla F3 debug screen. The HUD now automatically detects when debug mode is active and hides itself to prevent obscuring crucial debug information.
 
 ## 🚀 New Features & Improvements
 - **Distant Horizons Deep TPS Synergy:** Three new automated systems work together to keep your server buttery smooth with Distant Horizons installed:
@@ -22,3 +30,4 @@
 - **Advanced Performance Diagnostics:**
   - **JMX Allocation Tracker:** New zero-overhead tracker that measures JVM heap allocation rate in MB/s.
   - **Overhauled Stats GUI:** The Performance Settings stats tab now displays a GC health banner, DH version detection, active JVM heap usage, real-time allocation rate, and total GC pause times.
+

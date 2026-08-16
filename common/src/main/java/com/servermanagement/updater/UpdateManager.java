@@ -82,6 +82,20 @@ public class UpdateManager {
             } catch (Exception e) {
                 LOGGER.warn("Failed to clean up update flags", e);
             }
+            
+            // Clean up updater log files ONLY after a successful update has been confirmed.
+            // If the update failed, these logs are preserved for debugging.
+            if (justUpdated) {
+                try {
+                    Path modsDir = java.nio.file.Paths.get("mods");
+                    Files.deleteIfExists(modsDir.resolve("updater_jvm_error.log"));
+                    Files.deleteIfExists(modsDir.resolve("updater_jvm_output.log"));
+                    Files.deleteIfExists(modsDir.resolve("updater_log.txt"));
+                    LOGGER.info("Cleaned up updater log files after successful update to v{}.", currentVersion);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to clean up updater log files", e);
+                }
+            }
         } catch (Exception e) {
             LOGGER.error("Failed to check update success state", e);
         }
