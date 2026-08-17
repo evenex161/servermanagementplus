@@ -266,6 +266,6 @@ public class ItemSupplyDemandTracker {
     }
     
     private static String getItemId(ItemStack stack) {
-        return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        return com.servermanagement.features.economy.MarketPricingEngine.getItemKey(stack);
     }
 }

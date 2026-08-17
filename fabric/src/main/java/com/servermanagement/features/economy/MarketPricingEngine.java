@@ -192,4 +192,11 @@ public class MarketPricingEngine {
     public void shutdown() {
         instance = null;
     }
+
+    public static String getItemKey(net.minecraft.world.item.ItemStack stack) {
+        if (stack.isEmpty()) return "minecraft:air";
+        net.minecraft.world.item.ItemStack copy = stack.copy();
+        copy.setCount(1);
+        return copy.save(new net.minecraft.nbt.CompoundTag()).toString();
+    }
 }

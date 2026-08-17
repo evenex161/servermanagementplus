@@ -55,7 +55,7 @@ public class ClientMarketData {
      */
     private static double getSupplyFactor(net.minecraft.world.item.ItemStack stack) {
         if (stack.isEmpty()) return 1.0;
-        String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(stack);
         long supply = supplyData.getOrDefault(itemId, 0L);
         
         if (supply <= SUPPLY_BASELINE) {
@@ -78,7 +78,7 @@ public class ClientMarketData {
         net.minecraft.world.item.ItemStack singleItem = stack.copyWithCount(1);
         
         // Use recipe-based prices if available, otherwise fall back to ItemValuation
-        String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(singleItem.getItem()).toString();
+        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(singleItem);
         double staticValue;
         if (!recipePrices.isEmpty()) {
             staticValue = recipePrices.getOrDefault(itemId, DEFAULT_PRICE);

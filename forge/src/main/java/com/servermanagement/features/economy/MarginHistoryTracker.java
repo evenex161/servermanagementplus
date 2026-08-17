@@ -71,7 +71,7 @@ public class MarginHistoryTracker {
     public void recordMargin(ItemStack stack, double marginPercent, double moneyPrice,
                              double baseMarketPrice, UUID sellerId) {
         if (stack.isEmpty()) return;
-        String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(stack);
         recordMargin(itemId, marginPercent, moneyPrice, baseMarketPrice, sellerId);
     }
     
@@ -88,7 +88,7 @@ public class MarginHistoryTracker {
      */
     public double getAverageMargin(ItemStack stack) {
         if (stack.isEmpty()) return 10.0;
-        String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(stack);
         return getAverageMargin(itemId);
     }
     

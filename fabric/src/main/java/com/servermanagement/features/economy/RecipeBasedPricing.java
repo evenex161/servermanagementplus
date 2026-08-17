@@ -131,7 +131,7 @@ public class RecipeBasedPricing {
      */
     public double getItemBasePrice(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
-        String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(stack);
         return getItemBasePrice(itemId);
     }
 
@@ -200,7 +200,7 @@ public class RecipeBasedPricing {
                     }
                     if (nonEmpty.isEmpty()) continue;
 
-                    String outputId = BuiltInRegistries.ITEM.getKey(output.getItem()).toString();
+                    String outputId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(output);
                     result.add(new RecipeEntry(outputId, output.getCount(), nonEmpty, markup));
                 } catch (Exception e) {
                     // Skip individual problematic recipes silently
@@ -236,7 +236,7 @@ public class RecipeBasedPricing {
 
                     if (nonEmpty.isEmpty()) continue;
 
-                    String outputId = BuiltInRegistries.ITEM.getKey(output.getItem()).toString();
+                    String outputId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(output);
                     result.add(new RecipeEntry(outputId, output.getCount(), nonEmpty, CRAFTING_MARKUP));
                 } catch (Exception e) {
                     // Skip individual problematic recipes silently
@@ -334,7 +334,7 @@ public class RecipeBasedPricing {
 
         double cheapest = Double.MAX_VALUE;
         for (ItemStack option : options) {
-            String id = BuiltInRegistries.ITEM.getKey(option.getItem()).toString();
+            String id = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(option);
             double price = lookupCurrentPrice(id);
             if (price < cheapest) {
                 cheapest = price;
