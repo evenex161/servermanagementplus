@@ -23,7 +23,7 @@ public class ForgeUpdateHooks {
         public static void onClientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> {
                 UpdatePreferences.load();
-                UpdateManager.checkForUpdates("2.1.1-b01", "forge", "1.20.1")
+                UpdateManager.checkForUpdates("2.1.2-b1", "forge", "1.20.1")
                     .thenAccept(optInfo -> optInfo.ifPresent(info -> {
                         if (!UpdatePreferences.isSkipped(info.version())) {
                             pendingUpdate = info;
@@ -42,7 +42,7 @@ public class ForgeUpdateHooks {
                 UpdateInfo info = pendingUpdate;
                 pendingUpdate = null;
                 net.minecraft.client.Minecraft.getInstance().tell(() -> {
-                    net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.client.UpdateAvailableScreen(event.getScreen(), info, "2.1.1-b01"));
+                    net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.client.UpdateAvailableScreen(event.getScreen(), info, "2.1.2-b1"));
                 });
             }
         }
@@ -52,7 +52,7 @@ public class ForgeUpdateHooks {
     public static class ForgeEvents {
         @SubscribeEvent
         public static void onServerStarting(ServerStartingEvent event) {
-            UpdateManager.checkUpdateSuccessState("2.1.1-b01");
+            UpdateManager.checkUpdateSuccessState("2.1.2-b1");
             com.servermanagement.updater.ServerUpdateScheduler.start("forge");
         }
         
@@ -61,7 +61,7 @@ public class ForgeUpdateHooks {
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
                 if (player.hasPermissions(2)) {
                     if (UpdateManager.justUpdated) {
-                        player.sendSystemMessage(Component.literal("§a[ServerManagement] Successfully updated to version 2.1.1-b01!"));
+                        player.sendSystemMessage(Component.literal("§a[ServerManagement] Successfully updated to version 2.1.2-b1!"));
                         UpdateManager.justUpdated = false;
                     }
                     

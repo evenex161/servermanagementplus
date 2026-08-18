@@ -22,7 +22,7 @@ public record CheckForUpdatesPacket() implements IPacket {
     public void handle(ServerPlayer player) {
         if (player != null && player.hasPermissions(2)) {
             // Check for updates asynchronously
-            UpdateManager.checkForUpdates("2.1.1-b01", "fabric", "1.20.1").thenAccept(optInfo -> {
+            UpdateManager.checkForUpdates("2.1.2-b1", "fabric", "1.20.1").thenAccept(optInfo -> {
                 if (player.hasDisconnected()) return;
                 
                 boolean smartStartActive = Boolean.parseBoolean(System.getProperty("servermanagement.smartstart", "false"));

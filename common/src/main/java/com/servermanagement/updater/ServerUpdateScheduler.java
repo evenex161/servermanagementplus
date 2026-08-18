@@ -26,7 +26,7 @@ public class ServerUpdateScheduler {
         });
         
         scheduler.scheduleAtFixedRate(() -> {
-            UpdateManager.checkForUpdates("2.1.1-b01", loader, "1.20.1").thenAccept(optInfo -> {
+            UpdateManager.checkForUpdates("2.1.2-b1", loader, "1.20.1").thenAccept(optInfo -> {
                 optInfo.ifPresent(info -> {
                     if (!UpdatePreferences.isSkipped(info.version())) {
                         pendingUpdate = info;
