@@ -77,6 +77,12 @@ public class ModConfig {
     public static final DoubleValue TPS_WARNING_THRESHOLD;
     public static final DoubleValue TPS_CRITICAL_THRESHOLD;
     public static final BooleanValue TPS_AUTO_OPTIMIZE;
+    public static final BooleanValue CHUNK_GEN_THROTTLE_ENABLED;
+    public static final IntValue MAX_CHUNKS_PER_TICK;
+    public static final BooleanValue MOVEMENT_LENIENCY_ENABLED;
+    public static final IntValue MOVEMENT_LENIENCY_MULTIPLIER;
+    public static final BooleanValue DYNAMIC_VIEW_DISTANCE_ENABLED;
+    public static final IntValue VIEW_DISTANCE_REDUCTION;
 
     // Stub SPEC field for compatibility with ConfigMigration/ConfigValidator
     public static final Object SPEC = new Object();
@@ -126,6 +132,12 @@ public class ModConfig {
         TPS_WARNING_THRESHOLD = new DoubleValue("serverPerformance.tpsWarningThreshold", 18.0, 5.0, 20.0);
         TPS_CRITICAL_THRESHOLD = new DoubleValue("serverPerformance.tpsCriticalThreshold", 15.0, 5.0, 20.0);
         TPS_AUTO_OPTIMIZE = new BooleanValue("serverPerformance.tpsAutoOptimize", false);
+        CHUNK_GEN_THROTTLE_ENABLED = new BooleanValue("serverPerformance.chunkGenThrottleEnabled", false);
+        MAX_CHUNKS_PER_TICK = new IntValue("serverPerformance.maxChunksPerTick", 10, 1, 100);
+        MOVEMENT_LENIENCY_ENABLED = new BooleanValue("serverPerformance.movementLeniencyEnabled", true);
+        MOVEMENT_LENIENCY_MULTIPLIER = new IntValue("serverPerformance.movementLeniencyMultiplier", 2, 1, 10);
+        DYNAMIC_VIEW_DISTANCE_ENABLED = new BooleanValue("serverPerformance.dynamicViewDistanceEnabled", true);
+        VIEW_DISTANCE_REDUCTION = new IntValue("serverPerformance.viewDistanceReduction", 2, 1, 16);
 
         MOTD_ENABLED = new BooleanValue("motd.motdEnabled", true);
 

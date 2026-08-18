@@ -195,7 +195,7 @@ public class UpdateManager {
         return null;
     }
 
-    private static boolean isNewerVersion(String remote, String current) {
+    public static boolean isNewerVersion(String remote, String current) {
         if (remote == null || current == null || remote.equals(current)) return false;
         
         // Normalize "2.1.0b1" to "2.1.0-b1" for consistent splitting

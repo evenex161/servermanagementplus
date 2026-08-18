@@ -18,6 +18,7 @@ moddev = "2.0.49-beta"
 mixin = "0.8.5"
 mixinextras = "0.3.5"
 jopt-simple = "5.0.4"
+zstd = "1.5.5-5"
 
 [libraries]
 # Forge
@@ -32,6 +33,7 @@ minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 mixin = { module = "org.spongepowered:mixin", version.ref = "mixin" }
 mixinextras = { module = "io.github.llamalad7:mixinextras-common", version.ref = "mixinextras" }
 jopt-simple = { module = "net.sf.jopt-simple:jopt-simple", version.ref = "jopt-simple" }
+zstd = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }
 
 [plugins]
 fabric-loom = { id = "fabric-loom", version.ref = "fabric-loom" }

@@ -2,6 +2,7 @@ package com.servermanagement.features.serverperformance;
 
 import com.servermanagement.ServerManagementMod;
 import com.servermanagement.config.ModConfig;
+import com.servermanagement.integration.dh.DistantHorizonsHook;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -29,6 +30,17 @@ public class ServerPerformanceManager {
     private long totalSpawnsCancelled = 0;
     private long totalEntitiesThrottled = 0;
     private long totalRedstoneThrottled = 0;
+    private long totalChunksThrottled = 0;
+    private int viewDistanceReductions = 0;
+
+    // Dynamic view distance state
+    private int originalViewDistance = -1;
+    private int originalSimulationDistance = -1;
+    private boolean viewDistanceReduced = false;
+
+    // Movement leniency re-application counter
+    private int leniencyReapplyCounter = 0;
+    private static final int LENIENCY_REAPPLY_INTERVAL = 200; // every 10 seconds
 
     private ServerPerformanceManager() {}
 
@@ -54,6 +66,11 @@ public class ServerPerformanceManager {
 
         tickTimes[tickIndex] = elapsed;
         tickIndex = (tickIndex + 1) % tickTimes.length;
+
+        // Sample allocation rate every second (20 ticks)
+        if (tickIndex % 20 == 0) {
+            AllocationTracker.sample();
+        }
 
         // Calculate TPS and MSPT from rolling window
         long totalNanos = 0;
@@ -87,18 +104,54 @@ public class ServerPerformanceManager {
                 }
             }
         }
+
+        // Periodically re-apply movement leniency
+        if (ModConfig.MOVEMENT_LENIENCY_ENABLED.get()) {
+            leniencyReapplyCounter++;
+            if (leniencyReapplyCounter >= LENIENCY_REAPPLY_INTERVAL) {
+                leniencyReapplyCounter = 0;
+                MovementLeniencyHandler.applyLeniencyToAll();
+            }
+        }
     }
 
     private void activateAutoOptimize() {
         autoOptimizeActive = true;
         ServerManagementMod.LOGGER.warn("TPS dropped below critical threshold ({}) for 5 seconds — auto-optimize activated",
                 String.format("%.1f", currentTps));
+
+        // Dynamic view distance reduction
+        if (ModConfig.DYNAMIC_VIEW_DISTANCE_ENABLED.get() && server != null && !viewDistanceReduced) {
+            int reduction = ModConfig.VIEW_DISTANCE_REDUCTION.get();
+            originalViewDistance = server.getPlayerList().getViewDistance();
+            originalSimulationDistance = server.getPlayerList().getSimulationDistance();
+
+            int newViewDist = Math.max(2, originalViewDistance - reduction);
+            int newSimDist = Math.max(2, originalSimulationDistance - reduction);
+
+            server.getPlayerList().setViewDistance(newViewDist);
+            server.getPlayerList().setSimulationDistance(newSimDist);
+            viewDistanceReduced = true;
+            viewDistanceReductions++;
+
+            ServerManagementMod.LOGGER.warn("Dynamic View Distance: Reduced view {} -> {}, simulation {} -> {}",
+                    originalViewDistance, newViewDist, originalSimulationDistance, newSimDist);
+        }
     }
 
     private void deactivateAutoOptimize() {
         autoOptimizeActive = false;
         ServerManagementMod.LOGGER.info("TPS recovered above warning threshold ({}) — auto-optimize deactivated",
                 String.format("%.1f", currentTps));
+
+        // Restore original view distance
+        if (viewDistanceReduced && server != null) {
+            server.getPlayerList().setViewDistance(originalViewDistance);
+            server.getPlayerList().setSimulationDistance(originalSimulationDistance);
+            ServerManagementMod.LOGGER.info("Dynamic View Distance: Restored view {} and simulation {}",
+                    originalViewDistance, originalSimulationDistance);
+            viewDistanceReduced = false;
+        }
     }
 
     // --- Getters ---
@@ -180,6 +233,8 @@ public class ServerPerformanceManager {
         totalSpawnsCancelled = 0;
         totalEntitiesThrottled = 0;
         totalRedstoneThrottled = 0;
+        totalChunksThrottled = 0;
+        viewDistanceReductions = 0;
     }
 
     public TpsStatus getTpsStatus() {
@@ -193,6 +248,32 @@ public class ServerPerformanceManager {
             return TpsStatus.WARNING;
         }
         return TpsStatus.HEALTHY;
+    }
+
+    // --- Chunk throttle stats ---
+
+    public void addChunksThrottled(long count) {
+        totalChunksThrottled += count;
+    }
+
+    public long getTotalChunksThrottled() {
+        return totalChunksThrottled;
+    }
+
+    public int getViewDistanceReductions() {
+        return viewDistanceReductions;
+    }
+
+    public boolean isViewDistanceReduced() {
+        return viewDistanceReduced;
+    }
+
+    public int getEffectiveViewDistance() {
+        return server != null ? server.getPlayerList().getViewDistance() : -1;
+    }
+
+    public int getEffectiveSimulationDistance() {
+        return server != null ? server.getPlayerList().getSimulationDistance() : -1;
     }
 
     public enum TpsStatus {
