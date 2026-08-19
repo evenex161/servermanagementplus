@@ -19,11 +19,11 @@ public record BankTransferPacket(String targetPlayerName, double amount) impleme
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     public BankTransferPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16), buf.readDouble());
+        this(buf.readUtf(32767), buf.readDouble());
     }
     
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(this.targetPlayerName, 16);
+        buf.writeUtf(this.targetPlayerName, 32767);
         buf.writeDouble(this.amount);
     }
     

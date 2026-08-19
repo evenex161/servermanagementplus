@@ -14,7 +14,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
     }
 
     public OpenGuiPacket(FriendlyByteBuf buf) {
-        this(readGuiType(buf), buf.readUtf(256));
+        this(readGuiType(buf), buf.readUtf(32767));
     }
 
     private static GuiType readGuiType(FriendlyByteBuf buf) {
@@ -121,6 +121,13 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                     case UPDATER:
                         player.openMenu(new com.servermanagement.gui.provider.UpdaterMenuProvider());
                         break;
+                    case HUD_EDIT:
+                        // Sent from server to client to open HUD edit screen (client-side only, no menu provider)
+                        break;
+                }
+            } else {
+                if (guiType == GuiType.HUD_EDIT) {
+                    net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.gui.overlay.HudEditScreen());
                 }
             }
         });
@@ -301,11 +308,12 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
         MINESTACKS,
         PERFORMANCE_SETTINGS,
         MOTD_EDITOR,
-        UPDATER;
+        UPDATER,
+        HUD_EDIT;
 
         public boolean isAdminOnly() {
             return switch (this) {
-                case BANK, DAILY_TASKS, ACHIEVEMENTS, MINEBAY, MINESTACKS -> false;
+                case BANK, DAILY_TASKS, ACHIEVEMENTS, MINEBAY, MINESTACKS, HUD_EDIT -> false;
                 default -> true;
             };
         }

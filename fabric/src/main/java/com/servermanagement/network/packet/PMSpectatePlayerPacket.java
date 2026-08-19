@@ -13,11 +13,11 @@ public record PMSpectatePlayerPacket(String playerName) implements com.serverman
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     public PMSpectatePlayerPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16));
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(playerName, 16);
+        buf.writeUtf(playerName, 32767);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {

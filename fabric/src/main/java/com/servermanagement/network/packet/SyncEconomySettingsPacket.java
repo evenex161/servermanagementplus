@@ -1,0 +1,37 @@
+package com.servermanagement.network.packet;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import com.servermanagement.client.ClientPacketHandler;
+
+/**
+ * Server-to-client packet that syncs economy settings (tooltips, minebay, minestacks, blacklist, starting balance).
+ */
+public record SyncEconomySettingsPacket(boolean showMarketValueTooltips, boolean minebayEnabled, boolean minestacksEnabled, String tradeBlacklist, double startingBalance) implements com.servermanagement.network.IPacket {
+    public static final ResourceLocation ID = new ResourceLocation("servermanagement", "sync_economy_settings_packet");
+
+    @Override
+    public ResourceLocation id() { return ID; }
+
+    public SyncEconomySettingsPacket(FriendlyByteBuf buf) {
+        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readUtf(32767), buf.readDouble());
+    }
+
+    @Override
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeBoolean(showMarketValueTooltips);
+        buf.writeBoolean(minebayEnabled);
+        buf.writeBoolean(minestacksEnabled);
+        buf.writeUtf(tradeBlacklist, 32767);
+        buf.writeDouble(startingBalance);
+    }
+
+    public void handle(ServerPlayer player) {
+        ClientPacketHandler.setShowMarketValueTooltips(showMarketValueTooltips);
+        ClientPacketHandler.setMinebayEnabled(minebayEnabled);
+        ClientPacketHandler.setMinestacksEnabled(minestacksEnabled);
+        ClientPacketHandler.setTradeBlacklist(tradeBlacklist);
+        ClientPacketHandler.setStartingBalance(startingBalance);
+    }
+}

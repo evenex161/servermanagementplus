@@ -15,11 +15,11 @@ public record ConsoleResponsePacket(String message) implements com.servermanagem
 
 
     public ConsoleResponsePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(4096));
+        this(buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(message, 4096);
+        buf.writeUtf(message, 32767);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {

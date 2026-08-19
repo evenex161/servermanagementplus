@@ -16,12 +16,12 @@ public record StartServerUpdatePacket(String downloadUrl, boolean overrideScript
     public net.minecraft.resources.ResourceLocation id() { return ID; }
     
     public StartServerUpdatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(512), buf.readBoolean());
+        this(buf.readUtf(32767), buf.readBoolean());
     }
     
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(downloadUrl, 512);
+        buf.writeUtf(downloadUrl, 32767);
         buf.writeBoolean(overrideScripts);
     }
     

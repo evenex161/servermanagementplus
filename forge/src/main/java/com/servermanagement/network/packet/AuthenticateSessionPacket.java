@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  */
 public record AuthenticateSessionPacket(String token) implements IPacket {
     public AuthenticateSessionPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
+        this(buf.readUtf(32767));
     }
 
     @Override

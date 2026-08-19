@@ -9,14 +9,14 @@ import java.util.function.Supplier;
 public record WMSetTimerPacket(String dimensionId, int seconds, String portalType, long clientTick) implements IPacket {
 
     public WMSetTimerPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256), buf.readInt(), buf.readUtf(32), buf.readLong());
+        this(buf.readUtf(32767), buf.readInt(), buf.readUtf(32767), buf.readLong());
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(dimensionId, 256);
+        buf.writeUtf(dimensionId, 32767);
         buf.writeInt(seconds);
-        buf.writeUtf(portalType, 32);
+        buf.writeUtf(portalType, 32767);
         buf.writeLong(clientTick);
     }
 

@@ -28,6 +28,7 @@ import com.servermanagement.network.packet.RequestAutoShowPacket;
 import com.servermanagement.network.packet.RequestEconomyStatsPacket;
 import com.servermanagement.network.packet.RequestWorldListPacket;
 import com.servermanagement.network.packet.RespondMoneyRequestPacket;
+import com.servermanagement.network.packet.SaveEconomySettingsPacket;
 import com.servermanagement.network.packet.SaveFreeRewardSettingsPacket;
 import com.servermanagement.network.packet.SaveMotdPacket;
 import com.servermanagement.network.packet.SaveTemplatePacket;
@@ -38,6 +39,7 @@ import com.servermanagement.network.packet.SyncBankAccountPacket;
 import com.servermanagement.network.packet.SyncBankInventoryPacket;
 import com.servermanagement.network.packet.SyncBettingSlotStatePacket;
 import com.servermanagement.network.packet.SyncDailyTasksPacket;
+import com.servermanagement.network.packet.SyncEconomySettingsPacket;
 import com.servermanagement.network.packet.SyncEconomyStatsPacket;
 import com.servermanagement.network.packet.SyncEconomyTemplatesPacket;
 import com.servermanagement.network.packet.SyncFeatureStatesPacket;
@@ -247,6 +249,14 @@ public class ModNetworking {
         INSTANCE.registerMessage(id(), SyncEconomyStatsPacket.class, SyncEconomyStatsPacket::encode, SyncEconomyStatsPacket::new, SyncEconomyStatsPacket::handle);
         
         INSTANCE.registerMessage(id(), RequestEconomyStatsPacket.class, RequestEconomyStatsPacket::encode, RequestEconomyStatsPacket::new, RequestEconomyStatsPacket::handle);
+
+        // Economy Settings sync packets
+        INSTANCE.registerMessage(id(), SaveEconomySettingsPacket.class, SaveEconomySettingsPacket::encode, SaveEconomySettingsPacket::new, SaveEconomySettingsPacket::handle);
+        INSTANCE.registerMessage(id(), SyncEconomySettingsPacket.class, SyncEconomySettingsPacket::encode, SyncEconomySettingsPacket::new, SyncEconomySettingsPacket::handle);
+
+        // Performance patching packet
+        INSTANCE.registerMessage(id(), com.servermanagement.network.packet.PatchJvmFlagsPacket.class, com.servermanagement.network.packet.PatchJvmFlagsPacket::encode, com.servermanagement.network.packet.PatchJvmFlagsPacket::new, com.servermanagement.network.packet.PatchJvmFlagsPacket::handle);
+        
         ServerManagementMod.LOGGER.info("Registered {} network packets", packetId);
     }
 
@@ -297,7 +307,9 @@ public class ModNetworking {
                pkt instanceof DeleteTemplatePacket ||
                pkt instanceof ToggleTemplatePacket ||
                pkt instanceof SaveFreeRewardSettingsPacket ||
+               pkt instanceof SaveEconomySettingsPacket ||
                pkt instanceof UpdatePerformanceSettingPacket ||
+               pkt instanceof com.servermanagement.network.packet.PatchJvmFlagsPacket ||
                pkt instanceof SaveMotdPacket ||
                pkt instanceof CheckForUpdatesPacket ||
                pkt instanceof StartServerUpdatePacket ||

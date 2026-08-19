@@ -37,13 +37,41 @@ public class ForgeUpdateHooks {
     public static class ClientForgeEvents {
         @SubscribeEvent
         public static void onScreenInit(net.minecraftforge.client.event.ScreenEvent.Init.Post event) {
-            if (event.getScreen() instanceof net.minecraft.client.gui.screens.TitleScreen && pendingUpdate != null && !updateChecked) {
-                updateChecked = true;
-                UpdateInfo info = pendingUpdate;
-                pendingUpdate = null;
-                net.minecraft.client.Minecraft.getInstance().tell(() -> {
-                    net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.client.UpdateAvailableScreen(event.getScreen(), info, "2.1.2-b1"));
+            if (event.getScreen() instanceof net.minecraft.client.gui.screens.TitleScreen) {
+                com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(event.getScreen().width, event.getScreen().height, false, () -> {
+                    // Trigger manual update check with visual feedback
+                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                    String ver = "2.1.2-b1";
+                    com.servermanagement.updater.UpdatePreferences.load();
+                    String loader = com.servermanagement.platform.Services.PLATFORM.getPlatformName().toLowerCase();
+                    String mcVer = net.minecraft.SharedConstants.getCurrentVersion().getName();
+                    com.servermanagement.updater.UpdateManager.checkForUpdates(ver, loader, mcVer).thenAccept(opt -> {
+                        if (opt.isPresent()) {
+                            mc.execute(() -> mc.setScreen(new com.servermanagement.client.UpdateAvailableScreen(event.getScreen(), opt.get(), ver)));
+                        }
+                    });
                 });
+                event.addListener(btn);
+
+                if (pendingUpdate != null && !updateChecked) {
+                    updateChecked = true;
+                    UpdateInfo info = pendingUpdate;
+                    pendingUpdate = null;
+                    net.minecraft.client.Minecraft.getInstance().tell(() -> {
+                        net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.client.UpdateAvailableScreen(event.getScreen(), info, "2.1.2-b1"));
+                    });
+                }
+            } else if (event.getScreen() instanceof net.minecraft.client.gui.screens.PauseScreen pauseScreen) {
+                if (net.minecraft.client.Minecraft.getInstance().player != null && net.minecraft.client.Minecraft.getInstance().player.hasPermissions(2)) {
+                    com.servermanagement.gui.widgets.FloatingLogoButton btn = new com.servermanagement.gui.widgets.FloatingLogoButton(pauseScreen.width, pauseScreen.height, false, () -> {
+                        net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.gui.screen.PerformanceSettingsScreen(
+                            new com.servermanagement.gui.menu.PerformanceSettingsMenu(-1, net.minecraft.client.Minecraft.getInstance().player.getInventory()),
+                            net.minecraft.client.Minecraft.getInstance().player.getInventory(),
+                            net.minecraft.network.chat.Component.translatable("gui.servermanagement.performance_settings")
+                        ));
+                    });
+                    event.addListener(btn);
+                }
             }
         }
     }

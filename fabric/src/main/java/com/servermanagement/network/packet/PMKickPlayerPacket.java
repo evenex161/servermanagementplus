@@ -12,12 +12,12 @@ public record PMKickPlayerPacket(String playerName, String reason) implements co
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     public PMKickPlayerPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16), buf.readUtf(256));
+        this(buf.readUtf(32767), buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(playerName, 16);
-        buf.writeUtf(reason, 256);
+        buf.writeUtf(playerName, 32767);
+        buf.writeUtf(reason, 32767);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {

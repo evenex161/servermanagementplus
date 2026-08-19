@@ -10,13 +10,13 @@ import java.util.function.Supplier;
 public record WMSetLobbyPacket(BlockPos pos, String dimensionId, long clientTick) implements IPacket {
 
     public WMSetLobbyPacket(FriendlyByteBuf buf) {
-        this(buf.readBlockPos(), buf.readUtf(256), buf.readLong());
+        this(buf.readBlockPos(), buf.readUtf(32767), buf.readLong());
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
-        buf.writeUtf(dimensionId, 256);
+        buf.writeUtf(dimensionId, 32767);
         buf.writeLong(clientTick);
     }
 

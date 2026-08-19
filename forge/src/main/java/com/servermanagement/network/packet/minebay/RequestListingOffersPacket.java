@@ -19,12 +19,12 @@ import java.util.List;
 public record RequestListingOffersPacket(String listingId) implements IPacket {
 
     public RequestListingOffersPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36));
+        this(buf.readUtf(32767));
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(listingId, 36);
+        buf.writeUtf(listingId, 32767);
     }
 
     @Override

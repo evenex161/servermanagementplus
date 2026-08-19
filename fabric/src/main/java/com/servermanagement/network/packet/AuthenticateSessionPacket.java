@@ -14,7 +14,7 @@ public record AuthenticateSessionPacket(String token) implements com.servermanag
     public ResourceLocation id() { return ID; }
 
     public AuthenticateSessionPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
+        this(buf.readUtf(32767));
     }
 
     @Override

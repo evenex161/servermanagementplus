@@ -25,13 +25,13 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
         this(templateId != null ? templateId : "", taskType.ordinal(), description, goal, rewardAmount, rewardItem != null ? rewardItem : ItemStack.EMPTY);
     }
     public SaveTemplatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(), buf.readItem());
+        this(buf.readUtf(32767), buf.readInt(), buf.readUtf(32767), buf.readInt(), buf.readInt(), buf.readItem());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(templateId, 64);
+        buf.writeUtf(templateId, 32767);
         buf.writeInt(taskTypeOrdinal);
-        buf.writeUtf(description, 100);
+        buf.writeUtf(description, 32767);
         buf.writeInt(goal);
         buf.writeInt(rewardAmount);
         buf.writeItem(rewardItem);

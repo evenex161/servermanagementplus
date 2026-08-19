@@ -29,15 +29,15 @@ public record SaveTemplatePacket(String templateId, int taskTypeOrdinal, String 
     }
 
     public SaveTemplatePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readInt(), buf.readUtf(100), buf.readInt(), buf.readInt(),
+        this(buf.readUtf(32767), buf.readInt(), buf.readUtf(32767), buf.readInt(), buf.readInt(),
              buf.readItem());
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(templateId, 64);
+        buf.writeUtf(templateId, 32767);
         buf.writeInt(taskTypeOrdinal);
-        buf.writeUtf(description, 100);
+        buf.writeUtf(description, 32767);
         buf.writeInt(goal);
         buf.writeInt(rewardAmount);
         buf.writeItem(rewardItem);

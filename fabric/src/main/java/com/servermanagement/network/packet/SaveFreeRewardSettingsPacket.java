@@ -48,6 +48,6 @@ public record SaveFreeRewardSettingsPacket(int rewardAmount, int cooldownHours, 
             templateManager.setFreeRewardItem(rewardItem);
             
             templateManager.save(server);
-
-}
+            SyncEconomyTemplatesPacket.syncToPlayer(player, server);
+    }
 }

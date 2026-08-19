@@ -25,10 +25,10 @@ public record SyncBankAccountPacket(double balance, List<Transaction> recentTran
         int transactionCount = buf.readInt();
         List<Transaction> list = new ArrayList<>();
         for (int i = 0; i < transactionCount; i++) {
-            String typeName = buf.readUtf(64);
+            String typeName = buf.readUtf(32767);
             double amount = buf.readDouble();
             long timestamp = buf.readLong();
-            String description = buf.readUtf(256);
+            String description = buf.readUtf(32767);
             boolean hasOtherParty = buf.readBoolean();
             UUID otherParty = hasOtherParty ? buf.readUUID() : null;
             TransactionType type;
@@ -46,10 +46,10 @@ public record SyncBankAccountPacket(double balance, List<Transaction> recentTran
         buf.writeDouble(balance);
         buf.writeInt(recentTransactions.size());
         for (Transaction t : recentTransactions) {
-            buf.writeUtf(t.getType().name(), 64);
+            buf.writeUtf(t.getType().name(), 32767);
             buf.writeDouble(t.getAmount());
             buf.writeLong(t.getTimestamp());
-            buf.writeUtf(t.getDescription() != null ? t.getDescription() : "", 256);
+            buf.writeUtf(t.getDescription() != null ? t.getDescription() : "", 32767);
             buf.writeBoolean(t.getOtherParty() != null);
             if (t.getOtherParty() != null) {
                 buf.writeUUID(t.getOtherParty());

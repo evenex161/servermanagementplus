@@ -52,20 +52,50 @@ public class ClientMarketData {
 
     /**
      * Calculate the supply factor for an item, mirroring server-side logic.
+     * Uses gentle natural log curve to prevent over-deflation.
      */
     private static double getSupplyFactor(net.minecraft.world.item.ItemStack stack) {
         if (stack.isEmpty()) return 1.0;
-        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(stack);
+        String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
         long supply = supplyData.getOrDefault(itemId, 0L);
         
         if (supply <= SUPPLY_BASELINE) {
-            if (supply <= 0) return 1.2;
+            if (supply <= 0) return 1.1;
             double scarcityRatio = (double) supply / SUPPLY_BASELINE;
-            return 1.0 + (1.0 - scarcityRatio) * 0.2;
+            return 1.0 + (1.0 - scarcityRatio) * 0.1;
         }
         
         double supplyRatio = (double) supply / SUPPLY_BASELINE;
-        return 1.0 / (1.0 + Math.log10(supplyRatio));
+        return 1.0 / (1.0 + 0.15 * Math.log(supplyRatio));
+    }
+
+    /**
+     * Client-side replica of the server's dynamic fallback scarcity pricing.
+     * Bounded with gentle multipliers and a hard $500 cap.
+     */
+    private static double getDynamicFallbackPrice(net.minecraft.world.item.ItemStack item, String itemId) {
+        double basePrice = DEFAULT_PRICE;
+        
+        long supply = supplyData.getOrDefault(itemId, 0L);
+        double scarcityMultiplier = Math.max(1.0, 10.0 / (Math.sqrt(supply) + 1.0));
+        basePrice *= scarcityMultiplier;
+        
+        // 1.20.1 adaptation: use isDamageableItem() and getMaxStackSize() instead of DataComponents
+        if (item.isDamageableItem() || item.getMaxStackSize() == 1) {
+            basePrice *= 2.0;
+        }
+        
+        // 1.20.1 adaptation: use getRarity() instead of DataComponents.RARITY
+        net.minecraft.world.item.Rarity rarity = item.getRarity();
+        if (rarity == net.minecraft.world.item.Rarity.UNCOMMON) {
+            basePrice *= 1.5;
+        } else if (rarity == net.minecraft.world.item.Rarity.RARE) {
+            basePrice *= 3.0;
+        } else if (rarity == net.minecraft.world.item.Rarity.EPIC) {
+            basePrice *= 5.0;
+        }
+        
+        return Math.min(500.0, basePrice);
     }
 
     /**
@@ -77,11 +107,17 @@ public class ClientMarketData {
         if (stack.isEmpty()) return 0.0;
         net.minecraft.world.item.ItemStack singleItem = stack.copyWithCount(1);
         
-        // Use recipe-based prices if available, otherwise fall back to ItemValuation
-        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(singleItem);
+        // Use recipe-based prices if available, otherwise fall back to dynamic scarcity pricing.
+        // Recipe prices are raw intrinsic values (NOT pre-scaled by capitalMultiplier).
+        String itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(singleItem.getItem()).toString();
         double staticValue;
         if (!recipePrices.isEmpty()) {
-            staticValue = recipePrices.getOrDefault(itemId, DEFAULT_PRICE);
+            Double cached = recipePrices.get(itemId);
+            if (cached != null) {
+                staticValue = cached;
+            } else {
+                staticValue = getDynamicFallbackPrice(singleItem, itemId);
+            }
         } else {
             staticValue = com.servermanagement.features.gambling.ItemValuation.getItemValue(singleItem);
         }

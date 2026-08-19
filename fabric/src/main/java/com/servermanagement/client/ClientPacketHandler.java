@@ -16,6 +16,13 @@ public class ClientPacketHandler {
     private static boolean cachedChatConnected = false;
     private static String cachedTimerPortalType = "both";
 
+    // Economy settings (synced from server via SyncEconomySettingsPacket)
+    private static boolean showMarketValueTooltips = true;
+    private static boolean minebayEnabled = true;
+    private static boolean minestacksEnabled = true;
+    private static String tradeBlacklist = "";
+    private static double startingBalance = 1000.0;
+
     /**
      * Bug 5: On Fabric, custom S2C sync packet receivers are wrapped in
      * {@code context.client().execute(...)} so they may run AFTER the vanilla
@@ -346,4 +353,16 @@ public class ClientPacketHandler {
     public static long getPerfTotalSpawnsCancelled() { return perfTotalSpawnsCancelled; }
     public static long getPerfTotalEntitiesThrottled() { return perfTotalEntitiesThrottled; }
     public static long getPerfTotalRedstoneThrottled() { return perfTotalRedstoneThrottled; }
+
+    // Economy settings getters/setters
+    public static boolean showMarketValueTooltips() { return showMarketValueTooltips; }
+    public static void setShowMarketValueTooltips(boolean show) { showMarketValueTooltips = show; }
+    public static boolean minebayEnabled() { return minebayEnabled; }
+    public static void setMinebayEnabled(boolean enabled) { minebayEnabled = enabled; }
+    public static boolean minestacksEnabled() { return minestacksEnabled; }
+    public static void setMinestacksEnabled(boolean enabled) { minestacksEnabled = enabled; }
+    public static String getTradeBlacklist() { return tradeBlacklist; }
+    public static void setTradeBlacklist(String blacklist) { tradeBlacklist = blacklist; }
+    public static double getStartingBalance() { return startingBalance; }
+    public static void setStartingBalance(double balance) { startingBalance = balance; }
 }

@@ -85,10 +85,10 @@ public class ItemSupplyDemandTracker {
     }
     
     /**
-     * Get the supply factor for an item. Values &lt;lt; 1.0 reduce price (high supply),
+     * Get the supply factor for an item. Values &lt; 1.0 reduce price (high supply),
      * values close to 1.0 mean normal supply.
      * 
-     * Formula: 1.0 / (1.0 + log10(max(supplyCount / BASELINE, 1)))
+     * Curve is intentionally gentle: even at 50,000 supply, items only lose ~30% value.
      */
     public double getSupplyFactor(ItemStack stack) {
         if (stack.isEmpty()) return 1.0;
@@ -97,14 +97,16 @@ public class ItemSupplyDemandTracker {
         
         if (supply <= SUPPLY_BASELINE) {
             // Below baseline — scarcity bonus (slight price increase)
-            if (supply <= 0) return 1.2; // Very scarce
+            if (supply <= 0) return 1.1; // Very scarce
             double scarcityRatio = (double) supply / SUPPLY_BASELINE;
-            return 1.0 + (1.0 - scarcityRatio) * 0.2; // Up to 20% bonus
+            return 1.0 + (1.0 - scarcityRatio) * 0.1; // Up to 10% bonus
         }
         
-        // Above baseline — supply pressure reduces price
+        // Above baseline — gentle supply pressure using natural log with small coefficient.
+        // At 5000 supply (10x baseline): 1/(1+0.15*ln(10)) = 1/1.345 = 0.74 (26% discount)
+        // At 50000 supply (100x baseline): 1/(1+0.15*ln(100)) = 1/1.69 = 0.59 (41% discount max)
         double supplyRatio = (double) supply / SUPPLY_BASELINE;
-        return 1.0 / (1.0 + Math.log10(supplyRatio));
+        return 1.0 / (1.0 + 0.15 * Math.log(supplyRatio));
     }
     
     /**

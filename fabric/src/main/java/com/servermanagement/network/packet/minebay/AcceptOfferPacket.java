@@ -24,12 +24,12 @@ public record AcceptOfferPacket(String listingId, String offerId) implements com
 
 
     public AcceptOfferPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36), buf.readUtf(36));
+        this(buf.readUtf(32767), buf.readUtf(32767));
     }
     
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(listingId, 36);
-        buf.writeUtf(offerId, 36);
+        buf.writeUtf(listingId, 32767);
+        buf.writeUtf(offerId, 32767);
     }
     
         public void handle(net.minecraft.server.level.ServerPlayer player) {

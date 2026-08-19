@@ -11,11 +11,11 @@ public record ToggleFeaturePacket(String featureId, boolean enabled, long client
 
 
     public ToggleFeaturePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readBoolean(), buf.readLong());
+        this(buf.readUtf(32767), buf.readBoolean(), buf.readLong());
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(featureId, 64);
+        buf.writeUtf(featureId, 32767);
         buf.writeBoolean(enabled);
         buf.writeLong(clientTick);
     }

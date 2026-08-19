@@ -35,13 +35,13 @@ public record PlaceGamblingBetPacket(GameType gameType, double betAmount, String
         ROULETTE
     }
     public PlaceGamblingBetPacket(FriendlyByteBuf buf) {
-        this(buf.readEnum(GameType.class), buf.readDouble(), buf.readUtf(64));
+        this(buf.readEnum(GameType.class), buf.readDouble(), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
         buf.writeEnum(this.gameType);
         buf.writeDouble(this.betAmount);
-        buf.writeUtf(this.gameOption, 64);
+        buf.writeUtf(this.gameOption, 32767);
     }
     
     public void handle(net.minecraft.server.level.ServerPlayer player) {

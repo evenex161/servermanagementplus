@@ -29,7 +29,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
 
 // 0=BALANCE, 1=ITEMS// inventory slot indices for ITEMS mode
     public PurchaseListingPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36), buf.readByte(), decodeSelectedSlots(buf));
+        this(buf.readUtf(32767), buf.readByte(), decodeSelectedSlots(buf));
     }
 
     private static int[] decodeSelectedSlots(FriendlyByteBuf buf) {
@@ -45,7 +45,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
     }
     
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(this.listingId, 36);
+        buf.writeUtf(this.listingId, 32767);
         buf.writeByte(this.paymentMode);
         buf.writeVarInt(this.selectedSlots.length);
         for (int slot : this.selectedSlots) {

@@ -9,12 +9,12 @@ import java.util.function.Supplier;
 public record ToggleFeaturePacket(String featureId, boolean enabled, long clientTick) implements IPacket {
 
     public ToggleFeaturePacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(64), buf.readBoolean(), buf.readLong());
+        this(buf.readUtf(32767), buf.readBoolean(), buf.readLong());
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(featureId, 64);
+        buf.writeUtf(featureId, 32767);
         buf.writeBoolean(enabled);
         buf.writeLong(clientTick);
     }

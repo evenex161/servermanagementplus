@@ -19,11 +19,11 @@ public record DeleteListingPacket(String listingId) implements com.servermanagem
 
 
     public DeleteListingPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36));
+        this(buf.readUtf(32767));
     }
     
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(this.listingId, 36);
+        buf.writeUtf(this.listingId, 32767);
     }
     
         public void handle(net.minecraft.server.level.ServerPlayer player) {

@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  */
 public record SyncSessionTokenPacket(String token) implements IPacket {
     public SyncSessionTokenPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
+        this(buf.readUtf(32767));
     }
 
     @Override

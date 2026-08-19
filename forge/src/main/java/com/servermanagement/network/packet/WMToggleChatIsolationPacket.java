@@ -9,12 +9,12 @@ import java.util.function.Supplier;
 public record WMToggleChatIsolationPacket(String dimensionId, boolean enabled, long clientTick) implements IPacket {
 
     public WMToggleChatIsolationPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256), buf.readBoolean(), buf.readLong());
+        this(buf.readUtf(32767), buf.readBoolean(), buf.readLong());
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(dimensionId, 256);
+        buf.writeUtf(dimensionId, 32767);
         buf.writeBoolean(enabled);
         buf.writeLong(clientTick);
     }

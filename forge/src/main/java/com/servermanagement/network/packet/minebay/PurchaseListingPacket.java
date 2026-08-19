@@ -27,7 +27,7 @@ import java.util.Map;
 public record PurchaseListingPacket(String listingId, int paymentMode, int[] selectedSlots) implements IPacket {
 
     public PurchaseListingPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36), buf.readByte(), readSlots(buf));
+        this(buf.readUtf(32767), buf.readByte(), readSlots(buf));
     }
 
     private static int[] readSlots(FriendlyByteBuf buf) {
@@ -44,7 +44,7 @@ public record PurchaseListingPacket(String listingId, int paymentMode, int[] sel
     
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(this.listingId, 36);
+        buf.writeUtf(this.listingId, 32767);
         buf.writeByte(this.paymentMode);
         buf.writeVarInt(this.selectedSlots.length);
         for (int slot : this.selectedSlots) {

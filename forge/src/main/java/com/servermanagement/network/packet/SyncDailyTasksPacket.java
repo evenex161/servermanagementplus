@@ -29,7 +29,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             int progress = buf.readInt();
             boolean claimed = buf.readBoolean();
             int reward = buf.readInt();
-            String description = buf.readUtf(256);
+            String description = buf.readUtf(32767);
             DailyTask task = new DailyTask(type, goal, reward, description);
             task.setProgress(progress);
             task.setClaimed(claimed);
@@ -48,7 +48,7 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
             buf.writeInt(task.getProgress());
             buf.writeBoolean(task.isClaimed());
             buf.writeInt(task.getReward());
-            buf.writeUtf(task.getDescription(), 256);
+            buf.writeUtf(task.getDescription(), 32767);
         }
         
         buf.writeLong(resetTime);

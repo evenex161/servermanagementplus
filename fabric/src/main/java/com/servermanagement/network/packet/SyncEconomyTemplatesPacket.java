@@ -33,9 +33,9 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         List<TemplateData> templates = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             templates.add(new TemplateData(
-                buf.readUtf(64),
+                buf.readUtf(32767),
                 buf.readInt(),
-                buf.readUtf(100),
+                buf.readUtf(32767),
                 buf.readInt(),
                 buf.readInt(),
                 buf.readBoolean(),
@@ -48,9 +48,9 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         public void encode(FriendlyByteBuf buf) {
         buf.writeInt(templates.size());
         for (TemplateData t : templates) {
-            buf.writeUtf(t.id, 64);
+            buf.writeUtf(t.id, 32767);
             buf.writeInt(t.taskTypeOrdinal);
-            buf.writeUtf(t.description, 100);
+            buf.writeUtf(t.description, 32767);
             buf.writeInt(t.goal);
             buf.writeInt(t.rewardAmount);
             buf.writeBoolean(t.enabled);

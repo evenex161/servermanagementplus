@@ -25,6 +25,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
     private static final int BUTTON_HEIGHT = 18;
 
     private int currentPage = 0;
+    private boolean gcPatchConfirmMode = false;
 
     public PerformanceSettingsScreen(PerformanceSettingsMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title, 430, 420);
@@ -50,7 +51,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         else if (currentPage == 1) rows = 10;
         else if (currentPage == 2) {
             // Stats page: ~9 lines at 22px + padding
-            int statsHeight = 9 * 22 + 10;
+            int statsHeight = 17 * 22 + 10;
             return Math.max(0, statsHeight - getContentHeight());
         }
         else return 0;
@@ -64,10 +65,11 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
     @Override
     protected void init() {
         super.init();
-        refreshWidgets();
+        rebuildWidgets();
     }
 
-    protected void refreshWidgets() {
+    @Override
+    protected void rebuildWidgets() {
         this.clearWidgets();
 
         int cX = this.leftPos;
@@ -79,21 +81,21 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         int tabWidth = (tabTotalWidth - tabGap * 2) / 3;
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Toggles"),
-            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "0/Toggles"); currentPage = 0; scrollOffset = 0; refreshWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "0/Toggles"); currentPage = 0; scrollOffset = 0; rebuildWidgets(); })
             .bounds(cX + 10, cY + 42, tabWidth, 20)
             .style(currentPage == 0 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Settings"),
-            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "1/Settings"); currentPage = 1; scrollOffset = 0; refreshWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "1/Settings"); currentPage = 1; scrollOffset = 0; rebuildWidgets(); })
             .bounds(cX + 10 + tabWidth + tabGap, cY + 42, tabWidth, 20)
             .style(currentPage == 1 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
 
         this.addRenderableWidget(new ModernButton.Builder(
             Component.literal("Stats"),
-            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "2/Stats"); currentPage = 2; scrollOffset = 0; refreshWidgets(); })
+            btn -> { com.servermanagement.gui.debug.DebugLogger.logTabChange("PerformanceSettingsScreen", String.valueOf(currentPage), "2/Stats"); currentPage = 2; scrollOffset = 0; rebuildWidgets(); })
             .bounds(cX + 10 + (tabWidth + tabGap) * 2, cY + 42, tabWidth, 20)
             .style(currentPage == 2 ? ModernButton.ButtonStyle.PRIMARY : ModernButton.ButtonStyle.SECONDARY)
             .build());
@@ -106,6 +108,8 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
             buildTogglesPage(cX, contentY, rightCol);
         } else if (currentPage == 1) {
             buildSettingsPage(cX, contentY);
+        } else if (currentPage == 2) {
+            buildStatsPageWidgets(cX, contentY);
         }
 
         // --- Bottom buttons (fixed position, symmetrical) ---
@@ -230,7 +234,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         String valStr = isDouble ? String.valueOf(newVal) : String.valueOf((int) newVal);
         ModNetworking.sendToServer(new UpdatePerformanceSettingPacket(key, valStr, tick));
         applyLocalMenuUpdate(key, newVal);
-        refreshWidgets();
+        rebuildWidgets();
     }
 
     private void applyLocalMenuUpdate(String key, double val) {
@@ -253,7 +257,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         int maxScroll = getMaxScroll();
         if (maxScroll <= 0) return true;
         scrollOffset = (int) Math.max(0, Math.min(maxScroll, scrollOffset - scrollY * SCROLL_STEP));
-        refreshWidgets();
+        rebuildWidgets();
         return true;
     }
 
@@ -353,11 +357,121 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         }
     }
 
+    private void buildStatsPageWidgets(int cX, int contentY) {
+        var gcUrgency = com.servermanagement.features.serverperformance.GCAdvisor.getUrgency();
+        boolean showOptimize = gcUrgency != com.servermanagement.features.serverperformance.GCAdvisor.UrgencyLevel.OK
+            && !com.servermanagement.features.serverperformance.GCAdvisor.isScriptPatched();
+
+        if (gcPatchConfirmMode) {
+            // Confirmation sub-view
+            int btnY = getContentTop() + 100;
+            this.addRenderableWidget(new ModernButton.Builder(
+                Component.literal("Confirm Patch"),
+                btn -> {
+                    com.servermanagement.network.ModNetworking.sendToServer(
+                        null /* PatchJvmFlagsPacket not in 1.20.1 */);
+                    com.servermanagement.features.serverperformance.GCAdvisor.setScriptPatched(true);
+                    gcPatchConfirmMode = false;
+                    rebuildWidgets();
+                })
+                .bounds(cX + this.imageWidth / 2 - 120, btnY, 110, 20)
+                .style(ModernButton.ButtonStyle.SUCCESS)
+                .build());
+
+            this.addRenderableWidget(new ModernButton.Builder(
+                Component.literal("Cancel"),
+                btn -> {
+                    gcPatchConfirmMode = false;
+                    rebuildWidgets();
+                })
+                .bounds(cX + this.imageWidth / 2 + 10, btnY, 110, 20)
+                .style(ModernButton.ButtonStyle.SECONDARY)
+                .build());
+        } else if (showOptimize) {
+            // "Optimize JVM" button rendered inline
+            this.addRenderableWidget(new ModernButton.Builder(
+                Component.literal("Optimize JVM"),
+                btn -> {
+                    gcPatchConfirmMode = true;
+                    rebuildWidgets();
+                })
+                .bounds(cX + this.imageWidth - 120, getContentTop() - scrollOffset - 2, 100, 16)
+                .style(ModernButton.ButtonStyle.DANGER)
+                .build());
+        }
+    }
+
     private void renderStatsPage(GuiGraphics g, int cX, int startY) {
         int y = startY;
         int spacing = 22;
 
-        g.drawString(this.font, "\u00a76=== Performance Statistics ===", cX + 20, y, 0xFFFFFF, true);
+        if (gcPatchConfirmMode) {
+            // Render confirmation overlay
+            g.drawCenteredString(this.font, "\u00a7ePatch run scripts with ZGC flags?", cX + this.imageWidth / 2, y + 10, 0xFFFF55);
+            y += spacing;
+            var gcType = com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC();
+            g.drawCenteredString(this.font, "Current: " + gcType.getDisplayName(), cX + this.imageWidth / 2, y + 10, 0xAAAAAA);
+            y += spacing;
+            g.drawCenteredString(this.font, "Recommended: " + com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags(), cX + this.imageWidth / 2, y + 10, 0x55FF55);
+            y += spacing;
+            g.drawCenteredString(this.font, "A .bak backup of your script will be created.", cX + this.imageWidth / 2, y + 10, 0x777777);
+            return;
+        }
+
+        // --- GC Health Banner ---
+        var gcType = com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC();
+        var gcUrgency = com.servermanagement.features.serverperformance.GCAdvisor.getUrgency();
+
+        if (com.servermanagement.features.serverperformance.GCAdvisor.isScriptPatched()) {
+            g.fill(cX + 10, y - 2, cX + this.imageWidth - 10, y + 12, 0x8027AE60);
+            g.drawString(this.font, "GC: ZGC (Optimized!) - Restart to activate", cX + 15, y, 0xFF55FF55, true);
+            y += spacing;
+        } else if (gcUrgency == com.servermanagement.features.serverperformance.GCAdvisor.UrgencyLevel.CRITICAL) {
+            g.fill(cX + 10, y - 2, cX + this.imageWidth - 10, y + 12, 0x80E74C3C);
+            g.drawString(this.font, gcType.getDisplayName() + " + Distant Horizons - Switch to ZGC!", cX + 15, y, 0xFFFF5555, true);
+            y += spacing;
+        } else if (gcUrgency == com.servermanagement.features.serverperformance.GCAdvisor.UrgencyLevel.WARNING) {
+            g.fill(cX + 10, y - 2, cX + this.imageWidth - 10, y + 12, 0x80E67E22);
+            g.drawString(this.font, gcType.getDisplayName() + " Detected - ZGC recommended", cX + 15, y, 0xFFFFAA00, true);
+            y += spacing;
+        } else {
+            g.drawString(this.font, "GC: " + gcType.getDisplayName() + " (Optimal)", cX + 20, y, 0x55FF55, true);
+            y += spacing;
+        }
+
+        // --- DH Status ---
+        boolean dhAvailable = com.servermanagement.integration.dh.DistantHorizonsHook.isAvailable();
+        String dhStatus = dhAvailable
+            ? "Distant Horizons: Active (v" + com.servermanagement.integration.dh.DistantHorizonsHook.getVersion() + ")"
+            : "Distant Horizons: Not Installed";
+        int dhColor = dhAvailable ? 0x55FFFF : 0x777777;
+        g.drawString(this.font, dhStatus, cX + 20, y, dhColor, true);
+        y += spacing;
+
+        // --- JVM Info ---
+        g.drawString(this.font, String.format("Heap: %dMB / %dMB",
+            Runtime.getRuntime().totalMemory() / (1024 * 1024),
+            Runtime.getRuntime().maxMemory() / (1024 * 1024)), cX + 20, y, 0xAAAAAA, true);
+        y += spacing;
+
+        // Allocation Rate
+        double allocRate = com.servermanagement.features.serverperformance.AllocationTracker.getAllocationRateMBps();
+        if (com.servermanagement.features.serverperformance.AllocationTracker.isSupported()) {
+            int allocColor = allocRate > 500 ? 0xE74C3C : (allocRate > 200 ? 0xE67E22 : 0xAAAAAA);
+            g.drawString(this.font, String.format("Alloc Rate: %.0f MB/s", allocRate), cX + 20, y, allocColor, true);
+        } else {
+            g.drawString(this.font, "Alloc Rate: N/A", cX + 20, y, 0x777777, true);
+        }
+        y += spacing;
+
+        // GC Pauses
+        long gcPauseMs = com.servermanagement.features.serverperformance.GCAdvisor.getTotalGCPauseMs();
+        long gcCount = com.servermanagement.features.serverperformance.GCAdvisor.getTotalGCCount();
+        g.drawString(this.font, String.format("GC Pauses: %d (%dms total)", gcCount, gcPauseMs), cX + 20, y, 0xAAAAAA, true);
+        y += spacing + 5;
+
+        // --- TPS / MSPT ---
+        g.drawString(this.font, "\u00a76=== Server Performance ===", cX + 20, y, 0xFFFFFF, true);
         y += spacing;
 
         double tps = this.menu.getCurrentTps();
@@ -372,6 +486,7 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         g.drawString(this.font, "Auto-Optimize: " + autoOptStatus, cX + 20, y, 0xFFFFFF, true);
         y += spacing + 5;
 
+        // --- Cumulative Stats ---
         g.drawString(this.font, "\u00a77--- Cumulative Stats ---", cX + 20, y, 0xFFFFFF, true);
         y += spacing;
 

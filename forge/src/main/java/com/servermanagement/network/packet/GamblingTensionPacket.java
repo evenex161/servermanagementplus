@@ -20,12 +20,12 @@ public record GamblingTensionPacket(GameType gameType, String gameOption) implem
     }
     
     public GamblingTensionPacket(FriendlyByteBuf buf) {
-        this(buf.readEnum(GameType.class), buf.readUtf(64));
+        this(buf.readEnum(GameType.class), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
         buf.writeEnum(this.gameType);
-        buf.writeUtf(this.gameOption, 64);
+        buf.writeUtf(this.gameOption, 32767);
     }
     
     public void handle(Supplier<NetworkEvent.Context> ctx) {

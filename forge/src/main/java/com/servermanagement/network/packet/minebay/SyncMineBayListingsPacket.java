@@ -31,9 +31,9 @@ public record SyncMineBayListingsPacket(List<MineBayListing> listings) implement
         int count = buf.readInt();
         List<MineBayListing> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            String listingId = buf.readUtf(36);
+            String listingId = buf.readUtf(32767);
             UUID sellerId = buf.readUUID();
-            String sellerName = buf.readUtf(16);
+            String sellerName = buf.readUtf(32767);
             ItemStack itemOffered = buf.readItem();
             double moneyPrice = buf.readDouble();
             long createdTime = buf.readLong();
@@ -66,9 +66,9 @@ public record SyncMineBayListingsPacket(List<MineBayListing> listings) implement
         buf.writeInt(listings.size());
         
         for (MineBayListing listing : listings) {
-            buf.writeUtf(listing.getListingId(), 36);
+            buf.writeUtf(listing.getListingId(), 32767);
             buf.writeUUID(listing.getSellerId());
-            buf.writeUtf(listing.getSellerName(), 16);
+            buf.writeUtf(listing.getSellerName(), 32767);
             buf.writeItem(listing.getItemOffered());
             buf.writeDouble(listing.getMoneyPrice());
             buf.writeLong(listing.getCreatedTime());

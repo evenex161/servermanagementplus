@@ -25,13 +25,13 @@ public record SendMoneyRequestPacket(String targetPlayerName, double amount, Str
 
     private static final Pattern PLAYER_NAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
     public SendMoneyRequestPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(16), buf.readDouble(), buf.readUtf(256));
+        this(buf.readUtf(32767), buf.readDouble(), buf.readUtf(32767));
     }
 
         public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(this.targetPlayerName, 16);
+        buf.writeUtf(this.targetPlayerName, 32767);
         buf.writeDouble(this.amount);
-        buf.writeUtf(this.message, 256);
+        buf.writeUtf(this.message, 32767);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {

@@ -26,11 +26,11 @@ public class GamblingManager {
     private File statsFile;
     private AsyncSaveScheduler saveScheduler;
     
-    // House edge percentages (1.0 = 100%)
-    public static final double SLOT_MACHINE_HOUSE_EDGE = 0.05; // 5% house edge
-    public static final double COIN_FLIP_HOUSE_EDGE = 0.02; // 2% house edge
-    public static final double DICE_ROLL_HOUSE_EDGE = 0.03; // 3% house edge
-    public static final double ROULETTE_HOUSE_EDGE = 0.027; // 2.7% house edge
+    // House edge percentages (1.0 = 100%) — set to 0.0 for fair 50/50 payouts
+    public static final double SLOT_MACHINE_HOUSE_EDGE = 0.0; // 0% house edge
+    public static final double COIN_FLIP_HOUSE_EDGE = 0.0; // 0% house edge
+    public static final double DICE_ROLL_HOUSE_EDGE = 0.0; // 0% house edge
+    public static final double ROULETTE_HOUSE_EDGE = 0.0; // 0% house edge
     
     // Minimum and maximum bets
     public static final double MIN_BET = 10.0;

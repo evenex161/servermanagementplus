@@ -31,7 +31,7 @@ public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCircu
 
     public SyncEconomyStatsPacket(FriendlyByteBuf buf) {
         this(buf.readInt(), buf.readDouble(), buf.readDouble(),
-             buf.readDouble(), buf.readUtf(64), buf.readDouble(),
+             buf.readDouble(), buf.readUtf(32767), buf.readDouble(),
              buf.readInt(), buf.readInt(), buf.readInt(),
              buf.readInt(), buf.readInt(), buf.readInt(),
              buf.readInt(), buf.readInt(), buf.readInt(),
@@ -45,7 +45,7 @@ public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCircu
         buf.writeDouble(totalMoneyInCirculation);
         buf.writeDouble(averageBalance);
         buf.writeDouble(richestBalance);
-        buf.writeUtf(richestPlayerName, 64);
+        buf.writeUtf(richestPlayerName, 32767);
         buf.writeDouble(inflationMultiplier);
         buf.writeInt(activeListings);
         buf.writeInt(totalTemplates);

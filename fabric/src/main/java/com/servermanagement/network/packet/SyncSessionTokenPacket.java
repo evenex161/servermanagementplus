@@ -14,7 +14,7 @@ public record SyncSessionTokenPacket(String token) implements com.servermanageme
     public ResourceLocation id() { return ID; }
 
     public SyncSessionTokenPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
+        this(buf.readUtf(32767));
     }
 
     @Override

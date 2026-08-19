@@ -18,12 +18,12 @@ import java.util.function.Supplier;
 public record DeleteListingPacket(String listingId) implements IPacket {
     
     public DeleteListingPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36));
+        this(buf.readUtf(32767));
     }
     
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(this.listingId, 36);
+        buf.writeUtf(this.listingId, 32767);
     }
     
     @Override

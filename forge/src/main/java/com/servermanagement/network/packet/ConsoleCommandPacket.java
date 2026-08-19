@@ -12,12 +12,12 @@ import java.util.function.Supplier;
 public record ConsoleCommandPacket(String command) implements IPacket {
     
     public ConsoleCommandPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
+        this(buf.readUtf(32767));
     }
     
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(command, 256);
+        buf.writeUtf(command, 32767);
     }
     
     @Override

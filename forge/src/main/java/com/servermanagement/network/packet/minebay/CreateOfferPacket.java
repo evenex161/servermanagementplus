@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemStack> itemOffers) implements IPacket {
 
     public CreateOfferPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(36), Math.max(0.0, buf.readDouble()), readItemOffers(buf));
+        this(buf.readUtf(32767), Math.max(0.0, buf.readDouble()), readItemOffers(buf));
     }
 
     private static List<ItemStack> readItemOffers(FriendlyByteBuf buf) {
@@ -39,7 +39,7 @@ public record CreateOfferPacket(String listingId, double moneyOffer, List<ItemSt
     
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(listingId, 36);
+        buf.writeUtf(listingId, 32767);
         buf.writeDouble(moneyOffer);
         buf.writeInt(itemOffers.size());
         for (ItemStack stack : itemOffers) {

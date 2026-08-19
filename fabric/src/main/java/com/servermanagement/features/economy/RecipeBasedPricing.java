@@ -57,6 +57,10 @@ public class RecipeBasedPricing {
     private static final int MAX_ITERATIONS = 100;
     /** Price difference threshold for convergence detection */
     private static final double CONVERGENCE_THRESHOLD = 0.001;
+    /** Maximum allowed price increases per item before locking to prevent positive feedback loop divergence */
+    private static final int MAX_PRICE_INCREASES = 15;
+    /** Hard ceiling on any single recipe-derived price to prevent game-breaking economy values */
+    private static final double MAX_RECIPE_PRICE = 1000000.0;
 
     private RecipeBasedPricing() {
     }
@@ -274,6 +278,7 @@ public class RecipeBasedPricing {
         boolean changed = true;
         int iteration = 0;
         Map<String, Integer> increaseCounts = new java.util.HashMap<>();
+        java.util.Set<String> lockedItems = new java.util.HashSet<>();
 
         while (changed && iteration < MAX_ITERATIONS) {
             changed = false;
@@ -281,6 +286,10 @@ public class RecipeBasedPricing {
 
             for (Map.Entry<String, List<RecipeEntry>> entry : recipesByOutput.entrySet()) {
                 String itemId = entry.getKey();
+                if (lockedItems.contains(itemId)) {
+                    continue;
+                }
+
                 List<RecipeEntry> recipes = entry.getValue();
 
                 double cheapest = Double.MAX_VALUE;
@@ -292,16 +301,26 @@ public class RecipeBasedPricing {
                 }
 
                 if (cheapest < Double.MAX_VALUE) {
+                    cheapest = Math.min(MAX_RECIPE_PRICE, cheapest);
+
                     Double current = recipePrices.get(itemId);
                     if (current == null || Math.abs(current - cheapest) > CONVERGENCE_THRESHOLD) {
                         // Cycle protection: freeze price if it increases too many times
                         if (current != null && cheapest > current) {
-                            int count = increaseCounts.getOrDefault(itemId, 0) + 1;
-                            increaseCounts.put(itemId, count);
-                            if (count > 25) {
+                            int inc = increaseCounts.getOrDefault(itemId, 0) + 1;
+                            if (inc > MAX_PRICE_INCREASES) {
+                                ServerManagementMod.LOGGER.debug(
+                                        "Crafting cycle feedback loop detected for item '{}' after {} price increases. Locking price to anchor/default",
+                                        itemId, inc);
+                                lockedItems.add(itemId);
+                                Double anchor = anchorPrices.get(itemId);
+                                recipePrices.put(itemId, anchor != null ? anchor : getDynamicFallbackPrice(itemId));
+                                changed = true;
                                 continue;
                             }
+                            increaseCounts.put(itemId, inc);
                         }
+
                         recipePrices.put(itemId, cheapest);
                         changed = true;
                     }
@@ -356,7 +375,46 @@ public class RecipeBasedPricing {
         }
         if (recipePrice != null) return recipePrice;
         if (anchorPrice != null) return anchorPrice;
-        return DEFAULT_PRICE;
+        return getDynamicFallbackPrice(itemId);
+    }
+    
+    /**
+     * Dynamic fallback price for items with no recipe and no hardcoded anchor.
+     * Uses bounded scarcity + rarity modifiers with a hard cap to prevent
+     * both the $0.50 collapse and $3M+ runaway prices.
+     */
+    private double getDynamicFallbackPrice(String itemId) {
+        double basePrice = DEFAULT_PRICE;
+        try {
+            long supply = ItemSupplyDemandTracker.getInstance().getSupplyCount(itemId);
+            
+            // Gentle scarcity multiplier: max 10x for zero-supply items, tapers with sqrt.
+            double scarcityMultiplier = Math.max(1.0, 10.0 / (Math.sqrt(supply) + 1.0));
+            basePrice *= scarcityMultiplier;
+
+            net.minecraft.resources.ResourceLocation resourceLocation = new net.minecraft.resources.ResourceLocation(itemId);
+            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(resourceLocation);
+            
+            if (item != net.minecraft.world.item.Items.AIR) {
+                // Unstackable items (tools, armor) get a modest 2x boost
+                if (item.getDefaultInstance().isDamageableItem() || item.getDefaultInstance().getMaxStackSize() == 1) {
+                    basePrice *= 2.0;
+                }
+                
+                // Rarity modifiers
+                net.minecraft.world.item.Rarity rarity = item.getDefaultInstance().getRarity();
+                if (rarity == net.minecraft.world.item.Rarity.UNCOMMON) {
+                    basePrice *= 1.5;
+                } else if (rarity == net.minecraft.world.item.Rarity.RARE) {
+                    basePrice *= 3.0;
+                } else if (rarity == net.minecraft.world.item.Rarity.EPIC) {
+                    basePrice *= 5.0;
+                }
+            }
+        } catch (Exception ignored) {}
+        
+        // Hard cap: fallback items should never exceed the value of a rare anchored item
+        return Math.min(500.0, basePrice);
     }
 
     // ==================== Inner Classes ====================

@@ -34,6 +34,7 @@ import com.servermanagement.network.packet.RequestAutoShowPacket;
 import com.servermanagement.network.packet.RequestEconomyStatsPacket;
 import com.servermanagement.network.packet.RequestWorldListPacket;
 import com.servermanagement.network.packet.RespondMoneyRequestPacket;
+import com.servermanagement.network.packet.SaveEconomySettingsPacket;
 import com.servermanagement.network.packet.SaveFreeRewardSettingsPacket;
 import com.servermanagement.network.packet.SaveMotdPacket;
 import com.servermanagement.network.packet.SaveTemplatePacket;
@@ -45,6 +46,7 @@ import com.servermanagement.network.packet.SyncBankInventoryPacket;
 import com.servermanagement.network.packet.SyncBettingSlotStatePacket;
 import com.servermanagement.network.packet.SyncDailyTasksPacket;
 import com.servermanagement.network.packet.SyncEconomyStatsPacket;
+import com.servermanagement.network.packet.SyncEconomySettingsPacket;
 import com.servermanagement.network.packet.SyncEconomyTemplatesPacket;
 import com.servermanagement.network.packet.SyncFeatureStatesPacket;
 import com.servermanagement.network.packet.SyncGamblingStatsPacket;
@@ -81,6 +83,7 @@ import com.servermanagement.network.packet.minebay.RejectOfferPacket;
 import com.servermanagement.network.packet.minebay.RequestListingOffersPacket;
 import com.servermanagement.network.packet.minebay.SyncListingOffersPacket;
 import com.servermanagement.network.packet.minebay.SyncMineBayListingsPacket;
+import com.servermanagement.network.packet.PatchJvmFlagsPacket;
 
 /**
  * 1.20.1 fabric networking facade.
@@ -144,6 +147,8 @@ public final class ModNetworking {
         ServerPlayNetworking.registerGlobalReceiver(AuthenticateSessionPacket.ID, (server, player, handler, buf, sender) -> { AuthenticateSessionPacket pkt = new AuthenticateSessionPacket(buf); server.execute(() -> pkt.handle(player)); });
         ServerPlayNetworking.registerGlobalReceiver(CheckForUpdatesPacket.ID, (server, player, handler, buf, sender) -> { CheckForUpdatesPacket pkt = new CheckForUpdatesPacket(buf); server.execute(() -> pkt.handle(player)); });
         ServerPlayNetworking.registerGlobalReceiver(StartServerUpdatePacket.ID, (server, player, handler, buf, sender) -> { StartServerUpdatePacket pkt = new StartServerUpdatePacket(buf); server.execute(() -> pkt.handle(player)); });
+        ServerPlayNetworking.registerGlobalReceiver(SaveEconomySettingsPacket.ID, (server, player, handler, buf, sender) -> { SaveEconomySettingsPacket pkt = new SaveEconomySettingsPacket(buf); server.execute(() -> pkt.handle(player)); });
+        ServerPlayNetworking.registerGlobalReceiver(PatchJvmFlagsPacket.ID, (server, player, handler, buf, sender) -> { PatchJvmFlagsPacket pkt = new PatchJvmFlagsPacket(buf); server.execute(() -> pkt.handle(player)); });
     }
 
     public static void registerClientPackets() {
@@ -171,6 +176,8 @@ public final class ModNetworking {
         ClientPlayNetworking.registerGlobalReceiver(SyncListingOffersPacket.ID, (client, handler, buf, sender) -> { SyncListingOffersPacket pkt = new SyncListingOffersPacket(buf); client.execute(() -> pkt.handle(null)); });
         ClientPlayNetworking.registerGlobalReceiver(SyncSessionTokenPacket.ID, (client, handler, buf, sender) -> { SyncSessionTokenPacket pkt = new SyncSessionTokenPacket(buf); client.execute(() -> pkt.handle(null)); });
         ClientPlayNetworking.registerGlobalReceiver(SyncUpdateInfoPacket.ID, (client, handler, buf, sender) -> { SyncUpdateInfoPacket pkt = new SyncUpdateInfoPacket(buf); client.execute(() -> com.servermanagement.client.ClientUpdateManager.receiveUpdateInfo(pkt)); });
+        ClientPlayNetworking.registerGlobalReceiver(SyncEconomySettingsPacket.ID, (client, handler, buf, sender) -> { SyncEconomySettingsPacket pkt = new SyncEconomySettingsPacket(buf); client.execute(() -> pkt.handle(null)); });
+        ClientPlayNetworking.registerGlobalReceiver(OpenGuiPacket.ID, (client, handler, buf, sender) -> { OpenGuiPacket pkt = new OpenGuiPacket(buf); client.execute(() -> pkt.handle(null)); });
     }
 
     // ---------------- Send helpers -----------------
@@ -224,10 +231,12 @@ public final class ModNetworking {
                id.equals(DeleteTemplatePacket.ID) ||
                id.equals(ToggleTemplatePacket.ID) ||
                id.equals(SaveFreeRewardSettingsPacket.ID) ||
+               id.equals(SaveEconomySettingsPacket.ID) ||
                id.equals(UpdatePerformanceSettingPacket.ID) ||
                id.equals(SaveMotdPacket.ID) ||
                id.equals(CheckForUpdatesPacket.ID) ||
                id.equals(StartServerUpdatePacket.ID) ||
+               id.equals(PatchJvmFlagsPacket.ID) ||
                id.equals(RequestEconomyStatsPacket.ID);
     }
 

@@ -12,13 +12,13 @@ import java.util.function.Supplier;
 public record GamblingResultPacket(boolean won, double payout, String message) implements IPacket {
     
     public GamblingResultPacket(FriendlyByteBuf buf) {
-        this(buf.readBoolean(), buf.readDouble(), buf.readUtf(256));
+        this(buf.readBoolean(), buf.readDouble(), buf.readUtf(32767));
     }
     
     public void encode(FriendlyByteBuf buf) {
         buf.writeBoolean(this.won);
         buf.writeDouble(this.payout);
-        buf.writeUtf(this.message, 256);
+        buf.writeUtf(this.message, 32767);
     }
     
     public void handle(Supplier<NetworkEvent.Context> ctx) {

@@ -15,13 +15,13 @@ import java.util.function.Supplier;
 public record UpdatePerformanceSettingPacket(String settingKey, String value, long clientTick) implements IPacket {
 
     public UpdatePerformanceSettingPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(128), buf.readUtf(128), buf.readLong());
+        this(buf.readUtf(32767), buf.readUtf(32767), buf.readLong());
     }
 
     @Override
     public void encode(FriendlyByteBuf buf) {
-        buf.writeUtf(settingKey, 128);
-        buf.writeUtf(value, 128);
+        buf.writeUtf(settingKey, 32767);
+        buf.writeUtf(value, 32767);
         buf.writeLong(clientTick);
     }
 
