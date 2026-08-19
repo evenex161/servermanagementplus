@@ -60,14 +60,17 @@ public record SyncDailyTasksPacket(List<DailyTask> tasks, long resetTime, boolea
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Store daily tasks on client side for GUI display
             com.servermanagement.client.ClientDailyTasksData.setTasks(tasks);
             com.servermanagement.client.ClientDailyTasksData.setResetTime(resetTime);
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAvailable(freeRewardAvailable);
             com.servermanagement.client.ClientDailyTasksData.setFreeRewardAmount(freeRewardAmount);
             com.servermanagement.client.ClientDailyTasksData.setTimeUntilFreeReward(timeUntilFreeReward);
-            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
+            com.servermanagement.client.ClientScreenManager.refreshOpenScreen();
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

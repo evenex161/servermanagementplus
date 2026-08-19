@@ -33,13 +33,16 @@ public record SyncGamblingStatsPacket(long totalBets, long totalWins, long total
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Update client-side gambling stats
             ClientGamblingData.updateStats(
                 totalBets, totalWins, totalLosses,
                 totalWagered, totalWon, totalLost,
                 biggestWin, biggestLoss
             );
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

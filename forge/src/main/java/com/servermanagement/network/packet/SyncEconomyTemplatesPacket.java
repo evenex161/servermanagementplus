@@ -21,10 +21,10 @@ import java.util.function.Supplier;
  * Server-to-client packet that syncs economy templates and free reward settings
  */
 public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount,
-                                          int freeRewardCooldownHours) implements IPacket {
+                                          int freeRewardCooldownHours, ItemStack freeRewardItem) implements IPacket {
 
     public SyncEconomyTemplatesPacket(FriendlyByteBuf buf) {
-        this(readTemplates(buf), buf.readInt(), buf.readInt());
+        this(readTemplates(buf), buf.readInt(), buf.readInt(), buf.readItem());
     }
 
     private static List<TemplateData> readTemplates(FriendlyByteBuf buf) {
@@ -58,13 +58,17 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         }
         buf.writeInt(freeRewardAmount);
         buf.writeInt(freeRewardCooldownHours);
+        buf.writeItem(freeRewardItem);
     }
 
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours);
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
+            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours, freeRewardItem);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 
@@ -93,7 +97,8 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
             new SyncEconomyTemplatesPacket(
                 data,
                 (int) templateManager.getFreeRewardAmount(),
-                templateManager.getFreeRewardCooldownHours()
+                templateManager.getFreeRewardCooldownHours(),
+                templateManager.getFreeRewardItem()
             ),
             player
         );

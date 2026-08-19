@@ -25,12 +25,15 @@ public record SyncBettingSlotStatePacket(boolean bettingSlotActive) implements I
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null && player.containerMenu instanceof MineStacksMenu) {
                 MineStacksMenu menu = (MineStacksMenu) player.containerMenu;
                 menu.setBettingSlotActive(bettingSlotActive);
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

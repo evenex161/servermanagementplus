@@ -20,8 +20,11 @@ public record SyncAutoShowPacket(boolean autoShow) implements IPacket {
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Handle on client - update UI
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

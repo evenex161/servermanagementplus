@@ -23,34 +23,7 @@ public class ClientPacketHandler {
     private static String tradeBlacklist = "";
     private static double startingBalance = 1000.0;
 
-    /**
-     * Bug 5: On Fabric, custom S2C sync packet receivers are wrapped in
-     * {@code context.client().execute(...)} so they may run AFTER the vanilla
-     * {@code ClientboundOpenScreen} handler that opens the menu. Screens that
-     * read the cache only in their constructor or {@code init()} therefore
-     * display stale defaults. After every cache update, re-run {@code init()}
-     * on our own currently-open screen so widgets pick up the fresh values.
-     */
-    public static void refreshOpenScreen() {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-        if (mc == null) {
-            return;
-        }
-        net.minecraft.client.gui.screens.Screen screen = mc.screen;
-        if (screen == null) {
-            return;
-        }
-        if (!screen.getClass().getName().startsWith("com.servermanagement")) {
-            return;
-        }
-        try {
-            screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
-        } catch (Throwable t) {
-            // Don't take the client down if a screen rebuild misbehaves.
-            com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("ScreenRefresh",
-                    "failed for " + screen.getClass().getSimpleName() + ": " + t.getMessage());
-        }
-    }
+
     
     // MOTD cache
     private static String cachedMotdText = "";
@@ -58,7 +31,7 @@ public class ClientPacketHandler {
     public static void handleMotdSync(String motdText) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("MOTD", "text=\"" + (motdText.length() > 60 ? motdText.substring(0, 57) + "..." : motdText) + "\"");
         cachedMotdText = motdText;
-        refreshOpenScreen();
+        ClientScreenManager.refreshOpenScreen();
     }
 
     public static String getCachedMotdText() {
@@ -88,7 +61,7 @@ public class ClientPacketHandler {
     public static void handleWorldList(List<SyncWorldListPacket.WorldInfo> worlds) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("WorldList", worlds.size() + " worlds");
         cachedWorldList = new ArrayList<>(worlds);
-        refreshOpenScreen();
+        ClientScreenManager.refreshOpenScreen();
     }
 
     public static List<SyncWorldListPacket.WorldInfo> getCachedWorldList() {
@@ -107,7 +80,7 @@ public class ClientPacketHandler {
         cachedTimerSeconds = timerSeconds;
         cachedChatConnected = chatConnected;
         cachedTimerPortalType = timerPortalType;
-        refreshOpenScreen();
+        ClientScreenManager.refreshOpenScreen();
     }
 
     public static String getCachedDimensionId() {
@@ -143,7 +116,7 @@ public class ClientPacketHandler {
                 String.format("chatIsolation=%s tabIsolation=%s", chatIsolationEnabled, tabIsolationEnabled));
         cachedChatIsolationEnabled = chatIsolationEnabled;
         cachedTabIsolationEnabled = tabIsolationEnabled;
-        refreshOpenScreen();
+        ClientScreenManager.refreshOpenScreen();
     }
     
     public static boolean isChatIsolationEnabled() {
@@ -158,15 +131,17 @@ public class ClientPacketHandler {
     private static List<SyncEconomyTemplatesPacket.TemplateData> cachedTemplates = new ArrayList<>();
     private static int cachedFreeRewardAmount = 100;
     private static int cachedFreeRewardCooldownHours = 24;
+    private static net.minecraft.world.item.ItemStack cachedFreeRewardItem = net.minecraft.world.item.ItemStack.EMPTY;
     
     public static void handleEconomyTemplates(List<SyncEconomyTemplatesPacket.TemplateData> templates,
-            int freeRewardAmount, int freeRewardCooldownHours) {
+            int freeRewardAmount, int freeRewardCooldownHours, net.minecraft.world.item.ItemStack freeRewardItem) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("EconomyTemplates",
                 String.format("%d templates, freeReward=%d, cooldown=%dh", templates.size(), freeRewardAmount, freeRewardCooldownHours));
         cachedTemplates = new ArrayList<>(templates);
         cachedFreeRewardAmount = freeRewardAmount;
         cachedFreeRewardCooldownHours = freeRewardCooldownHours;
-        refreshOpenScreen();
+        cachedFreeRewardItem = freeRewardItem;
+        ClientScreenManager.refreshOpenScreen();
     }
     
     public static List<SyncEconomyTemplatesPacket.TemplateData> getCachedTemplates() {
@@ -179,6 +154,10 @@ public class ClientPacketHandler {
     
     public static int getCachedFreeRewardCooldownHours() {
         return cachedFreeRewardCooldownHours;
+    }
+
+    public static net.minecraft.world.item.ItemStack getCachedFreeRewardItem() {
+        return cachedFreeRewardItem;
     }
 
     // --- Economy Statistics cache ---
@@ -234,7 +213,7 @@ public class ClientPacketHandler {
         statTotalSaleVolume = totalSaleVolume;
         statTotalGamblingWagered = totalGamblingWagered;
         statTotalGamblingWon = totalGamblingWon;
-        refreshOpenScreen();
+        ClientScreenManager.refreshOpenScreen();
     }
 
     public static int getStatTotalAccounts() { return statTotalAccounts; }
@@ -325,7 +304,7 @@ public class ClientPacketHandler {
         perfTotalSpawnsCancelled = totalSpawnsCancelled;
         perfTotalEntitiesThrottled = totalEntitiesThrottled;
         perfTotalRedstoneThrottled = totalRedstoneThrottled;
-        refreshOpenScreen();
+        ClientScreenManager.refreshOpenScreen();
     }
 
     public static boolean getPerfFeatureEnabled() { return perfFeatureEnabled; }

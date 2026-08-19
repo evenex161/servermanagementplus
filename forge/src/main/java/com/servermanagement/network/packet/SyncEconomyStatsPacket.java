@@ -66,6 +66,7 @@ public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCircu
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             ClientPacketHandler.handleEconomyStats(
                 totalAccounts, totalMoneyInCirculation, averageBalance,
                 richestBalance, richestPlayerName, inflationMultiplier,
@@ -75,7 +76,9 @@ public record SyncEconomyStatsPacket(int totalAccounts, double totalMoneyInCircu
                 transferCount, totalPurchaseVolume, totalSaleVolume,
                 totalGamblingWagered, totalGamblingWon
             );
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 

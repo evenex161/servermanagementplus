@@ -86,11 +86,14 @@ public record SyncListingOffersPacket(String listingId, List<MineBayOffer> offer
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.screen instanceof com.servermanagement.gui.minebay.MineBayScreen screen) {
                 screen.receiveOffers(listingId, offers);
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

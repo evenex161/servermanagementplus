@@ -22,8 +22,11 @@ public record SyncMotdPacket(String motdText) implements IPacket {
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             ClientPacketHandler.handleMotdSync(motdText);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

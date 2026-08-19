@@ -12,10 +12,6 @@ public class GlobalSettingsMenu extends AbstractContainerMenu {
     
     public GlobalSettingsMenu(int windowId, Inventory playerInventory) {
         super(ModMenuTypes.GLOBAL_SETTINGS_MENU.get(), windowId);
-        
-        // Read from client-side cache (synced by SyncGlobalSettingsPacket before menu opens)
-        this.chatIsolationEnabled = com.servermanagement.client.ClientPacketHandler.isChatIsolationEnabled();
-        this.tabIsolationEnabled = com.servermanagement.client.ClientPacketHandler.isTabIsolationEnabled();
     }
     
     public boolean isChatIsolationEnabled() {

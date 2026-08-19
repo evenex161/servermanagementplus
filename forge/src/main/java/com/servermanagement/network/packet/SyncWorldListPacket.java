@@ -44,9 +44,12 @@ public record SyncWorldListPacket(List<WorldInfo> worlds) implements IPacket {
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Handle on client - update GUI
             com.servermanagement.client.ClientPacketHandler.handleWorldList(worlds);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 

@@ -23,33 +23,6 @@ public class ClientPacketHandler {
     private static String tradeBlacklist = "";
     private static double startingBalance = 1000.0;
 
-    /**
-     * Re-run init() on the currently open mod screen so it re-reads the cache.
-     * Used by S2C sync packet handlers that may arrive AFTER the vanilla
-     * ClientboundOpenScreen packet — without this, screens display stale
-     * snapshots of the cache from their constructor / initial init().
-     */
-    public static void refreshOpenScreen() {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-        if (mc == null) {
-            return;
-        }
-        net.minecraft.client.gui.screens.Screen screen = mc.screen;
-        if (screen == null) {
-            return;
-        }
-        if (!screen.getClass().getName().startsWith("com.servermanagement")) {
-            return;
-        }
-        try {
-            screen.init(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
-        } catch (Throwable t) {
-            // Don't take the client down if a screen rebuild misbehaves.
-            com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("ScreenRefresh",
-                    "failed for " + screen.getClass().getSimpleName() + ": " + t.getMessage());
-        }
-    }
-
     // MOTD cache
     private static String cachedMotdText = "";
 
@@ -152,14 +125,16 @@ public class ClientPacketHandler {
     private static List<SyncEconomyTemplatesPacket.TemplateData> cachedTemplates = new ArrayList<>();
     private static int cachedFreeRewardAmount = 100;
     private static int cachedFreeRewardCooldownHours = 24;
+    private static net.minecraft.world.item.ItemStack cachedFreeRewardItem = net.minecraft.world.item.ItemStack.EMPTY;
     
     public static void handleEconomyTemplates(List<SyncEconomyTemplatesPacket.TemplateData> templates,
-            int freeRewardAmount, int freeRewardCooldownHours) {
+            int freeRewardAmount, int freeRewardCooldownHours, net.minecraft.world.item.ItemStack freeRewardItem) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("EconomyTemplates",
                 String.format("%d templates, freeReward=%d, cooldown=%dh", templates.size(), freeRewardAmount, freeRewardCooldownHours));
         cachedTemplates = new ArrayList<>(templates);
         cachedFreeRewardAmount = freeRewardAmount;
         cachedFreeRewardCooldownHours = freeRewardCooldownHours;
+        cachedFreeRewardItem = freeRewardItem;
     }
     
     public static List<SyncEconomyTemplatesPacket.TemplateData> getCachedTemplates() {
@@ -172,6 +147,10 @@ public class ClientPacketHandler {
     
     public static int getCachedFreeRewardCooldownHours() {
         return cachedFreeRewardCooldownHours;
+    }
+
+    public static net.minecraft.world.item.ItemStack getCachedFreeRewardItem() {
+        return cachedFreeRewardItem;
     }
 
     // --- Economy Statistics cache ---

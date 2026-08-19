@@ -39,6 +39,22 @@ public class FabricUpdateHooks {
                             ));
                     player.sendSystemMessage(msg);
                 }
+                
+                if (com.servermanagement.features.serverperformance.GCAdvisor.isUsingSuboptimalGC() && !com.servermanagement.features.serverperformance.GCAdvisor.isDismissed()) {
+                    net.minecraft.network.chat.MutableComponent msg = Component.literal("§c[ServerManagement] Warning: Suboptimal Server JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
+                        .append(Component.literal("§e[Click to Fix]")
+                            .withStyle(style -> style
+                                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm gc patch"))
+                                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, Component.literal("Apply optimal GC flags to startup scripts")))
+                            ))
+                        .append(" ")
+                        .append(Component.literal("§7[Dismiss]")
+                            .withStyle(style -> style
+                                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm gc dismiss"))
+                                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, Component.literal("Dismiss this warning")))
+                            ));
+                    player.sendSystemMessage(msg);
+                }
             }
         });
     }

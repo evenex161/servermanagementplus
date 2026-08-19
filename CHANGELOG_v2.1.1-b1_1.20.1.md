@@ -38,6 +38,7 @@ v2.1.1-b1 introduces a completely overhauled, bifurcated updater architecture. I
 - **Handshake Parity Fix**: 
   - Enforced strict client-side mod requirement during network handshakes (Fabric). Vanilla clients or clients missing the mod are now gracefully rejected with a helpful disconnect message (`§cThis server requires the ServerManagement+ mod to be installed on your client!`), preventing server-side errors and breaking functionality.
   - Fixed a subsequent issue where valid Fabric clients were also being rejected by switching the handshake validation from the Forge-specific `main` channel to the cross-loader `SyncSessionTokenPacket.ID`.
+- **Free Reward Settings Fix**: Fixed an issue where the Free Reward Tab in `EconomyManagementScreen` would always prompt for "Unsaved Changes" and fail to display or persist the configured `ItemStack` properly. The missing `freeRewardItem` is now correctly synced to the client via `SyncEconomyTemplatesPacket` and initialized in the widget.
 - **Updater GUI Polish & Fixes**: 
   - Fixed `UpdaterScreen` and `PerformanceSettingsScreen` going off-screen upon window resizing. This was caused by overriding `Screen.rebuildWidgets()` in 1.20.1 without a super call, which bypassed the standard GUI initialization and scaling update matrix. Now properly uses `refreshWidgets()`.
   - Fixed update screen layouts (`UpdateAvailableScreen` and `OTAUpdateScreen`) going off-screen on narrow window sizes by implementing responsive vertical stacking and dynamic text width constraints.

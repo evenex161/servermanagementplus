@@ -104,7 +104,7 @@ public class MotdEditorScreen extends ScalableContainerScreen<MotdEditorMenu> {
         // SyncMotdPacket triggering refreshOpenScreen() doesn't clobber pending
         // typing.
         if (this.originalMotdText == null) {
-            this.menu.reloadFromClientCache();
+            this.menu.setMotdText(com.servermanagement.client.ClientPacketHandler.getCachedMotdText());
         }
 
         int cx = (this.width - this.imageWidth) / 2;

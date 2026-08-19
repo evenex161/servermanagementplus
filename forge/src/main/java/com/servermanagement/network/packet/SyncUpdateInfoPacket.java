@@ -23,8 +23,11 @@ public record SyncUpdateInfoPacket(boolean hasUpdate, String version, String cha
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             com.servermanagement.client.ClientUpdateManager.receiveUpdateInfo(this);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

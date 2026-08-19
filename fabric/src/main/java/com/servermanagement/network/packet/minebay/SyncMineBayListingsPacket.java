@@ -88,7 +88,7 @@ public record SyncMineBayListingsPacket(List<MineBayListing> listings) implement
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             // Update client-side cache
             com.servermanagement.client.ClientMineBayData.updateListings(listings);
-            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
+            com.servermanagement.client.ClientScreenManager.refreshOpenScreen();
             
             // Update client-side screen if MineBay is open
             Minecraft minecraft = Minecraft.getInstance();

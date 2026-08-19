@@ -30,7 +30,7 @@ public record SyncBankInventoryPacket(CompoundTag inventoryData) implements com.
             // Store in client-side data holder
             BankInventory inventory = BankInventory.fromNBT(inventoryData);
             com.servermanagement.client.ClientBankInventoryData.setBankInventory(inventory);
-            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
+            com.servermanagement.client.ClientScreenManager.refreshOpenScreen();
 
 }
 }

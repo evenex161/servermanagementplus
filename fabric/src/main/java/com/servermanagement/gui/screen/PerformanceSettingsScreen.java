@@ -31,6 +31,8 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         super(menu, playerInventory, title, 430, 420);
         this.imageWidth = 430;
         this.imageHeight = 420;
+        
+        // Injection moved to init()
     }
 
     private int getContentTop() {
@@ -65,6 +67,36 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
     @Override
     protected void init() {
         super.init();
+        
+        // Inject client cache into the side-agnostic menu during init() so refreshOpenScreen() updates stats
+        this.menu.setFeatureEnabled(com.servermanagement.client.ClientPacketHandler.getPerfFeatureEnabled());
+        this.menu.setItemMergingEnabled(com.servermanagement.client.ClientPacketHandler.getPerfItemMergingEnabled());
+        this.menu.setMobSpawnLimiterEnabled(com.servermanagement.client.ClientPacketHandler.getPerfMobSpawnLimiterEnabled());
+        this.menu.setEntityActivationRangeEnabled(com.servermanagement.client.ClientPacketHandler.getPerfEntityActivationRangeEnabled());
+        this.menu.setVillagerThrottleEnabled(com.servermanagement.client.ClientPacketHandler.getPerfVillagerThrottleEnabled());
+        this.menu.setRedstoneThrottleEnabled(com.servermanagement.client.ClientPacketHandler.getPerfRedstoneThrottleEnabled());
+        this.menu.setTpsMonitorEnabled(com.servermanagement.client.ClientPacketHandler.getPerfTpsMonitorEnabled());
+        this.menu.setTpsAutoOptimize(com.servermanagement.client.ClientPacketHandler.getPerfTpsAutoOptimize());
+
+        this.menu.setItemMergeRadius(com.servermanagement.client.ClientPacketHandler.getPerfItemMergeRadius());
+        this.menu.setItemMergeInterval(com.servermanagement.client.ClientPacketHandler.getPerfItemMergeInterval());
+        this.menu.setMobCapMultiplier(com.servermanagement.client.ClientPacketHandler.getPerfMobCapMultiplier());
+        this.menu.setMonsterActivationRange(com.servermanagement.client.ClientPacketHandler.getPerfMonsterActivationRange());
+        this.menu.setAnimalActivationRange(com.servermanagement.client.ClientPacketHandler.getPerfAnimalActivationRange());
+        this.menu.setMiscActivationRange(com.servermanagement.client.ClientPacketHandler.getPerfMiscActivationRange());
+        this.menu.setVillagerTickInterval(com.servermanagement.client.ClientPacketHandler.getPerfVillagerTickInterval());
+        this.menu.setRedstoneUpdatesPerTick(com.servermanagement.client.ClientPacketHandler.getPerfRedstoneUpdatesPerTick());
+        this.menu.setTpsWarningThreshold(com.servermanagement.client.ClientPacketHandler.getPerfTpsWarningThreshold());
+        this.menu.setTpsCriticalThreshold(com.servermanagement.client.ClientPacketHandler.getPerfTpsCriticalThreshold());
+
+        this.menu.setCurrentTps(com.servermanagement.client.ClientPacketHandler.getPerfCurrentTps());
+        this.menu.setAverageMspt(com.servermanagement.client.ClientPacketHandler.getPerfAverageMspt());
+        this.menu.setAutoOptimizeActive(com.servermanagement.client.ClientPacketHandler.getPerfAutoOptimizeActive());
+        this.menu.setTotalItemsMerged(com.servermanagement.client.ClientPacketHandler.getPerfTotalItemsMerged());
+        this.menu.setTotalSpawnsCancelled(com.servermanagement.client.ClientPacketHandler.getPerfTotalSpawnsCancelled());
+        this.menu.setTotalEntitiesThrottled(com.servermanagement.client.ClientPacketHandler.getPerfTotalEntitiesThrottled());
+        this.menu.setTotalRedstoneThrottled(com.servermanagement.client.ClientPacketHandler.getPerfTotalRedstoneThrottled());
+        
         rebuildWidgets();
     }
 

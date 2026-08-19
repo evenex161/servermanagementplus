@@ -1,6 +1,6 @@
 package com.servermanagement.gui.menu;
 
-import com.servermanagement.client.ClientPacketHandler;
+
 import com.servermanagement.gui.ModMenuTypes;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -42,37 +42,6 @@ public class PerformanceSettingsMenu extends AbstractContainerMenu {
 
     public PerformanceSettingsMenu(int windowId, Inventory playerInventory) {
         super(ModMenuTypes.PERFORMANCE_SETTINGS_MENU.get(), windowId);
-        loadFromClientCache();
-    }
-
-    private void loadFromClientCache() {
-        this.featureEnabled = ClientPacketHandler.getPerfFeatureEnabled();
-        this.itemMergingEnabled = ClientPacketHandler.getPerfItemMergingEnabled();
-        this.mobSpawnLimiterEnabled = ClientPacketHandler.getPerfMobSpawnLimiterEnabled();
-        this.entityActivationRangeEnabled = ClientPacketHandler.getPerfEntityActivationRangeEnabled();
-        this.villagerThrottleEnabled = ClientPacketHandler.getPerfVillagerThrottleEnabled();
-        this.redstoneThrottleEnabled = ClientPacketHandler.getPerfRedstoneThrottleEnabled();
-        this.tpsMonitorEnabled = ClientPacketHandler.getPerfTpsMonitorEnabled();
-        this.tpsAutoOptimize = ClientPacketHandler.getPerfTpsAutoOptimize();
-
-        this.itemMergeRadius = ClientPacketHandler.getPerfItemMergeRadius();
-        this.itemMergeInterval = ClientPacketHandler.getPerfItemMergeInterval();
-        this.mobCapMultiplier = ClientPacketHandler.getPerfMobCapMultiplier();
-        this.monsterActivationRange = ClientPacketHandler.getPerfMonsterActivationRange();
-        this.animalActivationRange = ClientPacketHandler.getPerfAnimalActivationRange();
-        this.miscActivationRange = ClientPacketHandler.getPerfMiscActivationRange();
-        this.villagerTickInterval = ClientPacketHandler.getPerfVillagerTickInterval();
-        this.redstoneUpdatesPerTick = ClientPacketHandler.getPerfRedstoneUpdatesPerTick();
-        this.tpsWarningThreshold = ClientPacketHandler.getPerfTpsWarningThreshold();
-        this.tpsCriticalThreshold = ClientPacketHandler.getPerfTpsCriticalThreshold();
-
-        this.currentTps = ClientPacketHandler.getPerfCurrentTps();
-        this.averageMspt = ClientPacketHandler.getPerfAverageMspt();
-        this.autoOptimizeActive = ClientPacketHandler.getPerfAutoOptimizeActive();
-        this.totalItemsMerged = ClientPacketHandler.getPerfTotalItemsMerged();
-        this.totalSpawnsCancelled = ClientPacketHandler.getPerfTotalSpawnsCancelled();
-        this.totalEntitiesThrottled = ClientPacketHandler.getPerfTotalEntitiesThrottled();
-        this.totalRedstoneThrottled = ClientPacketHandler.getPerfTotalRedstoneThrottled();
     }
 
     // --- Getters & Setters ---
@@ -132,12 +101,19 @@ public class PerformanceSettingsMenu extends AbstractContainerMenu {
     public void setTpsCriticalThreshold(double v) { this.tpsCriticalThreshold = v; }
 
     public double getCurrentTps() { return currentTps; }
+    public void setCurrentTps(double currentTps) { this.currentTps = currentTps; }
     public double getAverageMspt() { return averageMspt; }
+    public void setAverageMspt(double averageMspt) { this.averageMspt = averageMspt; }
     public boolean isAutoOptimizeActive() { return autoOptimizeActive; }
+    public void setAutoOptimizeActive(boolean autoOptimizeActive) { this.autoOptimizeActive = autoOptimizeActive; }
     public long getTotalItemsMerged() { return totalItemsMerged; }
+    public void setTotalItemsMerged(long totalItemsMerged) { this.totalItemsMerged = totalItemsMerged; }
     public long getTotalSpawnsCancelled() { return totalSpawnsCancelled; }
+    public void setTotalSpawnsCancelled(long totalSpawnsCancelled) { this.totalSpawnsCancelled = totalSpawnsCancelled; }
     public long getTotalEntitiesThrottled() { return totalEntitiesThrottled; }
+    public void setTotalEntitiesThrottled(long totalEntitiesThrottled) { this.totalEntitiesThrottled = totalEntitiesThrottled; }
     public long getTotalRedstoneThrottled() { return totalRedstoneThrottled; }
+    public void setTotalRedstoneThrottled(long totalRedstoneThrottled) { this.totalRedstoneThrottled = totalRedstoneThrottled; }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {

@@ -26,12 +26,15 @@ public record SyncEconomySettingsPacket(boolean showMarketValueTooltips, boolean
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             ClientPacketHandler.setShowMarketValueTooltips(showMarketValueTooltips);
             ClientPacketHandler.setMinebayEnabled(minebayEnabled);
             ClientPacketHandler.setMinestacksEnabled(minestacksEnabled);
             ClientPacketHandler.setTradeBlacklist(tradeBlacklist);
             ClientPacketHandler.setStartingBalance(startingBalance);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

@@ -60,9 +60,12 @@ public record SyncBankAccountPacket(double balance, List<Transaction> recentTran
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             com.servermanagement.client.ClientBankData.setBalance(balance);
             com.servermanagement.client.ClientBankData.setTransactions(recentTransactions);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

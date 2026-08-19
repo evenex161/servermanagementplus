@@ -17,3 +17,9 @@ This update backports critical bug fixes and configuration improvements from the
 - **Economy NBT Serialization**: Fixed a critical exploit where items with NBT data (such as Enchanted Books, named items, or damaged tools) were losing their exact state upon server restart. The dynamic market engine and recipe pricing now correctly serialize and track NBT data in 1.20.1.
 - **Repository Cleanup**: Cleaned up leftover testing directories and `TestModrinth.java` scripts that leaked into the production tree.
 - **Versioning**: Adapted internal hardcoded updater target versions to `2.1.2-b1` due to the previous version being released already.
+- **Server Stability Fixes:**
+    *   Fixed a critical crash on dedicated servers where opening the GUI would attempt to load client-only classes.
+    *   Fixed a critical memory-leak where cached `Menu` items inadvertently prevented JVM garbage collection because they were incorrectly instantiated inside constructor lambdas.
+    *   Fixed a `BootstrapMethodError` during dedicated server startup caused by `OpenGuiPacket` aggressively referencing client UI screens.
+    *   Resolved `RuntimeDistCleaner` dedicated server crashes for the `GlobalSettingsMenu` and `MotdEditorMenu` by wrapping clientbound Forge packet lambdas in `DistExecutor.unsafeRunWhenOn(Dist.CLIENT)`.
+    *   Restored missing ZGC (`-XX:+UseZGC`) warnings upon login for server administrators and local clients. Server OP's can now simply press `[Click to Fix]` in-game to auto-patch their server run-scripts, while clients get a convenient `[Copy Optimal Flags]` button directly into their clipboard.

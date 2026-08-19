@@ -37,4 +37,28 @@ public class ClientConnectionHandler {
             }
         }
     }
+
+    @SubscribeEvent
+    public static void onClientJoin(ClientPlayerNetworkEvent.LoggingIn event) {
+        if (com.servermanagement.features.serverperformance.GCAdvisor.isUsingSuboptimalGC() && !com.servermanagement.features.serverperformance.GCAdvisor.isDismissed()) {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            mc.tell(() -> {
+                if (mc.player != null) {
+                    net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component.literal("§c[ServerManagement] Warning: Suboptimal Client JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
+                        .append(net.minecraft.network.chat.Component.literal("§e[Copy Optimal Flags]")
+                            .withStyle(style -> style
+                                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.COPY_TO_CLIPBOARD, com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags()))
+                                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, net.minecraft.network.chat.Component.literal("Copy flags to clipboard for your Launcher")))
+                            ))
+                        .append(" ")
+                        .append(net.minecraft.network.chat.Component.literal("§7[Dismiss]")
+                            .withStyle(style -> style
+                                .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm gc dismiss"))
+                                .withHoverEvent(new net.minecraft.network.chat.HoverEvent(net.minecraft.network.chat.HoverEvent.Action.SHOW_TEXT, net.minecraft.network.chat.Component.literal("Dismiss this warning")))
+                            ));
+                    mc.player.sendSystemMessage(msg);
+                }
+            });
+        }
+    }
 }

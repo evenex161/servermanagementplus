@@ -27,6 +27,7 @@ public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEna
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Handle on client
             com.servermanagement.client.ClientPacketHandler.handleWorldDetail(
                 dimensionId, netherPortalsEnabled, endPortalsEnabled,
@@ -39,7 +40,9 @@ public record SyncWorldDetailPacket(String dimensionId, boolean netherPortalsEna
             if (mc.screen instanceof com.servermanagement.gui.screen.WorldDetailScreen wds) {
                 wds.resize(mc, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

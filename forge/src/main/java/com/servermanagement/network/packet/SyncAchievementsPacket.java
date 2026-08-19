@@ -40,10 +40,13 @@ public record SyncAchievementsPacket(Set<String> earnedAchievements, int totalRe
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Store achievements on client side for GUI display
             com.servermanagement.client.ClientAchievementsData.setEarnedAchievements(earnedAchievements);
             com.servermanagement.client.ClientAchievementsData.setTotalRewardsEarned(totalRewards);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

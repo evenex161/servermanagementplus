@@ -124,7 +124,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements com.serverm
                 }
             } else {
                 if (guiType == GuiType.HUD_EDIT) {
-                    net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.gui.overlay.HudEditScreen());
+                    com.servermanagement.client.ClientScreenManager.openHudEditScreen();
                 }
             }
 }

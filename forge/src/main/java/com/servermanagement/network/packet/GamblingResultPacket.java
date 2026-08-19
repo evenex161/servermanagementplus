@@ -23,6 +23,7 @@ public record GamblingResultPacket(boolean won, double payout, String message) i
     
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Update client-side screen
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.screen instanceof com.servermanagement.gui.gambling.MineStacksScreen) {
@@ -30,7 +31,9 @@ public record GamblingResultPacket(boolean won, double payout, String message) i
                     (com.servermanagement.gui.gambling.MineStacksScreen) mc.screen;
                 screen.handleGamblingResult(this.won, this.payout, this.message);
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

@@ -24,11 +24,14 @@ public record ConsoleResponsePacket(String message) implements IPacket {
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.screen instanceof com.servermanagement.gui.screen.ConsoleScreen consoleScreen) {
                 consoleScreen.addConsoleLine(message);
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

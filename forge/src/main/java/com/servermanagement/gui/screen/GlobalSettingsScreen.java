@@ -25,11 +25,16 @@ public class GlobalSettingsScreen extends ScalableContainerScreen<GlobalSettings
         super(menu, playerInventory, title, 360, 240);
         this.imageWidth = 320;
         this.imageHeight = 200;
+        
+        // Injection moved to init()
     }
 
     @Override
     protected void init() {
         super.init();
+        
+        this.menu.setChatIsolationEnabled(com.servermanagement.client.ClientPacketHandler.isChatIsolationEnabled());
+        this.menu.setTabIsolationEnabled(com.servermanagement.client.ClientPacketHandler.isTabIsolationEnabled());
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;

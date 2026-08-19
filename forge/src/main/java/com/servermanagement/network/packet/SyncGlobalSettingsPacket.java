@@ -25,8 +25,11 @@ public record SyncGlobalSettingsPacket(boolean chatIsolationEnabled, boolean tab
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             ClientPacketHandler.handleGlobalSettings(chatIsolationEnabled, tabIsolationEnabled);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

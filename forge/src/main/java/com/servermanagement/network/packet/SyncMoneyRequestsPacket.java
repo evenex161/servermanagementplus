@@ -56,9 +56,12 @@ public record SyncMoneyRequestsPacket(List<ClientMoneyRequestData.RequestEntry> 
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             ClientMoneyRequestData.setIncomingRequests(incoming);
             ClientMoneyRequestData.setOutgoingRequests(outgoing);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

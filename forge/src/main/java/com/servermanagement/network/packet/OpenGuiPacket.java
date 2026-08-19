@@ -32,6 +32,7 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             ServerPlayer player = ctx.get().getSender();
             if (player != null) {
                 // Admin GUIs require OP level 2
@@ -127,10 +128,12 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                 }
             } else {
                 if (guiType == GuiType.HUD_EDIT) {
-                    net.minecraft.client.Minecraft.getInstance().setScreen(new com.servermanagement.gui.overlay.HudEditScreen());
+                    com.servermanagement.client.ClientScreenManager.openHudEditScreen();
                 }
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
     

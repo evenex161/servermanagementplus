@@ -1,6 +1,6 @@
 package com.servermanagement.gui;
 
-import com.servermanagement.client.ClientPacketHandler;
+
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -12,15 +12,6 @@ public class MotdEditorMenu extends AbstractContainerMenu {
 
     public MotdEditorMenu(int windowId, Inventory playerInventory) {
         super(ModMenuTypes.MOTD_EDITOR_MENU, windowId);
-        reloadFromClientCache();
-    }
-
-    /** Re-pull MOTD text from the client cache. Called from the screen's init()
-     *  ONLY before any user edit (originalMotdText == null) so a late
-     *  SyncMotdPacket triggering refreshOpenScreen() picks up freshly synced
-     *  data without clobbering pending typing. */
-    public void reloadFromClientCache() {
-        this.motdText = ClientPacketHandler.getCachedMotdText();
     }
 
     public String getMotdText() {

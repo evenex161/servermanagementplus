@@ -92,6 +92,7 @@ public record SyncMineBayListingsPacket(List<MineBayListing> listings) implement
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Update client-side cache
             com.servermanagement.client.ClientMineBayData.updateListings(listings);
             
@@ -100,7 +101,9 @@ public record SyncMineBayListingsPacket(List<MineBayListing> listings) implement
             if (minecraft.screen instanceof com.servermanagement.gui.minebay.MineBayScreen screen) {
                 screen.updateListings(listings);
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

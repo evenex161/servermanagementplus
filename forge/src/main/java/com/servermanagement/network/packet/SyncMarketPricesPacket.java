@@ -66,10 +66,13 @@ public record SyncMarketPricesPacket(double inflationMultiplier, double averageB
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             com.servermanagement.client.ClientMarketData.update(
                 inflationMultiplier, averageBalance, totalPlayerCount, starterMoney, supplyData, recipePrices
             );
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

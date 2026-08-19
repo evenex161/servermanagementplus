@@ -321,7 +321,12 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
         this.addRenderableWidget(cooldownBox);
         
         if (freeRewardEditorWidget == null) {
-            freeRewardEditorWidget = new FreeRewardEditorWidget(formX, formY + 30, 310, 160, new java.util.ArrayList<>());
+            java.util.List<ItemStack> initItems = new java.util.ArrayList<>();
+            ItemStack cachedItem = com.servermanagement.client.ClientPacketHandler.getCachedFreeRewardItem();
+            if (cachedItem != null && !cachedItem.isEmpty()) {
+                initItems.add(cachedItem.copy());
+            }
+            freeRewardEditorWidget = new FreeRewardEditorWidget(formX, formY + 30, 310, 160, initItems);
         }
         this.addRenderableWidget(freeRewardEditorWidget);
         
@@ -510,7 +515,12 @@ public class EconomyManagementScreen extends ScalableContainerScreen<EconomyMana
             int currentReward = freeRewardBox.getValue().isEmpty() ? 0 : Integer.parseInt(freeRewardBox.getValue());
             int currentCooldown = cooldownBox.getValue().isEmpty() ? 0 : Integer.parseInt(cooldownBox.getValue());
             if (currentReward != cachedReward || currentCooldown != cachedCooldown) return true;
-            if (freeRewardEditorWidget.getRewardItems().size() != 0) return true;
+            
+            java.util.List<ItemStack> currentItems = freeRewardEditorWidget.getRewardItems();
+            ItemStack cachedItem = com.servermanagement.client.ClientPacketHandler.getCachedFreeRewardItem();
+            if (currentItems.isEmpty() && cachedItem != null && !cachedItem.isEmpty()) return true;
+            if (!currentItems.isEmpty() && (cachedItem == null || cachedItem.isEmpty())) return true;
+            if (!currentItems.isEmpty() && !ItemStack.matches(currentItems.get(0), cachedItem)) return true;
         } else if (currentTab == Tab.SETTINGS && tooltipSwitch != null && minebaySwitch != null && minestacksSwitch != null && startingBalanceBox != null && blacklistWidget != null) {
             if (tooltipSwitch.isToggled() != com.servermanagement.client.ClientPacketHandler.showMarketValueTooltips()) return true;
             if (minebaySwitch.isToggled() != com.servermanagement.client.ClientPacketHandler.minebayEnabled()) return true;

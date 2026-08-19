@@ -36,7 +36,7 @@ public record SyncFeatureStatesPacket(Map<String, Boolean> featureStates) implem
         public void handle(net.minecraft.server.level.ServerPlayer player) {
             // Handle on client thread
             com.servermanagement.features.FeatureManager.syncFeatureStates(featureStates);
-            com.servermanagement.client.ClientPacketHandler.refreshOpenScreen();
+            com.servermanagement.client.ClientScreenManager.refreshOpenScreen();
 
 }
 

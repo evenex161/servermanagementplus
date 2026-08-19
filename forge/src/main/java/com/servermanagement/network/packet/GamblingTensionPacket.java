@@ -30,6 +30,7 @@ public record GamblingTensionPacket(GameType gameType, String gameOption) implem
     
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // This will be handled on the client side
             net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
             if (minecraft.player != null && minecraft.screen instanceof com.servermanagement.gui.gambling.MineStacksScreen) {
@@ -37,7 +38,9 @@ public record GamblingTensionPacket(GameType gameType, String gameOption) implem
                     (com.servermanagement.gui.gambling.MineStacksScreen) minecraft.screen;
                 screen.startTension(this.gameType, this.gameOption);
             }
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }

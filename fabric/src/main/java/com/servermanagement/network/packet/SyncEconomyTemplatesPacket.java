@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 /**
  * Server-to-client packet that syncs economy templates and free reward settings
  */
-public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours) implements com.servermanagement.network.IPacket {
+public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeRewardAmount, int freeRewardCooldownHours, ItemStack freeRewardItem) implements com.servermanagement.network.IPacket {
     public static final net.minecraft.resources.ResourceLocation ID = new net.minecraft.resources.ResourceLocation("servermanagement", "sync_economy_templates_packet");
 
     @Override
@@ -25,7 +25,7 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
 
 
     public SyncEconomyTemplatesPacket(FriendlyByteBuf buf) {
-        this(decodeTemplates(buf), buf.readInt(), buf.readInt());
+        this(decodeTemplates(buf), buf.readInt(), buf.readInt(), buf.readItem());
     }
 
     private static List<TemplateData> decodeTemplates(FriendlyByteBuf buf) {
@@ -58,10 +58,11 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
         }
         buf.writeInt(freeRewardAmount);
         buf.writeInt(freeRewardCooldownHours);
+        buf.writeItem(freeRewardItem);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
-            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours);
+            ClientPacketHandler.handleEconomyTemplates(templates, freeRewardAmount, freeRewardCooldownHours, freeRewardItem);
 
 }
 
@@ -90,7 +91,8 @@ public record SyncEconomyTemplatesPacket(List<TemplateData> templates, int freeR
             new SyncEconomyTemplatesPacket(
                 data,
                 (int) templateManager.getFreeRewardAmount(),
-                templateManager.getFreeRewardCooldownHours()
+                templateManager.getFreeRewardCooldownHours(),
+                templateManager.getFreeRewardItem()
             ),
             player
         );

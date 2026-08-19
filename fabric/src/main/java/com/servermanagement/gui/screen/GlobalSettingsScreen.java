@@ -25,17 +25,16 @@ public class GlobalSettingsScreen extends ScalableContainerScreen<GlobalSettings
         super(menu, playerInventory, title, 360, 240);
         this.imageWidth = 320;
         this.imageHeight = 200;
+        
+        // Injection moved to init()
     }
 
     @Override
     protected void init() {
         super.init();
-
-        // Fabric: re-pull toggle state from the client cache on every init() so
-        // that a late SyncGlobalSettingsPacket triggering refreshOpenScreen()
-        // updates the toggles on the second init() pass instead of leaving
-        // them at the values latched in the menu constructor.
-        this.menu.reloadFromClientCache();
+        
+        this.menu.setChatIsolationEnabled(com.servermanagement.client.ClientPacketHandler.isChatIsolationEnabled());
+        this.menu.setTabIsolationEnabled(com.servermanagement.client.ClientPacketHandler.isTabIsolationEnabled());
         
         int centerX = (this.width - this.imageWidth) / 2;
         int centerY = (this.height - this.imageHeight) / 2;

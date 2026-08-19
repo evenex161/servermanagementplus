@@ -35,9 +35,12 @@ public record SyncFeatureStatesPacket(Map<String, Boolean> featureStates) implem
     @Override
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
             // Handle on client thread
             com.servermanagement.features.FeatureManager.syncFeatureStates(featureStates);
+            });
         });
+
         ctx.get().setPacketHandled(true);
     }
 }
