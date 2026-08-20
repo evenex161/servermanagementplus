@@ -11,5 +11,4 @@ public class Constants {
     // Updater API Config
     public static final String MODRINTH_PROJECT_ID = "j0mPPVWV";
     public static final String CURSEFORGE_PROJECT_ID = "1381899";
-    public static final String CURSEFORGE_API_KEY = "0a2789c0-66c1-4882-8ea1-26df277caf2d";
 }

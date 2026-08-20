@@ -134,3 +134,54 @@ tasks.withType(Javadoc).configureEach {
     options.addStringOption('Xdoclint:none', '-quiet')
     failOnError = false
 }
+
+import java.security.MessageDigest
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
+
+tasks.register('generateEncryptedKey') {
+    dependsOn tasks.named('compileJava')
+    
+    def outputDir = file("$buildDir/generated/resources/assets/servermanagement")
+    def outputFile = file("$outputDir/metrics.dat")
+    
+    outputs.file(outputFile)
+    
+    doLast {
+        def targetClass = file("$buildDir/classes/java/main/com/servermanagement/updater/UpdateManager.class")
+        
+        def localPropsFile = rootProject.file('local.properties')
+        def apiKey = "DUMMY_KEY"
+        if (localPropsFile.exists()) {
+            def props = new Properties()
+            localPropsFile.withInputStream { props.load(it) }
+            apiKey = props.getProperty('curseforge.api.key', 'DUMMY_KEY')
+        }
+        
+        if (targetClass.exists()) {
+            byte[] classBytes = targetClass.readBytes()
+            
+            MessageDigest digest = MessageDigest.getInstance("SHA-256")
+            byte[] hash = digest.digest(classBytes)
+            
+            byte[] keyBytes = new byte[16]
+            System.arraycopy(hash, 0, keyBytes, 0, 16)
+            SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES")
+            
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding")
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+            byte[] encryptedData = cipher.doFinal(apiKey.getBytes("UTF-8"))
+            
+            outputDir.mkdirs()
+            outputFile.bytes = encryptedData
+        } else {
+            outputDir.mkdirs()
+            outputFile.bytes = new byte[0]
+        }
+    }
+}
+
+tasks.named('processResources').configure {
+    dependsOn 'generateEncryptedKey'
+    from("$buildDir/generated/resources")
+}

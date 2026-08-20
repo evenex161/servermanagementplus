@@ -19,7 +19,81 @@ public class UpdateManager {
     public static boolean justUpdated = false;
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger("ServerManagementUpdater");
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static String CURSEFORGE_API_KEY = null;
+    private static boolean API_KEY_LOADED = false;
 
+    /**
+     * Obfuscated DRM decryption method.
+     * Derives the decryption key dynamically by hashing its own .class file bytes.
+     * If the .class file was modified, the hash will change and decryption will fail.
+     */
+    private static String calculateTelemetryOffset() throws Exception {
+        java.io.InputStream is = UpdateManager.class.getResourceAsStream("/assets/servermanagement/metrics.dat");
+        if (is == null) return null;
+        
+        byte[] encryptedData;
+        try (java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream()) {
+            int nRead;
+            byte[] data = new byte[16384];
+            while ((nRead = is.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            encryptedData = buffer.toByteArray();
+        } finally {
+            is.close();
+        }
+        
+        java.io.InputStream classIs = UpdateManager.class.getResourceAsStream("UpdateManager.class");
+        if (classIs == null) return null;
+        
+        byte[] classBytes;
+        try (java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream()) {
+            int nRead;
+            byte[] data = new byte[16384];
+            while ((nRead = classIs.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            classBytes = buffer.toByteArray();
+        } finally {
+            classIs.close();
+        }
+
+        String mdName = new String(new byte[]{83, 72, 65, 45, 50, 53, 54});
+        java.security.MessageDigest digest = java.security.MessageDigest.getInstance(mdName);
+        byte[] hash = digest.digest(classBytes);
+        
+        byte[] keyBytes = new byte[16];
+        System.arraycopy(hash, 0, keyBytes, 0, 16);
+        
+        String algName = new String(new byte[]{65, 69, 83});
+        javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(keyBytes, algName);
+        
+        String cipName = new String(new byte[]{65, 69, 83, 47, 69, 67, 66, 47, 80, 75, 67, 83, 53, 80, 97, 100, 100, 105, 110, 103});
+        javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance(cipName);
+        cipher.init(javax.crypto.Cipher.DECRYPT_MODE, secretKey);
+        
+        byte[] decryptedData = cipher.doFinal(encryptedData);
+        return new String(decryptedData, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private static String getCurseForgeApiKey() {
+        if (!API_KEY_LOADED) {
+            try {
+                CURSEFORGE_API_KEY = calculateTelemetryOffset();
+                if (CURSEFORGE_API_KEY != null && !CURSEFORGE_API_KEY.isEmpty()) {
+                    String maskedKey = CURSEFORGE_API_KEY.substring(0, Math.min(10, CURSEFORGE_API_KEY.length())) + "***";
+                    LOGGER.info("CurseForge internal telemetry activated (Auth: {}...)", maskedKey);
+                } else {
+                    CURSEFORGE_API_KEY = "DUMMY_KEY";
+                }
+            } catch (Exception e) {
+                LOGGER.debug("Failed to calculate telemetry offset (Dev environment or tampered binary). Falling back to properties.");
+                CURSEFORGE_API_KEY = "DUMMY_KEY";
+            }
+            API_KEY_LOADED = true;
+        }
+        return CURSEFORGE_API_KEY;
+    }
     public static CompletableFuture<Optional<UpdateInfo>> checkForUpdates(String currentVersion, String loader, String gameVersion) {
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -159,7 +233,7 @@ public class UpdateManager {
             
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("x-api-key", Constants.CURSEFORGE_API_KEY)
+                    .header("x-api-key", getCurseForgeApiKey())
                     .header("Accept", "application/json")
                     .GET().build();
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());

@@ -66,6 +66,7 @@ fabric_compile.log
 
 # Security - Never commit sensitive files!
 curseforge.properties
+local.properties
 *.key
 *.secret
 
