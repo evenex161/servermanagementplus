@@ -832,118 +832,7 @@ public class ModCommands {
                     return 1;
                 })
             )
-            .then(Commands.literal("dailies")
-                .executes(context -> {
-                    if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                            player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
-                            return 0;
-                        }
-                        
-                        // Sync daily tasks data before opening
-                        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
-                        var dailyTasksManager = economyManager.getDailyTasksManager();
-                        var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
-                        var templateManager = economyManager.getTemplateManager();
-                        
-                        // Use admin-configurable free reward amount from template manager
-                        int freeRewardAmount = templateManager != null
-                            ? (int) templateManager.getFreeRewardAmount()
-                            : playerTasks.getFreeRewardAmount();
-                        
-                        // Calculate reset time
-                        long resetTime = System.currentTimeMillis() + playerTasks.getTimeUntilTaskRefresh();
-                        
-                        com.servermanagement.network.ModNetworking.sendToPlayer(
-                            new com.servermanagement.network.packet.SyncDailyTasksPacket(
-                                playerTasks.getTasks(),
-                                resetTime,
-                                playerTasks.isFreeRewardAvailable(),
-                                freeRewardAmount,
-                                playerTasks.getTimeUntilFreeReward()
-                            ),
-                            player
-                        );
-                        
-                        // Open Daily Tasks GUI
-                        player.openMenu(new com.servermanagement.gui.economy.DailyTasksMenuProvider());
-                    }
-                    return 1;
-                })
-                .then(Commands.literal("claim")
-                    .then(Commands.argument("taskNumber", IntegerArgumentType.integer(1, 3))
-                        .executes(context -> {
-                            if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                                if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                    player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
-                                    return 0;
-                                }
-                                
-                                int taskNum = IntegerArgumentType.getInteger(context, "taskNumber");
-                                int taskIndex = taskNum - 1;
-                                
-                                var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
-                                int reward = manager.getDailyTasksManager()
-                                    .claimTaskReward(player.getUUID(), taskIndex);
-                                
-                                if (reward > 0) {
-                                    manager.deposit(
-                                        player.getUUID(),
-                                        reward,
-                                        com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
-                                        "Daily Task Reward"
-                                    );
-                                    
-                                    // Send reward notification
-                                    com.servermanagement.features.economy.notifications.NotificationManager
-                                        .sendRewardClaimedNotification(player, reward);
-                                } else {
-                                    player.sendSystemMessage(Component.literal(
-                                        "§cTask not completed or already claimed"
-                                    ));
-                                }
-                            }
-                            return 1;
-                        })
-                    )
-                )
-                .then(Commands.literal("free")
-                    .executes(context -> {
-                        if (context.getSource().getEntity() instanceof ServerPlayer player) {
-                            if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
-                                player.sendSystemMessage(Component.literal("§cEconomy feature is disabled"));
-                                return 0;
-                            }
-                            
-                            var manager = com.servermanagement.features.economy.EconomyManager.getInstance();
-                            int reward = manager.getDailyTasksManager()
-                                .claimFreeReward(player.getUUID());
-                            
-                            if (reward > 0) {
-                                manager.deposit(
-                                    player.getUUID(),
-                                    reward,
-                                    com.servermanagement.features.economy.TransactionType.ADMIN_GIVE,
-                                    "Free Daily Reward"
-                                );
-                                
-                                // Send reward notification
-                                com.servermanagement.features.economy.notifications.NotificationManager
-                                    .sendRewardClaimedNotification(player, reward);
-                            } else {
-                                var playerTasks = manager.getDailyTasksManager()
-                                    .getOrCreatePlayerTasks(player.getUUID());
-                                long timeRemaining = playerTasks.getTimeUntilFreeReward();
-                                player.sendSystemMessage(Component.literal(
-                                    "§cFree reward not available. Next reward in: " +
-                                    com.servermanagement.features.economy.PlayerDailyTasks.formatTimeRemaining(timeRemaining)
-                                ));
-                            }
-                        }
-                        return 1;
-                    })
-                )
-            )
+            .then(buildDailiesCommand())
             .then(Commands.literal("request")
                 .then(Commands.argument("player", StringArgumentType.word())
                     .then(Commands.argument("amount", IntegerArgumentType.integer(1))
@@ -1319,6 +1208,192 @@ public class ModCommands {
                 })
             )
         );
+        dispatcher.register(buildDailiesCommand());
+    }
+
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> buildDailiesCommand() {
+        return Commands.literal("dailies")
+            .executes(context -> {
+                if (context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                    if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                        player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cEconomy feature is disabled"));
+                        return 0;
+                    }
+                    var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+                    var playerTasks = economyManager.getDailyTasksManager().getOrCreatePlayerTasks(player.getUUID());
+                    var templateManager = economyManager.getTemplateManager();
+                    int freeRewardAmount = templateManager != null ? (int) templateManager.getFreeRewardAmount() : playerTasks.getFreeRewardAmount();
+                    long resetTime = System.currentTimeMillis() + playerTasks.getTimeUntilTaskRefresh();
+                    com.servermanagement.network.ModNetworking.sendToPlayer(
+                        new com.servermanagement.network.packet.SyncDailyTasksPacket(playerTasks.getTasks(), resetTime, playerTasks.isFreeRewardAvailable(), freeRewardAmount, playerTasks.getTimeUntilFreeReward()), player);
+                    player.openMenu(new com.servermanagement.gui.economy.DailyTasksMenuProvider());
+                }
+                return 1;
+            })
+            .then(Commands.literal("claim")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cEconomy feature is disabled"));
+                            return 0;
+                        }
+                        handleClaimAllDailies(player);
+                    }
+                    return 1;
+                })
+                .then(Commands.argument("taskNumber", com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 3))
+                    .executes(context -> {
+                        if (context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                            if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cEconomy feature is disabled"));
+                                return 0;
+                            }
+                            handleClaimSpecificDaily(player, com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "taskNumber") - 1);
+                        }
+                        return 1;
+                    })
+                )
+            )
+            .then(Commands.literal("free")
+                .executes(context -> {
+                    if (context.getSource().getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cEconomy feature is disabled"));
+                            return 0;
+                        }
+                        handleClaimFreeReward(player);
+                    }
+                    return 1;
+                })
+            );
+    }
+
+    private static void handleClaimAllDailies(net.minecraft.server.level.ServerPlayer player) {
+        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+        var dailyTasksManager = economyManager.getDailyTasksManager();
+        var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+        var templateManager = economyManager.getTemplateManager();
+        
+        int totalMoney = 0;
+        int totalItems = 0;
+        boolean claimedAnything = false;
+
+        for (int i = 0; i < playerTasks.getTasks().size(); i++) {
+            var task = playerTasks.getTasks().get(i);
+            if (task.isCompleted() && !task.isClaimed()) {
+                int reward = dailyTasksManager.claimTaskReward(player.getUUID(), i);
+                if (reward > 0) {
+                    var account = economyManager.getOrCreateAccount(player.getUUID());
+                    account.deposit(reward);
+                    totalMoney += reward;
+                    claimedAnything = true;
+                    
+                    net.minecraft.world.item.ItemStack rewardItem = task.getRewardItem();
+                    if (!rewardItem.isEmpty()) {
+                        boolean added = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
+                        if (!added) {
+                            economyManager.getBankInventory(player.getUUID()).addItem(rewardItem.copy(), com.servermanagement.features.economy.BankInventory.ItemSource.DAILY_TASK, "Daily Task #" + (i + 1));
+                        }
+                        totalItems += rewardItem.getCount();
+                    }
+                }
+            }
+        }
+        
+        if (playerTasks.isFreeRewardAvailable()) {
+            int reward = dailyTasksManager.claimFreeReward(player.getUUID());
+            if (reward > 0) {
+                var account = economyManager.getOrCreateAccount(player.getUUID());
+                account.deposit(reward);
+                account.addTransaction(new com.servermanagement.features.economy.Transaction(com.servermanagement.features.economy.TransactionType.FREE_REWARD, reward, "Free daily reward"));
+                totalMoney += reward;
+                claimedAnything = true;
+                
+                net.minecraft.world.item.ItemStack rewardItem = templateManager != null ? templateManager.getFreeRewardItem() : net.minecraft.world.item.ItemStack.EMPTY;
+                if (!rewardItem.isEmpty()) {
+                    boolean added = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
+                    if (!added) {
+                        economyManager.getBankInventory(player.getUUID()).addItem(rewardItem.copy(), com.servermanagement.features.economy.BankInventory.ItemSource.FREE_REWARD, "Free Daily Reward");
+                    }
+                    totalItems += rewardItem.getCount();
+                }
+            }
+        }
+        
+        if (claimedAnything) {
+            player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("§a§l✓ §r§aClaimed all available rewards: §6$%d §aand §f%d item(s)", totalMoney, totalItems)), true);
+            economyManager.save();
+            com.servermanagement.features.economy.DailyTaskProgressListener.pushSyncDailyTasks(player);
+        } else {
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cNo completed tasks or free rewards available to claim."));
+        }
+    }
+
+    private static void handleClaimSpecificDaily(net.minecraft.server.level.ServerPlayer player, int taskIndex) {
+        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+        var dailyTasksManager = economyManager.getDailyTasksManager();
+        var playerTasks = dailyTasksManager.getOrCreatePlayerTasks(player.getUUID());
+        
+        if (taskIndex < 0 || taskIndex >= playerTasks.getTasks().size()) {
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cInvalid task!"));
+            return;
+        }
+        
+        var task = playerTasks.getTasks().get(taskIndex);
+        int reward = dailyTasksManager.claimTaskReward(player.getUUID(), taskIndex);
+        
+        if (reward > 0) {
+            var account = economyManager.getOrCreateAccount(player.getUUID());
+            account.deposit(reward);
+            
+            net.minecraft.world.item.ItemStack rewardItem = task.getRewardItem();
+            if (!rewardItem.isEmpty()) {
+                boolean added = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
+                if (!added) {
+                    economyManager.getBankInventory(player.getUUID()).addItem(rewardItem.copy(), com.servermanagement.features.economy.BankInventory.ItemSource.DAILY_TASK, "Daily Task #" + (taskIndex + 1));
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§e⚠ Inventory full! Item sent to Bank Inventory."));
+                }
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Claimed $" + reward + " + " + rewardItem.getHoverName().getString() + " x" + rewardItem.getCount() + " for completing task #" + (taskIndex + 1)));
+            } else {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§a✓ Claimed $" + reward + " for completing task #" + (taskIndex + 1)));
+            }
+            economyManager.save();
+            com.servermanagement.features.economy.DailyTaskProgressListener.pushSyncDailyTasks(player);
+        } else {
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cTask is not completed or already claimed!"));
+        }
+    }
+
+    private static void handleClaimFreeReward(net.minecraft.server.level.ServerPlayer player) {
+        var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
+        var playerTasks = economyManager.getDailyTasksManager().getOrCreatePlayerTasks(player.getUUID());
+        
+        if (playerTasks.isFreeRewardAvailable()) {
+            var templateManager = economyManager.getTemplateManager();
+            int reward = economyManager.getDailyTasksManager().claimFreeReward(player.getUUID());
+            
+            var account = economyManager.getOrCreateAccount(player.getUUID());
+            account.deposit(reward);
+            account.addTransaction(new com.servermanagement.features.economy.Transaction(com.servermanagement.features.economy.TransactionType.FREE_REWARD, reward, "Free daily reward"));
+            
+            net.minecraft.world.item.ItemStack rewardItem = templateManager != null ? templateManager.getFreeRewardItem() : net.minecraft.world.item.ItemStack.EMPTY;
+            if (!rewardItem.isEmpty()) {
+                boolean added = com.servermanagement.features.economy.OverflowInventoryManager.safeAddToInventory(player, rewardItem.copy());
+                if (!added) {
+                    economyManager.getBankInventory(player.getUUID()).addItem(rewardItem.copy(), com.servermanagement.features.economy.BankInventory.ItemSource.FREE_REWARD, "Free Daily Reward");
+                    player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§6[Reward] §eInventory full — item sent to Bank Inventory."));
+                }
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("§a§l✓ §r§aClaimed daily reward: §6$%d §a+ §f%s x%d", reward, rewardItem.getHoverName().getString(), rewardItem.getCount())), true);
+            } else {
+                player.displayClientMessage(net.minecraft.network.chat.Component.literal(String.format("§a§l✓ §r§aClaimed daily reward: §6$%d", reward)), true);
+            }
+            economyManager.save();
+            com.servermanagement.features.economy.DailyTaskProgressListener.pushSyncDailyTasks(player);
+        } else {
+            long timeUntilNext = playerTasks.getTimeUntilFreeReward();
+            String timeStr = com.servermanagement.features.economy.PlayerDailyTasks.formatTimeRemaining(timeUntilNext);
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("§cFree reward not available. Next reward in: " + timeStr));
+        }
     }
     
     private static int executePerformanceToggle(net.minecraft.commands.CommandSourceStack source, String subsystem) {

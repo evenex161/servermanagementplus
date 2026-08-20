@@ -61,6 +61,7 @@ public class FeatureManager {
         featureStates.put("tablist", com.servermanagement.config.ModConfig.TAB_ISOLATION_ENABLED.get());
         featureStates.put("server_performance", com.servermanagement.config.ModConfig.SERVER_PERFORMANCE_ENABLED.get());
         featureStates.put("motd_editor", com.servermanagement.config.ModConfig.MOTD_ENABLED.get());
+        featureStates.put("economy", com.servermanagement.config.ModConfig.ECONOMY_ENABLED.get());
     }
 
     public static void toggleFeature(String featureId, boolean enabled) {
@@ -112,6 +113,9 @@ public class FeatureManager {
                 break;
             case "motd_editor":
                 com.servermanagement.config.ModConfig.MOTD_ENABLED.set(enabled);
+                break;
+            case "economy":
+                com.servermanagement.config.ModConfig.ECONOMY_ENABLED.set(enabled);
                 break;
         }
         // Save config to disk

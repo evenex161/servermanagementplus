@@ -91,18 +91,32 @@ public record OpenGuiPacket(GuiType guiType, String data) implements com.serverm
                         player.openMenu(new com.servermanagement.gui.economy.AchievementsMenuProvider());
                         break;
                     case ECONOMY_MANAGEMENT:
+                        com.servermanagement.network.ModNetworking.sendToPlayer(
+                            new SyncEconomySettingsPacket(
+                                com.servermanagement.config.ModConfig.SHOW_MARKET_VALUE_TOOLTIPS.get(),
+                                com.servermanagement.config.ModConfig.MINEBAY_ENABLED.get(),
+                                com.servermanagement.config.ModConfig.MINESTACKS_ENABLED.get(),
+                                com.servermanagement.config.ModConfig.TRADE_BLACKLIST.get(),
+                                com.servermanagement.config.ModConfig.STARTING_BALANCE.get()
+                            ), player);
                         SyncEconomyTemplatesPacket.syncToPlayer(player, player.getServer());
                         SyncEconomyStatsPacket.syncToPlayer(player, player.getServer());
                         player.openMenu(new com.servermanagement.gui.economy.EconomyManagementMenuProvider());
                         break;
                     case MINEBAY:
-                        // Available to all players
+                        if (!com.servermanagement.config.ModConfig.MINEBAY_ENABLED.get()) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("[ServerManagement] MineBay is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            return;
+                        }
                         syncBankAccount(player); // Sync balance for price display
                         syncMineBayListings(player);
                         player.openMenu(new com.servermanagement.gui.minebay.MineBayMenuProvider());
                         break;
                     case MINESTACKS:
-                        // Available to all players - gambling system
+                        if (!com.servermanagement.config.ModConfig.MINESTACKS_ENABLED.get()) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("[ServerManagement] MineStacks is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            return;
+                        }
                         syncBankAccount(player); // Sync balance for display
                         syncGamblingStats(player); // Sync gambling statistics
                         com.servermanagement.gui.gambling.MineStacksMenuProvider.open(player);
