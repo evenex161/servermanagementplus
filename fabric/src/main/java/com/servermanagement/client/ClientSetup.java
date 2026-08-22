@@ -12,6 +12,7 @@ import com.servermanagement.updater.UpdatePreferences;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.gui.screens.TitleScreen;
+import com.servermanagement.Constants;
 
 public class ClientSetup implements ClientModInitializer {
     private static boolean updateChecked = false;
@@ -44,7 +45,7 @@ public class ClientSetup implements ClientModInitializer {
             if (com.servermanagement.features.serverperformance.GCAdvisor.isUsingSuboptimalGC() && !com.servermanagement.features.serverperformance.GCAdvisor.isDismissed()) {
                 minecraftClient.tell(() -> {
                     if (minecraftClient.player != null) {
-                        net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component.literal("§c[ServerManagement] Warning: Suboptimal Client JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
+                        net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component.literal("§c" + Constants.CHAT_PREFIX + " Warning: Suboptimal Client JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
                             .append(net.minecraft.network.chat.Component.literal("§e[Copy Optimal Flags]")
                                 .withStyle(style -> style
                                     .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.COPY_TO_CLIPBOARD, com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags()))

@@ -17,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import com.servermanagement.Constants;
 public class ModCommands {
 
     public static void onRegisterCommands(com.mojang.brigadier.CommandDispatcher<net.minecraft.commands.CommandSourceStack> dispatcher) {
@@ -100,7 +101,7 @@ public class ModCommands {
                         if (info != null) {
                             com.servermanagement.updater.UpdatePreferences.skipVersion(info.version());
                             com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate = null;
-                            context.getSource().sendSuccess(() -> Component.literal("§a[ServerManagement] Update " + info.version() + " has been skipped."), true);
+                            context.getSource().sendSuccess(() -> Component.literal("§a" + Constants.CHAT_PREFIX + " Update " + info.version() + " has been skipped."), true);
                         } else {
                             context.getSource().sendFailure(Component.literal("No pending update to skip."));
                         }
@@ -130,15 +131,15 @@ public class ModCommands {
                             java.nio.file.Path serverRoot = java.nio.file.Paths.get("").toAbsolutePath();
                             var scripts = com.servermanagement.features.serverperformance.JvmFlagPatcher.getDetectedScriptNames(serverRoot);
                             if (scripts.isEmpty()) {
-                                player.sendSystemMessage(Component.literal("\u00a7c[SM+] No run scripts found. Create a run.bat or run.sh first."));
+                                player.sendSystemMessage(Component.literal("\u00a7c" + Constants.CHAT_PREFIX + " No run scripts found. Create a run.bat or run.sh first."));
                             } else {
                                 boolean hasSmartStart = com.servermanagement.features.serverperformance.JvmFlagPatcher.hasSmartStart(serverRoot);
                                 player.sendSystemMessage(Component.literal(
-                                    "\u00a7e[SM+] This will patch: " + String.join(", ", scripts) + "\n" +
-                                    "\u00a7e[SM+] Adding: " + com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags() + "\n" +
+                                    "\u00a7e" + Constants.CHAT_PREFIX + " This will patch: " + String.join(", ", scripts) + "\n" +
+                                    "\u00a7e" + Constants.CHAT_PREFIX + " Adding: " + com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags() + "\n" +
                                     (hasSmartStart
-                                        ? "\u00a7a[SM+] SmartStart detected -- your original .bak backup will be preserved."
-                                        : "\u00a7e[SM+] A .bak backup will be created.")
+                                        ? "\u00a7a" + Constants.CHAT_PREFIX + " SmartStart detected -- your original .bak backup will be preserved."
+                                        : "\u00a7e" + Constants.CHAT_PREFIX + " A .bak backup will be created.")
                                 ));
                                 player.sendSystemMessage(
                                     Component.literal(" [Confirm Patch]").withStyle(net.minecraft.ChatFormatting.GREEN, net.minecraft.ChatFormatting.BOLD)
@@ -157,12 +158,12 @@ public class ModCommands {
                                 var result = com.servermanagement.features.serverperformance.JvmFlagPatcher.patchRunScripts(serverRoot);
                                 if (result.success()) {
                                     String backupMsg = result.smartStartDetected()
-                                        ? "\u00a7a[SM+] SmartStart detected -- your original .bak backup is preserved."
-                                        : "\u00a7e[SM+] .bak backups created.";
+                                        ? "\u00a7a" + Constants.CHAT_PREFIX + " SmartStart detected -- your original .bak backup is preserved."
+                                        : "\u00a7e" + Constants.CHAT_PREFIX + " .bak backups created.";
                                     player.sendSystemMessage(Component.literal(
-                                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", result.patchedScripts()) + "\n" +
+                                        "\u00a7a" + Constants.CHAT_PREFIX + " Successfully patched: " + String.join(", ", result.patchedScripts()) + "\n" +
                                         backupMsg + "\n" +
-                                        "\u00a7e[SM+] Restart server for ZGC to activate."
+                                        "\u00a7e" + Constants.CHAT_PREFIX + " Restart server for ZGC to activate."
                                     ));
                                     if (result.smartStartDetected()) {
                                         player.sendSystemMessage(
@@ -174,7 +175,7 @@ public class ModCommands {
                                         );
                                     }
                                 } else {
-                                    player.sendSystemMessage(Component.literal("\u00a7c[SM+] No run scripts found to patch."));
+                                    player.sendSystemMessage(Component.literal("\u00a7c" + Constants.CHAT_PREFIX + " No run scripts found to patch."));
                                 }
                             }
                             return 1;
@@ -184,7 +185,7 @@ public class ModCommands {
                 .then(Commands.literal("dismiss")
                     .executes(context -> {
                         com.servermanagement.features.serverperformance.GCAdvisor.setDismissed(true);
-                        context.getSource().sendSuccess(() -> Component.literal("\u00a77[SM+] GC advisory dismissed until server restart."), false);
+                        context.getSource().sendSuccess(() -> Component.literal("\u00a77" + Constants.CHAT_PREFIX + " GC advisory dismissed until server restart."), false);
                         return 1;
                     })
                 )
@@ -195,20 +196,20 @@ public class ModCommands {
                     boolean hasSmartStart = com.servermanagement.features.serverperformance.JvmFlagPatcher.hasSmartStart(serverRoot);
                     if (!hasSmartStart) {
                         context.getSource().sendSuccess(() -> Component.literal(
-                            "\u00a7c[SM+] Restart requires SmartStart integration.\n" +
-                            "\u00a77[SM+] Use the update manager to integrate SmartStart, or restart manually."
+                            "\u00a7c" + Constants.CHAT_PREFIX + " Restart requires SmartStart integration.\n" +
+                            "\u00a77" + Constants.CHAT_PREFIX + " Use the update manager to integrate SmartStart, or restart manually."
                         ), false);
                         return 0;
                     }
                     try {
                         java.nio.file.Files.writeString(serverRoot.resolve("restart_requested.flag"), "restart");
                     } catch (java.io.IOException e) {
-                        context.getSource().sendFailure(Component.literal("\u00a7c[SM+] Failed to write restart flag: " + e.getMessage()));
+                        context.getSource().sendFailure(Component.literal("\u00a7c" + Constants.CHAT_PREFIX + " Failed to write restart flag: " + e.getMessage()));
                         return 0;
                     }
                     context.getSource().sendSuccess(() -> Component.literal(
-                        "\u00a7a[SM+] Restart flag written. Stopping server...\n" +
-                        "\u00a77[SM+] SmartStart will automatically restart it."
+                        "\u00a7a" + Constants.CHAT_PREFIX + " Restart flag written. Stopping server...\n" +
+                        "\u00a77" + Constants.CHAT_PREFIX + " SmartStart will automatically restart it."
                     ), true);
                     context.getSource().getServer().halt(false);
                     return 1;

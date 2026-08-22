@@ -89,13 +89,13 @@ public class ForgeUpdateHooks {
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
                 if (player.hasPermissions(2)) {
                     if (UpdateManager.justUpdated) {
-                        player.sendSystemMessage(Component.literal("§a[ServerManagement] Successfully updated to version 2.1.2-b1!"));
+                        player.sendSystemMessage(Component.literal("§a" + Constants.CHAT_PREFIX + " Successfully updated to version 2.1.2-b1!"));
                         UpdateManager.justUpdated = false;
                     }
                     
                     if (com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate != null) {
                         var info = com.servermanagement.updater.ServerUpdateScheduler.pendingUpdate;
-                        net.minecraft.network.chat.MutableComponent msg = Component.literal("§e[ServerManagement] A new update (" + info.version() + ") is available! ")
+                        net.minecraft.network.chat.MutableComponent msg = Component.literal("§e" + Constants.CHAT_PREFIX + " A new update (" + info.version() + ") is available! ")
                             .append(Component.literal("§a[Update Now]")
                                 .withStyle(style -> style
                                     .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm update gui"))
@@ -111,7 +111,7 @@ public class ForgeUpdateHooks {
                     }
                     
                     if (com.servermanagement.features.serverperformance.GCAdvisor.isUsingSuboptimalGC() && !com.servermanagement.features.serverperformance.GCAdvisor.isDismissed()) {
-                        net.minecraft.network.chat.MutableComponent msg = Component.literal("§c[ServerManagement] Warning: Suboptimal Server JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
+                        net.minecraft.network.chat.MutableComponent msg = Component.literal("§c" + Constants.CHAT_PREFIX + " Warning: Suboptimal Server JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
                             .append(Component.literal("§e[Click to Fix]")
                                 .withStyle(style -> style
                                     .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/sm gc patch"))

@@ -30,6 +30,11 @@ public record ToggleFeaturePacket(String featureId, boolean enabled, long client
                 if (com.servermanagement.network.PacketTimestampTracker.shouldProcessPacket(player, actionKey, clientTick)) {
                     // Toggle feature logic will be implemented in FeatureManager
                     com.servermanagement.features.FeatureManager.toggleFeature(featureId, enabled);
+                    // Broadcast updated feature states to all connected clients
+                    var updatedStates = com.servermanagement.features.FeatureManager.getFeatureStates();
+                    com.servermanagement.network.ModNetworking.sendToAllPlayers(
+                        new SyncFeatureStatesPacket(updatedStates)
+                    );
                 }
             }
         });

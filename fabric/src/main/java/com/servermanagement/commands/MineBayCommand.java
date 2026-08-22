@@ -6,6 +6,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import com.servermanagement.Constants;
 
 public class MineBayCommand {
     
@@ -18,6 +19,15 @@ public class MineBayCommand {
     
     private static int openMineBayGUI(CommandContext<CommandSourceStack> context) {
         if (context.getSource().getEntity() instanceof ServerPlayer player) {
+            // Check master economy feature first (ConfigScreen toggle), then sub-feature flag
+            if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " Economy feature is disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                return 0;
+            }
+            if (!com.servermanagement.config.ModConfig.MINEBAY_ENABLED.get()) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " MineBay is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                return 0;
+            }
             // Sync balance before opening
             var economyManager = com.servermanagement.features.economy.EconomyManager.getInstance();
             var account = economyManager.getOrCreateAccount(player.getUUID());

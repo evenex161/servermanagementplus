@@ -6,6 +6,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 import java.util.function.Supplier;
+import com.servermanagement.Constants;
 
 public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
 
@@ -75,6 +76,11 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                         player.openMenu(new com.servermanagement.gui.PortalTimerMenuProvider(data));
                         break;
                     case BANK:
+                        // Economy master toggle gate — blocks all economy sub-screens
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " The economy system is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            return;
+                        }
                         // Send bank account sync before opening
                         syncBankAccount(player);
                         // Send bank inventory sync
@@ -84,11 +90,19 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                         player.openMenu(new com.servermanagement.gui.economy.BankMenuProvider());
                         break;
                     case DAILY_TASKS:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " The economy system is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            return;
+                        }
                         // Send daily tasks sync before opening
                         syncDailyTasks(player);
                         player.openMenu(new com.servermanagement.gui.economy.DailyTasksMenuProvider());
                         break;
                     case ACHIEVEMENTS:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " The economy system is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            return;
+                        }
                         // Send achievements sync before opening
                         syncAchievements(player);
                         player.openMenu(new com.servermanagement.gui.economy.AchievementsMenuProvider());
@@ -107,8 +121,12 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                         player.openMenu(new com.servermanagement.gui.economy.EconomyManagementMenuProvider());
                         break;
                     case MINEBAY:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " The economy system is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            return;
+                        }
                         if (!com.servermanagement.config.ModConfig.MINEBAY_ENABLED.get()) {
-                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("[ServerManagement] MineBay is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " MineBay is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
                             return;
                         }
                         syncBankAccount(player); // Sync balance for price display
@@ -116,8 +134,12 @@ public record OpenGuiPacket(GuiType guiType, String data) implements IPacket {
                         player.openMenu(new com.servermanagement.gui.minebay.MineBayMenuProvider());
                         break;
                     case MINESTACKS:
+                        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) {
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " The economy system is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            return;
+                        }
                         if (!com.servermanagement.config.ModConfig.MINESTACKS_ENABLED.get()) {
-                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal("[ServerManagement] MineStacks is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
+                            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(Constants.CHAT_PREFIX + " MineStacks is currently disabled.").withStyle(net.minecraft.ChatFormatting.RED));
                             return;
                         }
                         syncBankAccount(player); // Sync balance for display

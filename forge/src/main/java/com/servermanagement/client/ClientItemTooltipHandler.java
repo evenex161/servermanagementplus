@@ -24,6 +24,9 @@ public class ClientItemTooltipHandler {
         // Only show if market data has been synced (inflation > 0 means data received)
         if (ClientMarketData.getInflationMultiplier() <= 0) return;
 
+        // Economy feature master toggle check
+        if (!com.servermanagement.features.FeatureManager.isFeatureEnabled("economy")) return;
+
         // Admin setting check
         if (!ClientPacketHandler.showMarketValueTooltips()) return;
 

@@ -31,31 +31,31 @@ public final class BlurBackdrop {
     private BlurBackdrop() {}
 
     public static void enable() {
-        LOGGER.info("[ServerManagement] BlurBackdrop.enable() called. activeCount = {}", activeCount);
+        LOGGER.info("BlurBackdrop.enable() called. activeCount = {}", activeCount);
         Minecraft mc = Minecraft.getInstance();
         if (mc == null) {
-            LOGGER.info("[ServerManagement] mc is null");
+            LOGGER.info("mc is null");
             return;
         }
         if (mc.gameRenderer == null) {
-            LOGGER.info("[ServerManagement] mc.gameRenderer is null");
+            LOGGER.info("mc.gameRenderer is null");
             return;
         }
         if (mc.level == null) {
-            LOGGER.info("[ServerManagement] mc.level is null");
+            LOGGER.info("mc.level is null");
             return;
         }
 
-        LOGGER.info("[ServerManagement] activeCount before logic: {}", activeCount);
+        LOGGER.info("activeCount before logic: {}", activeCount);
         if (activeCount == 0) {
             try {
                 if (blurChain == null) {
-                    LOGGER.info("[ServerManagement] Loading blur shader: {}", BLUR_SHADER);
+                    LOGGER.info("Loading blur shader: {}", BLUR_SHADER);
                     blurChain = new PostChain(mc.getTextureManager(), mc.getResourceManager(), mc.getMainRenderTarget(), BLUR_SHADER);
                     lastWidth = mc.getWindow().getWidth();
                     lastHeight = mc.getWindow().getHeight();
                     blurChain.resize(lastWidth, lastHeight);
-                    LOGGER.info("[ServerManagement] Shader loaded successfully!");
+                    LOGGER.info("Shader loaded successfully!");
                 } else {
                     int width = mc.getWindow().getWidth();
                     int height = mc.getWindow().getHeight();
@@ -66,7 +66,7 @@ public final class BlurBackdrop {
                     }
                 }
             } catch (Throwable t) {
-                LOGGER.error("[ServerManagement] Failed to load blur shader: {}", BLUR_SHADER, t);
+                LOGGER.error("Failed to load blur shader: {}", BLUR_SHADER, t);
                 if (blurChain != null) {
                     try {
                         blurChain.close();
@@ -80,7 +80,7 @@ public final class BlurBackdrop {
         if (activeCount >= 0) {
             activeCount++;
         }
-        LOGGER.info("[ServerManagement] activeCount after logic: {}", activeCount);
+        LOGGER.info("activeCount after logic: {}", activeCount);
     }
 
     public static void processBlur(float partialTick) {
@@ -98,7 +98,7 @@ public final class BlurBackdrop {
             try {
                 blurChain.resize(width, height);
             } catch (Throwable t) {
-                LOGGER.error("[ServerManagement] Failed to resize blur shader", t);
+                LOGGER.error("Failed to resize blur shader", t);
                 try {
                     blurChain.close();
                 } catch (Throwable ignored) {}
@@ -116,7 +116,7 @@ public final class BlurBackdrop {
             
             mc.getMainRenderTarget().bindWrite(false);
         } catch (Throwable t) {
-            LOGGER.error("[ServerManagement] Failed to process blur shader, resetting chain", t);
+            LOGGER.error("Failed to process blur shader, resetting chain", t);
             try {
                 blurChain.close();
             } catch (Throwable ignored) {}
@@ -125,7 +125,7 @@ public final class BlurBackdrop {
     }
 
     public static void disable() {
-        LOGGER.info("[ServerManagement] BlurBackdrop.disable() called. activeCount = {}", activeCount);
+        LOGGER.info("BlurBackdrop.disable() called. activeCount = {}", activeCount);
         if (activeCount <= 0) {
             return;
         }

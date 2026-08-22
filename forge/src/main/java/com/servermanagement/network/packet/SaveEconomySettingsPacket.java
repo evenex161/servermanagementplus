@@ -36,6 +36,14 @@ public record SaveEconomySettingsPacket(boolean showMarketValueTooltips, boolean
                 ModConfig.STARTING_BALANCE.set(startingBalance);
                 ModConfig.SPEC.save();
 
+                // Force-clear all caches so subsequent .get() calls read the updated values
+                // rather than potentially stale cached data from ForgeConfigSpec's autoreload
+                ModConfig.SHOW_MARKET_VALUE_TOOLTIPS.clearCache();
+                ModConfig.MINEBAY_ENABLED.clearCache();
+                ModConfig.MINESTACKS_ENABLED.clearCache();
+                ModConfig.TRADE_BLACKLIST.clearCache();
+                ModConfig.STARTING_BALANCE.clearCache();
+
                 // Broadcast updated settings to all connected clients
                 ModNetworking.sendToAllPlayers(new SyncEconomySettingsPacket(showMarketValueTooltips, minebayEnabled, minestacksEnabled, tradeBlacklist, startingBalance));
             }

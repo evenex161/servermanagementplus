@@ -35,12 +35,12 @@ public record PatchJvmFlagsPacket(boolean confirmed) implements IPacket {
 
                 if (result.success()) {
                     String backupMsg = result.smartStartDetected()
-                        ? "\u00a7a[SM+] SmartStart detected -- your original .bak backup is preserved."
-                        : "\u00a7e[SM+] .bak backups created.";
+                        ? "\u00a7a" + Constants.CHAT_PREFIX + " SmartStart detected -- your original .bak backup is preserved."
+                        : "\u00a7e" + Constants.CHAT_PREFIX + " .bak backups created.";
                     player.sendSystemMessage(Component.literal(
-                        "\u00a7a[SM+] Successfully patched: " + String.join(", ", result.patchedScripts()) + "\n" +
+                        "\u00a7a" + Constants.CHAT_PREFIX + " Successfully patched: " + String.join(", ", result.patchedScripts()) + "\n" +
                         backupMsg + "\n" +
-                        "\u00a7e[SM+] Restart server for ZGC to activate."
+                        "\u00a7e" + Constants.CHAT_PREFIX + " Restart server for ZGC to activate."
                     ));
                     if (result.smartStartDetected()) {
                         player.sendSystemMessage(
@@ -53,7 +53,7 @@ public record PatchJvmFlagsPacket(boolean confirmed) implements IPacket {
                     }
                 } else {
                     player.sendSystemMessage(Component.literal(
-                        "\u00a7c[SM+] No run scripts found to patch. Create a run.bat or run.sh first."
+                        "\u00a7c" + Constants.CHAT_PREFIX + " No run scripts found to patch. Create a run.bat or run.sh first."
                     ));
                 }
             }

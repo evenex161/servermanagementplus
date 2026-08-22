@@ -7,6 +7,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import com.servermanagement.Constants;
 
 /**
  * Client-side event handler for connection events
@@ -44,7 +45,7 @@ public class ClientConnectionHandler {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             mc.tell(() -> {
                 if (mc.player != null) {
-                    net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component.literal("§c[ServerManagement] Warning: Suboptimal Client JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
+                    net.minecraft.network.chat.MutableComponent msg = net.minecraft.network.chat.Component.literal("§c" + Constants.CHAT_PREFIX + " Warning: Suboptimal Client JVM GC detected! (" + com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName() + ") ")
                         .append(net.minecraft.network.chat.Component.literal("§e[Copy Optimal Flags]")
                             .withStyle(style -> style
                                 .withClickEvent(new net.minecraft.network.chat.ClickEvent(net.minecraft.network.chat.ClickEvent.Action.COPY_TO_CLIPBOARD, com.servermanagement.features.serverperformance.GCAdvisor.getRecommendedFlags()))
