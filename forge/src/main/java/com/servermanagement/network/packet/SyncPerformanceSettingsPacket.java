@@ -19,7 +19,10 @@ public record SyncPerformanceSettingsPacket(
         double tpsWarningThreshold, double tpsCriticalThreshold,
         double currentTps, double averageMspt, boolean autoOptimizeActive,
         long totalItemsMerged, long totalSpawnsCancelled,
-        long totalEntitiesThrottled, long totalRedstoneThrottled) implements IPacket {
+        long totalEntitiesThrottled, long totalRedstoneThrottled,
+        String serverGcName, String serverGcUrgency, boolean serverGcScriptPatched,
+        long serverMaxHeapMB, long serverUsedHeapMB, double serverAllocRate,
+        long serverGcPausesMs, boolean serverDhAvailable) implements IPacket {
 
     public SyncPerformanceSettingsPacket(FriendlyByteBuf buf) {
         this(buf.readBoolean(),
@@ -32,7 +35,10 @@ public record SyncPerformanceSettingsPacket(
              buf.readDouble(), buf.readDouble(),
              buf.readDouble(), buf.readDouble(), buf.readBoolean(),
              buf.readLong(), buf.readLong(),
-             buf.readLong(), buf.readLong());
+             buf.readLong(), buf.readLong(),
+             buf.readUtf(128), buf.readUtf(32), buf.readBoolean(),
+             buf.readLong(), buf.readLong(), buf.readDouble(),
+             buf.readLong(), buf.readBoolean());
     }
 
     @Override
@@ -62,6 +68,14 @@ public record SyncPerformanceSettingsPacket(
         buf.writeLong(totalSpawnsCancelled);
         buf.writeLong(totalEntitiesThrottled);
         buf.writeLong(totalRedstoneThrottled);
+        buf.writeUtf(serverGcName);
+        buf.writeUtf(serverGcUrgency);
+        buf.writeBoolean(serverGcScriptPatched);
+        buf.writeLong(serverMaxHeapMB);
+        buf.writeLong(serverUsedHeapMB);
+        buf.writeDouble(serverAllocRate);
+        buf.writeLong(serverGcPausesMs);
+        buf.writeBoolean(serverDhAvailable);
     }
 
     @Override
@@ -79,7 +93,10 @@ public record SyncPerformanceSettingsPacket(
                 tpsWarningThreshold, tpsCriticalThreshold,
                 currentTps, averageMspt, autoOptimizeActive,
                 totalItemsMerged, totalSpawnsCancelled,
-                totalEntitiesThrottled, totalRedstoneThrottled
+                totalEntitiesThrottled, totalRedstoneThrottled,
+                serverGcName, serverGcUrgency, serverGcScriptPatched,
+                serverMaxHeapMB, serverUsedHeapMB, serverAllocRate,
+                serverGcPausesMs, serverDhAvailable
             );
             });
         });
@@ -120,7 +137,15 @@ public record SyncPerformanceSettingsPacket(
                 manager.getTotalItemsMerged(),
                 manager.getTotalSpawnsCancelled(),
                 manager.getTotalEntitiesThrottled(),
-                manager.getTotalRedstoneThrottled()
+                manager.getTotalRedstoneThrottled(),
+                com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName(),
+                com.servermanagement.features.serverperformance.GCAdvisor.getUrgency().name(),
+                com.servermanagement.features.serverperformance.GCAdvisor.isScriptPatched(),
+                com.servermanagement.features.serverperformance.GCAdvisor.getMaxHeapMB(),
+                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024),
+                com.servermanagement.features.serverperformance.AllocationTracker.isSupported() ? com.servermanagement.features.serverperformance.AllocationTracker.getAllocationRateMBps() : -1.0,
+                com.servermanagement.features.serverperformance.GCAdvisor.getTotalGCPauseMs(),
+                com.servermanagement.integration.dh.DistantHorizonsHook.isAvailable()
             ),
             player
         );

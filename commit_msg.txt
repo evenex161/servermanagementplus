@@ -1,7 +1,0 @@
-Refactor: unify chat prefixes and fix economy feature toggle bugs
-
-- Replaced hardcoded "[ServerManagement]" and "[SM+]" strings with `Constants.CHAT_PREFIX` across commands, client handlers, GUI packets, and update hooks in both Forge and Fabric.
-- Fixed `ToggleFeaturePacket` to properly broadcast `SyncFeatureStatesPacket` to all connected clients after toggling a feature, ensuring UI elements like tooltips update immediately.
-- Added master feature check (`FeatureManager.isFeatureEnabled("economy")`) to `OpenGuiPacket` to prevent opening economy-related GUIs when the master feature is disabled.
-- Fixed `SaveEconomySettingsPacket` in Forge to force-clear caches (`clearCache()`) for economy configs so subsequent reads fetch the updated values.
-- Updated changelog for v2.1.2 mc1.20.1 branch.

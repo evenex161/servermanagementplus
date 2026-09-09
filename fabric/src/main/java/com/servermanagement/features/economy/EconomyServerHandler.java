@@ -53,7 +53,8 @@ public class EconomyServerHandler {
                 tracker.applyDecay();
                 tracker.tickSave(server);
                 
-                // Periodic margin history save
+                // Periodic drop rate and margin history save
+                DropRateTracker.getInstance().tickSave(server);
                 MarginHistoryTracker.getInstance().save(server);
             }
 

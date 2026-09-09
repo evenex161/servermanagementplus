@@ -69,10 +69,10 @@ public class GCAdvisor {
 
             if (urgency == UrgencyLevel.CRITICAL) {
                 Constants.LOG.warn("GC Advisor: {} + Distant Horizons detected. FPS stuttering likely. " +
-                    "Recommended: add -XX:+UseZGC -XX:+ZGenerational to your JVM arguments.", detectedGC.getDisplayName());
+                    "Recommended: add {} to your JVM arguments.", detectedGC.getDisplayName(), getRecommendedFlags());
             } else {
                 Constants.LOG.info("GC Advisor: {} detected. For smoother performance, consider switching to ZGC: " +
-                    "-XX:+UseZGC -XX:+ZGenerational", detectedGC.getDisplayName());
+                    "{}", detectedGC.getDisplayName(), getRecommendedFlags());
             }
         }
 

@@ -451,28 +451,28 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         }
 
         // --- GC Health Banner ---
-        var gcType = com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC();
-        var gcUrgency = com.servermanagement.features.serverperformance.GCAdvisor.getUrgency();
+        String gcType = com.servermanagement.client.ClientPacketHandler.getServerGcName();
+        String gcUrgency = com.servermanagement.client.ClientPacketHandler.getServerGcUrgency();
 
-        if (com.servermanagement.features.serverperformance.GCAdvisor.isScriptPatched()) {
+        if (com.servermanagement.client.ClientPacketHandler.isServerGcScriptPatched()) {
             g.fill(cX + 10, y - 2, cX + this.imageWidth - 10, y + 12, 0x8027AE60);
             g.drawString(this.font, "GC: ZGC (Optimized!) - Restart to activate", cX + 15, y, 0xFF55FF55, true);
             y += spacing;
-        } else if (gcUrgency == com.servermanagement.features.serverperformance.GCAdvisor.UrgencyLevel.CRITICAL) {
+        } else if ("CRITICAL".equals(gcUrgency)) {
             g.fill(cX + 10, y - 2, cX + this.imageWidth - 10, y + 12, 0x80E74C3C);
-            g.drawString(this.font, gcType.getDisplayName() + " + Distant Horizons - Switch to ZGC!", cX + 15, y, 0xFFFF5555, true);
+            g.drawString(this.font, gcType + " + Distant Horizons - Switch to ZGC!", cX + 15, y, 0xFFFF5555, true);
             y += spacing;
-        } else if (gcUrgency == com.servermanagement.features.serverperformance.GCAdvisor.UrgencyLevel.WARNING) {
+        } else if ("WARNING".equals(gcUrgency)) {
             g.fill(cX + 10, y - 2, cX + this.imageWidth - 10, y + 12, 0x80E67E22);
-            g.drawString(this.font, gcType.getDisplayName() + " Detected - ZGC recommended", cX + 15, y, 0xFFFFAA00, true);
+            g.drawString(this.font, gcType + " Detected - ZGC recommended", cX + 15, y, 0xFFFFAA00, true);
             y += spacing;
         } else {
-            g.drawString(this.font, "GC: " + gcType.getDisplayName() + " (Optimal)", cX + 20, y, 0x55FF55, true);
+            g.drawString(this.font, "GC: " + gcType + " (Optimal)", cX + 20, y, 0x55FF55, true);
             y += spacing;
         }
 
         // --- DH Status ---
-        boolean dhAvailable = com.servermanagement.integration.dh.DistantHorizonsHook.isAvailable();
+        boolean dhAvailable = com.servermanagement.client.ClientPacketHandler.isServerDhAvailable();
         String dhStatus = dhAvailable
             ? "Distant Horizons: Active (v" + com.servermanagement.integration.dh.DistantHorizonsHook.getVersion() + ")"
             : "Distant Horizons: Not Installed";
@@ -482,13 +482,13 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
 
         // --- JVM Info ---
         g.drawString(this.font, String.format("Heap: %dMB / %dMB",
-            Runtime.getRuntime().totalMemory() / (1024 * 1024),
-            Runtime.getRuntime().maxMemory() / (1024 * 1024)), cX + 20, y, 0xAAAAAA, true);
+            com.servermanagement.client.ClientPacketHandler.getServerUsedHeapMB(),
+            com.servermanagement.client.ClientPacketHandler.getServerMaxHeapMB()), cX + 20, y, 0xAAAAAA, true);
         y += spacing;
 
         // Allocation Rate
-        double allocRate = com.servermanagement.features.serverperformance.AllocationTracker.getAllocationRateMBps();
-        if (com.servermanagement.features.serverperformance.AllocationTracker.isSupported()) {
+        double allocRate = com.servermanagement.client.ClientPacketHandler.getServerAllocRate();
+        if (allocRate >= 0) {
             int allocColor = allocRate > 500 ? 0xE74C3C : (allocRate > 200 ? 0xE67E22 : 0xAAAAAA);
             g.drawString(this.font, String.format("Alloc Rate: %.0f MB/s", allocRate), cX + 20, y, allocColor, true);
         } else {
@@ -497,8 +497,8 @@ public class PerformanceSettingsScreen extends ScalableContainerScreen<Performan
         y += spacing;
 
         // GC Pauses
-        long gcPauseMs = com.servermanagement.features.serverperformance.GCAdvisor.getTotalGCPauseMs();
-        long gcCount = com.servermanagement.features.serverperformance.GCAdvisor.getTotalGCCount();
+        long gcPauseMs = com.servermanagement.client.ClientPacketHandler.getServerGcPausesMs();
+        long gcCount = 0; // We don't sync this anymore to save packet size, just show total MS
         g.drawString(this.font, String.format("GC Pauses: %d (%dms total)", gcCount, gcPauseMs), cX + 20, y, 0xAAAAAA, true);
         y += spacing + 5;
 

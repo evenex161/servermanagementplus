@@ -12,9 +12,11 @@ This update backports critical bug fixes and configuration improvements from the
 - **Recipe Pricing Stability** (`RecipeBasedPricing`): Tightened cycle breaker from 25 to 15 price increases. Added `lockedItems` set for proper cycle detection that falls back to anchor/dynamic prices instead of silently freezing. Added $1,000,000 hard ceiling on recipe-derived prices. Added `getDynamicFallbackPrice()` with bounded scarcity multipliers (sqrt taper, rarity modifiers) and a hard $500 cap for items with no recipe and no anchor.
 - **Client-Side Fallback Pricing** (`ClientMarketData`): Added `getDynamicFallbackPrice()` mirroring server logic. Items not in the recipe cache now get scarcity-aware pricing instead of flat $1.00. Switched item ID resolution from full NBT key to simple `BuiltInRegistries.ITEM.getKey()` for consistency.
 - **Fair Gambling** (`GamblingManager`): Set all MineStacks house edge constants to `0.0` (was 2-5%). All games now offer fair 50/50 payouts.
+- **Ore-Based Drop Rate Pricing** (`DropRateTracker`, `RecipeBasedPricing`): Backported the `DropRateTracker` and `VirtualRecipeEntry` system from 1.21.1. Ores now dynamically derive their price from observed block-break drop statistics (e.g., diamond ore price reflects the ~1.2 average diamonds dropped per ore mined). This creates a natural price relationship between ores and their drops instead of relying solely on hardcoded anchor values.
 
 ## Bug Fixes
 - **Economy NBT Serialization**: Fixed a critical exploit where items with NBT data (such as Enchanted Books, named items, or damaged tools) were losing their exact state upon server restart. The dynamic market engine and recipe pricing now correctly serialize and track NBT data in 1.20.1.
+- **Critical: Item Price Uniformity Fix** (`MarketPricingEngine.getItemKey`, `RecipeBasedPricing`, `ItemSupplyDemandTracker`): Fixed a critical bug where `getItemKey()` returned full NBT compound strings (e.g., `{id:"minecraft:diamond",Count:1b}`) instead of simple registry IDs (`"minecraft:diamond"`). This caused **every** anchor price lookup in `ItemValuation` to miss, making all items collapse to the `$1.00` default — explaining why items with wildly different crafting recipes and rarity had identical prices. Fixed across all callers in both Forge and Fabric.
 - **Repository Cleanup**: Cleaned up leftover testing directories and `TestModrinth.java` scripts that leaked into the production tree.
 - **Versioning**: Adapted internal hardcoded updater target versions to `2.1.2-b1` due to the previous version being released already.
 - **Server Stability Fixes:**
@@ -41,3 +43,4 @@ This update backports critical bug fixes and configuration improvements from the
     *   Cleaned up redundant `[ServerManagement]` prefixes from `BlurBackdrop` SLF4J logger messages (the logger name already identifies the source).
     *   `[MineBay]` sub-brand prefix intentionally preserved as-is.
     *   Shell script console output and GUI titles retain the full `ServerManagement+` branding where appropriate.
+- Fixed Server Performance GUI screen incorrectly displaying local client GC and JVM statistics (Heap size, Allocation Rate, GC type, and Pauses) instead of the server's remote statistics. The server now correctly syncs these statistics in the \SyncPerformanceSettingsPacket\.

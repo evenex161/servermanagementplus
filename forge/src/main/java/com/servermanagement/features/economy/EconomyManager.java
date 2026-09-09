@@ -86,6 +86,9 @@ public class EconomyManager {
         // Load supply/demand tracking data
         ItemSupplyDemandTracker.getInstance().load(server);
         
+        // Load drop rate tracking data (for ore-based pricing)
+        DropRateTracker.getInstance().load(server);
+        
         // Load margin history data
         MarginHistoryTracker.getInstance().load(server);
         
@@ -220,6 +223,7 @@ public class EconomyManager {
         if (server != null) {
             ItemSupplyDemandTracker.getInstance().shutdown(server);
             MarginHistoryTracker.getInstance().shutdown(server);
+            DropRateTracker.getInstance().shutdown(server);
         }
     }
 

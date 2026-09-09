@@ -255,6 +255,16 @@ public class ClientPacketHandler {
     private static long perfTotalSpawnsCancelled = 0;
     private static long perfTotalEntitiesThrottled = 0;
     private static long perfTotalRedstoneThrottled = 0;
+    
+    // Server GC Stats
+    private static String serverGcName = "Unknown";
+    private static String serverGcUrgency = "OK";
+    private static boolean serverGcScriptPatched = false;
+    private static long serverMaxHeapMB = 0;
+    private static long serverUsedHeapMB = 0;
+    private static double serverAllocRate = 0.0;
+    private static long serverGcPausesMs = 0;
+    private static boolean serverDhAvailable = false;
 
     public static void handlePerformanceSettings(
             boolean featureEnabled,
@@ -267,7 +277,10 @@ public class ClientPacketHandler {
             double tpsWarningThreshold, double tpsCriticalThreshold,
             double currentTps, double averageMspt, boolean autoOptimizeActive,
             long totalItemsMerged, long totalSpawnsCancelled,
-            long totalEntitiesThrottled, long totalRedstoneThrottled) {
+            long totalEntitiesThrottled, long totalRedstoneThrottled,
+            String gcName, String gcUrgency, boolean gcScriptPatched,
+            long maxHeapMB, long usedHeapMB, double allocRate,
+            long gcPausesMs, boolean dhAvailable) {
         com.servermanagement.gui.debug.DebugLogger.logCacheUpdate("PerformanceSettings",
                 String.format("enabled=%s tps=%.1f mspt=%.1f autoOpt=%s merged=%d spawns=%d throttled=%d",
                         featureEnabled, currentTps, averageMspt, autoOptimizeActive, totalItemsMerged, totalSpawnsCancelled, totalEntitiesThrottled));
@@ -296,6 +309,15 @@ public class ClientPacketHandler {
         perfTotalSpawnsCancelled = totalSpawnsCancelled;
         perfTotalEntitiesThrottled = totalEntitiesThrottled;
         perfTotalRedstoneThrottled = totalRedstoneThrottled;
+        
+        serverGcName = gcName;
+        serverGcUrgency = gcUrgency;
+        serverGcScriptPatched = gcScriptPatched;
+        serverMaxHeapMB = maxHeapMB;
+        serverUsedHeapMB = usedHeapMB;
+        serverAllocRate = allocRate;
+        serverGcPausesMs = gcPausesMs;
+        serverDhAvailable = dhAvailable;
     }
 
     public static boolean getPerfFeatureEnabled() { return perfFeatureEnabled; }
@@ -335,4 +357,13 @@ public class ClientPacketHandler {
     public static void setTradeBlacklist(String blacklist) { tradeBlacklist = blacklist; }
     public static double getStartingBalance() { return startingBalance; }
     public static void setStartingBalance(double balance) { startingBalance = balance; }
+    
+    public static String getServerGcName() { return serverGcName; }
+    public static String getServerGcUrgency() { return serverGcUrgency; }
+    public static boolean isServerGcScriptPatched() { return serverGcScriptPatched; }
+    public static long getServerMaxHeapMB() { return serverMaxHeapMB; }
+    public static long getServerUsedHeapMB() { return serverUsedHeapMB; }
+    public static double getServerAllocRate() { return serverAllocRate; }
+    public static long getServerGcPausesMs() { return serverGcPausesMs; }
+    public static boolean isServerDhAvailable() { return serverDhAvailable; }
 }

@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * Server → Client: syncs all performance settings so the GUI can display current values.
  */
-public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean itemMergingEnabled, boolean mobSpawnLimiterEnabled, boolean entityActivationRangeEnabled, boolean villagerThrottleEnabled, boolean redstoneThrottleEnabled, boolean tpsMonitorEnabled, boolean tpsAutoOptimize, double itemMergeRadius, int itemMergeInterval, int mobCapMultiplier, int monsterActivationRange, int animalActivationRange, int miscActivationRange, int villagerTickInterval, int redstoneUpdatesPerTick, double tpsWarningThreshold, double tpsCriticalThreshold, double currentTps, double averageMspt, boolean autoOptimizeActive, long totalItemsMerged, long totalSpawnsCancelled, long totalEntitiesThrottled, long totalRedstoneThrottled) implements com.servermanagement.network.IPacket {
+public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean itemMergingEnabled, boolean mobSpawnLimiterEnabled, boolean entityActivationRangeEnabled, boolean villagerThrottleEnabled, boolean redstoneThrottleEnabled, boolean tpsMonitorEnabled, boolean tpsAutoOptimize, double itemMergeRadius, int itemMergeInterval, int mobCapMultiplier, int monsterActivationRange, int animalActivationRange, int miscActivationRange, int villagerTickInterval, int redstoneUpdatesPerTick, double tpsWarningThreshold, double tpsCriticalThreshold, double currentTps, double averageMspt, boolean autoOptimizeActive, long totalItemsMerged, long totalSpawnsCancelled, long totalEntitiesThrottled, long totalRedstoneThrottled, String serverGcName, String serverGcUrgency, boolean serverGcScriptPatched, long serverMaxHeapMB, long serverUsedHeapMB, double serverAllocRate, long serverGcPausesMs, boolean serverDhAvailable) implements com.servermanagement.network.IPacket {
     public static final net.minecraft.resources.ResourceLocation ID = new net.minecraft.resources.ResourceLocation("servermanagement", "sync_performance_settings_packet");
 
     @Override
@@ -18,7 +18,7 @@ public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean item
 
     // Live stats
     public SyncPerformanceSettingsPacket(FriendlyByteBuf buf) {
-        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readDouble(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readBoolean(), buf.readLong(), buf.readLong(), buf.readLong(), buf.readLong());
+        this(buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readDouble(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readBoolean(), buf.readLong(), buf.readLong(), buf.readLong(), buf.readLong(), buf.readUtf(128), buf.readUtf(32), buf.readBoolean(), buf.readLong(), buf.readLong(), buf.readDouble(), buf.readLong(), buf.readBoolean());
     }
 
         public void encode(FriendlyByteBuf buf) {
@@ -47,6 +47,14 @@ public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean item
         buf.writeLong(totalSpawnsCancelled);
         buf.writeLong(totalEntitiesThrottled);
         buf.writeLong(totalRedstoneThrottled);
+        buf.writeUtf(serverGcName);
+        buf.writeUtf(serverGcUrgency);
+        buf.writeBoolean(serverGcScriptPatched);
+        buf.writeLong(serverMaxHeapMB);
+        buf.writeLong(serverUsedHeapMB);
+        buf.writeDouble(serverAllocRate);
+        buf.writeLong(serverGcPausesMs);
+        buf.writeBoolean(serverDhAvailable);
     }
 
         public void handle(net.minecraft.server.level.ServerPlayer player) {
@@ -61,7 +69,10 @@ public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean item
                 tpsWarningThreshold, tpsCriticalThreshold,
                 currentTps, averageMspt, autoOptimizeActive,
                 totalItemsMerged, totalSpawnsCancelled,
-                totalEntitiesThrottled, totalRedstoneThrottled
+                totalEntitiesThrottled, totalRedstoneThrottled,
+                serverGcName, serverGcUrgency, serverGcScriptPatched,
+                serverMaxHeapMB, serverUsedHeapMB, serverAllocRate,
+                serverGcPausesMs, serverDhAvailable
             );
 
 }
@@ -99,7 +110,15 @@ public record SyncPerformanceSettingsPacket(boolean featureEnabled, boolean item
                 manager.getTotalItemsMerged(),
                 manager.getTotalSpawnsCancelled(),
                 manager.getTotalEntitiesThrottled(),
-                manager.getTotalRedstoneThrottled()
+                manager.getTotalRedstoneThrottled(),
+                com.servermanagement.features.serverperformance.GCAdvisor.getDetectedGC().getDisplayName(),
+                com.servermanagement.features.serverperformance.GCAdvisor.getUrgency().name(),
+                com.servermanagement.features.serverperformance.GCAdvisor.isScriptPatched(),
+                com.servermanagement.features.serverperformance.GCAdvisor.getMaxHeapMB(),
+                (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024 * 1024),
+                com.servermanagement.features.serverperformance.AllocationTracker.isSupported() ? com.servermanagement.features.serverperformance.AllocationTracker.getAllocationRateMBps() : -1.0,
+                com.servermanagement.features.serverperformance.GCAdvisor.getTotalGCPauseMs(),
+                com.servermanagement.integration.dh.DistantHorizonsHook.isAvailable()
             ),
             player
         );

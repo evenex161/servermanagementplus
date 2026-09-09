@@ -83,16 +83,18 @@ public class RecipeBasedPricing {
             anchorPrices.clear();
             recipePrices.clear();
 
-            // Step 1: Load anchor prices from ItemValuation's hardcoded map
+            // Step 1: Load anchor prices from ItemValuation's hardcoded map as raw intrinsic values.
+            // These are NOT scaled by capitalMultiplier — inflation is handled separately by
+            // MarketPricingEngine.inflationMultiplier which already accounts for economy size.
             anchorPrices.putAll(ItemValuation.getHardcodedValues());
 
             // Step 2: Collect all recipes from every supported recipe type
-            List<RecipeEntry> allRecipes = collectRecipes(server);
+            List<IRecipeEntry> allRecipes = collectRecipes(server);
 
             // Step 3: Group recipes by output item
-            Map<String, List<RecipeEntry>> recipesByOutput = new HashMap<>();
-            for (RecipeEntry entry : allRecipes) {
-                recipesByOutput.computeIfAbsent(entry.outputId, k -> new ArrayList<>()).add(entry);
+            Map<String, List<IRecipeEntry>> recipesByOutput = new HashMap<>();
+            for (IRecipeEntry entry : allRecipes) {
+                recipesByOutput.computeIfAbsent(entry.getOutputId(), k -> new ArrayList<>()).add(entry);
             }
 
             // Step 4: Iteratively resolve recipe prices until convergence
@@ -135,7 +137,7 @@ public class RecipeBasedPricing {
      */
     public double getItemBasePrice(ItemStack stack) {
         if (stack.isEmpty()) return 0.0;
-        String itemId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(stack);
+        String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
         return getItemBasePrice(itemId);
     }
 
@@ -168,10 +170,10 @@ public class RecipeBasedPricing {
 
     // ==================== Recipe Collection ====================
 
-    private List<RecipeEntry> collectRecipes(MinecraftServer server) {
+    private List<IRecipeEntry> collectRecipes(MinecraftServer server) {
         RecipeManager mgr = server.getRecipeManager();
         var registryAccess = server.registryAccess();
-        List<RecipeEntry> result = new ArrayList<>();
+        List<IRecipeEntry> result = new ArrayList<>();
 
         collectFromType(mgr, RecipeType.CRAFTING, registryAccess, CRAFTING_MARKUP, result);
         collectFromType(mgr, RecipeType.SMELTING, registryAccess, SMELTING_MARKUP, result);
@@ -180,14 +182,26 @@ public class RecipeBasedPricing {
         collectFromType(mgr, RecipeType.STONECUTTING, registryAccess, CRAFTING_MARKUP, result);
         collectSmithingRecipes(mgr, registryAccess, result);
 
+        // Add Drop Rate Tracked Virtual Recipes
+        for (Map.Entry<String, Map<String, Double>> blockEntry :
+                DropRateTracker.getInstance().getAverages().entrySet()) {
+            String blockId = blockEntry.getKey();
+            for (Map.Entry<String, Double> dropEntry : blockEntry.getValue().entrySet()) {
+                String dropId = dropEntry.getKey();
+                double avgDrops = dropEntry.getValue();
+
+                // Forward: 1 Block -> avgDrops DropItem
+                result.add(new VirtualRecipeEntry(dropId, avgDrops, blockId, 1.0, 1.0));
+            }
+        }
+
         return result;
     }
 
-    @SuppressWarnings("unchecked")
     private <I extends net.minecraft.world.Container, T extends Recipe<I>> void collectFromType(
             RecipeManager mgr, RecipeType<T> type,
             net.minecraft.core.RegistryAccess registryAccess,
-            double markup, List<RecipeEntry> result) {
+            double markup, List<IRecipeEntry> result) {
         try {
             for (T holder : mgr.getAllRecipesFor(type)) {
                 try {
@@ -204,8 +218,8 @@ public class RecipeBasedPricing {
                     }
                     if (nonEmpty.isEmpty()) continue;
 
-                    String outputId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(output);
-                    result.add(new RecipeEntry(outputId, output.getCount(), nonEmpty, markup));
+                    String outputId = BuiltInRegistries.ITEM.getKey(output.getItem()).toString();
+                    result.add(new StandardRecipeEntry(outputId, output.getCount(), nonEmpty, markup));
                 } catch (Exception e) {
                     // Skip individual problematic recipes silently
                 }
@@ -216,7 +230,7 @@ public class RecipeBasedPricing {
     }
 
     private void collectSmithingRecipes(RecipeManager mgr,
-            net.minecraft.core.RegistryAccess registryAccess, List<RecipeEntry> result) {
+            net.minecraft.core.RegistryAccess registryAccess, List<IRecipeEntry> result) {
         try {
             for (SmithingRecipe holder : mgr.getAllRecipesFor(RecipeType.SMITHING)) {
                 try {
@@ -240,8 +254,8 @@ public class RecipeBasedPricing {
 
                     if (nonEmpty.isEmpty()) continue;
 
-                    String outputId = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(output);
-                    result.add(new RecipeEntry(outputId, output.getCount(), nonEmpty, CRAFTING_MARKUP));
+                    String outputId = BuiltInRegistries.ITEM.getKey(output.getItem()).toString();
+                    result.add(new StandardRecipeEntry(outputId, output.getCount(), nonEmpty, CRAFTING_MARKUP));
                 } catch (Exception e) {
                     // Skip individual problematic recipes silently
                 }
@@ -274,7 +288,7 @@ public class RecipeBasedPricing {
 
     // ==================== Price Resolution ====================
 
-    private void resolveRecipePrices(Map<String, List<RecipeEntry>> recipesByOutput) {
+    private void resolveRecipePrices(Map<String, List<IRecipeEntry>> recipesByOutput) {
         boolean changed = true;
         int iteration = 0;
         Map<String, Integer> increaseCounts = new java.util.HashMap<>();
@@ -284,17 +298,17 @@ public class RecipeBasedPricing {
             changed = false;
             iteration++;
 
-            for (Map.Entry<String, List<RecipeEntry>> entry : recipesByOutput.entrySet()) {
+            for (Map.Entry<String, List<IRecipeEntry>> entry : recipesByOutput.entrySet()) {
                 String itemId = entry.getKey();
                 if (lockedItems.contains(itemId)) {
                     continue;
                 }
 
-                List<RecipeEntry> recipes = entry.getValue();
+                List<IRecipeEntry> recipes = entry.getValue();
 
                 double cheapest = Double.MAX_VALUE;
-                for (RecipeEntry recipe : recipes) {
-                    double cost = computeRecipeCost(recipe);
+                for (IRecipeEntry recipe : recipes) {
+                    double cost = recipe.computeCost();
                     if (cost > 0 && cost < cheapest) {
                         cheapest = cost;
                     }
@@ -335,14 +349,6 @@ public class RecipeBasedPricing {
         }
     }
 
-    private double computeRecipeCost(RecipeEntry recipe) {
-        double totalCost = 0;
-        for (Ingredient ingredient : recipe.ingredients) {
-            double ingredientCost = cheapestMatchingPrice(ingredient);
-            totalCost += ingredientCost;
-        }
-        return (totalCost / recipe.outputCount) * recipe.markup;
-    }
 
     /**
      * For a tag-based ingredient with multiple matching items, returns the cheapest option.
@@ -353,7 +359,7 @@ public class RecipeBasedPricing {
 
         double cheapest = Double.MAX_VALUE;
         for (ItemStack option : options) {
-            String id = com.servermanagement.features.economy.MarketPricingEngine.getItemKey(option);
+            String id = BuiltInRegistries.ITEM.getKey(option.getItem()).toString();
             double price = lookupCurrentPrice(id);
             if (price < cheapest) {
                 cheapest = price;
@@ -419,17 +425,58 @@ public class RecipeBasedPricing {
 
     // ==================== Inner Classes ====================
 
-    private static class RecipeEntry {
+    private interface IRecipeEntry {
+        String getOutputId();
+        double computeCost();
+    }
+
+    private class StandardRecipeEntry implements IRecipeEntry {
         final String outputId;
         final int outputCount;
         final List<Ingredient> ingredients;
         final double markup;
 
-        RecipeEntry(String outputId, int outputCount, List<Ingredient> ingredients, double markup) {
+        StandardRecipeEntry(String outputId, int outputCount, List<Ingredient> ingredients, double markup) {
             this.outputId = outputId;
             this.outputCount = outputCount;
             this.ingredients = ingredients;
             this.markup = markup;
+        }
+
+        @Override
+        public String getOutputId() { return outputId; }
+
+        @Override
+        public double computeCost() {
+            double totalCost = 0;
+            for (Ingredient ingredient : ingredients) {
+                totalCost += cheapestMatchingPrice(ingredient);
+            }
+            return (totalCost / outputCount) * markup;
+        }
+    }
+
+    private class VirtualRecipeEntry implements IRecipeEntry {
+        final String outputId;
+        final double outputCount;
+        final String inputId;
+        final double inputCount;
+        final double markup;
+
+        VirtualRecipeEntry(String outputId, double outputCount, String inputId, double inputCount, double markup) {
+            this.outputId = outputId;
+            this.outputCount = outputCount;
+            this.inputId = inputId;
+            this.inputCount = inputCount;
+            this.markup = markup;
+        }
+
+        @Override
+        public String getOutputId() { return outputId; }
+
+        @Override
+        public double computeCost() {
+            return (lookupCurrentPrice(inputId) * inputCount / outputCount) * markup;
         }
     }
 }

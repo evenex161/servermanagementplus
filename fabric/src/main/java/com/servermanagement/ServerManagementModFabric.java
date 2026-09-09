@@ -167,6 +167,15 @@ public class ServerManagementModFabric implements ModInitializer {
                 } catch (Throwable t) {
                     LOGGER.error("DailyTaskProgressListener.onBlockBreak failed", t);
                 }
+                // Track block drops for ore-based pricing
+                try {
+                    if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                        com.servermanagement.features.economy.DropRateTracker
+                            .onBlockBreak(serverLevel, player, pos, state);
+                    }
+                } catch (Throwable t) {
+                    LOGGER.error("DropRateTracker.onBlockBreak failed", t);
+                }
             });
 
         // Daily task: mob kill tracking. Forge uses @SubscribeEvent on
