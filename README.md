@@ -136,7 +136,6 @@ Automatic over-the-air mod updates for connected clients and intelligent server 
 - **Standalone Handoff** — Extracts an embedded `updater.jar` to execute outside the main JVM, permitting safe jar hot-swapping while the server is offline
 - **Graceful Shutdown** — Halts the server process gracefully prior to applying updates to ensure all world data is saved and standard ports are freed
 - **Smart Start Generator** — Dynamically parses existing `run.bat` / `run.sh` scripts in the server root and injects the `-Dservermanagement.smartstart=true` JVM flag, enabling automated reboot loops post-update
-- **Manual Installation Notice (v2.1.1-b1)** — Due to the complete architecture overhaul, v2.1.1-b1 must be installed manually for both the server and client. Subsequent updates will be handled by the new automated system.
 - **Smart version comparison** — Accurate semantic versioning evaluation that considers build numbers for granular patch detection
 - **Multi-version aware** — OTA updates are blocked across different Minecraft versions (e.g., a 1.20.1 client won't receive a 1.21.1 update)
 - **Multi-loader aware** — Clients are only served updates matching their active loader (Forge, Fabric, NeoForge)
@@ -147,7 +146,7 @@ To ensure full transparency on how the mod handles updates without triggering fa
 2. **Standalone Updater**: To avoid file-lock issues on Windows, the mod extracts an embedded `updater.jar` into the server root. This jar runs in a separate, temporary JVM process whose *only* job is to wait for the main server to exit, copy the newly downloaded mod jar over the old one, and then delete itself.
 3. **Server-Side Script Modification**: If an admin opts into the Smart Restart feature via the in-game GUI prompt, the mod will read their existing `run.bat` or `run.sh` script, back it up to `run.bat.bak`, and inject a standard `-Dservermanagement.smartstart=true` JVM argument. It **does not** execute arbitrary shell code or download external scripts. All script generation is done locally and requires explicit in-game admin consent.
 4. **Client-Side Consent**: On the client side, if an update is detected, the mod intercepts the Main Menu with a dedicated UI overlay. The client will **never** automatically download or install anything without the user clicking **"Update Now"**. Users are also explicitly provided with **"Update Later"** and **"Skip This Version"** options.
-5. **Verify it Yourself**: If you are a code reviewer or server-admin and want to safely test this system in action, clone our open-source repository and down-bump the version to simulate an outdated mod. Because the mod's current version is statically validated, you will need to lower the version in `gradle.properties`, as well as change the hardcoded `"2.1.1-b01"` version strings located in `ForgeUpdateHooks.java` and `FabricUpdateHooks.java` to `"2.1.0"`. Compile the mod (`gradlew build`), launch a local test server, and explicitly opt-in to the Smart Restart feature via the in-game admin menu. You will observe that the mod securely downloads the update, extracts `updater.jar`, backs up your run scripts to `.bak` files, and cleanly injects the `-Dservermanagement.smartstart=true` flag without executing arbitrary shell code. Nothing is hidden.
+5. **Verify it Yourself**: If you are a code reviewer or server-admin and want to safely test this system in action, clone our open-source repository and down-bump the version to simulate an outdated mod. Because the mod's current version is statically validated, you will need to lower the version in `gradle.properties`, as well as change the hardcoded version strings located in `ForgeUpdateHooks.java` and `FabricUpdateHooks.java` to an older version. Compile the mod (`gradlew build`), launch a local test server, and explicitly opt-in to the Smart Restart feature via the in-game admin menu. You will observe that the mod securely downloads the update, extracts `updater.jar`, backs up your run scripts to `.bak` files, and cleanly injects the `-Dservermanagement.smartstart=true` flag without executing arbitrary shell code. Nothing is hidden.
 
 ---
 
@@ -246,11 +245,11 @@ All economy data, task templates, and player progress persist across server rest
 
 ### Setup
 1. Download the JAR for your Minecraft version and mod loader:
-   - MC 1.20.1 (Forge): `ServerManagement-forge-1.20.1-2.1.1-b01-mc1.20.1.jar`
-   - MC 1.20.1 (Fabric): `ServerManagement+-fabric-1.20.1-2.1.1-b01-mc1.20.1.jar`
-   - MC 1.21.1 (Forge): `ServerManagement-forge-1.21.1-2.1.0-b01-mc1.21.1.jar`
-   - MC 1.21.1 (NeoForge): `ServerManagement-neoforge-1.21.1-2.1.0-b01-mc1.21.1.jar`
-   - MC 1.21.1 (Fabric): `ServerManagement+-fabric-1.21.1-2.1.0-b01-mc1.21.1.jar`
+   - MC 1.20.1 (Forge): `ServerManagement-forge-1.20.1-2.1.2-b01-mc1.20.1.jar`
+   - MC 1.20.1 (Fabric): `ServerManagement+-fabric-1.20.1-2.1.2-b01-mc1.20.1.jar`
+   - MC 1.21.1 (Forge): `ServerManagement-forge-1.21.1-2.1.2-b03-mc1.21.1.jar`
+   - MC 1.21.1 (NeoForge): `ServerManagement-neoforge-1.21.1-2.1.2-b03-mc1.21.1.jar`
+   - MC 1.21.1 (Fabric): `ServerManagement+-fabric-1.21.1-2.1.2-b03-mc1.21.1.jar`
 2. Place it in your server's `mods/` folder
 3. Start the server — config and data folders generate automatically
 4. Optionally install on clients for full GUI support (server-side only works too)
@@ -303,4 +302,4 @@ MIT License — free to use, modify, and distribute.
 
 ---
 
-*ServerManagement+ v2.1.1-b1 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*
+*ServerManagement+ v2.1.2-b3 — Minecraft 1.20.1 / 1.21.1 — Forge 47.4.0+ / 52.1.0+*
